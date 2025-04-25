@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,32 +61,34 @@ export const HoleScoreCard = ({
       <CardContent className="pt-6 space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
-          <div className={`text-sm px-3 py-1 rounded-md ${getTeeColorStyle()}`}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="par">Par</Label>
-                <Input 
-                  id="par"
-                  type="number"
-                  placeholder="Enter par"
-                  value={data.par || ''}
-                  onChange={(e) => handleChange('par', parseInt(e.target.value) || 0)}
-                  min={3}
-                  max={6}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="distance">Yards</Label>
-                <Input 
-                  id="distance"
-                  type="number"
-                  placeholder="Enter yards"
-                  value={data.distance || ''}
-                  onChange={(e) => handleChange('distance', parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-            </div>
+          <div className={`text-sm text-muted-foreground ${getTeeColorStyle()} px-3 py-1 rounded-md`}>
+            Tees
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="par">Par</Label>
+            <Input 
+              id="par"
+              type="number"
+              placeholder="Enter par"
+              value={data.par || ''}
+              onChange={(e) => handleChange('par', parseInt(e.target.value) || 0)}
+              min={3}
+              max={6}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="distance">Yards</Label>
+            <Input 
+              id="distance"
+              type="number"
+              placeholder="Enter yards"
+              value={data.distance || ''}
+              onChange={(e) => handleChange('distance', parseInt(e.target.value) || 0)}
+              min={0}
+            />
           </div>
         </div>
 
