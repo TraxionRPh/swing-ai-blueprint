@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, 
@@ -11,9 +10,6 @@ import {
   Tooltip, 
   Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
 } from "recharts";
 
 const scoreData = [
@@ -31,14 +27,6 @@ const practiceFocusData = [
   { name: 'Chipping', hours: 5 },
   { name: 'Putting', hours: 15 },
 ];
-
-const statData = [
-  { name: "FIR %", value: 54 },
-  { name: "GIR %", value: 38 },
-  { name: "Putts/Round", value: 33 },
-];
-
-const COLORS = ['#10B981', '#FFC300', '#EA384C'];
 
 const Dashboard = () => {
   return (
@@ -128,55 +116,75 @@ const Dashboard = () => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Performance Stats</CardTitle>
-            <CardDescription>Key metrics from recent rounds</CardDescription>
+            <CardTitle>Scoring Breakdown</CardTitle>
+            <CardDescription>Last 5 rounds performance</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1">
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie
-                  data={statData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={40}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name }) => `${name}`}
-                >
-                  {statData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `${value}`} />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Fairways Hit</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-[#10B981]">64%</span>
+                  <span className="text-xs text-muted-foreground">(+2%)</span>
+                </div>
+              </div>
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 bg-[#10B981] rounded-full" style={{ width: '64%' }} />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Greens in Regulation</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-[#10B981]">48%</span>
+                  <span className="text-xs text-muted-foreground">(+5%)</span>
+                </div>
+              </div>
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 bg-[#10B981] rounded-full" style={{ width: '48%' }} />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Average Putts per Round</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-[#FFC300]">31.4</span>
+                  <span className="text-xs text-muted-foreground">(-0.6)</span>
+                </div>
+              </div>
+              <div className="h-2 bg-muted rounded-full">
+                <div className="h-2 bg-[#FFC300] rounded-full" style={{ width: '78%' }} />
+              </div>
+            </div>
           </CardContent>
         </Card>
         
-        <Card className="md:col-span-2 border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
+        <Card className="border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
           <div className="bg-card h-full rounded-lg">
             <CardHeader className="pb-2 text-foreground rounded-t-lg border-b border-purple-500/20">
-              <CardTitle>AI Insights</CardTitle>
-              <CardDescription>Personalized recommendations based on your data</CardDescription>
+              <CardTitle>Performance Insights</CardTitle>
+              <CardDescription>Analysis based on recent rounds</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/20 rounded-lg border border-[#EA384C]/20">
-                <h4 className="font-medium mb-2 text-[#EA384C]">Putting Improvement Needed</h4>
-                <p className="text-sm text-muted-foreground">
-                  Your putting stats show you're averaging 33 putts per round. Try the "Clock Drill" 
-                  for distance control and the "Gate Drill" for direction accuracy.
-                </p>
-              </div>
+            <CardContent className="space-y-4 pt-4">
               <div className="p-4 bg-muted/20 rounded-lg border border-[#10B981]/20">
-                <h4 className="font-medium mb-2 text-[#10B981]">Drive Consistency Improving</h4>
-                <p className="text-sm text-muted-foreground">
-                  Your driving accuracy is improving but could benefit from more consistency. 
-                  Focus on the "Alignment Stick Path" drill to improve your swing path.
-                </p>
+                <h4 className="font-medium mb-2 text-[#10B981]">Strong Performance Areas</h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Consistent improvement in fairway accuracy (+2% over last 5 rounds)</li>
+                  <li>• Significant progress in GIR percentage (+5% improvement)</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-muted/20 rounded-lg border border-[#FFC300]/20">
+                <h4 className="font-medium mb-2 text-[#FFC300]">Areas for Focus</h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Average of 1.8 three-putts per round</li>
+                  <li>• Sand save percentage below target (current: 35%)</li>
+                </ul>
               </div>
             </CardContent>
           </div>
