@@ -50,10 +50,7 @@ const Layout = () => {
           </Sheet>
           
           <div className="ml-auto flex items-center space-x-4">
-            <div className="flex items-center gap-2 mr-4">
-              <NotificationBell />
-            </div>
-            <ModeToggle />
+            <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -69,6 +66,13 @@ const Layout = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/subscription")}>
                   Subscription
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <div className="flex items-center justify-between w-full">
+                    <span>Theme</span>
+                    <ModeToggle />
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
