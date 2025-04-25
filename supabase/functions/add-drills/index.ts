@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const drillsData = [
@@ -28,7 +27,7 @@ const drillsData = [
     "title": "One-Foot Driver Drill",
     "overview": "Improve balance and center contact by challenging your stability during the swing.",
     "difficulty": "Intermediate",
-    "category": "Driving", 
+    "category": "Driving",
     "duration": "15 minutes",
     "focus": ["Balance", "Contact", "Stability"],
     "video_url": null,
@@ -334,7 +333,6 @@ const drillsData = [
   }
 ];
 
-// Function to format instructions into markdown
 function formatInstructions(data: any) {
   let instructions = "How to perform:\n";
   
@@ -386,7 +384,6 @@ serve(async (req) => {
   }
 });
 
-// Helper function to create a Supabase client (required for the edge function)
 function createClient(supabaseUrl: string, supabaseKey: string) {
   return {
     from: (table: string) => ({
