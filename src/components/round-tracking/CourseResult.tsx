@@ -9,7 +9,7 @@ import { useState } from "react";
 
 interface CourseResultProps {
   course: Course;
-  onSelect: (course: Course) => void;
+  onSelect: (course: Course, holeCount?: number) => void;
   onEdit?: (course: Course) => void;
   onDelete?: (roundId: string) => void;
   showEditButton?: boolean;
@@ -34,11 +34,11 @@ export const CourseResult = ({
       onSelect(course);
       return;
     }
-    setIsSelected(true);
+    setIsSelected(!isSelected);
   };
 
   const handleStartRound = () => {
-    onSelect(course);
+    onSelect(course, holeCount);
   };
 
   const handleDelete = (e: React.MouseEvent) => {

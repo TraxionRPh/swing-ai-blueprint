@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import type { Course } from "@/types/round-tracking";
 
 interface RoundsDisplayProps {
-  onCourseSelect: (course: Course) => void;
+  onCourseSelect: (course: Course, holeCount?: number) => void;
 }
 
 interface RoundWithCourse {
@@ -131,7 +131,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               course={round.golf_courses}
               onSelect={isInProgress ? 
                 () => handleInProgressRoundSelect(round) : 
-                () => onCourseSelect(round.golf_courses)
+                (course, holeCount) => onCourseSelect(course, holeCount)
               }
               isInProgress={isInProgress}
               roundId={isInProgress ? round.id : undefined}

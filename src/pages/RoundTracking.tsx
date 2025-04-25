@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useParams } from "react-router-dom";
+import type { Course } from "@/types/round-tracking";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
@@ -61,6 +62,13 @@ const RoundTracking = () => {
     setShowFinalScore(false);
   };
 
+  const handleCourseSelection = (course: Course, selectedHoleCount?: number) => {
+    if (selectedHoleCount) {
+      setHoleCount(selectedHoleCount);
+    }
+    handleCourseSelect(course);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -84,7 +92,7 @@ const RoundTracking = () => {
       <CourseSelector
         selectedCourse={selectedCourse}
         selectedTee={selectedTee}
-        onCourseSelect={handleCourseSelect}
+        onCourseSelect={handleCourseSelection}
         onTeeSelect={setSelectedTee}
       />
 
@@ -114,9 +122,11 @@ const RoundTracking = () => {
         </div>
       )}
 
-      {selectedCourse && holeCount > 0 && holeScores.length > 0 && (
+      {selectedCourse && holeCount > 0 && (
         <>
-          <ScoreSummary holeScores={holeScores.slice(0, holeCount)} />
+          {holeScores.length > 0 && (
+            <ScoreSummary holeScores={holeScores.slice(0, holeCount)} />
+          )}
           
           <HoleScoreCard
             holeData={currentHoleData}

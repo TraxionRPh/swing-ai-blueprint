@@ -50,7 +50,7 @@ export const useRoundTracking = () => {
   }, [user]);
 
   const handleCourseSelect = async (course: Course) => {
-    const newRoundId = await handleCourseSelectBase(course);
+    const newRoundId = await handleCourseSelectBase(course, holeCount);
     if (newRoundId) {
       setCurrentRoundId(newRoundId);
       // Create default holes based on the selected hole count
@@ -59,7 +59,9 @@ export const useRoundTracking = () => {
         par: 4,
         distance: 0,
         score: 0,
-        putts: 0
+        putts: 0,
+        fairwayHit: false,
+        greenInRegulation: false
       }));
       setHoleScores(defaultHoles);
     }
