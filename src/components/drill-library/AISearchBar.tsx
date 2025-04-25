@@ -73,7 +73,7 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
         <Button 
           onClick={handleAISearch}
           disabled={isSearching}
-          className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90 self-start"
+          className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90 w-full md:w-auto"
         >
           <Brain className="mr-2 h-4 w-4" />
           {isSearching ? "Analyzing..." : "Analyze with AI"}
