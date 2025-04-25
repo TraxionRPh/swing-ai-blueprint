@@ -10,8 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
-  useSidebar 
+  SidebarFooter
 } from "@/components/ui/sidebar";
 import { LucideGolf, Home, Award, Dumbbell, Calendar, Brain, List, User } from "./icons/CustomIcons";
 
@@ -20,11 +19,8 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ currentPath }: AppSidebarProps) => {
-  const { state, isMobile } = useSidebar();
-  console.log("AppSidebar rendered:", { currentPath, sidebarState: state, isMobile });
-
   return (
-    <Sidebar className="h-full w-full">
+    <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-2">
           <LucideGolf className="h-8 w-8 text-primary" />
@@ -41,6 +37,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/dashboard"}
+                  tooltip="Dashboard"
                 >
                   <Link to="/dashboard">
                     <Home className="h-5 w-5" />
@@ -52,6 +49,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/drills"}
+                  tooltip="Drill Library"
                 >
                   <Link to="/drills">
                     <Dumbbell className="h-5 w-5" />
@@ -63,6 +61,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/challenges"}
+                  tooltip="Challenge Library"
                 >
                   <Link to="/challenges">
                     <Award className="h-5 w-5" />
@@ -82,6 +81,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/practice-plans"}
+                  tooltip="Practice Plans"
                 >
                   <Link to="/practice-plans">
                     <Calendar className="h-5 w-5" />
@@ -93,6 +93,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/rounds"}
+                  tooltip="Round Tracking"
                 >
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
@@ -112,6 +113,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/ai-analysis"}
+                  tooltip="AI Analysis"
                 >
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
@@ -131,6 +133,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 <SidebarMenuButton 
                   asChild
                   isActive={currentPath === "/profile"}
+                  tooltip="Profile"
                 >
                   <Link to="/profile">
                     <User className="h-5 w-5" />

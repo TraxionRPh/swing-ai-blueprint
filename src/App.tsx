@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
@@ -64,48 +63,46 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <SidebarProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/" element={<Root />} />
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Root />} />
+              <Route
+                path="/welcome"
+                element={
+                  <ProtectedRoute>
+                    <Welcome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/drills" element={<DrillLibrary />} />
+                <Route path="/challenges" element={<ChallengeLibrary />} />
+                <Route path="/rounds" element={<RoundTracking />} />
+                <Route path="/rounds/:roundId" element={<RoundTracking />} />
+                <Route path="/rounds/:roundId/:holeNumber" element={<RoundTracking />} />
+                <Route path="/ai-analysis" element={<AIAnalysis />} />
+                <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
+                <Route path="/practice-plans" element={<AIPracticePlans />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route
-                  path="/welcome"
+                  path="/subscription"
                   element={
                     <ProtectedRoute>
-                      <Welcome />
+                      <Subscription />
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <Layout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/drills" element={<DrillLibrary />} />
-                  <Route path="/challenges" element={<ChallengeLibrary />} />
-                  <Route path="/rounds" element={<RoundTracking />} />
-                  <Route path="/rounds/:roundId" element={<RoundTracking />} />
-                  <Route path="/rounds/:roundId/:holeNumber" element={<RoundTracking />} />
-                  <Route path="/ai-analysis" element={<AIAnalysis />} />
-                  <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
-                  <Route path="/practice-plans" element={<AIPracticePlans />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route
-                    path="/subscription"
-                    element={
-                      <ProtectedRoute>
-                        <Subscription />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </SidebarProvider>
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
