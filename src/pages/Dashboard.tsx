@@ -38,43 +38,43 @@ const statData = [
   { name: "Putts/Round", value: 33 },
 ];
 
-const COLORS = ['#1E5631', '#14213D', '#FCA311', '#E5E5E5'];
+const COLORS = ['#0EA5E9', '#D946EF', '#F97316', '#9b87f5'];
 
 const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
         <p className="text-muted-foreground">
           Welcome back! Here's an overview of your golf performance.
         </p>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Handicap</CardTitle>
-            <CardDescription>Current handicap index</CardDescription>
+        <Card className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
+          <CardHeader className="text-white">
+            <CardTitle className="text-white">Handicap</CardTitle>
+            <CardDescription className="text-white/80">Current handicap index</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center pt-4">
             <div className="text-5xl font-bold">18.2</div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Best Round</CardTitle>
-            <CardDescription>Your lowest round in past 90 days</CardDescription>
+        <Card className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+          <CardHeader className="text-white">
+            <CardTitle className="text-white">Best Round</CardTitle>
+            <CardDescription className="text-white/80">Your lowest round in past 90 days</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center pt-4">
             <div className="text-5xl font-bold">83</div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Practice Time</CardTitle>
-            <CardDescription>Hours practiced this month</CardDescription>
+        <Card className="bg-gradient-to-br from-orange-500 to-amber-600 text-white">
+          <CardHeader className="text-white">
+            <CardTitle className="text-white">Practice Time</CardTitle>
+            <CardDescription className="text-white/80">Hours practiced this month</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center items-center pt-4">
             <div className="text-5xl font-bold">12</div>
@@ -100,7 +100,7 @@ const Dashboard = () => {
                   <Line 
                     type="monotone" 
                     dataKey="score" 
-                    stroke="#1E5631" 
+                    stroke="#0EA5E9" 
                     strokeWidth={2}
                     activeDot={{ r: 8 }}
                   />
@@ -124,7 +124,7 @@ const Dashboard = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="hours" fill="#14213D" />
+                  <Bar dataKey="hours" fill="#D946EF" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -163,28 +163,28 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle>AI Insights</CardTitle>
-            <CardDescription>Personalized recommendations based on your data</CardDescription>
+        <Card className="col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+          <CardHeader className="text-white">
+            <CardTitle className="text-white">AI Insights</CardTitle>
+            <CardDescription className="text-white/80">Personalized recommendations based on your data</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium mb-2">Putting Improvement</h4>
-              <p className="text-sm text-muted-foreground">
+            <div className="p-4 bg-white/20 rounded-lg">
+              <h4 className="font-medium mb-2 text-white">Putting Improvement</h4>
+              <p className="text-sm text-white/80">
                 Your putting stats show you're averaging 33 putts per round. Try the "Clock Drill" 
                 for distance control and the "Gate Drill" for direction accuracy.
               </p>
             </div>
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium mb-2">Drive Consistency</h4>
-              <p className="text-sm text-muted-foreground">
+            <div className="p-4 bg-white/20 rounded-lg">
+              <h4 className="font-medium mb-2 text-white">Drive Consistency</h4>
+              <p className="text-sm text-white/80">
                 Your driving accuracy is improving but could benefit from more consistency. 
                 Focus on the "Alignment Stick Path" drill to improve your swing path.
               </p>
             </div>
             <div className="text-sm text-center mt-2">
-              <a href="/ai-analysis" className="text-primary hover:underline">View full AI analysis →</a>
+              <a href="/ai-analysis" className="text-white hover:underline">View full AI analysis →</a>
             </div>
           </CardContent>
         </Card>
@@ -194,3 +194,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
