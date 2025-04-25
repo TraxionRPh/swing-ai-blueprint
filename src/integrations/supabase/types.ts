@@ -123,8 +123,10 @@ export type Database = {
           distance_yards: number | null
           hole_number: number
           id: string
+          last_updated: string | null
           par: number
           tee_distances: Json | null
+          updated_by: string | null
         }
         Insert: {
           course_id?: string | null
@@ -132,8 +134,10 @@ export type Database = {
           distance_yards?: number | null
           hole_number: number
           id?: string
+          last_updated?: string | null
           par: number
           tee_distances?: Json | null
+          updated_by?: string | null
         }
         Update: {
           course_id?: string | null
@@ -141,8 +145,10 @@ export type Database = {
           distance_yards?: number | null
           hole_number?: number
           id?: string
+          last_updated?: string | null
           par?: number
           tee_distances?: Json | null
+          updated_by?: string | null
         }
         Relationships: [
           {

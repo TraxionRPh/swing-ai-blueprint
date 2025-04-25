@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
@@ -39,7 +38,6 @@ const RoundTracking = () => {
 
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
-    // Fetch hole data after setting the course
     fetchCourseHoles(course.id);
   };
 
@@ -62,10 +60,9 @@ const RoundTracking = () => {
           putts: 0
         })));
       } else {
-        // If no holes data, create default 18 holes
         const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
           holeNumber: i + 1,
-          par: 4, // Default par
+          par: 4,
           distance: 0,
           score: 0,
           putts: 0
@@ -79,10 +76,9 @@ const RoundTracking = () => {
         variant: "destructive"
       });
       
-      // Create default holes on error
       const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
         holeNumber: i + 1,
-        par: 4, // Default par
+        par: 4,
         distance: 0,
         score: 0,
         putts: 0
@@ -111,19 +107,18 @@ const RoundTracking = () => {
     }
   };
 
-  // Get current tee color
   const currentTeeColor = selectedTee && selectedCourse 
     ? selectedCourse.course_tees.find(tee => tee.id === selectedTee)?.color 
     : undefined;
 
-  // Get the current hole data
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || 
     (holeScores.length > 0 ? holeScores[0] : {
       holeNumber: currentHole,
       par: 4,
       distance: 0,
       score: 0,
-      putts: 0
+      putts: 0,
+      courseId: selectedCourse?.id
     });
 
   return (
@@ -154,6 +149,7 @@ const RoundTracking = () => {
             isFirst={currentHole === 1}
             isLast={currentHole === 18}
             teeColor={currentTeeColor}
+            courseId={selectedCourse.id}
           />
         </>
       )}

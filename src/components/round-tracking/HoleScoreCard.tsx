@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HoleData {
   holeNumber: number;
@@ -14,6 +15,7 @@ interface HoleData {
   putts: number;
   fairwayHit?: boolean;
   greenInRegulation?: boolean;
+  courseId?: string;
 }
 
 interface HoleScoreCardProps {
@@ -24,6 +26,7 @@ interface HoleScoreCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   teeColor?: string;
+  courseId?: string;
 }
 
 export const HoleScoreCard = ({
@@ -33,15 +36,51 @@ export const HoleScoreCard = ({
   onPrevious,
   isFirst,
   isLast,
-  teeColor
+  teeColor,
+  courseId
 }: HoleScoreCardProps) => {
   const [data, setData] = useState<HoleData>(holeData);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
   
-  // Reset internal state when holeData changes (when switching holes)
   useEffect(() => {
     setData(holeData);
   }, [holeData.holeNumber]);
   
+  const saveCourseHoleData = async (field: 'par' | 'distance', value: number) => {
+    if (!courseId) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('course_holes')
+        .upsert({
+          course_id: courseId,
+          hole_number: data.holeNumber,
+          [field]: value,
+          ...(field === 'par' ? { distance_yards: data.distance } : { par: data.par })
+        }, {
+          onConflict: '(course_id, hole_number)'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Course data saved",
+        description: "This information will be available for future rounds"
+      });
+    } catch (error) {
+      console.error('Error saving course hole data:', error);
+      toast({
+        title: "Error saving course data",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleChange = (field: keyof HoleData, value: any) => {
     const newData = {
       ...data,
@@ -49,8 +88,12 @@ export const HoleScoreCard = ({
     };
     setData(newData);
     onUpdate(newData);
+
+    if ((field === 'par' || field === 'distance') && courseId) {
+      saveCourseHoleData(field, value);
+    }
   };
-  
+
   return (
     <Card className="w-full max-w-xl mx-auto">
       <CardContent className="pt-6 space-y-4">
