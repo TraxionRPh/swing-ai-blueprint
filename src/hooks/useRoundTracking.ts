@@ -1,10 +1,9 @@
-
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
-import { Course } from "@/types/round-tracking"; // Add this import
+import { Course } from "@/types/round-tracking";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
@@ -12,7 +11,7 @@ export const useRoundTracking = () => {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
-    finishRound
+    finishRound: baseFinishRound
   } = useRoundManagement(user);
 
   const {
@@ -50,7 +49,6 @@ export const useRoundTracking = () => {
     const newRoundId = await handleCourseSelectBase(course);
     if (newRoundId) {
       setCurrentRoundId(newRoundId);
-      // Initialize hole scores with default values after creating a new round
       const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
         holeNumber: i + 1,
         par: 4,
@@ -64,7 +62,7 @@ export const useRoundTracking = () => {
 
   const handleNext = () => {
     if (currentHole === 18) {
-      finishRound(holeScores);
+      return;
     } else {
       handleNextBase();
     }
@@ -82,6 +80,7 @@ export const useRoundTracking = () => {
     handlePrevious,
     currentTeeColor,
     currentHoleData,
-    isSaving
+    isSaving,
+    finishRound: baseFinishRound
   };
 };
