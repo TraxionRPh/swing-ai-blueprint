@@ -1,49 +1,10 @@
+
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Form, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TeesForm } from "./TeesForm";
 import { Card } from "@/components/ui/card";
-
-const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", 
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-];
-
-interface CourseFormData {
-  name: string;
-  city: string;
-  state: string;
-  totalPar: string;
-}
-
-interface TeeData {
-  name: string;
-  color: string;
-  courseRating: string;
-  slopeRating: string;
-  totalYards: string;
-}
+import { CourseBasicInfoForm } from "./CourseBasicInfoForm";
 
 interface CourseFormProps {
   onCourseCreated: (course: any) => void;
@@ -55,17 +16,8 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
   const [showTeesForm, setShowTeesForm] = useState(false);
   const [courseId, setCourseId] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  const form = useForm<CourseFormData>({
-    defaultValues: {
-      name: "",
-      city: "",
-      state: "",
-      totalPar: "",
-    },
-  });
 
-  const onSubmit = async (data: CourseFormData) => {
+  const handleBasicInfoSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
       const { data: course, error } = await supabase
@@ -98,14 +50,14 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
     }
   };
 
-  const handleTeesSubmit = async (tees: TeeData[]) => {
+  const handleTeesSubmit = async (tees: any) => {
     if (!courseId) return;
 
     try {
       const { error } = await supabase
         .from('course_tees')
         .insert(
-          tees.map(tee => ({
+          tees.map((tee: any) => ({
             course_id: courseId,
             name: tee.name,
             color: tee.color,
@@ -153,102 +105,10 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          rules={{ required: "Course name is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Course Name</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Enter course name" required />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="city"
-          rules={{ required: "City is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>City</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Enter city" required />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="state"
-          rules={{ required: "State is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>State</FormLabel>
-              <FormControl>
-                <Select 
-                  value={field.value} 
-                  onValueChange={field.onChange}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select State" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {US_STATES.map(state => (
-                      <SelectItem key={state} value={state}>
-                        {state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="totalPar"
-          rules={{ 
-            required: "Total par is required",
-            validate: (value) => {
-              const numValue = parseInt(value);
-              return (numValue > 0 && numValue < 100) || "Invalid par value";
-            }
-          }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Total Par</FormLabel>
-              <FormControl>
-                <Input 
-                  {...field} 
-                  type="number" 
-                  placeholder="Enter total par (e.g., 72)" 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Next: Add Tees"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <CourseBasicInfoForm
+      onSubmit={handleBasicInfoSubmit}
+      onCancel={onCancel}
+      isSubmitting={isSubmitting}
+    />
   );
 };
