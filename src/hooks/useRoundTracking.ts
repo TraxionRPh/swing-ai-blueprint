@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
@@ -7,6 +8,8 @@ import { Course } from "@/types/round-tracking";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
+  const [holeCount, setHoleCount] = useState<number | null>(null);
+  
   const {
     currentRoundId,
     setCurrentRoundId,
@@ -39,6 +42,7 @@ export const useRoundTracking = () => {
       if (roundData) {
         setCurrentRoundId(roundData.roundId);
         setHoleScores(roundData.holeScores);
+        setHoleCount(roundData.holeCount || 18);
       }
     };
 
@@ -61,11 +65,15 @@ export const useRoundTracking = () => {
   };
 
   const handleNext = () => {
-    if (currentHole === 18) {
+    if (holeCount && currentHole === holeCount) {
       return;
     } else {
       handleNextBase();
     }
+  };
+
+  const finishRound = async (holeScores: any[]) => {
+    return baseFinishRound(holeScores, holeCount || 18);
   };
 
   return {
@@ -81,6 +89,8 @@ export const useRoundTracking = () => {
     currentTeeColor,
     currentHoleData,
     isSaving,
-    finishRound: baseFinishRound
+    finishRound,
+    holeCount,
+    setHoleCount
   };
 };

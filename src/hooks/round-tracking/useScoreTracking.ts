@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,33 +16,61 @@ export const useScoreTracking = (roundId: string | null) => {
       // Fetch existing hole scores for this round
       const fetchHoleScores = async () => {
         try {
-          const { data, error } = await supabase
+          const { data: holeScoresData, error: holeScoresError } = await supabase
             .from('hole_scores')
             .select('*')
             .eq('round_id', roundId)
             .order('hole_number');
 
-          if (error) throw error;
+          if (holeScoresError) throw holeScoresError;
 
-          if (data && data.length > 0) {
+          // Get course info to fetch hole data (par, distance)
+          const { data: roundData, error: roundError } = await supabase
+            .from('rounds')
+            .select('course_id')
+            .eq('id', roundId)
+            .single();
+            
+          if (roundError) throw roundError;
+          
+          // Get hole information from course_holes
+          let holeInfo: any[] = [];
+          if (roundData?.course_id) {
+            const { data: courseHoles, error: courseHolesError } = await supabase
+              .from('course_holes')
+              .select('*')
+              .eq('course_id', roundData.course_id);
+              
+            if (courseHolesError) throw courseHolesError;
+            holeInfo = courseHoles || [];
+          }
+
+          if (holeScoresData && holeScoresData.length > 0) {
             // Convert from DB format to our format
-            const formattedScores = data.map(hole => ({
-              holeNumber: hole.hole_number,
-              par: 4, // Default, will be updated when course data is available
-              distance: 0, // Default, will be updated when course data is available
-              score: hole.score || 0,
-              putts: hole.putts || 0,
-              fairwayHit: hole.fairway_hit || false,
-              greenInRegulation: hole.green_in_regulation || false
-            }));
+            const formattedScores = holeScoresData.map(hole => {
+              // Find corresponding hole info to get par and distance
+              const courseHole = holeInfo.find(h => h.hole_number === hole.hole_number);
+              
+              return {
+                holeNumber: hole.hole_number,
+                par: courseHole?.par || 4,
+                distance: courseHole?.distance_yards || 0,
+                score: hole.score || 0,
+                putts: hole.putts || 0,
+                fairwayHit: hole.fairway_hit || false,
+                greenInRegulation: hole.green_in_regulation || false
+              };
+            });
             
             // Create a full 18-hole array with default values for holes not in DB
             const fullScores = Array.from({ length: 18 }, (_, i) => {
               const existingHole = formattedScores.find(h => h.holeNumber === i + 1);
+              const courseHole = holeInfo.find(h => h.hole_number === i + 1);
+              
               return existingHole || {
                 holeNumber: i + 1,
-                par: 4,
-                distance: 0,
+                par: courseHole?.par || 4,
+                distance: courseHole?.distance_yards || 0,
                 score: 0,
                 putts: 0,
                 fairwayHit: false,
@@ -52,15 +81,19 @@ export const useScoreTracking = (roundId: string | null) => {
             setHoleScores(fullScores);
           } else {
             // Initialize with default values if no scores exist
-            const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
-              holeNumber: i + 1,
-              par: 4,
-              distance: 0,
-              score: 0,
-              putts: 0,
-              fairwayHit: false,
-              greenInRegulation: false
-            }));
+            const defaultHoles = Array.from({ length: 18 }, (_, i) => {
+              const courseHole = holeInfo.find(h => h.hole_number === i + 1);
+              
+              return {
+                holeNumber: i + 1,
+                par: courseHole?.par || 4,
+                distance: courseHole?.distance_yards || 0,
+                score: 0,
+                putts: 0,
+                fairwayHit: false,
+                greenInRegulation: false
+              };
+            });
             setHoleScores(defaultHoles);
           }
         } catch (error) {
@@ -137,8 +170,8 @@ export const useScoreTracking = (roundId: string | null) => {
       const { error } = await supabase
         .from('rounds')
         .update({
-          total_score: totals.score,
-          total_putts: totals.putts,
+          total_score: null, // Keep it null until the round is finished
+          total_putts: null,
           fairways_hit: totals.fairways,
           greens_in_regulation: totals.greens,
           updated_at: new Date().toISOString()

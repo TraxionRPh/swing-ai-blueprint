@@ -9,11 +9,22 @@ interface FinalScoreCardProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  holeCount?: number;
 }
 
-export const FinalScoreCard = ({ holeScores, isOpen, onConfirm, onCancel }: FinalScoreCardProps) => {
-  const frontNine = holeScores.slice(0, 9);
-  const backNine = holeScores.slice(9, 18);
+export const FinalScoreCard = ({ 
+  holeScores, 
+  isOpen, 
+  onConfirm, 
+  onCancel, 
+  holeCount = 18 
+}: FinalScoreCardProps) => {
+  // Ensure we're only using valid hole scores up to the hole count
+  const validHoleScores = holeScores.slice(0, holeCount);
+  
+  // For 9 holes, we just show 9 holes. For 18 holes, we split into front 9 and back 9
+  const frontNine = validHoleScores.slice(0, 9);
+  const backNine = holeCount > 9 ? validHoleScores.slice(9, 18) : [];
 
   const calculateTotal = (holes: HoleData[]) => ({
     score: holes.reduce((sum, hole) => sum + (hole.score || 0), 0),
@@ -23,7 +34,7 @@ export const FinalScoreCard = ({ holeScores, isOpen, onConfirm, onCancel }: Fina
   });
 
   const frontNineTotals = calculateTotal(frontNine);
-  const backNineTotals = calculateTotal(backNine);
+  const backNineTotals = holeCount > 9 ? calculateTotal(backNine) : { score: 0, putts: 0, fairways: 0, greens: 0 };
   const totalScore = frontNineTotals.score + backNineTotals.score;
 
   return (
@@ -55,26 +66,28 @@ export const FinalScoreCard = ({ holeScores, isOpen, onConfirm, onCancel }: Fina
             </TableBody>
           </Table>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Hole</TableHead>
-                {[...Array(9)].map((_, i) => (
-                  <TableHead key={i + 10} className="text-center">{i + 10}</TableHead>
-                ))}
-                <TableHead className="text-center">In</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>Score</TableCell>
-                {backNine.map((hole, i) => (
-                  <TableCell key={i} className="text-center">{hole.score || '-'}</TableCell>
-                ))}
-                <TableCell className="text-center font-bold">{backNineTotals.score}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {holeCount > 9 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Hole</TableHead>
+                  {[...Array(9)].map((_, i) => (
+                    <TableHead key={i + 10} className="text-center">{i + 10}</TableHead>
+                  ))}
+                  <TableHead className="text-center">In</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Score</TableCell>
+                  {backNine.map((hole, i) => (
+                    <TableCell key={i} className="text-center">{hole.score || '-'}</TableCell>
+                  ))}
+                  <TableCell className="text-center font-bold">{backNineTotals.score}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-muted p-4 rounded-lg">

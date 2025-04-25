@@ -24,3 +24,12 @@ export interface HoleData {
   fairwayHit?: boolean;
   greenInRegulation?: boolean;
 }
+
+export interface RoundData {
+  id: string;
+  courseId: string;
+  date: Date;
+  totalScore?: number;
+  holeCount: number;
+  userId: string;
+}

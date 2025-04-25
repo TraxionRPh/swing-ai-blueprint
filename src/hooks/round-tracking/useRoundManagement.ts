@@ -17,6 +17,7 @@ export const useRoundManagement = (user: any) => {
         .select(`
           id,
           course_id,
+          hole_count,
           golf_courses:course_id (
             id,
             name,
@@ -26,6 +27,7 @@ export const useRoundManagement = (user: any) => {
           hole_scores (*)
         `)
         .eq('user_id', user.id)
+        .is('total_score', null)
         .maybeSingle();
 
       if (error) throw error;
@@ -39,21 +41,38 @@ export const useRoundManagement = (user: any) => {
             
         if (courseTeesResponse?.error) throw courseTeesResponse.error;
         
+        // Get hole information including distance
+        const holeInfoResponse = data.course_id ?
+          await supabase
+            .from('course_holes')
+            .select('*')
+            .eq('course_id', data.course_id) : null;
+            
+        if (holeInfoResponse?.error) throw holeInfoResponse.error;
+        
+        const holeInfo = holeInfoResponse?.data || [];
+        
         return {
           roundId: data.id,
+          holeCount: data.hole_count || 18,
           course: data.golf_courses ? {
             ...data.golf_courses,
             course_tees: courseTeesResponse?.data || []
           } : null,
-          holeScores: data.hole_scores?.map((hole: any) => ({
-            holeNumber: hole.hole_number,
-            par: hole.par || 4,
-            distance: hole.distance || 0,
-            score: hole.score,
-            putts: hole.putts,
-            fairwayHit: hole.fairway_hit,
-            greenInRegulation: hole.green_in_regulation
-          })) || []
+          holeScores: data.hole_scores?.map((hole: any) => {
+            // Find corresponding hole info to get distance
+            const courseHole = holeInfo.find((h: any) => h.hole_number === hole.hole_number);
+            
+            return {
+              holeNumber: hole.hole_number,
+              par: courseHole?.par || 4,
+              distance: courseHole?.distance_yards || 0,
+              score: hole.score,
+              putts: hole.putts,
+              fairwayHit: hole.fairway_hit,
+              greenInRegulation: hole.green_in_regulation
+            };
+          }) || []
         };
       }
       return null;
@@ -63,17 +82,21 @@ export const useRoundManagement = (user: any) => {
     }
   };
 
-  const finishRound = async (holeScores: HoleData[]) => {
-    if (!currentRoundId) return;
+  const finishRound = async (holeScores: HoleData[], holeCount: number) => {
+    if (!currentRoundId) return false;
 
     try {
+      // Only consider holes up to the hole count limit
+      const relevantScores = holeScores.slice(0, holeCount);
+      
       await supabase
         .from('rounds')
         .update({ 
-          total_score: holeScores.reduce((sum, hole) => sum + hole.score, 0),
-          total_putts: holeScores.reduce((sum, hole) => sum + hole.putts, 0),
-          fairways_hit: holeScores.filter(hole => hole.fairwayHit).length,
-          greens_in_regulation: holeScores.filter(hole => hole.greenInRegulation).length
+          total_score: relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
+          total_putts: relevantScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
+          fairways_hit: relevantScores.filter(hole => hole.fairwayHit).length,
+          greens_in_regulation: relevantScores.filter(hole => hole.greenInRegulation).length,
+          hole_count: holeCount
         })
         .eq('id', currentRoundId);
 
