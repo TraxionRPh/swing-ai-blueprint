@@ -1,0 +1,264 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { LucideGolf } from "@/components/icons/CustomIcons";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+
+const PracticePlanGenerator = () => {
+  const [planType, setPlanType] = useState<string>("ai");
+  const [duration, setDuration] = useState<string>("1");
+  const [focus, setFocus] = useState<string>("balanced");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const { toast } = useToast();
+  
+  const handleGeneratePlan = () => {
+    setIsGenerating(true);
+    
+    // Simulating API call to generate plan
+    setTimeout(() => {
+      const mockPlan = {
+        days: parseInt(duration),
+        focus: focus,
+        sessionsPerDay: 1,
+        totalTime: parseInt(duration) * 60,
+        sessions: [
+          {
+            day: 1,
+            title: "Building Fundamentals",
+            drills: [
+              { name: "Alignment Stick Path", duration: 15, type: "driving" },
+              { name: "Gate Drill", duration: 10, type: "putting" },
+              { name: "Chip-It Circle", duration: 15, type: "chipping" },
+              { name: "Distance Control", duration: 20, type: "irons" }
+            ]
+          }
+        ]
+      };
+      
+      // Add more sessions for multi-day plans
+      if (parseInt(duration) >= 3) {
+        mockPlan.sessions.push({
+          day: 2,
+          title: "Focus on Weaknesses",
+          drills: [
+            { name: "Tempo Training", duration: 15, type: "driving" },
+            { name: "Clock Drill", duration: 20, type: "putting" },
+            { name: "Ball Position Ladder", duration: 15, type: "irons" }
+          ]
+        });
+        mockPlan.sessions.push({
+          day: 3,
+          title: "Challenge Day",
+          drills: [
+            { name: "Up-and-Down Challenge", duration: 25, type: "chipping" },
+            { name: "100 Putts Challenge", duration: 30, type: "putting" }
+          ]
+        });
+      }
+      
+      if (parseInt(duration) === 5) {
+        mockPlan.sessions.push({
+          day: 4,
+          title: "Precision Work",
+          drills: [
+            { name: "Half-Swing Power", duration: 20, type: "driving" },
+            { name: "Distance Control", duration: 20, type: "irons" },
+            { name: "Gate Drill", duration: 10, type: "putting" }
+          ]
+        });
+        mockPlan.sessions.push({
+          day: 5,
+          title: "Integration Day",
+          drills: [
+            { name: "9-Shot Challenge", duration: 30, type: "full swing" },
+            { name: "Clock Drill", duration: 20, type: "putting" }
+          ]
+        });
+      }
+      
+      setGeneratedPlan(mockPlan);
+      setIsGenerating(false);
+      
+      toast({
+        title: "Practice Plan Generated",
+        description: `Your ${duration}-day practice plan is ready!`,
+      });
+    }, 2000);
+  };
+  
+  const handleSavePlan = () => {
+    toast({
+      title: "Practice Plan Saved",
+      description: "Your practice plan has been saved to your profile.",
+    });
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Practice Plan Generator</h1>
+        <p className="text-muted-foreground">
+          Create personalized practice plans to improve your golf game
+        </p>
+      </div>
+      
+      {!generatedPlan ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generate a New Practice Plan</CardTitle>
+            <CardDescription>
+              Choose your preferences to create a tailored practice routine
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Plan Type</h3>
+              <Tabs value={planType} onValueChange={setPlanType} className="w-full">
+                <TabsList className="grid grid-cols-2">
+                  <TabsTrigger value="ai">AI-Generated</TabsTrigger>
+                  <TabsTrigger value="manual">Manual Selection</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              {planType === "ai" && (
+                <p className="text-sm text-muted-foreground">
+                  Our AI will analyze your performance data and create a plan tailored to your needs.
+                </p>
+              )}
+              
+              {planType === "manual" && (
+                <p className="text-sm text-muted-foreground">
+                  Select specific drills and exercises to create your own custom practice plan.
+                </p>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Plan Duration</h3>
+              <RadioGroup value={duration} onValueChange={setDuration} className="flex space-x-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="day-1" />
+                  <Label htmlFor="day-1">1 Day</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="3" id="day-3" />
+                  <Label htmlFor="day-3">3 Days</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="5" id="day-5" />
+                  <Label htmlFor="day-5">5 Days</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Focus Areas</h3>
+              <RadioGroup value={focus} onValueChange={setFocus}>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="balanced" id="focus-balanced" />
+                    <Label htmlFor="focus-balanced">Balanced Practice</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="driving" id="focus-driving" />
+                    <Label htmlFor="focus-driving">Driving Improvement</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="iron-play" id="focus-iron" />
+                    <Label htmlFor="focus-iron">Iron Play</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="short-game" id="focus-short" />
+                    <Label htmlFor="focus-short">Short Game</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="putting" id="focus-putting" />
+                    <Label htmlFor="focus-putting">Putting</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="weaknesses" id="focus-weaknesses" />
+                    <Label htmlFor="focus-weaknesses">Target Weaknesses</Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleGeneratePlan} 
+              disabled={isGenerating} 
+              className="w-full"
+            >
+              {isGenerating ? "Generating Plan..." : "Generate Practice Plan"}
+            </Button>
+          </CardFooter>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">
+                {generatedPlan.days}-Day {generatedPlan.focus.charAt(0).toUpperCase() + generatedPlan.focus.slice(1)} Practice Plan
+              </h2>
+              <p className="text-muted-foreground">
+                Total practice time: {generatedPlan.totalTime} minutes
+              </p>
+            </div>
+            <div className="space-x-2">
+              <Button variant="outline" onClick={() => setGeneratedPlan(null)}>
+                Create New Plan
+              </Button>
+              <Button onClick={handleSavePlan}>
+                Save Plan
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            {generatedPlan.sessions.map((session: any) => (
+              <Card key={session.day}>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Day {session.day}: {session.title}</CardTitle>
+                      <CardDescription>
+                        {session.drills.reduce((total: number, drill: any) => total + drill.duration, 0)} minutes total
+                      </CardDescription>
+                    </div>
+                    <Badge>Day {session.day}</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {session.drills.map((drill: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            <LucideGolf className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{drill.name}</p>
+                            <p className="text-sm text-muted-foreground capitalize">{drill.type}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline">{drill.duration} mins</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PracticePlanGenerator;
