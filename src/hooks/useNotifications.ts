@@ -2,22 +2,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
 
-interface NotificationPreferences {
+export interface NotificationPreferences {
   practice_reminders: boolean;
   round_completion_reminders: boolean;
   ai_insights: boolean;
 }
 
-export interface Notification {
-  id: string;
-  title: string;
-  body: string;
+export interface Notification extends Tables['notifications']['Row'] {
   type: string;
-  read: boolean;
-  data: any;
-  created_at: string;
-  user_id: string;
 }
 
 export const useNotifications = () => {
@@ -82,10 +76,16 @@ export const useNotifications = () => {
 
   const updatePreferences = async (newPreferences: Partial<NotificationPreferences>) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
       const { error } = await supabase
         .from('notification_preferences')
         .update(newPreferences)
-        .eq('user_id', supabase.auth.getUser().data.user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
       

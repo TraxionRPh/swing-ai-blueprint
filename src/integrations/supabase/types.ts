@@ -362,6 +362,36 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          ai_insights: boolean | null
+          created_at: string | null
+          id: string
+          practice_reminders: boolean | null
+          round_completion_reminders: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_insights?: boolean | null
+          created_at?: string | null
+          id?: string
+          practice_reminders?: boolean | null
+          round_completion_reminders?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_insights?: boolean | null
+          created_at?: string | null
+          id?: string
+          practice_reminders?: boolean | null
+          round_completion_reminders?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -370,6 +400,7 @@ export type Database = {
           id: string
           read: boolean | null
           title: string
+          type: string | null
           updated_at: string | null
           user_id: string
         }
@@ -380,6 +411,7 @@ export type Database = {
           id?: string
           read?: boolean | null
           title: string
+          type?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -390,6 +422,7 @@ export type Database = {
           id?: string
           read?: boolean | null
           title?: string
+          type?: string | null
           updated_at?: string | null
           user_id?: string
         }
