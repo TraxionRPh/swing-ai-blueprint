@@ -14,12 +14,23 @@ export const useCourseManagement = (currentRoundId: string | null) => {
     await fetchCourseHoles(course.id);
     
     if (!currentRoundId) {
+      // Get the current user before creating the round
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user?.id) {
+        toast({
+          title: "Authentication error",
+          description: "You need to be logged in to start a round.",
+          variant: "destructive"
+        });
+        return null;
+      }
+      
       const { data, error } = await supabase
         .from('rounds')
         .insert({
           course_id: course.id,
-          user_id: supabase.auth.getUser().then(({ data }) => data?.user?.id), // Fix: Use supabase auth to get user ID
-          is_in_progress: true,
+          user_id: user.id,
           date: new Date().toISOString()
         })
         .select()
@@ -31,7 +42,7 @@ export const useCourseManagement = (currentRoundId: string | null) => {
           description: "Could not start a new round. Please try again.",
           variant: "destructive"
         });
-        return;
+        return null;
       }
 
       return data.id;
