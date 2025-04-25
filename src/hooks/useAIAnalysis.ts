@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
+import { ConfidencePoint } from "@/types/drill";
 
 export const useAIAnalysis = () => {
   const [analysis, setAnalysis] = useState<AIAnalysisForPracticePlan | null>(null);
@@ -119,4 +119,3 @@ export const useAIAnalysis = () => {
     aiConfidenceHistory
   };
 };
-
