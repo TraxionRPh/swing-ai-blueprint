@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,12 +7,14 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useParams } from "react-router-dom";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
+  const { roundId } = useParams();
   const [showFinalScore, setShowFinalScore] = useState(false);
   const {
     selectedCourse,
@@ -30,6 +33,16 @@ const RoundTracking = () => {
     holeCount,
     setHoleCount
   } = useRoundTracking();
+
+  useEffect(() => {
+    // If we have a roundId from URL params, check if there's a stored hole count
+    if (roundId) {
+      const storedHoleCount = sessionStorage.getItem('current-hole-count');
+      if (storedHoleCount) {
+        setHoleCount(parseInt(storedHoleCount));
+      }
+    }
+  }, [roundId, setHoleCount]);
 
   const handleBack = () => {
     navigate(-1);

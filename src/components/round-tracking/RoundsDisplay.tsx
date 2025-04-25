@@ -14,6 +14,7 @@ interface RoundsDisplayProps {
 interface RoundWithCourse {
   id: string;
   total_score: number | null;
+  hole_count: number;
   hole_scores: {
     hole_number: number;
   }[];
@@ -35,6 +36,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
           .select(`
             id,
             total_score,
+            hole_count,
             hole_scores (
               hole_number
             ),
@@ -81,7 +83,10 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     const lastHole = round.hole_scores.reduce((max, score) => 
       Math.max(max, score.hole_number), 0);
     
-    // Navigate to the round tracking page with the round ID
+    // Store hole count in sessionStorage to use in RoundTracking
+    sessionStorage.setItem('current-hole-count', round.hole_count?.toString() || '18');
+    
+    // Navigate to the round tracking page with the round ID and next hole
     navigate(`/rounds/${round.id}/${lastHole + 1}`);
   };
 
