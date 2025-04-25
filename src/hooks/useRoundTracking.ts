@@ -34,7 +34,7 @@ export const useRoundTracking = () => {
     handlePrevious,
     currentHoleData,
     isSaving
-  } = useScoreTracking(currentRoundId);
+  } = useScoreTracking(currentRoundId, selectedCourse?.id);
 
   useEffect(() => {
     const initializeRound = async () => {

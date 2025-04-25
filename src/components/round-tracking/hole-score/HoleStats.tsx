@@ -14,14 +14,16 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const [localPar, setLocalPar] = useState<number>(data.par);
   const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
 
+  // This effect ensures local state is updated when the hole data changes
   useEffect(() => {
-    // Update local state when external data changes (e.g. when hole changes)
+    console.log("HoleStats: Data changed", data);
     setLocalPar(data.par);
     setLocalDistance(data.distance || '');
   }, [data.holeNumber, data.par, data.distance]);
 
   const handleParChange = (value: string) => {
     const parsedValue = parseInt(value) || 3;
+    console.log(`Changing par to ${parsedValue}`);
     setLocalPar(parsedValue);
     onDataChange('par', parsedValue);
   };

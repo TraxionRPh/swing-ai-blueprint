@@ -48,6 +48,16 @@ const RoundTracking = () => {
     }
   }, [roundId, holeNumber, setHoleCount, setCurrentRoundId]);
 
+  useEffect(() => {
+    // Log important state values to help debugging
+    console.log('RoundTracking component state:', {
+      roundId,
+      selectedCourse,
+      currentHoleData,
+      holeScores: holeScores.length
+    });
+  }, [roundId, selectedCourse, currentHoleData, holeScores]);
+
   const handleBack = () => {
     navigate(-1);
   };
@@ -68,6 +78,7 @@ const RoundTracking = () => {
   const handleCourseSelection = (course: Course, selectedHoleCount?: number) => {
     if (selectedHoleCount) {
       setHoleCount(selectedHoleCount);
+      sessionStorage.setItem('current-hole-count', selectedHoleCount.toString());
       handleCourseSelect(course);
     } else if (!holeCount) {
       return;
@@ -112,6 +123,7 @@ const RoundTracking = () => {
             onValueChange={(value) => {
               const count = parseInt(value);
               setHoleCount(count);
+              sessionStorage.setItem('current-hole-count', count.toString());
               handleCourseSelect(selectedCourse);
             }}
           >

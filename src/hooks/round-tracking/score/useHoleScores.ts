@@ -3,19 +3,24 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { HoleData } from "@/types/round-tracking";
 
-export const useHoleScores = (roundId: string | null) => {
+export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (roundId) {
-      fetchHoleScores();
+      fetchHoleScoresFromRound(roundId);
+    } else if (courseId) {
+      fetchHoleScoresFromCourse(courseId);
     } else if (holeScores.length === 0) {
       initializeDefaultScores();
     }
-  }, [roundId]);
+  }, [roundId, courseId]);
 
-  const fetchHoleScores = async () => {
+  const fetchHoleScoresFromRound = async (roundId: string) => {
+    setIsLoading(true);
     try {
+      console.log('Fetching hole scores for round:', roundId);
       // First get the scores for this round
       const { data: holeScoresData, error: holeScoresError } = await supabase
         .from('hole_scores')
@@ -36,7 +41,7 @@ export const useHoleScores = (roundId: string | null) => {
       
       let holeInfo: any[] = [];
       if (roundData?.course_id) {
-        console.log('Fetching course holes for course:', roundData.course_id);
+        console.log('Fetching course holes for course (from round):', roundData.course_id);
         const { data: courseHoles, error: courseHolesError } = await supabase
           .from('course_holes')
           .select('*')
@@ -45,15 +50,45 @@ export const useHoleScores = (roundId: string | null) => {
           
         if (courseHolesError) throw courseHolesError;
         holeInfo = courseHoles || [];
-        console.log('Course holes data:', holeInfo);
+        console.log('Course holes data (from round):', holeInfo);
       }
 
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo);
-      console.log('Formatted hole scores with course data:', formattedScores);
+      console.log('Formatted hole scores with course data (from round):', formattedScores);
       setHoleScores(formattedScores);
     } catch (error) {
-      console.error('Error fetching hole scores:', error);
+      console.error('Error fetching hole scores from round:', error);
       initializeDefaultScores();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchHoleScoresFromCourse = async (courseId: string) => {
+    setIsLoading(true);
+    try {
+      console.log('Directly fetching course holes for course:', courseId);
+      
+      // Get course hole data directly
+      const { data: courseHoles, error: courseHolesError } = await supabase
+        .from('course_holes')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('hole_number');
+        
+      if (courseHolesError) throw courseHolesError;
+      
+      const holeInfo = courseHoles || [];
+      console.log('Course holes data (direct):', holeInfo);
+
+      const formattedScores = formatHoleScores([], holeInfo);
+      console.log('Formatted hole scores with course data (direct):', formattedScores);
+      setHoleScores(formattedScores);
+    } catch (error) {
+      console.error('Error fetching hole scores from course:', error);
+      initializeDefaultScores();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,6 +124,7 @@ export const useHoleScores = (roundId: string | null) => {
 
   return {
     holeScores,
-    setHoleScores
+    setHoleScores,
+    isLoading
   };
 };

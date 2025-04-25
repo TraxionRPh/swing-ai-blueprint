@@ -4,9 +4,9 @@ import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHolePersistence } from "./score/useHolePersistence";
 import { useHoleScores } from "./score/useHoleScores";
 
-export const useScoreTracking = (roundId: string | null) => {
+export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
-  const { holeScores, setHoleScores } = useHoleScores(roundId);
+  const { holeScores, setHoleScores, isLoading } = useHoleScores(roundId, courseId);
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
 
   const handleHoleUpdate = (data: HoleData) => {
@@ -17,7 +17,9 @@ export const useScoreTracking = (roundId: string | null) => {
       )
     );
     
-    saveHoleScore(data);
+    if (roundId) {
+      saveHoleScore(data);
+    }
   };
 
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
@@ -39,7 +41,7 @@ export const useScoreTracking = (roundId: string | null) => {
     handleHoleUpdate,
     handleNext,
     handlePrevious,
-    isSaving,
+    isSaving: isSaving || isLoading,
     currentHoleData
   };
 };
