@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, 
@@ -141,42 +142,44 @@ const Dashboard = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={60}
+                  outerRadius={45}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name }) => `${name}`}
                 >
                   {statData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => `${value}`} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-2 bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white rounded-t-lg">
-            <CardTitle>AI Insights</CardTitle>
-            <CardDescription className="text-white/90">Personalized recommendations based on your data</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-muted/20 rounded-lg border border-[#EA384C]/20">
-              <h4 className="font-medium mb-2 text-[#EA384C]">Putting Improvement Needed</h4>
-              <p className="text-sm text-muted-foreground">
-                Your putting stats show you're averaging 33 putts per round. Try the "Clock Drill" 
-                for distance control and the "Gate Drill" for direction accuracy.
-              </p>
-            </div>
-            <div className="p-4 bg-muted/20 rounded-lg border border-[#10B981]/20">
-              <h4 className="font-medium mb-2 text-[#10B981]">Drive Consistency Improving</h4>
-              <p className="text-sm text-muted-foreground">
-                Your driving accuracy is improving but could benefit from more consistency. 
-                Focus on the "Alignment Stick Path" drill to improve your swing path.
-              </p>
-            </div>
-          </CardContent>
+        <Card className="md:col-span-2 border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
+          <div className="bg-card h-full rounded-lg">
+            <CardHeader className="pb-2 bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white rounded-t-lg">
+              <CardTitle>AI Insights</CardTitle>
+              <CardDescription className="text-white/90">Personalized recommendations based on your data</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-muted/20 rounded-lg border border-[#EA384C]/20">
+                <h4 className="font-medium mb-2 text-[#EA384C]">Putting Improvement Needed</h4>
+                <p className="text-sm text-muted-foreground">
+                  Your putting stats show you're averaging 33 putts per round. Try the "Clock Drill" 
+                  for distance control and the "Gate Drill" for direction accuracy.
+                </p>
+              </div>
+              <div className="p-4 bg-muted/20 rounded-lg border border-[#10B981]/20">
+                <h4 className="font-medium mb-2 text-[#10B981]">Drive Consistency Improving</h4>
+                <p className="text-sm text-muted-foreground">
+                  Your driving accuracy is improving but could benefit from more consistency. 
+                  Focus on the "Alignment Stick Path" drill to improve your swing path.
+                </p>
+              </div>
+            </CardContent>
+          </div>
         </Card>
       </div>
     </div>
