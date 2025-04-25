@@ -3,13 +3,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AISearchBar } from "@/components/drill-library/AISearchBar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { LucideGolf } from "@/components/icons/CustomIcons";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loading } from "@/components/ui/loading";
+import { DrillFilters } from "@/components/drill-library/DrillFilters";
 
 type Drill = {
   id: string;
@@ -20,38 +17,6 @@ type Drill = {
   focus: string[];
   video_url: string | null;
   category: string;
-};
-
-const DrillCard = ({ drill }: { drill: Drill }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle>{drill.title}</CardTitle>
-          <Badge variant={
-            drill.difficulty === "Beginner" ? "outline" : 
-            drill.difficulty === "Intermediate" ? "secondary" : "default"
-          }>
-            {drill.difficulty}
-          </Badge>
-        </div>
-        <CardDescription>{drill.duration}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">{drill.description}</p>
-        <div className="flex flex-wrap gap-2">
-          {drill.focus.map((tag: string) => (
-            <Badge key={tag} variant="outline">{tag}</Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button variant="secondary" size="sm" className="w-full">
-          View Details
-        </Button>
-      </CardFooter>
-    </Card>
-  );
 };
 
 const DrillLibrary = () => {
@@ -117,33 +82,7 @@ const DrillLibrary = () => {
         </CardContent>
       </Card>
       
-      <Tabs defaultValue="driving">
-        <TabsList className="grid grid-cols-4 mb-8">
-          <TabsTrigger value="driving">Driving</TabsTrigger>
-          <TabsTrigger value="irons">Irons</TabsTrigger>
-          <TabsTrigger value="chipping">Chipping</TabsTrigger>
-          <TabsTrigger value="putting">Putting</TabsTrigger>
-        </TabsList>
-        
-        {['driving', 'irons', 'chipping', 'putting'].map(category => (
-          <TabsContent key={category} value={category} className="animate-fade-in">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filterDrills(drills?.filter(drill => drill.category === category)).map(drill => (
-                <DrillCard key={drill.id} drill={drill} />
-              ))}
-              {filterDrills(drills?.filter(drill => drill.category === category)).length === 0 && (
-                <div className="col-span-full text-center py-10">
-                  <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                  <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Try adjusting your search or filters
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+      <DrillFilters drills={drills} filterDrills={filterDrills} />
     </div>
   );
 };
