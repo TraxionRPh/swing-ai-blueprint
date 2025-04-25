@@ -359,27 +359,44 @@ function formatInstructions(data: any) {
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
     
+    console.log('Starting to insert drills...');
+    
     const { data, error } = await supabaseClient
       .from("drills")
       .insert(drillsData)
       .select();
       
-    if (error) throw error;
+    if (error) {
+      console.error('Error inserting drills:', error);
+      throw error;
+    }
+    
+    console.log('Successfully inserted drills:', data?.length);
     
     return new Response(
-      JSON.stringify({ success: true, message: "Drills added successfully", count: data.length }),
-      { headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ success: true, message: "Drills added successfully", count: data?.length }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error('Function error:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

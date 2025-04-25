@@ -119,39 +119,72 @@ export type Database = {
       drills: {
         Row: {
           category: string | null
+          common_mistake1: string | null
+          common_mistake2: string | null
+          common_mistake3: string | null
+          common_mistake4: string | null
+          common_mistake5: string | null
           created_at: string | null
           difficulty: string | null
           duration: string | null
           focus: string[] | null
           id: string
+          instruction1: string | null
+          instruction2: string | null
+          instruction3: string | null
+          instruction4: string | null
+          instruction5: string | null
           instructions: string | null
           overview: string | null
+          pro_tip: string | null
           title: string | null
           updated_at: string | null
           video_url: string | null
         }
         Insert: {
           category?: string | null
+          common_mistake1?: string | null
+          common_mistake2?: string | null
+          common_mistake3?: string | null
+          common_mistake4?: string | null
+          common_mistake5?: string | null
           created_at?: string | null
           difficulty?: string | null
           duration?: string | null
           focus?: string[] | null
           id?: string
+          instruction1?: string | null
+          instruction2?: string | null
+          instruction3?: string | null
+          instruction4?: string | null
+          instruction5?: string | null
           instructions?: string | null
           overview?: string | null
+          pro_tip?: string | null
           title?: string | null
           updated_at?: string | null
           video_url?: string | null
         }
         Update: {
           category?: string | null
+          common_mistake1?: string | null
+          common_mistake2?: string | null
+          common_mistake3?: string | null
+          common_mistake4?: string | null
+          common_mistake5?: string | null
           created_at?: string | null
           difficulty?: string | null
           duration?: string | null
           focus?: string[] | null
           id?: string
+          instruction1?: string | null
+          instruction2?: string | null
+          instruction3?: string | null
+          instruction4?: string | null
+          instruction5?: string | null
           instructions?: string | null
           overview?: string | null
+          pro_tip?: string | null
           title?: string | null
           updated_at?: string | null
           video_url?: string | null
