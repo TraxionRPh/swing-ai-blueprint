@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Brain } from "@/components/icons/CustomIcons";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,18 +62,18 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 border border-primary/50 bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF] rounded-lg">
           <div className="bg-card rounded-lg w-full flex flex-col">
-            <Input
+            <Textarea
               placeholder="Describe your golf issue (e.g., 'I'm hitting behind the ball' or 'My drives are slicing')"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent border-0 shadow-none focus-visible:ring-0 text-sm placeholder:text-xs placeholder:text-muted-foreground"
+              className="w-full bg-transparent border-0 shadow-none focus-visible:ring-0 text-sm min-h-[100px] resize-y"
             />
           </div>
         </div>
         <Button 
           onClick={handleAISearch}
           disabled={isSearching}
-          className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90"
+          className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90 self-start"
         >
           <Brain className="mr-2 h-4 w-4" />
           {isSearching ? "Analyzing..." : "Analyze with AI"}
