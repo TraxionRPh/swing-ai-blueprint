@@ -9,8 +9,8 @@ interface Course {
   id: string;
   name: string;
   address: string | null;
-  course_rating: number | null;
-  slope_rating: number | null;
+  courseRating: number | null;
+  slopeRating: number | null;
   total_par: number | null;
 }
 
@@ -37,7 +37,17 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
       if (error) throw error;
 
-      setCourses(data || []);
+      // Transform the data to match our Course interface with camelCase properties
+      const transformedData = (data || []).map(course => ({
+        id: course.id,
+        name: course.name,
+        address: course.address,
+        courseRating: course.course_rating,
+        slopeRating: course.slope_rating,
+        total_par: course.total_par
+      }));
+
+      setCourses(transformedData);
     } catch (error) {
       toast({
         title: "Error searching courses",

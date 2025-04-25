@@ -11,8 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface Course {
   id: string;
   name: string;
-  courseRating: number;
-  slopeRating: number;
+  courseRating: number | null;
+  slopeRating: number | null;
 }
 
 interface HoleData {
@@ -32,15 +32,21 @@ const RoundTracking = () => {
   const [showCourseSearch, setShowCourseSearch] = useState(false);
   const { toast } = useToast();
 
-  const handleCourseSelect = async (course: Course) => {
+  const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
     setShowCourseSearch(false);
 
+    // Fetch hole data after setting the course
+    fetchCourseHoles(course.id);
+  };
+
+  // Separate async function to fetch course holes
+  const fetchCourseHoles = async (courseId: string) => {
     try {
       const { data: holes, error } = await supabase
         .from('course_holes')
         .select('*')
-        .eq('course_id', course.id)
+        .eq('course_id', courseId)
         .order('hole_number');
 
       if (error) throw error;
