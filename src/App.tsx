@@ -15,7 +15,6 @@ import PracticePlanGenerator from "./pages/PracticePlanGenerator";
 import RoundTracking from "./pages/RoundTracking";
 import Dashboard from "./pages/Dashboard";
 import AIAnalysis from "./pages/AIAnalysis";
-import AIPracticePlans from "./pages/AIPracticePlans";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 
@@ -38,7 +37,6 @@ const App = () => (
               <Route path="/rounds" element={<RoundTracking />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/ai-analysis" element={<AIAnalysis />} />
-              <Route path="/ai-practice-plans" element={<AIPracticePlans />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

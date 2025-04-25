@@ -1,13 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { LucideGolf } from "@/components/icons/CustomIcons";
+import { LucideGolf, Brain } from "@/components/icons/CustomIcons";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data
 const drillsData = {
   driving: [
     {
@@ -134,6 +133,8 @@ const DrillCard = ({ drill }: { drill: any }) => {
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
   
   const filterDrills = (drills: any[]) => {
     if (!searchQuery) return drills;
@@ -145,28 +146,61 @@ const DrillLibrary = () => {
     );
   };
   
+  const handleAISearch = async () => {
+    if (!searchQuery.trim()) {
+      toast({
+        title: "Please describe your issue",
+        description: "Tell us what's happening with your game and we'll find the best drills to help.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    
+    setTimeout(() => {
+      toast({
+        title: "AI Analysis Complete",
+        description: "We've analyzed your issue and highlighted the most relevant drills.",
+      });
+      setIsAnalyzing(false);
+    }, 1500);
+  };
+  
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Drill Library</h1>
         <p className="text-muted-foreground">
-          Browse our collection of golf drills to improve your game
+          Browse our collection of golf drills or describe an issue for personalized recommendations
         </p>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Input
-          placeholder="Search drills by name, description, or focus area..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md"
-        />
-        {searchQuery && (
-          <Button variant="ghost" onClick={() => setSearchQuery("")}>
-            Clear
-          </Button>
-        )}
-      </div>
+      <Card className="bg-muted/50">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search drills or describe an issue (e.g., 'I'm hitting behind the ball' or 'My drives are slicing')"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Button 
+              onClick={handleAISearch}
+              disabled={isAnalyzing}
+              className="md:w-auto w-full"
+            >
+              <Brain className="mr-2 h-4 w-4" />
+              {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Try asking AI about specific issues like "topping my irons" or "three-putting too often"
+          </p>
+        </CardContent>
+      </Card>
       
       <Tabs defaultValue="driving">
         <TabsList className="grid grid-cols-4 mb-8">

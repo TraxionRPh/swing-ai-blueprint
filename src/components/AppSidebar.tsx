@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -81,7 +80,7 @@ const AppSidebar = () => {
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>AI Features</SidebarGroupLabel>
+          <SidebarGroupLabel>Analysis</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -89,14 +88,6 @@ const AppSidebar = () => {
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/ai-practice-plans">
-                    <Clock className="h-5 w-5" />
-                    <span>AI Practice Plans</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
