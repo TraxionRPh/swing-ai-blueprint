@@ -1,35 +1,61 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Drill } from "@/types/drill";
 
 interface DrillFiltersProps {
-  categories: string[];
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
-  focusAreas: string[];
-  selectedFocus: string | null;
-  onFocusChange: (focus: string | null) => void;
-  difficulties: string[];
-  selectedDifficulty: string | null;
-  onDifficultyChange: (difficulty: string | null) => void;
+  drills: Drill[];
+  filterDrills: (drills?: Drill[]) => Drill[];
 }
 
 export const DrillFilters: React.FC<DrillFiltersProps> = ({
-  categories,
-  selectedCategory,
-  onCategoryChange,
-  focusAreas,
-  selectedFocus,
-  onFocusChange,
-  difficulties,
-  selectedDifficulty,
-  onDifficultyChange
+  drills,
+  filterDrills
 }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedFocus, setSelectedFocus] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(['all']);
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
+  const [difficulties, setDifficulties] = useState<string[]>([]);
+
+  // Extract unique categories, focus areas, and difficulties from the drills
+  useEffect(() => {
+    if (!drills || drills.length === 0) return;
+    
+    // Extract categories
+    const uniqueCategories = ['all', ...new Set(drills.map(drill => drill.category))];
+    setCategories(uniqueCategories);
+    
+    // Extract focus areas (flattening nested arrays)
+    const allFocusAreas = drills.reduce((areas: string[], drill) => {
+      return [...areas, ...drill.focus];
+    }, []);
+    const uniqueFocusAreas = [...new Set(allFocusAreas)];
+    setFocusAreas(uniqueFocusAreas);
+    
+    // Extract difficulties
+    const uniqueDifficulties = [...new Set(drills.map(drill => drill.difficulty))];
+    setDifficulties(uniqueDifficulties);
+  }, [drills]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const handleFocusChange = (focus: string | null) => {
+    setSelectedFocus(focus);
+  };
+
+  const handleDifficultyChange = (difficulty: string | null) => {
+    setSelectedDifficulty(difficulty);
+  };
+
   return (
     <>
       <div className="sticky top-0 z-10 bg-background shadow-sm pb-4">
-        <Tabs value={selectedCategory} onValueChange={onCategoryChange}>
+        <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
           <TabsList className="grid grid-cols-4 w-full">
             {categories.map(category => (
               <TabsTrigger key={category} value={category}>
@@ -44,7 +70,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
         <Badge 
           variant={selectedFocus === null ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => onFocusChange(null)}
+          onClick={() => handleFocusChange(null)}
         >
           All Focus Areas
         </Badge>
@@ -53,7 +79,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
             key={focus} 
             variant={selectedFocus === focus ? "default" : "outline"}
             className="cursor-pointer"
-            onClick={() => onFocusChange(focus)}
+            onClick={() => handleFocusChange(focus)}
           >
             {focus}
           </Badge>
@@ -64,7 +90,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
         <Badge 
           variant={selectedDifficulty === null ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => onDifficultyChange(null)}
+          onClick={() => handleDifficultyChange(null)}
         >
           All Difficulties
         </Badge>
@@ -73,7 +99,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
             key={difficulty} 
             variant={selectedDifficulty === difficulty ? "default" : "outline"}
             className="cursor-pointer"
-            onClick={() => onDifficultyChange(difficulty)}
+            onClick={() => handleDifficultyChange(difficulty)}
           >
             {difficulty}
           </Badge>

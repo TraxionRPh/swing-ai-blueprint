@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AISearchBar } from "@/components/drill-library/AISearchBar";
@@ -10,11 +10,13 @@ import { DrillFilters } from "@/components/drill-library/DrillFilters";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DrillCarousel } from "@/components/drill-library/DrillCarousel";
 import { Drill } from "@/types/drill";
+import { DrillCard } from "@/components/drill-library/DrillCard";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendedDrills, setRecommendedDrills] = useState<Drill[]>([]);
+  const [filteredDrills, setFilteredDrills] = useState<Drill[]>([]);
   const { toast } = useToast();
 
   const { data: drills, isLoading } = useQuery({
@@ -25,9 +27,15 @@ const DrillLibrary = () => {
         .select('*');
       
       if (error) throw error;
-      return data;
+      return data as Drill[];
     }
   });
+
+  useEffect(() => {
+    if (drills) {
+      setFilteredDrills(filterDrills(drills));
+    }
+  }, [drills, searchQuery]);
 
   const handleAISearch = async (query: string) => {
     setIsAnalyzing(true);
@@ -58,12 +66,12 @@ const DrillLibrary = () => {
     }
   };
   
-  const filterDrills = (drills: Drill[] = []) => {
-    if (!searchQuery) return drills;
+  const filterDrills = (drillsToFilter: Drill[] = []) => {
+    if (!searchQuery) return drillsToFilter;
     
-    return drills.filter(drill => 
+    return drillsToFilter.filter(drill => 
       drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      drill.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
       drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
@@ -98,7 +106,18 @@ const DrillLibrary = () => {
       )}
       
       <ScrollArea className="h-[600px] rounded-md border p-4">
-        <DrillFilters drills={drills} filterDrills={filterDrills} />
+        {drills && (
+          <DrillFilters 
+            drills={drills} 
+            filterDrills={filterDrills}
+          />
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          {filteredDrills.map((drill) => (
+            <DrillCard key={drill.id} drill={drill} />
+          ))}
+        </div>
       </ScrollArea>
     </div>
   );
