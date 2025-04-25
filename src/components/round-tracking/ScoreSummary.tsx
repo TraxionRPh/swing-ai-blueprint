@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 interface HoleData {
   holeNumber: number;
   par: number;
@@ -24,19 +26,27 @@ export const ScoreSummary = ({ holeScores }: ScoreSummaryProps) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
       <div className="bg-muted p-4 rounded-lg">
-        <div className="text-2xl font-bold">{totals.score}</div>
+        <div className="text-2xl font-bold">
+          {totals.score > 0 ? totals.score : "No Scores"}
+        </div>
         <div className="text-sm text-muted-foreground">Total Score</div>
       </div>
       <div className="bg-muted p-4 rounded-lg">
-        <div className="text-2xl font-bold">{totals.putts}</div>
+        <div className="text-2xl font-bold">
+          {totals.putts > 0 ? totals.putts : "No Putts"}
+        </div>
         <div className="text-sm text-muted-foreground">Total Putts</div>
       </div>
       <div className="bg-muted p-4 rounded-lg">
-        <div className="text-2xl font-bold">{totals.fairways}</div>
+        <div className="text-2xl font-bold">
+          {totals.fairways > 0 ? totals.fairways : "No Fairways"}
+        </div>
         <div className="text-sm text-muted-foreground">Fairways Hit</div>
       </div>
       <div className="bg-muted p-4 rounded-lg">
-        <div className="text-2xl font-bold">{totals.greens}</div>
+        <div className="text-2xl font-bold">
+          {totals.greens > 0 ? totals.greens : "No Greens"}
+        </div>
         <div className="text-sm text-muted-foreground">Greens in Regulation</div>
       </div>
     </div>
