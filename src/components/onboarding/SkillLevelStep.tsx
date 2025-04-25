@@ -1,10 +1,11 @@
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { HandicapLevel } from "@/hooks/useProfile";
 
 interface SkillLevelStepProps {
-  handicap: string;
-  setHandicap: (value: string) => void;
+  handicap: HandicapLevel;
+  setHandicap: (value: HandicapLevel) => void;
 }
 
 const SkillLevelStep = ({ handicap, setHandicap }: SkillLevelStepProps) => {

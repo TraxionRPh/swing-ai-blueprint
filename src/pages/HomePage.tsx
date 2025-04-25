@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { useAuth } from "@/context/AuthContext";
 import { LucideGolf, Home, Dumbbell, Award, List, Brain } from "@/components/icons/CustomIcons";
 
-const Home = () => {
+const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [greeting] = useState(() => {
@@ -175,4 +174,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default HomePage;
