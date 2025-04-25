@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, 
@@ -38,7 +37,7 @@ const statData = [
   { name: "Putts/Round", value: 33 },
 ];
 
-const COLORS = ['#0EA5E9', '#D946EF', '#F97316', '#9b87f5'];
+const COLORS = ['#10B981', '#FFC300', '#EA384C'];
 
 const Dashboard = () => {
   return (
@@ -51,7 +50,7 @@ const Dashboard = () => {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-green-400 to-mint-500 text-white">
           <CardHeader className="text-white">
             <CardTitle className="text-white">Handicap</CardTitle>
             <CardDescription className="text-white/80">Current handicap index</CardDescription>
@@ -61,7 +60,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+        <Card className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white">
           <CardHeader className="text-white">
             <CardTitle className="text-white">Best Round</CardTitle>
             <CardDescription className="text-white/80">Your lowest round in past 90 days</CardDescription>
@@ -71,7 +70,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-orange-500 to-amber-600 text-white">
+        <Card className="bg-gradient-to-br from-red-400 to-red-500 text-white">
           <CardHeader className="text-white">
             <CardTitle className="text-white">Practice Time</CardTitle>
             <CardDescription className="text-white/80">Hours practiced this month</CardDescription>
@@ -100,7 +99,7 @@ const Dashboard = () => {
                   <Line 
                     type="monotone" 
                     dataKey="score" 
-                    stroke="#0EA5E9" 
+                    stroke="#10B981" 
                     strokeWidth={2}
                     activeDot={{ r: 8 }}
                   />
@@ -124,7 +123,7 @@ const Dashboard = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="hours" fill="#D946EF" />
+                  <Bar dataKey="hours" fill="#FFC300" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -163,7 +162,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+        <Card className="col-span-2 bg-gradient-to-br from-green-500 to-green-600 text-white">
           <CardHeader className="text-white">
             <CardTitle className="text-white">AI Insights</CardTitle>
             <CardDescription className="text-white/80">Personalized recommendations based on your data</CardDescription>
@@ -194,4 +193,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
