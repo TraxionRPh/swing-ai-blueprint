@@ -1,4 +1,7 @@
+
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { AISearchBar } from "@/components/drill-library/AISearchBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,100 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { LucideGolf } from "@/components/icons/CustomIcons";
 import { useToast } from "@/hooks/use-toast";
+import { Loading } from "@/components/ui/loading";
 
-const drillsData = {
-  driving: [
-    {
-      id: 1,
-      title: "Alignment Stick Path",
-      description: "Place alignment sticks on the ground to visualize and train your swing path.",
-      difficulty: "Beginner",
-      duration: "10 mins",
-      focus: ["Path", "Alignment"],
-      videoUrl: "#"
-    },
-    {
-      id: 2,
-      title: "Tempo Training",
-      description: "Practice your swing tempo with a metronome to develop consistency.",
-      difficulty: "Intermediate",
-      duration: "15 mins",
-      focus: ["Tempo", "Rhythm"],
-      videoUrl: "#"
-    },
-    {
-      id: 3,
-      title: "Half-Swing Power",
-      description: "Build control and power using only half swings to maximize efficiency.",
-      difficulty: "Advanced",
-      duration: "20 mins",
-      focus: ["Power", "Control"],
-      videoUrl: "#"
-    }
-  ],
-  irons: [
-    {
-      id: 4,
-      title: "Ball Position Ladder",
-      description: "Use alignment sticks to create a ladder and practice different ball positions.",
-      difficulty: "Intermediate",
-      duration: "15 mins",
-      focus: ["Contact", "Ball Position"],
-      videoUrl: "#"
-    },
-    {
-      id: 5,
-      title: "Distance Control",
-      description: "Hit to specific targets to improve your distance control with irons.",
-      difficulty: "Intermediate",
-      duration: "20 mins",
-      focus: ["Distance", "Accuracy"],
-      videoUrl: "#"
-    }
-  ],
-  chipping: [
-    {
-      id: 6,
-      title: "Chip-It Circle",
-      description: "Place targets in a circle around the hole at different distances.",
-      difficulty: "Beginner",
-      duration: "15 mins",
-      focus: ["Touch", "Accuracy"],
-      videoUrl: "#"
-    },
-    {
-      id: 7,
-      title: "Up-and-Down Challenge",
-      description: "Practice getting up and down from various lies around the green.",
-      difficulty: "Advanced",
-      duration: "25 mins",
-      focus: ["Versatility", "Scoring"],
-      videoUrl: "#"
-    }
-  ],
-  putting: [
-    {
-      id: 8,
-      title: "Gate Drill",
-      description: "Set up tees as a gate that the ball must roll through to improve accuracy.",
-      difficulty: "Beginner",
-      duration: "10 mins",
-      focus: ["Direction", "Stroke"],
-      videoUrl: "#"
-    },
-    {
-      id: 9,
-      title: "Clock Drill",
-      description: "Place balls in a clock formation to practice putts from all angles.",
-      difficulty: "Intermediate",
-      duration: "20 mins",
-      focus: ["Distance", "Reading"],
-      videoUrl: "#"
-    }
-  ]
+type Drill = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  duration: string;
+  focus: string[];
+  video_url: string | null;
+  category: string;
 };
 
-const DrillCard = ({ drill }: { drill: any }) => {
+const DrillCard = ({ drill }: { drill: Drill }) => {
   return (
     <Card>
       <CardHeader>
@@ -136,6 +59,18 @@ const DrillLibrary = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
+  const { data: drills, isLoading } = useQuery({
+    queryKey: ['drills'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('drills')
+        .select('*');
+      
+      if (error) throw error;
+      return data as Drill[];
+    }
+  });
+
   const handleAISearch = async (query: string) => {
     setIsAnalyzing(true);
     setSearchQuery(query);
@@ -149,15 +84,23 @@ const DrillLibrary = () => {
     }, 1500);
   };
   
-  const filterDrills = (drills: any[]) => {
+  const filterDrills = (drills: Drill[] = []) => {
     if (!searchQuery) return drills;
     
     return drills.filter(drill => 
       drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       drill.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      drill.focus.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loading message="Loading drills..." />
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -182,73 +125,24 @@ const DrillLibrary = () => {
           <TabsTrigger value="putting">Putting</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="driving" className="animate-fade-in">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filterDrills(drillsData.driving).map(drill => (
-              <DrillCard key={drill.id} drill={drill} />
-            ))}
-            {filterDrills(drillsData.driving).length === 0 && (
-              <div className="col-span-full text-center py-10">
-                <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="irons" className="animate-fade-in">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filterDrills(drillsData.irons).map(drill => (
-              <DrillCard key={drill.id} drill={drill} />
-            ))}
-            {filterDrills(drillsData.irons).length === 0 && (
-              <div className="col-span-full text-center py-10">
-                <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="chipping" className="animate-fade-in">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filterDrills(drillsData.chipping).map(drill => (
-              <DrillCard key={drill.id} drill={drill} />
-            ))}
-            {filterDrills(drillsData.chipping).length === 0 && (
-              <div className="col-span-full text-center py-10">
-                <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="putting" className="animate-fade-in">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filterDrills(drillsData.putting).map(drill => (
-              <DrillCard key={drill.id} drill={drill} />
-            ))}
-            {filterDrills(drillsData.putting).length === 0 && (
-              <div className="col-span-full text-center py-10">
-                <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+        {['driving', 'irons', 'chipping', 'putting'].map(category => (
+          <TabsContent key={category} value={category} className="animate-fade-in">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filterDrills(drills?.filter(drill => drill.category === category)).map(drill => (
+                <DrillCard key={drill.id} drill={drill} />
+              ))}
+              {filterDrills(drills?.filter(drill => drill.category === category)).length === 0 && (
+                <div className="col-span-full text-center py-10">
+                  <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
+                  <h3 className="mt-4 text-lg font-medium">No drills found</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );

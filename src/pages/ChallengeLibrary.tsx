@@ -1,55 +1,32 @@
 
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Loading } from "@/components/ui/loading";
 
-// Mock challenge data
-const challenges = [
-  {
-    id: 1,
-    title: "10 Up-and-Downs in a Row",
-    description: "Test your short game by completing 10 consecutive up-and-downs.",
-    difficulty: "Intermediate",
-    category: "chipping",
-    metrics: ["Success Rate", "Proximity", "Time"],
-    progress: 40,
-    bestScore: "8 consecutive"
-  },
-  {
-    id: 2,
-    title: "100 Putts from 6 Feet",
-    description: "Build putting confidence by making 100 putts from 6 feet.",
-    difficulty: "Beginner",
-    category: "putting",
-    metrics: ["Makes", "Streak", "Time"],
-    progress: 65,
-    bestScore: "65/100 completed"
-  },
-  {
-    id: 3,
-    title: "Fairway Finder",
-    description: "Hit 20 drives that land in a 20-yard wide zone.",
-    difficulty: "Advanced",
-    category: "driving",
-    metrics: ["Accuracy", "Distance", "Dispersion"],
-    progress: 25,
-    bestScore: "5/20 completed"
-  },
-  {
-    id: 4,
-    title: "Distance Control Challenge",
-    description: "Hit to 4 different targets with 4 different clubs, scoring based on proximity.",
-    difficulty: "Advanced",
-    category: "irons",
-    metrics: ["Accuracy", "Consistency", "Club Selection"],
-    progress: 10,
-    bestScore: "72 points"
-  }
-];
+type Challenge = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  category: string;
+  metrics: string[];
+};
 
-const ChallengeCard = ({ challenge }: { challenge: any }) => {
+type UserProgress = {
+  challenge_id: string;
+  progress: number;
+  best_score: string | null;
+};
+
+const ChallengeCard = ({ challenge, progress }: { 
+  challenge: Challenge; 
+  progress?: UserProgress;
+}) => {
   return (
     <Card>
       <CardHeader>
@@ -69,14 +46,16 @@ const ChallengeCard = ({ challenge }: { challenge: any }) => {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Progress</span>
-            <span>{challenge.progress}%</span>
+            <span>{progress?.progress || 0}%</span>
           </div>
-          <Progress value={challenge.progress} />
+          <Progress value={progress?.progress || 0} />
         </div>
-        <div className="text-sm">
-          <span className="font-medium">Best Result: </span>
-          <span className="text-muted-foreground">{challenge.bestScore}</span>
-        </div>
+        {progress?.best_score && (
+          <div className="text-sm">
+            <span className="font-medium">Best Result: </span>
+            <span className="text-muted-foreground">{progress.best_score}</span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2 pt-2">
           {challenge.metrics.map((metric: string) => (
             <Badge key={metric} variant="secondary">{metric}</Badge>
@@ -96,6 +75,38 @@ const ChallengeCard = ({ challenge }: { challenge: any }) => {
 };
 
 const ChallengeLibrary = () => {
+  const { data: challenges, isLoading: challengesLoading } = useQuery({
+    queryKey: ['challenges'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenges')
+        .select('*');
+      
+      if (error) throw error;
+      return data as Challenge[];
+    }
+  });
+
+  const { data: progress, isLoading: progressLoading } = useQuery({
+    queryKey: ['user-challenge-progress'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_challenge_progress')
+        .select('*');
+      
+      if (error) throw error;
+      return data as UserProgress[];
+    }
+  });
+
+  if (challengesLoading || progressLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loading message="Loading challenges..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -116,43 +127,31 @@ const ChallengeLibrary = () => {
         
         <TabsContent value="all" className="mt-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.map(challenge => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
+            {challenges?.map(challenge => (
+              <ChallengeCard 
+                key={challenge.id} 
+                challenge={challenge}
+                progress={progress?.find(p => p.challenge_id === challenge.id)}
+              />
             ))}
           </div>
         </TabsContent>
         
-        <TabsContent value="driving" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.filter(c => c.category === "driving").map(challenge => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="irons" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.filter(c => c.category === "irons").map(challenge => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="chipping" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.filter(c => c.category === "chipping").map(challenge => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="putting" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges.filter(c => c.category === "putting").map(challenge => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
-          </div>
-        </TabsContent>
+        {['driving', 'irons', 'chipping', 'putting'].map(category => (
+          <TabsContent key={category} value={category} className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {challenges
+                ?.filter(c => c.category === category)
+                .map(challenge => (
+                  <ChallengeCard 
+                    key={challenge.id} 
+                    challenge={challenge}
+                    progress={progress?.find(p => p.challenge_id === challenge.id)}
+                  />
+                ))}
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
