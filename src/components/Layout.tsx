@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,6 +16,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Icons } from "@/components/icons";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
+import AppSidebar from "@/components/AppSidebar";
 
 const Layout = () => {
   const { user, session, loading } = useAuth();
@@ -45,7 +46,7 @@ const Layout = () => {
               side="left"
               className="w-3/4 sm:w-60 border-r p-0 pt-8"
             >
-              <Sidebar />
+              <AppSidebar />
             </SheetContent>
           </Sheet>
           
@@ -86,7 +87,7 @@ const Layout = () => {
       
       <div className="container relative flex min-h-[calc(100vh-theme(spacing.14))]">
         <aside className="hidden h-full border-r md:block">
-          <Sidebar />
+          <AppSidebar />
         </aside>
         <main className="flex-1 pt-6 md:p-8 w-full">
           <div className="mx-auto max-w-7xl w-full">
