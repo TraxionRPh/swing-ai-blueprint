@@ -8,7 +8,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
-import { Card } from "@/components/ui/card"; // Added this import
+import { Card } from "@/components/ui/card";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -19,6 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import AIAnalysis from "./pages/AIAnalysis";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
+import Welcome from "./pages/Welcome";
 
 const queryClient = new QueryClient();
 
@@ -36,8 +37,8 @@ const Root = () => {
     );
   }
 
-  // Redirect to dashboard if authenticated, otherwise show auth page
-  return session ? <Navigate to="/dashboard" replace /> : <Auth />;
+  // Redirect to welcome if authenticated, otherwise show auth page
+  return session ? <Navigate to="/welcome" replace /> : <Auth />;
 };
 
 const App = () => (
@@ -50,6 +51,14 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<Root />} />
+              <Route
+                path="/welcome"
+                element={
+                  <ProtectedRoute>
+                    <Welcome />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 element={
                   <ProtectedRoute>

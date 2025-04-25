@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,29 +8,94 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { LucideGolf } from "@/components/icons/CustomIcons";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import Home from "./Home";
 
 const Welcome = () => {
+  const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
   const [step, setStep] = useState(1);
   const [handicap, setHandicap] = useState<string>("beginner");
   const [goals, setGoals] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const checkUserProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('has_onboarded')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error checking user profile:', error);
+        setIsFirstVisit(false);
+        return;
+      }
+      
+      setIsFirstVisit(data?.has_onboarded !== true);
+    };
+    
+    checkUserProfile();
+  }, [user?.id]);
   
   const handleNext = () => {
     setStep(step + 1);
   };
   
-  const handleComplete = () => {
-    toast({
-      title: "Profile set up successfully!",
-      description: "Your personalized golf training experience is ready.",
-    });
-    navigate("/dashboard");
+  const handleComplete = async () => {
+    try {
+      if (user?.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            handicap_level: handicap,
+            goals: goals,
+            has_onboarded: true
+          });
+          
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Profile set up successfully!",
+        description: "Your personalized golf training experience is ready.",
+      });
+      
+      setIsFirstVisit(false);
+    } catch (error: any) {
+      toast({
+        title: "Error saving profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isFirstVisit === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-6">
+          <div className="animate-pulse">Loading...</div>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (!isFirstVisit) {
+    return <Home />;
+  }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center">
+      <div className="absolute inset-0 bg-black/40" />
+      
+      <Card className="w-full max-w-md z-10">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
             <LucideGolf className="h-10 w-10 text-primary" />
