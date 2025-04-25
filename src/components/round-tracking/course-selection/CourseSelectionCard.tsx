@@ -48,4 +48,4 @@ export const CourseSelectionCard = ({ onCourseSelect }: CourseSelectionCardProps
       </CardContent>
     </Card>
   );
-}
+};

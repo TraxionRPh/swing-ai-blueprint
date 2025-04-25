@@ -19,13 +19,13 @@ const RoundTracking = () => {
   const {
     selectedCourse,
     selectedTee,
+    currentHole,
     holeScores,
     handleCourseSelect,
     setSelectedTee,
     handleHoleUpdate,
-    handleNext: baseHandleNext,
+    handleNext,
     handlePrevious,
-    currentHole,
     currentTeeColor,
     currentHoleData,
     isSaving,
@@ -36,15 +36,10 @@ const RoundTracking = () => {
   } = useRoundTracking();
 
   useEffect(() => {
-    // If we have a roundId from URL params, set it in the context
     if (roundId && roundId !== 'new') {
       setCurrentRoundId(roundId);
-      
-      // If we also have a holeNumber, we might want to navigate to that specific hole
-      // This would require additional handling in the useRoundTracking hook
     }
     
-    // If we have a roundId from URL params, check if there's a stored hole count
     if (roundId) {
       const storedHoleCount = sessionStorage.getItem('current-hole-count');
       if (storedHoleCount) {
@@ -75,8 +70,6 @@ const RoundTracking = () => {
       setHoleCount(selectedHoleCount);
       handleCourseSelect(course);
     } else if (!holeCount) {
-      // Only show the hole count selector if holeCount hasn't been set yet
-      // and wasn't provided by the course selection
       return;
     } else {
       handleCourseSelect(course);
@@ -119,7 +112,6 @@ const RoundTracking = () => {
             onValueChange={(value) => {
               const count = parseInt(value);
               setHoleCount(count);
-              // After setting hole count, automatically continue with the selected course
               handleCourseSelect(selectedCourse);
             }}
           >
