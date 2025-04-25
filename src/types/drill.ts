@@ -1,14 +1,15 @@
+
 export interface Drill {
   id: string;  
   title: string;
-  description?: string;  // Make this optional
-  overview: string;  // Add this field
+  description?: string;  // Optional
+  overview: string;
   category: string;
   focus: string[];
   difficulty: string;
   duration: string;
   video_url: string | null;
-  instructions?: string;  // Make this optional
+  instructions?: string;  // Optional
   created_at?: string;
   updated_at?: string;
 }

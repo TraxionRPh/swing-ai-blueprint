@@ -18,42 +18,6 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
 }) => {
   if (!drill) return null;
 
-  const formatInstructions = (text: string | undefined) => {
-    if (!text) return '';
-    
-    // Split the text into sections based on headers
-    const sections = text.split(/(?=How to perform:|Common Mistakes:|Pro tip:)/g);
-    
-    let formattedText = '';
-    
-    sections.forEach(section => {
-      if (section.trim().startsWith('How to perform:')) {
-        // Format numbered instructions
-        const instructions = section.replace('How to perform:', '').trim()
-          .split(/\d+\.|\n/).filter(Boolean)
-          .map((instruction, index) => `${index + 1}. ${instruction.trim()}`)
-          .join('\n');
-        
-        formattedText += `## How to perform:\n\n\n${instructions}\n\n\n\n`;
-      }
-      else if (section.trim().startsWith('Common Mistakes:')) {
-        // Format mistakes and tips with multiple blank lines after the header
-        const mistakes = section.replace('Common Mistakes:', '').trim()
-          .split('\n').filter(Boolean)
-          .map(mistake => `- ${mistake.trim()}`)
-          .join('\n');
-        
-        formattedText += `## Common Mistakes:\n\n\n${mistakes}\n\n\n\n`;
-      }
-      else if (section.trim().startsWith('Pro tip:')) {
-        // Format pro tip with multiple blank lines after the header
-        formattedText += `## Pro tip:\n\n\n${section.replace('Pro tip:', '').trim()}\n\n\n\n`;
-      }
-    });
-    
-    return formattedText.trim();
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -94,7 +58,7 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
               <div className="prose prose-invert max-w-none">
                 <div className="text-sm text-muted-foreground">
                   <ReactMarkdown>
-                    {formatInstructions(drill.instructions)}
+                    {drill.instructions}
                   </ReactMarkdown>
                 </div>
               </div>

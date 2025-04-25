@@ -22,3 +22,8 @@ CREATE POLICY insert_own_profile ON public.profiles
 -- Create policy to allow users to update only their own profile
 CREATE POLICY update_own_profile ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
+
+-- Ensure the drills table has all the necessary columns
+ALTER TABLE IF EXISTS public.drills
+  ADD COLUMN IF NOT EXISTS instructions TEXT;
+
