@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
+import { Loading } from "@/components/ui/loading";
 
 // Import all page components
 import Auth from "@/pages/Auth";
