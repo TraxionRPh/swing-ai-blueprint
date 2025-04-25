@@ -8,25 +8,10 @@ import { useAuth } from "@/context/AuthContext";
 import { SearchInput } from "./SearchInput";
 import { CourseResult } from "./CourseResult";
 import { RecentlyPlayed } from "./RecentlyPlayed";
-
-interface Course {
-  id: string;
-  name: string;
-  city: string;
-  state: string;
-  total_par?: number;
-  is_verified?: boolean;
-  course_tees: {
-    id: string;
-    name: string;
-    color: string;
-    course_rating: number;
-    slope_rating: number;
-  }[];
-}
+import type { Course } from "@/types/round-tracking";
 
 interface CourseSearchProps {
-  onCourseSelect: (course: Course) => void;
+  onCourseSelect: (course: Course, holeCount?: number) => void;
 }
 
 export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
@@ -151,7 +136,7 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
             <CourseResult
               key={course.id}
               course={course}
-              onSelect={onCourseSelect}
+              onSelect={(course, holeCount) => onCourseSelect(course, holeCount)}
               onEdit={handleEdit}
               showEditButton={!!user}
             />

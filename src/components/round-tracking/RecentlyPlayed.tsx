@@ -3,24 +3,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
 import { useToast } from "@/hooks/use-toast";
-
-interface Course {
-  id: string;
-  name: string;
-  city: string;
-  state: string;
-  is_verified?: boolean;
-  course_tees: {
-    id: string;
-    name: string;
-    color: string;
-    course_rating: number;
-    slope_rating: number;
-  }[];
-}
+import type { Course } from "@/types/round-tracking";
 
 interface RecentlyPlayedProps {
-  onCourseSelect: (course: Course) => void;
+  onCourseSelect: (course: Course, holeCount?: number) => void;
 }
 
 export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
@@ -87,7 +73,7 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
           <CourseResult
             key={course.id}
             course={course}
-            onSelect={onCourseSelect}
+            onSelect={(course, holeCount) => onCourseSelect(course, holeCount || 18)}
           />
         ))}
       </div>
