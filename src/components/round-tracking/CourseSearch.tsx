@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,11 +63,12 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
   }, [toast]);
 
   const handleEdit = async (course: Course) => {
+    // We need to be careful here because we're trying to use total_par which doesn't exist in Course
+    // Let's create a simple object with just the properties we need
     const previousState = {
       name: course.name,
       city: course.city,
-      state: course.state,
-      total_par: course.total_par
+      state: course.state
     };
 
     try {

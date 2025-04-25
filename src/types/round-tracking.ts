@@ -13,6 +13,9 @@ export interface Course {
   city: string;
   state: string;
   course_tees: CourseTee[];
+  // Adding the total_par property as optional since it's used but not in the original definition
+  total_par?: number;
+  is_verified?: boolean;
 }
 
 export interface HoleData {
