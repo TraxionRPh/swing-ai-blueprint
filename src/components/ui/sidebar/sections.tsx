@@ -76,6 +76,32 @@ export const SidebarGroup = React.forwardRef<
 ))
 SidebarGroup.displayName = "SidebarGroup"
 
+export const SidebarGroupContent = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    data-sidebar="group-content"
+    className={cn("flex w-full min-w-0 flex-col", className)}
+    {...props}
+  />
+))
+SidebarGroupContent.displayName = "SidebarGroupContent"
+
+export const SidebarGroupLabel = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<"div">
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    data-sidebar="group-label"
+    className={cn("text-xs font-medium text-sidebar-foreground/60 px-2 mb-2", className)}
+    {...props}
+  />
+))
+SidebarGroupLabel.displayName = "SidebarGroupLabel"
+
 export const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
@@ -117,4 +143,3 @@ export const SidebarContent = React.forwardRef<
   />
 ))
 SidebarContent.displayName = "SidebarContent"
-

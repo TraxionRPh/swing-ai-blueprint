@@ -6,7 +6,5 @@ export * from "./menu"
 export * from "./sections"
 export * from "./sidebar"
 
-// Imports from "@/lib/utils" were not found in the allowed files, 
-// adding it here for completeness
+// Exports from "@/lib/utils" for convenience
 export { cn }
-

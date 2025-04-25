@@ -5,8 +5,6 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -34,8 +32,8 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <div className="text-xs font-medium text-sidebar-foreground/60 px-2 mb-2">Main</div>
+          <div>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -71,12 +69,12 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroupContent>
+          </div>
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>Training</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <div className="text-xs font-medium text-sidebar-foreground/60 px-2 mb-2">Training</div>
+          <div>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -101,12 +99,12 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroupContent>
+          </div>
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>Analysis</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <div className="text-xs font-medium text-sidebar-foreground/60 px-2 mb-2">Analysis</div>
+          <div>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -120,12 +118,12 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroupContent>
+          </div>
         </SidebarGroup>
         
         <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <div className="text-xs font-medium text-sidebar-foreground/60 px-2 mb-2">Account</div>
+          <div>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -139,7 +137,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroupContent>
+          </div>
         </SidebarGroup>
       </SidebarContent>
       
