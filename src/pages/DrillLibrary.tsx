@@ -9,6 +9,7 @@ import { Loading } from "@/components/ui/loading";
 import { DrillFilters } from "@/components/drill-library/DrillFilters";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DrillCarousel } from "@/components/drill-library/DrillCarousel";
+import { Drill } from "@/types/drill";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");

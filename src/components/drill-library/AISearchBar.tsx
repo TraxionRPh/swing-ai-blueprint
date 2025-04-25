@@ -60,13 +60,13 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF] rounded-lg">
+        <div className="flex-1 border border-primary/50 bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF] rounded-lg">
           <div className="bg-card rounded-lg w-full flex flex-col">
             <Input
               placeholder="Describe your golf issue (e.g., 'I'm hitting behind the ball' or 'My drives are slicing')"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent border-0 shadow-none focus-visible:ring-0"
+              className="w-full bg-transparent border-0 shadow-none focus-visible:ring-0 text-sm placeholder:text-xs placeholder:text-muted-foreground"
             />
           </div>
         </div>
