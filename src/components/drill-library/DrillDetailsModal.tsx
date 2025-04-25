@@ -63,9 +63,11 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
             <div>
               <h3 className="text-lg font-semibold mb-2">Instructions</h3>
               <div className="prose prose-invert max-w-none">
-                <ReactMarkdown className="text-sm text-muted-foreground">
-                  {formatInstructions(drill.instructions)}
-                </ReactMarkdown>
+                <div className="text-sm text-muted-foreground">
+                  <ReactMarkdown>
+                    {formatInstructions(drill.instructions)}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           )}
