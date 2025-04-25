@@ -36,6 +36,7 @@ export const useHoleScores = (roundId: string | null) => {
       
       let holeInfo: any[] = [];
       if (roundData?.course_id) {
+        console.log('Fetching course holes for course:', roundData.course_id);
         const { data: courseHoles, error: courseHolesError } = await supabase
           .from('course_holes')
           .select('*')
@@ -44,9 +45,11 @@ export const useHoleScores = (roundId: string | null) => {
           
         if (courseHolesError) throw courseHolesError;
         holeInfo = courseHoles || [];
+        console.log('Course holes data:', holeInfo);
       }
 
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo);
+      console.log('Formatted hole scores with course data:', formattedScores);
       setHoleScores(formattedScores);
     } catch (error) {
       console.error('Error fetching hole scores:', error);

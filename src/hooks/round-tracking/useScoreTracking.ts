@@ -10,6 +10,7 @@ export const useScoreTracking = (roundId: string | null) => {
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
 
   const handleHoleUpdate = (data: HoleData) => {
+    console.log('Updating hole data:', data);
     setHoleScores(prev => 
       prev.map(hole => 
         hole.holeNumber === data.holeNumber ? data : hole
@@ -19,6 +20,18 @@ export const useScoreTracking = (roundId: string | null) => {
     saveHoleScore(data);
   };
 
+  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
+    holeNumber: currentHole,
+    par: 4,
+    distance: 0,
+    score: 0,
+    putts: 0,
+    fairwayHit: false,
+    greenInRegulation: false
+  };
+
+  console.log('Current hole data:', currentHoleData);
+
   return {
     currentHole,
     holeScores,
@@ -27,14 +40,6 @@ export const useScoreTracking = (roundId: string | null) => {
     handleNext,
     handlePrevious,
     isSaving,
-    currentHoleData: holeScores.find(hole => hole.holeNumber === currentHole) || {
-      holeNumber: currentHole,
-      par: 4,
-      distance: 0,
-      score: 0,
-      putts: 0,
-      fairwayHit: false,
-      greenInRegulation: false
-    }
+    currentHoleData
   };
 };

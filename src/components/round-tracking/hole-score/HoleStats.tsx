@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { HoleData } from "@/types/round-tracking";
+import { useEffect, useState } from "react";
 
 interface HoleStatsProps {
   data: HoleData;
@@ -10,14 +11,35 @@ interface HoleStatsProps {
 }
 
 export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
+  const [localPar, setLocalPar] = useState<number>(data.par);
+  const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
+
+  useEffect(() => {
+    // Update local state when external data changes (e.g. when hole changes)
+    setLocalPar(data.par);
+    setLocalDistance(data.distance || '');
+  }, [data.holeNumber, data.par, data.distance]);
+
+  const handleParChange = (value: string) => {
+    const parsedValue = parseInt(value) || 3;
+    setLocalPar(parsedValue);
+    onDataChange('par', parsedValue);
+  };
+
+  const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalDistance(value);
+    onDataChange('distance', parseInt(value) || 0);
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Par</Label>
         <ToggleGroup 
           type="single" 
-          value={data.par.toString()}
-          onValueChange={(value) => onDataChange('par', parseInt(value) || 3)}
+          value={localPar.toString()}
+          onValueChange={handleParChange}
           className="justify-start"
         >
           {[3, 4, 5].map((par) => (
@@ -34,8 +56,8 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
           id="distance" 
           type="number" 
           placeholder="Enter yards" 
-          value={data.distance || ''} 
-          onChange={e => onDataChange('distance', parseInt(e.target.value) || 0)} 
+          value={localDistance} 
+          onChange={handleDistanceChange} 
           min={0}
         />
       </div>
