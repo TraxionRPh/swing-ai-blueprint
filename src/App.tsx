@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,10 +29,8 @@ const Root = () => {
   
   if (authLoading || profileLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <Card className="p-6">
-          <div className="animate-pulse">Loading...</div>
-        </Card>
+      <div className="container mx-auto p-4">
+        <Loading message="Setting up your account..." />
       </div>
     );
   }

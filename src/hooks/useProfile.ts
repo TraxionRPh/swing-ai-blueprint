@@ -36,7 +36,18 @@ export const useProfile = (): UseProfileReturn => {
           .maybeSingle();
         
         if (error) throw error;
-        setIsFirstVisit(!data?.has_onboarded);
+
+        // If no profile exists, create one
+        if (!data) {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({ id: user.id });
+            
+          if (insertError) throw insertError;
+          setIsFirstVisit(true);
+        } else {
+          setIsFirstVisit(!data.has_onboarded);
+        }
       } catch (error: any) {
         console.error('Error checking user profile:', error);
         toast({
