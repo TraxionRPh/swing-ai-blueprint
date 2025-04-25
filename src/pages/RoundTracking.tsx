@@ -24,7 +24,7 @@ const RoundTracking = () => {
     handleCourseSelect,
     setSelectedTee,
     handleHoleUpdate,
-    handleNext,
+    handleNext: moveToNextHole,
     handlePrevious,
     currentTeeColor,
     currentHoleData,
@@ -56,7 +56,7 @@ const RoundTracking = () => {
     if (currentHole === holeCount) {
       setShowFinalScore(true);
     } else {
-      baseHandleNext();
+      moveToNextHole();
     }
   };
 
