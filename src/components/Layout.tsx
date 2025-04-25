@@ -29,15 +29,15 @@ const Layout = () => {
     navigate("/auth");
   };
 
+  const currentPath = location.pathname;
+  console.log("Current path:", currentPath); // Add debugging
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-            <SheetTrigger
-              asChild
-              className="md:hidden"
-            >
+            <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="sm" className="px-2.5">
                 <Icons.menu className="h-5 w-5" />
               </Button>
@@ -46,8 +46,8 @@ const Layout = () => {
               side="left"
               className="p-0 w-[280px]"
             >
-              <div className="h-full pt-8">
-                <AppSidebar />
+              <div className="flex h-full flex-col">
+                <AppSidebar currentPath={currentPath} />
               </div>
             </SheetContent>
           </Sheet>
@@ -89,7 +89,7 @@ const Layout = () => {
       
       <div className="container relative flex min-h-[calc(100vh-theme(spacing.14))]">
         <aside className="hidden h-full border-r md:block">
-          <AppSidebar />
+          <AppSidebar currentPath={currentPath} />
         </aside>
         <main className="flex-1 pt-6 md:p-8 w-full">
           <div className="mx-auto max-w-7xl w-full">

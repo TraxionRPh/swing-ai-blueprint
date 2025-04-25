@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -13,7 +14,13 @@ import {
 } from "@/components/ui/sidebar";
 import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
 
-const AppSidebar = () => {
+interface AppSidebarProps {
+  currentPath?: string;
+}
+
+const AppSidebar = ({ currentPath }: AppSidebarProps) => {
+  console.log("AppSidebar rendered with currentPath:", currentPath);
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -36,7 +43,10 @@ const AppSidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/drills"}
+                >
                   <Link to="/drills">
                     <Dumbbell className="h-5 w-5" />
                     <span>Drill Library</span>
@@ -44,7 +54,10 @@ const AppSidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/challenges"}
+                >
                   <Link to="/challenges">
                     <Award className="h-5 w-5" />
                     <span>Challenge Library</span>
@@ -60,7 +73,10 @@ const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/practice-plans"}
+                >
                   <Link to="/practice-plans">
                     <Calendar className="h-5 w-5" />
                     <span>Practice Plans</span>
@@ -68,7 +84,10 @@ const AppSidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/rounds"}
+                >
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
                     <span>Round Tracking</span>
@@ -84,7 +103,10 @@ const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/ai-analysis"}
+                >
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
@@ -100,7 +122,10 @@ const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/profile"}
+                >
                   <Link to="/profile">
                     <User className="h-5 w-5" />
                     <span>Profile</span>
