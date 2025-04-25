@@ -82,8 +82,11 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
             key={course.id}
             course={course}
             onSelect={(selectedCourse) => {
-              onCourseSelect(selectedCourse, course.hole_count);
-              sessionStorage.setItem('current-hole-count', course.hole_count?.toString() || '18');
+              // Make sure to explicitly pass the holeCount when selecting a course
+              const holeCount = course.hole_count || 18;
+              onCourseSelect(selectedCourse, holeCount);
+              // Store the hole count in session storage for persistence
+              sessionStorage.setItem('current-hole-count', holeCount.toString());
             }}
           />
         ))}

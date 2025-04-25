@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -38,10 +39,11 @@ export const CourseResult = ({
     setIsExpanded(!isExpanded);
   };
 
-  const handleStartRound = async () => {
+  const handleStartRound = () => {
+    // Call onSelect with the course and hole count
     onSelect(course, holeCount);
     setIsExpanded(false);
-    // Start a new round and navigate to the scoring interface
+    // Navigate to the new round page
     navigate('/rounds/new');
   };
 
