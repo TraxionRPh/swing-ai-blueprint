@@ -4,28 +4,32 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Course } from "@/types/round-tracking";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface CourseResultProps {
   course: Course;
   onSelect: (course: Course) => void;
   onEdit?: (course: Course) => void;
+  onDelete?: (roundId: string) => void;
   showEditButton?: boolean;
   isInProgress?: boolean;
+  roundId?: string;
 }
 
 export const CourseResult = ({
   course,
   onSelect,
   onEdit,
+  onDelete,
   showEditButton = false,
   isInProgress = false,
+  roundId,
 }: CourseResultProps) => {
   const [isSelected, setIsSelected] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
 
   const handleSelect = () => {
-    // If it's an in-progress round, select it immediately without showing options
     if (isInProgress) {
       onSelect(course);
       return;
@@ -35,6 +39,13 @@ export const CourseResult = ({
 
   const handleStartRound = () => {
     onSelect(course);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete && roundId) {
+      onDelete(roundId);
+    }
   };
 
   return (
@@ -47,18 +58,29 @@ export const CourseResult = ({
               {course.city}, {course.state}
             </p>
           </div>
-          {showEditButton && onEdit && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(course);
-              }}
-            >
-              Edit
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {showEditButton && onEdit && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(course);
+                }}
+              >
+                Edit
+              </Button>
+            )}
+            {isInProgress && onDelete && roundId && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {isSelected && !isInProgress && (

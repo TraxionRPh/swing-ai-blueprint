@@ -28,53 +28,53 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchRounds = async () => {
-      try {
-        const { data: rounds, error } = await supabase
-          .from('rounds')
-          .select(`
+  const fetchRounds = async () => {
+    try {
+      const { data: rounds, error } = await supabase
+        .from('rounds')
+        .select(`
+          id,
+          total_score,
+          hole_count,
+          hole_scores (
+            hole_number
+          ),
+          golf_courses (
             id,
-            total_score,
-            hole_count,
-            hole_scores (
-              hole_number
-            ),
-            golf_courses (
+            name,
+            city,
+            state,
+            is_verified,
+            course_tees (
               id,
               name,
-              city,
-              state,
-              is_verified,
-              course_tees (
-                id,
-                name,
-                color,
-                course_rating,
-                slope_rating
-              )
+              color,
+              course_rating,
+              slope_rating
             )
-          `)
-          .order('created_at', { ascending: false });
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const inProgress = rounds?.filter(round => !round.total_score) || [];
-        const completed = rounds?.filter(round => round.total_score !== null) || [];
+      const inProgress = rounds?.filter(round => !round.total_score) || [];
+      const completed = rounds?.filter(round => round.total_score !== null) || [];
 
-        setInProgressRounds(inProgress as RoundWithCourse[]);
-        setCompletedRounds(completed as RoundWithCourse[]);
-      } catch (error) {
-        toast({
-          title: "Error loading rounds",
-          description: "Please try again later",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+      setInProgressRounds(inProgress as RoundWithCourse[]);
+      setCompletedRounds(completed as RoundWithCourse[]);
+    } catch (error) {
+      toast({
+        title: "Error loading rounds",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRounds();
   }, [toast]);
 
@@ -88,6 +88,30 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     
     // Navigate to the round tracking page with the round ID and next hole
     navigate(`/rounds/${round.id}/${lastHole + 1}`);
+  };
+
+  const handleDeleteRound = async (roundId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rounds')
+        .delete()
+        .eq('id', roundId);
+
+      if (error) throw error;
+
+      await fetchRounds();
+      
+      toast({
+        title: "Round deleted",
+        description: "The round has been successfully deleted"
+      });
+    } catch (error) {
+      toast({
+        title: "Error deleting round",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) return null;
@@ -109,6 +133,9 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
                 () => handleInProgressRoundSelect(round) : 
                 () => onCourseSelect(round.golf_courses)
               }
+              isInProgress={isInProgress}
+              roundId={isInProgress ? round.id : undefined}
+              onDelete={isInProgress ? handleDeleteRound : undefined}
             />
           ))}
         </CardContent>
