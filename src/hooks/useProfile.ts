@@ -2,13 +2,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
+// Define the HandicapLevel type
+export type HandicapLevel = "beginner" | "novice" | "intermediate" | "advanced" | "expert" | "pro";
+
 export const useProfile = () => {
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   
   // Add new state for handicap and goals
-  const [handicap, setHandicap] = useState<string | null>(null);
+  const [handicap, setHandicap] = useState<HandicapLevel | null>(null);
   const [goals, setGoals] = useState<string | null>(null);
 
   const saveProfile = async (profileData: { handicap?: string; goals?: string }) => {

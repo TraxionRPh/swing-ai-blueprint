@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useProfile } from "@/hooks/useProfile";
-import { ProgressIndicator } from "@/components/onboarding/ProgressIndicator";
-import { GoalsStep } from "@/components/onboarding/GoalsStep";
-import { SkillLevelStep } from "@/components/onboarding/SkillLevelStep";
-import { ProfileSummaryStep } from "@/components/onboarding/ProfileSummaryStep";
+import { useProfile, HandicapLevel } from "@/hooks/useProfile";
+import ProgressIndicator from "@/components/onboarding/ProgressIndicator";
+import GoalsStep from "@/components/onboarding/GoalsStep";
+import SkillLevelStep from "@/components/onboarding/SkillLevelStep";
+import ProfileSummaryStep from "@/components/onboarding/ProfileSummaryStep";
 
 const Welcome = () => {
   const { 
