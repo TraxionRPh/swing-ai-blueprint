@@ -11,6 +11,7 @@ interface CourseResultProps {
   onSelect: (course: Course) => void;
   onEdit?: (course: Course) => void;
   showEditButton?: boolean;
+  isInProgress?: boolean;
 }
 
 export const CourseResult = ({
@@ -18,11 +19,17 @@ export const CourseResult = ({
   onSelect,
   onEdit,
   showEditButton = false,
+  isInProgress = false,
 }: CourseResultProps) => {
   const [isSelected, setIsSelected] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
 
   const handleSelect = () => {
+    // If it's an in-progress round, select it immediately without showing options
+    if (isInProgress) {
+      onSelect(course);
+      return;
+    }
     setIsSelected(true);
   };
 
@@ -33,8 +40,8 @@ export const CourseResult = ({
   return (
     <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
       <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-start">
-          <div onClick={handleSelect}>
+        <div className="flex justify-between items-start" onClick={handleSelect}>
+          <div>
             <h3 className="font-medium">{course.name}</h3>
             <p className="text-sm text-muted-foreground">
               {course.city}, {course.state}
@@ -54,7 +61,7 @@ export const CourseResult = ({
           )}
         </div>
 
-        {isSelected && (
+        {isSelected && !isInProgress && (
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <h4 className="text-sm font-medium">How many holes?</h4>
