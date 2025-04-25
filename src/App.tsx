@@ -21,6 +21,7 @@ import PracticePlanGenerator from "@/pages/PracticePlanGenerator";
 import AIPracticePlans from "@/pages/AIPracticePlans";
 import Subscription from "@/pages/Subscription";
 import NotFound from "@/pages/NotFound";
+import Profile from "@/pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
                 <Route path="/ai-analysis" element={<AIAnalysis />} />
                 <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
                 <Route path="/practice-plans" element={<AIPracticePlans />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route
                   path="/subscription"
                   element={

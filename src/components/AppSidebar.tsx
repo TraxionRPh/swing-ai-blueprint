@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarFooter 
 } from "@/components/ui/sidebar";
-import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List } from "./icons/CustomIcons";
+import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
 
 const AppSidebar = () => {
   return (
@@ -88,6 +88,22 @@ const AppSidebar = () => {
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/profile">
+                    <User className="h-5 w-5" />
+                    <span>Profile</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

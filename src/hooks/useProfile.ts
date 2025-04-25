@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,11 +9,10 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   
-  // Add new state for handicap and goals
   const [handicap, setHandicap] = useState<HandicapLevel | null>(null);
   const [goals, setGoals] = useState<string | null>(null);
 
-  const saveProfile = async (profileData: { handicap?: string; goals?: string }) => {
+  const saveProfile = async (profileData: { handicap?: HandicapLevel; goals?: string }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -33,7 +31,6 @@ export const useProfile = () => {
 
       if (error) throw error;
       
-      // Update local state
       if (profileData.handicap) setHandicap(profileData.handicap);
       if (profileData.goals) setGoals(profileData.goals);
     } catch (error) {
@@ -53,7 +50,6 @@ export const useProfile = () => {
           return;
         }
 
-        // Check profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('has_onboarded, handicap_level, goals')
@@ -68,7 +64,6 @@ export const useProfile = () => {
           setGoals(profileData.goals);
         }
 
-        // Check subscription status
         const { data: subscriptionData, error: subscriptionError } = await supabase
           .from('subscriptions')
           .select('is_premium')
