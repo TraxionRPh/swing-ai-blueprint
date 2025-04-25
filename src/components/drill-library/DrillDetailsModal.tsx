@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +33,7 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
           .map((instruction, index) => `${index + 1}. ${instruction.trim()}`)
           .join('\n');
         
-        formattedText += `## How to perform:\n${instructions}\n\n`;
+        formattedText += `## How to perform:\n\n${instructions}\n\n`;
       }
       else if (section.trim().startsWith('Common Mistakes:')) {
         // Format mistakes and tips with a blank line after the header
@@ -46,7 +45,7 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
         formattedText += `## Common Mistakes:\n\n${mistakes}\n\n`;
       }
       else if (section.trim().startsWith('Pro tip:')) {
-        // Format pro tips with a blank line after the header
+        // Format pro tip with a blank line after the header
         formattedText += `## Pro tip:\n\n${section.replace('Pro tip:', '').trim()}\n\n`;
       }
     });
