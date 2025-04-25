@@ -19,8 +19,10 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
   if (!drill) return null;
 
   // Format instructions by replacing n/n1 with line breaks
+  // and ensuring proper markdown format
   const formatInstructions = (text: string | undefined) => {
     if (!text) return '';
+    // Replace n/n1 with double newlines for paragraph breaks
     return text.replace(/n\/n1/g, '\n\n');
   };
 
@@ -101,4 +103,3 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
     </Dialog>
   );
 };
-
