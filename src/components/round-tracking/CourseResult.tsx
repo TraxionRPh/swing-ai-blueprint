@@ -31,18 +31,15 @@ export const CourseResult = ({
 
   const handleSelect = () => {
     if (isInProgress) {
-      // For in-progress rounds, just continue the round
       onSelect(course);
       return;
     }
-    // For new rounds, show hole count selection
     setIsSelected(!isSelected);
   };
 
   const handleStartRound = () => {
-    // Pass the selected hole count to the parent component
     onSelect(course, holeCount);
-    setIsSelected(false); // Hide selection after starting
+    setIsSelected(false);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -53,9 +50,12 @@ export const CourseResult = ({
   };
 
   return (
-    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+    <Card 
+      className="p-4 hover:bg-accent/50 transition-colors cursor-pointer relative"
+      onClick={handleSelect}
+    >
       <div className="flex flex-col space-y-4">
-        <div className="flex justify-between items-start" onClick={handleSelect}>
+        <div className="flex justify-between items-start">
           <div>
             <h3 className="font-medium">{course.name}</h3>
             <p className="text-sm text-muted-foreground">
@@ -88,34 +88,40 @@ export const CourseResult = ({
         </div>
 
         {isSelected && !isInProgress && (
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">How many holes?</h4>
-              <RadioGroup 
-                defaultValue="18" 
-                className="grid grid-cols-2 gap-4"
-                onValueChange={(value) => setHoleCount(parseInt(value))}
+          <div className="absolute left-0 right-0 bottom-0 bg-background p-4 rounded-b-lg border-t shadow-lg z-10">
+            <div className="space-y-4 pb-2">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">How many holes?</h4>
+                <RadioGroup 
+                  defaultValue="18" 
+                  className="grid grid-cols-2 gap-4"
+                  onValueChange={(value) => setHoleCount(parseInt(value))}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="9" id={`nine-${course.id}`} />
+                    <Label htmlFor={`nine-${course.id}`}>9 Holes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="18" id={`eighteen-${course.id}`} />
+                    <Label htmlFor={`eighteen-${course.id}`}>18 Holes</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <Button 
+                className="w-full" 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card collapse
+                  handleStartRound();
+                }}
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="9" id={`nine-${course.id}`} />
-                  <Label htmlFor={`nine-${course.id}`}>9 Holes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="18" id={`eighteen-${course.id}`} />
-                  <Label htmlFor={`eighteen-${course.id}`}>18 Holes</Label>
-                </div>
-              </RadioGroup>
+                Start Round
+              </Button>
             </div>
-            
-            <Button 
-              className="w-full" 
-              onClick={handleStartRound}
-            >
-              Start Round
-            </Button>
           </div>
         )}
       </div>
     </Card>
   );
 };
+
