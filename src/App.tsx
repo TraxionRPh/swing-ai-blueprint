@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,19 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
 import { Loading } from "@/components/ui/loading";
-
-// Import all page components
-import Auth from "@/pages/Auth";
-import Welcome from "@/pages/Welcome";
-import Dashboard from "@/pages/Dashboard";
-import DrillLibrary from "@/pages/DrillLibrary";
-import ChallengeLibrary from "@/pages/ChallengeLibrary";
-import RoundTracking from "@/pages/RoundTracking";
-import AIAnalysis from "@/pages/AIAnalysis";
-import NotFound from "@/pages/NotFound";
-import Layout from "@/components/Layout";
-import PracticePlanGenerator from "@/pages/PracticePlanGenerator";
-import AIPracticePlans from "@/pages/AIPracticePlans";
+import Subscription from "@/pages/Subscription";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +18,6 @@ const Root = () => {
   const { session, loading: authLoading } = useAuth();
   const { isFirstVisit, loading: profileLoading } = useProfile();
   
-  // Only show loading when checking authentication
   if (authLoading) {
     return (
       <div className="container mx-auto p-4">
@@ -40,12 +26,10 @@ const Root = () => {
     );
   }
 
-  // If not authenticated, show login page
   if (!session) {
     return <Auth />;
   }
 
-  // Only show profile loading when we have a session
   if (profileLoading) {
     return (
       <div className="container mx-auto p-4">
@@ -54,7 +38,6 @@ const Root = () => {
     );
   }
 
-  // After profile is loaded, handle redirects
   if (isFirstVisit) {
     return <Navigate to="/welcome" replace />;
   }
@@ -94,6 +77,14 @@ const App = () => (
                 <Route path="/ai-analysis" element={<AIAnalysis />} />
                 <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
                 <Route path="/practice-plans" element={<AIPracticePlans />} />
+                <Route
+                  path="/subscription"
+                  element={
+                    <ProtectedRoute>
+                      <Subscription />
+                    </ProtectedRoute>
+                  }
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
