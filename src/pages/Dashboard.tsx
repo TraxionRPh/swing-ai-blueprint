@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, 
@@ -141,7 +142,7 @@ const Dashboard = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={45}
+                  outerRadius={40}
                   fill="#8884d8"
                   dataKey="value"
                   label={({ name }) => `${name}`}
@@ -157,8 +158,8 @@ const Dashboard = () => {
         </Card>
         
         <Card className="md:col-span-2 border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
-          <div className="bg-transparent h-full rounded-lg">
-            <CardHeader className="pb-2 bg-transparent text-foreground rounded-t-lg border-b border-purple-500/20">
+          <div className="bg-card h-full rounded-lg">
+            <CardHeader className="pb-2 text-foreground rounded-t-lg border-b border-purple-500/20">
               <CardTitle>AI Insights</CardTitle>
               <CardDescription>Personalized recommendations based on your data</CardDescription>
             </CardHeader>
