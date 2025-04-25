@@ -21,6 +21,7 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
           .from('rounds')
           .select(`
             course_id,
+            hole_count,
             golf_courses (
               id,
               name,
@@ -73,7 +74,7 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
           <CourseResult
             key={course.id}
             course={course}
-            onSelect={(course, holeCount) => onCourseSelect(course, holeCount || 18)}
+            onSelect={onCourseSelect}
           />
         ))}
       </div>

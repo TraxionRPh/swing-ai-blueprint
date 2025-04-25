@@ -41,11 +41,11 @@ export const CourseSelectionCard = ({ onCourseSelect }: CourseSelectionCardProps
       </CardHeader>
       <CardContent>
         {activeTab === 'search' ? (
-          <CourseSearch onCourseSelect={(course, holeCount) => onCourseSelect(course, holeCount)} />
+          <CourseSearch onCourseSelect={onCourseSelect} />
         ) : (
-          <RoundsDisplay onCourseSelect={(course, holeCount) => onCourseSelect(course, holeCount)} />
+          <RoundsDisplay onCourseSelect={onCourseSelect} />
         )}
       </CardContent>
     </Card>
   );
-};
+}
