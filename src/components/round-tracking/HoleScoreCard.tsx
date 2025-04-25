@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface HoleData {
   holeNumber: number;
@@ -53,7 +53,6 @@ export const HoleScoreCard = ({
     
     setIsSaving(true);
     try {
-      // Always include both par and distance when updating
       const updateData = {
         course_id: courseId,
         hole_number: data.holeNumber,
@@ -68,11 +67,6 @@ export const HoleScoreCard = ({
         });
 
       if (error) throw error;
-
-      toast({
-        title: "Course data saved",
-        description: "This information will be available for future rounds"
-      });
     } catch (error) {
       console.error('Error saving course hole data:', error);
       toast({
@@ -99,54 +93,62 @@ export const HoleScoreCard = ({
   };
 
   return (
-    <Card className="w-full max-w-xl mx-auto">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
-        </div>
+    <>
+      <Card className="w-full max-w-xl mx-auto">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="par">Par</Label>
-            <Input id="par" type="number" placeholder="Enter par" value={data.par || ''} onChange={e => handleChange('par', parseInt(e.target.value) || 0)} min={3} max={6} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="par">Par</Label>
+              <Input id="par" type="number" placeholder="Enter par" value={data.par || ''} onChange={e => handleChange('par', parseInt(e.target.value) || 0)} min={3} max={6} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="distance">Yards</Label>
+              <Input id="distance" type="number" placeholder="Enter yards" value={data.distance || ''} onChange={e => handleChange('distance', parseInt(e.target.value) || 0)} min={0} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="distance">Yards</Label>
-            <Input id="distance" type="number" placeholder="Enter yards" value={data.distance || ''} onChange={e => handleChange('distance', parseInt(e.target.value) || 0)} min={0} />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="score">Score</Label>
-            <Input id="score" type="number" placeholder="Enter score" value={data.score || ''} onChange={e => handleChange('score', parseInt(e.target.value) || 0)} min={1} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="score">Score</Label>
+              <Input id="score" type="number" placeholder="Enter score" value={data.score || ''} onChange={e => handleChange('score', parseInt(e.target.value) || 0)} min={1} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="putts">Putts</Label>
+              <Input id="putts" type="number" placeholder="Enter putts" value={data.putts || ''} onChange={e => handleChange('putts', parseInt(e.target.value) || 0)} min={0} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="putts">Putts</Label>
-            <Input id="putts" type="number" placeholder="Enter putts" value={data.putts || ''} onChange={e => handleChange('putts', parseInt(e.target.value) || 0)} min={0} />
-          </div>
-        </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="fairway">Fairway Hit</Label>
-            <Switch id="fairway" checked={data.fairwayHit} onCheckedChange={checked => handleChange('fairwayHit', checked)} />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="fairway">Fairway Hit</Label>
+              <Switch id="fairway" checked={data.fairwayHit} onCheckedChange={checked => handleChange('fairwayHit', checked)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="gir">Green in Regulation</Label>
+              <Switch id="gir" checked={data.greenInRegulation} onCheckedChange={checked => handleChange('greenInRegulation', checked)} />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="gir">Green in Regulation</Label>
-            <Switch id="gir" checked={data.greenInRegulation} onCheckedChange={checked => handleChange('greenInRegulation', checked)} />
-          </div>
-        </div>
 
-        <div className="flex justify-between mt-6">
-          <Button variant="outline" onClick={onPrevious} disabled={isFirst}>
-            Previous Hole
-          </Button>
-          <Button onClick={onNext} disabled={isLast}>
-            Next Hole
-          </Button>
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={onPrevious} disabled={isFirst}>
+              Previous Hole
+            </Button>
+            <Button onClick={onNext} disabled={isLast}>
+              Next Hole
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {isSaving && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 };
