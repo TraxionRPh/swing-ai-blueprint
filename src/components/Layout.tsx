@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -12,22 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Icons } from "@/components/icons";
-import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 
 const Layout = () => {
-  const { user, session, loading, } = useAuth();
+  const { user, session, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -57,7 +48,11 @@ const Layout = () => {
               <Sidebar />
             </SheetContent>
           </Sheet>
+          
           <div className="ml-auto flex items-center space-x-4">
+            <div className="flex items-center gap-2 mr-4">
+              <NotificationBell />
+            </div>
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -81,10 +76,6 @@ const Layout = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-          
-          <div className="flex items-center gap-2 ml-4">
-            <NotificationBell />
           </div>
         </div>
       </header>
