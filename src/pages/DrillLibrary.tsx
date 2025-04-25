@@ -17,14 +17,18 @@ const DrillLibrary = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendedDrills, setRecommendedDrills] = useState<Drill[]>([]);
   const [filteredDrills, setFilteredDrills] = useState<Drill[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: drills, isLoading } = useQuery({
     queryKey: ['drills'],
     queryFn: async () => {
+      // Get all drills - make sure to set a high limit to get all records
       const { data, error } = await supabase
         .from('drills')
-        .select('*');
+        .select('*')
+        .limit(100);
       
       if (error) throw error;
       return data as Drill[];
@@ -35,7 +39,7 @@ const DrillLibrary = () => {
     if (drills) {
       setFilteredDrills(filterDrills(drills));
     }
-  }, [drills, searchQuery]);
+  }, [drills, searchQuery, selectedCategory, selectedDifficulty]);
 
   const handleAISearch = async (query: string) => {
     setIsAnalyzing(true);
@@ -67,13 +71,23 @@ const DrillLibrary = () => {
   };
   
   const filterDrills = (drillsToFilter: Drill[] = []) => {
-    if (!searchQuery) return drillsToFilter;
+    if (!drillsToFilter) return [];
     
-    return drillsToFilter.filter(drill => 
-      drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    return drillsToFilter.filter(drill => {
+      // Filter by search query
+      const matchesSearch = !searchQuery || 
+        drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Filter by category
+      const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
+      
+      // Filter by difficulty
+      const matchesDifficulty = !selectedDifficulty || drill.difficulty === selectedDifficulty;
+      
+      return matchesSearch && matchesCategory && matchesDifficulty;
+    });
   };
 
   if (isLoading) {
@@ -109,7 +123,12 @@ const DrillLibrary = () => {
         {drills && (
           <DrillFilters 
             drills={drills} 
-            filterDrills={filterDrills}
+            filterDrills={(filtered) => {
+              if (filtered) {
+                setFilteredDrills(filtered);
+              }
+              return filteredDrills;
+            }}
           />
         )}
         
@@ -118,6 +137,12 @@ const DrillLibrary = () => {
             <DrillCard key={drill.id} drill={drill} />
           ))}
         </div>
+        
+        {filteredDrills.length === 0 && (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No drills match your filters.</p>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );

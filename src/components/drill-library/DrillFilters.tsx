@@ -43,9 +43,13 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
     <>
       <div className="sticky top-0 z-10 bg-background shadow-sm pb-4">
         <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-          <TabsList className="w-full grid grid-cols-5 gap-2">
+          <TabsList className="w-full">
             {categories.map(category => (
-              <TabsTrigger key={category} value={category} className="px-2">
+              <TabsTrigger 
+                key={category} 
+                value={category} 
+                className="flex-1 px-2"
+              >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </TabsTrigger>
             ))}

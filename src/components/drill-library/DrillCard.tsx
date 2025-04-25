@@ -10,12 +10,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Drill } from "@/types/drill";
+import { useState } from "react";
+import { DrillDetailsModal } from "./DrillDetailsModal";
 
 interface DrillCardProps {
   drill: Drill;
 }
 
 export const DrillCard = ({ drill }: DrillCardProps) => {
+  const [showDetails, setShowDetails] = useState(false);
+
   // Helper function to get badge variant based on difficulty
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty) {
@@ -36,31 +40,46 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle>{drill.title}</CardTitle>
-          <Badge className={getDifficultyBadgeClass(drill.difficulty)}>
-            {drill.difficulty}
-          </Badge>
-        </div>
-        <CardDescription>{drill.duration}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">{drill.description}</p>
-        <div className="flex flex-wrap gap-2">
-          {drill.focus.map((tag: string) => (
-            <Badge key={tag} variant="outline">
-              {capitalizeFirstLetter(tag)}
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle>{drill.title}</CardTitle>
+            <Badge className={getDifficultyBadgeClass(drill.difficulty)}>
+              {drill.difficulty}
             </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button variant="secondary" size="sm" className="w-full">
-          View Details
-        </Button>
-      </CardFooter>
-    </Card>
+          </div>
+          <CardDescription>{drill.duration}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            {drill.overview ? drill.overview.substring(0, 100) + '...' : ''}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {drill.focus.map((tag: string) => (
+              <Badge key={tag} variant="outline">
+                {capitalizeFirstLetter(tag)}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="w-full"
+            onClick={() => setShowDetails(true)}
+          >
+            View Details
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <DrillDetailsModal
+        drill={drill}
+        isOpen={showDetails}
+        onClose={() => setShowDetails(false)}
+      />
+    </>
   );
 };
