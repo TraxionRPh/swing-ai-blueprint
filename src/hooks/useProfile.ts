@@ -1,12 +1,43 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { User } from '@supabase/supabase-js';
 
 export const useProfile = () => {
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  
+  // Add new state for handicap and goals
+  const [handicap, setHandicap] = useState<string | null>(null);
+  const [goals, setGoals] = useState<string | null>(null);
+
+  const saveProfile = async (profileData: { handicap?: string; goals?: string }) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          handicap_level: profileData.handicap,
+          goals: profileData.goals,
+          has_onboarded: true
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      if (profileData.handicap) setHandicap(profileData.handicap);
+      if (profileData.goals) setGoals(profileData.goals);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -22,7 +53,7 @@ export const useProfile = () => {
         // Check profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('has_onboarded')
+          .select('has_onboarded, handicap_level, goals')
           .eq('id', user.id)
           .single();
 
@@ -30,6 +61,8 @@ export const useProfile = () => {
           setIsFirstVisit(true);
         } else {
           setIsFirstVisit(profileData.has_onboarded === false);
+          setHandicap(profileData.handicap_level);
+          setGoals(profileData.goals);
         }
 
         // Check subscription status
@@ -52,5 +85,14 @@ export const useProfile = () => {
     checkProfile();
   }, []);
 
-  return { isFirstVisit, loading, isPremium };
+  return { 
+    isFirstVisit, 
+    loading, 
+    isPremium,
+    handicap,
+    goals,
+    setHandicap,
+    setGoals,
+    saveProfile 
+  };
 };

@@ -1,92 +1,103 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { LucideGolf } from "@/components/icons/CustomIcons";
-import HomePage from "./HomePage";
-import SkillLevelStep from "@/components/onboarding/SkillLevelStep";
-import GoalsStep from "@/components/onboarding/GoalsStep";
-import ProfileSummaryStep from "@/components/onboarding/ProfileSummaryStep";
-import ProgressIndicator from "@/components/onboarding/ProgressIndicator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
+import { ProgressIndicator } from "@/components/onboarding/ProgressIndicator";
+import { GoalsStep } from "@/components/onboarding/GoalsStep";
+import { SkillLevelStep } from "@/components/onboarding/SkillLevelStep";
+import { ProfileSummaryStep } from "@/components/onboarding/ProfileSummaryStep";
 
 const Welcome = () => {
-  const [step, setStep] = useState(1);
   const { 
     isFirstVisit, 
+    loading, 
     handicap, 
     goals, 
     setHandicap, 
     setGoals, 
-    saveProfile, 
-    loading 
+    saveProfile 
   } = useProfile();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-6">
-          <div className="animate-pulse">Loading...</div>
-        </Card>
-      </div>
-    );
-  }
-  
-  if (!isFirstVisit) {
-    return <HomePage />;
-  }
-  
-  const handleNext = () => {
-    setStep(step + 1);
+  const navigate = useNavigate();
+
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const handleNextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
   };
-  
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCompleteOnboarding = async () => {
+    try {
+      await saveProfile({ handicap, goals });
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Onboarding error:', error);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isFirstVisit) {
+    navigate('/dashboard');
+    return null;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <LucideGolf className="h-10 w-10 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Welcome to ChipAway</CardTitle>
-          <CardDescription>Let's set up your profile to personalize your experience</CardDescription>
+        <CardHeader>
+          <CardTitle>Welcome to Your Golf Improvement Journey</CardTitle>
+          <ProgressIndicator currentStep={currentStep} totalSteps={3} />
         </CardHeader>
-        
         <CardContent>
-          <ProgressIndicator currentStep={step} totalSteps={3} />
-          
-          {step === 1 && (
-            <SkillLevelStep handicap={handicap} setHandicap={setHandicap} />
+          {currentStep === 1 && (
+            <SkillLevelStep 
+              handicap={handicap} 
+              setHandicap={setHandicap} 
+            />
+          )}
+          {currentStep === 2 && (
+            <GoalsStep 
+              goals={goals} 
+              setGoals={setGoals} 
+            />
+          )}
+          {currentStep === 3 && (
+            <ProfileSummaryStep 
+              handicap={handicap} 
+              goals={goals} 
+            />
           )}
           
-          {step === 2 && (
-            <GoalsStep goals={goals} setGoals={setGoals} />
-          )}
-          
-          {step === 3 && (
-            <ProfileSummaryStep handicap={handicap} goals={goals} />
-          )}
+          <div className="flex justify-between mt-6">
+            {currentStep > 1 && (
+              <Button variant="outline" onClick={handlePreviousStep}>
+                Previous
+              </Button>
+            )}
+            {currentStep < 3 && (
+              <Button onClick={handleNextStep}>
+                Next
+              </Button>
+            )}
+            {currentStep === 3 && (
+              <Button onClick={handleCompleteOnboarding}>
+                Complete Onboarding
+              </Button>
+            )}
+          </div>
         </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          {step > 1 && (
-            <Button variant="outline" onClick={() => setStep(step - 1)}>
-              Back
-            </Button>
-          )}
-          {step < 3 ? (
-            <Button 
-              onClick={handleNext} 
-              disabled={step === 2 && !goals.trim()}
-              className={step === 1 ? "ml-auto" : ""}
-            >
-              Continue
-            </Button>
-          ) : (
-            <Button onClick={saveProfile}>
-              Get Started
-            </Button>
-          )}
-        </CardFooter>
       </Card>
     </div>
   );

@@ -7,10 +7,20 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
-import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
 import { Loading } from "@/components/ui/loading";
+import Auth from "@/pages/Auth";
+import Welcome from "@/pages/Welcome";
+import Layout from "@/components/Layout";
+import Dashboard from "@/pages/Dashboard";
+import DrillLibrary from "@/pages/DrillLibrary";
+import ChallengeLibrary from "@/pages/ChallengeLibrary";
+import RoundTracking from "@/pages/RoundTracking";
+import AIAnalysis from "@/pages/AIAnalysis";
+import PracticePlanGenerator from "@/pages/PracticePlanGenerator";
+import AIPracticePlans from "@/pages/AIPracticePlans";
 import Subscription from "@/pages/Subscription";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
