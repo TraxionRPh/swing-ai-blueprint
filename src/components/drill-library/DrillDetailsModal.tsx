@@ -19,10 +19,9 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
   if (!drill) return null;
 
   // Format instructions by replacing n/n1 with line breaks
-  // and ensuring proper markdown format
   const formatInstructions = (text: string | undefined) => {
     if (!text) return '';
-    // Replace n/n1 with double newlines for paragraph breaks
+    // Replace n/n1 with proper markdown line breaks
     return text.replace(/n\/n1/g, '\n\n');
   };
 
@@ -63,13 +62,8 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
           {drill.instructions && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Instructions</h3>
-              <div className="prose prose-invert max-w-none space-y-4">
-                <ReactMarkdown
-                  components={{
-                    p: ({node, ...props}) => <p className="text-sm text-muted-foreground" {...props} />,
-                    strong: ({node, ...props}) => <span className="font-bold text-foreground" {...props} />,
-                  }}
-                >
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown className="text-sm text-muted-foreground">
                   {formatInstructions(drill.instructions)}
                 </ReactMarkdown>
               </div>
