@@ -4,37 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { GeneratedPracticePlan } from '@/types/practice-plan';
-
-export interface AIAnalysisData {
-  performanceAnalysis: {
-    driving: number;
-    ironPlay: number;
-    chipping: number;
-    bunker: number;
-    putting: number;
-  };
-  aiConfidence: number;
-  identifiedIssues: Array<{
-    area: string;
-    description: string;
-    priority: 'High' | 'Medium' | 'Low';
-  }>;
-  recommendedPractice: {
-    weeklyFocus: string;
-    primaryDrill: {
-      name: string;
-      description: string;
-      frequency: string;
-    };
-    secondaryDrill: {
-      name: string;
-      description: string;
-      frequency: string;
-    };
-    weeklyAssignment: string;
-  };
-}
+import { GeneratedPracticePlan, AIAnalysisForPracticePlan } from '@/types/practice-plan';
 
 export const useAIAnalysis = () => {
   const [aiConfidenceHistory, setAiConfidenceHistory] = useState([
@@ -79,7 +49,7 @@ export const useAIAnalysis = () => {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 is for "no rows returned"
-      return data?.practice_plan as unknown as AIAnalysisData | null;
+      return data?.practice_plan as unknown as AIAnalysisForPracticePlan | null;
     },
     enabled: !!user?.id,
   });

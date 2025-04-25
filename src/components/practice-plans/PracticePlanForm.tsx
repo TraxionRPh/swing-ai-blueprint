@@ -31,12 +31,22 @@ export const PracticePlanForm = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Textarea 
-          placeholder="Describe your golf issue in detail (e.g., 'I'm slicing my driver' or 'I'm struggling with distance control in my putting')"
-          className="min-h-32"
-          value={inputValue}
-          onChange={(e) => onInputChange(e.target.value)}
-        />
+        <div className="space-y-4">
+          <Textarea 
+            placeholder="Describe your golf issue in detail (e.g., 'I'm slicing my driver' or 'I'm struggling with distance control in my putting')"
+            className="min-h-32"
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+          />
+          
+          <Button 
+            className="w-full" 
+            onClick={onSubmit}
+            disabled={isGenerating}
+          >
+            {isGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
+          </Button>
+        </div>
         
         <div className="space-y-4">
           <h3 className="text-md font-medium">Common Problems</h3>
@@ -51,15 +61,6 @@ export const PracticePlanForm = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter>
-        <Button 
-          className="w-full" 
-          onClick={onSubmit}
-          disabled={isGenerating}
-        >
-          {isGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
