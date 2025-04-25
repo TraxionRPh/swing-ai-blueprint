@@ -7,16 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Shield } from "lucide-react";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
 const Profile = () => {
-  const { handicap, goals, isPremium, loading, saveProfile } = useProfile();
+  const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl } = useProfile();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [localHandicap, setLocalHandicap] = useState<HandicapLevel | null>(handicap);
   const [localGoals, setLocalGoals] = useState<string | null>(goals);
+  const [localFirstName, setLocalFirstName] = useState<string | null>(firstName);
+  const [localLastName, setLocalLastName] = useState<string | null>(lastName);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(avatarUrl);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -24,6 +29,9 @@ const Profile = () => {
       await saveProfile({
         handicap: localHandicap || undefined,
         goals: localGoals || undefined,
+        firstName: localFirstName || undefined,
+        lastName: localLastName || undefined,
+        avatarUrl: localAvatarUrl || undefined,
       });
       toast({
         title: "Profile Updated",
@@ -51,9 +59,40 @@ const Profile = () => {
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Update your golf profile information</CardDescription>
+          <CardDescription>Update your profile information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="flex justify-center pb-6">
+            <AvatarUpload
+              url={localAvatarUrl}
+              onUpload={(url) => setLocalAvatarUrl(url)}
+              size={150}
+            />
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                value={localFirstName || ''}
+                onChange={(e) => setLocalFirstName(e.target.value)}
+                placeholder="Enter your first name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                value={localLastName || ''}
+                onChange={(e) => setLocalLastName(e.target.value)}
+                placeholder="Enter your last name"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Skill Level</h3>
             <RadioGroup value={localHandicap || ''} onValueChange={(value) => setLocalHandicap(value as HandicapLevel)}>

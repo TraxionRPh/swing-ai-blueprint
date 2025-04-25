@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the HandicapLevel type
 export type HandicapLevel = "beginner" | "novice" | "intermediate" | "advanced" | "expert" | "pro";
 
 export const useProfile = () => {
@@ -12,8 +10,17 @@ export const useProfile = () => {
   
   const [handicap, setHandicap] = useState<HandicapLevel | null>(null);
   const [goals, setGoals] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const saveProfile = async (profileData: { handicap?: HandicapLevel; goals?: string }) => {
+  const saveProfile = async (profileData: { 
+    handicap?: HandicapLevel; 
+    goals?: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+  }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -26,6 +33,9 @@ export const useProfile = () => {
         .update({
           handicap_level: profileData.handicap,
           goals: profileData.goals,
+          first_name: profileData.firstName,
+          last_name: profileData.lastName,
+          avatar_url: profileData.avatarUrl,
           has_onboarded: true
         })
         .eq('id', user.id);
@@ -34,6 +44,9 @@ export const useProfile = () => {
       
       if (profileData.handicap) setHandicap(profileData.handicap);
       if (profileData.goals) setGoals(profileData.goals);
+      if (profileData.firstName) setFirstName(profileData.firstName);
+      if (profileData.lastName) setLastName(profileData.lastName);
+      if (profileData.avatarUrl) setAvatarUrl(profileData.avatarUrl);
     } catch (error) {
       console.error('Error saving profile:', error);
       throw error;
@@ -53,7 +66,7 @@ export const useProfile = () => {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('has_onboarded, handicap_level, goals')
+          .select('has_onboarded, handicap_level, goals, first_name, last_name, avatar_url')
           .eq('id', user.id)
           .single();
 
@@ -65,6 +78,9 @@ export const useProfile = () => {
             setHandicap(profileData.handicap_level as HandicapLevel);
           }
           setGoals(profileData.goals);
+          setFirstName(profileData.first_name);
+          setLastName(profileData.last_name);
+          setAvatarUrl(profileData.avatar_url);
         }
 
         const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -92,6 +108,9 @@ export const useProfile = () => {
     isPremium,
     handicap,
     goals,
+    firstName,
+    lastName,
+    avatarUrl,
     setHandicap,
     setGoals,
     saveProfile 
