@@ -2,9 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { GeneratedPracticePlan } from "@/types/practice-plan";
 
 interface GeneratedPlanProps {
-  plan: any;
+  plan: GeneratedPracticePlan;
   onClear: () => void;
 }
 
@@ -27,7 +28,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
           
           <h3 className="font-medium mt-6 mb-2">Root Causes</h3>
           <ul className="list-disc pl-5 space-y-1">
-            {plan.rootCauses.map((cause: string, i: number) => (
+            {plan.rootCauses.map((cause, i) => (
               <li key={i} className="text-muted-foreground">{cause}</li>
             ))}
           </ul>
@@ -42,7 +43,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {plan.recommendedDrills.map((drill: any, i: number) => (
+          {plan.recommendedDrills.map((drill, i) => (
             <div key={i} className="p-4 bg-muted/50 rounded-lg">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-medium">{drill.name}</h4>
@@ -51,7 +52,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
               <p className="text-sm text-muted-foreground mb-3">{drill.description}</p>
               <div className="flex justify-between items-center">
                 <div className="flex gap-2">
-                  {drill.focus.map((tag: string) => (
+                  {drill.focus.map((tag) => (
                     <Badge key={tag} variant="outline">{tag}</Badge>
                   ))}
                 </div>
@@ -75,7 +76,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
             <span className="text-muted-foreground">{plan.practicePlan.frequency}, focusing on the drills below.</span>
           </div>
           
-          {plan.practicePlan.sessions.map((session: any, i: number) => (
+          {plan.practicePlan.sessions.map((session, i) => (
             <div key={i} className="border rounded-lg overflow-hidden">
               <div className="bg-secondary/10 p-3 border-b">
                 <h4 className="font-medium">Session {i+1}: {session.focus}</h4>
@@ -83,7 +84,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
               </div>
               <div className="p-3">
                 <ul className="space-y-2">
-                  {session.drills.map((drill: string, j: number) => (
+                  {session.drills.map((drill, j) => (
                     <li key={j} className="flex items-center">
                       <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
                       <span className="text-sm">{drill}</span>

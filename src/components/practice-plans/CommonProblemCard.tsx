@@ -1,12 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-
-interface CommonProblem {
-  id: number;
-  problem: string;
-  description: string;
-  popularity: string;
-}
+import { CommonProblem } from "@/types/practice-plan";
 
 interface CommonProblemCardProps {
   item: CommonProblem;

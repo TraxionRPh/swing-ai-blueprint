@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CommonProblemCard } from "./CommonProblemCard";
+import { CommonProblem } from "@/types/practice-plan";
 
 interface PracticePlanFormProps {
   inputValue: string;
@@ -10,12 +11,7 @@ interface PracticePlanFormProps {
   onSubmit: () => void;
   onSelectProblem: (problem: string) => void;
   isGenerating: boolean;
-  commonProblems: Array<{
-    id: number;
-    problem: string;
-    description: string;
-    popularity: string;
-  }>;
+  commonProblems: CommonProblem[];
 }
 
 export const PracticePlanForm = ({

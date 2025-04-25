@@ -5,8 +5,9 @@ import { Brain } from "lucide-react";
 import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { PracticePlanForm } from "@/components/practice-plans/PracticePlanForm";
 import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
+import { CommonProblem, GeneratedPracticePlan } from "@/types/practice-plan";
 
-const commonProblems = [
+const commonProblems: CommonProblem[] = [
   {
     id: 1,
     problem: "Slicing my driver",
@@ -48,7 +49,7 @@ const commonProblems = [
 const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [generatedPlan, setGeneratedPlan] = useState<GeneratedPracticePlan | null>(null);
   const { toast } = useToast();
   const { generateAnalysis, isGenerating: isAnalyzing } = useAIAnalysis();
   
@@ -64,10 +65,8 @@ const AIPracticePlans = () => {
     
     setIsGenerating(true);
     
-    // Simulate AI response generation
     setTimeout(() => {
-      // For demo, generate plan based on slicing issue regardless of input
-      const mockPlan = {
+      const mockPlan: GeneratedPracticePlan = {
         problem: inputValue,
         diagnosis: "Based on your description, you're experiencing an out-to-in swing path combined with an open clubface at impact. This is a common issue that causes the ball to start left and curve significantly to the right (for right-handed golfers).",
         rootCauses: [
