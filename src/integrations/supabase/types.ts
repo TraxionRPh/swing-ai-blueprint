@@ -52,6 +52,7 @@ export type Database = {
           description: string
           difficulty: string
           id: string
+          metric: string
           metrics: string[]
           title: string
           updated_at: string
@@ -62,6 +63,7 @@ export type Database = {
           description: string
           difficulty: string
           id?: string
+          metric?: string
           metrics: string[]
           title: string
           updated_at?: string
@@ -72,6 +74,7 @@ export type Database = {
           description?: string
           difficulty?: string
           id?: string
+          metric?: string
           metrics?: string[]
           title?: string
           updated_at?: string

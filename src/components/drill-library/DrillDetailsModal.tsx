@@ -1,0 +1,70 @@
+
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Drill } from "@/types/drill";
+import ReactMarkdown from 'react-markdown';
+
+interface DrillDetailsModalProps {
+  drill: Drill | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({ 
+  drill, 
+  isOpen, 
+  onClose 
+}) => {
+  if (!drill) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{drill.title}</DialogTitle>
+          <div className="flex items-center justify-between mt-2">
+            <Badge 
+              className={
+                drill.difficulty === 'Beginner' 
+                  ? 'bg-emerald-500 text-white' 
+                  : drill.difficulty === 'Intermediate' 
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-rose-500 text-white'
+              }
+            >
+              {drill.difficulty}
+            </Badge>
+            <span className="text-sm text-muted-foreground">{drill.duration}</span>
+          </div>
+          <DialogDescription className="mt-4">
+            <ReactMarkdown>{drill.description}</ReactMarkdown>
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Focus Areas</h3>
+          <div className="flex flex-wrap gap-2">
+            {drill.focus.map(tag => (
+              <Badge key={tag} variant="outline">
+                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {drill.video_url && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">Video Tutorial</h3>
+            <iframe 
+              src={drill.video_url} 
+              title={`${drill.title} Tutorial`} 
+              className="w-full aspect-video"
+              allowFullScreen
+            />
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
