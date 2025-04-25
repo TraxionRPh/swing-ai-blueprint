@@ -1,15 +1,18 @@
 
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
 const RoundTracking = () => {
+  const navigate = useNavigate();
   const [showFinalScore, setShowFinalScore] = useState(false);
   const {
     selectedCourse,
@@ -29,26 +32,28 @@ const RoundTracking = () => {
     setHoleCount
   } = useRoundTracking();
 
-  const handleNext = () => {
-    if (currentHole === holeCount) {
-      setShowFinalScore(true);
-    } else {
-      baseHandleNext();
-    }
-  };
-
-  const handleConfirmRound = async () => {
-    await finishRound();
-    setShowFinalScore(false);
+  const handleBack = () => {
+    navigate(-1); // Go back to the previous page
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
-        <p className="text-muted-foreground">
-          Track your round hole by hole
-        </p>
+      <div className="flex items-center space-x-4">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={handleBack}
+          className="text-muted-foreground hover:bg-secondary"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="sr-only">Go back</span>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
+          <p className="text-muted-foreground">
+            Track your round hole by hole
+          </p>
+        </div>
       </div>
 
       <CourseSelector
@@ -114,3 +119,4 @@ const RoundTracking = () => {
 };
 
 export default RoundTracking;
+
