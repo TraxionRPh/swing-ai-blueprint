@@ -18,7 +18,7 @@ export const useCourseManagement = (currentRoundId: string | null) => {
         .from('rounds')
         .insert({
           course_id: course.id,
-          user_id: user?.id,
+          user_id: supabase.auth.getUser().then(({ data }) => data?.user?.id), // Fix: Use supabase auth to get user ID
           is_in_progress: true,
           date: new Date().toISOString()
         })

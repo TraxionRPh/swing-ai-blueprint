@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
+import { Course } from "@/types/round-tracking"; // Add this import
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
