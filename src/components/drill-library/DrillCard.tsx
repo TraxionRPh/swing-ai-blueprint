@@ -34,11 +34,6 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
     }
   };
 
-  // Helper function to capitalize first letter of each word
-  const capitalizeFirstLetter = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
   return (
     <>
       <Card>
@@ -53,12 +48,12 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            {drill.overview ? drill.overview.substring(0, 100) + '...' : ''}
+            {drill.overview?.substring(0, 100) + '...' || ''}
           </p>
           <div className="flex flex-wrap gap-2">
-            {drill.focus.map((tag: string) => (
+            {drill.focus?.map((tag: string) => (
               <Badge key={tag} variant="outline">
-                {capitalizeFirstLetter(tag)}
+                {tag.charAt(0).toUpperCase() + tag.slice(1)}
               </Badge>
             ))}
           </div>

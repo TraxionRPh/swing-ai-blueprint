@@ -18,37 +18,26 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
   const [categories, setCategories] = useState<string[]>(['all']);
   const [difficulties, setDifficulties] = useState<string[]>([]);
 
-  // Extract unique categories and difficulties from the drills
   useEffect(() => {
     if (!drills || drills.length === 0) return;
     
-    // Extract categories
     const uniqueCategories = ['all', ...new Set(drills.map(drill => drill.category))];
     setCategories(uniqueCategories);
     
-    // Extract difficulties
     const uniqueDifficulties = [...new Set(drills.map(drill => drill.difficulty))];
     setDifficulties(uniqueDifficulties);
   }, [drills]);
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-  };
-
-  const handleDifficultyChange = (difficulty: string | null) => {
-    setSelectedDifficulty(difficulty);
-  };
-
   return (
     <>
       <div className="sticky top-0 z-10 bg-background shadow-sm pb-4">
-        <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-          <TabsList className="w-full">
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          <TabsList className="w-full grid grid-cols-5">
             {categories.map(category => (
               <TabsTrigger 
                 key={category} 
                 value={category} 
-                className="flex-1 px-2"
+                className="flex-1"
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </TabsTrigger>
@@ -61,7 +50,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
         <Badge 
           variant={selectedDifficulty === null ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => handleDifficultyChange(null)}
+          onClick={() => setSelectedDifficulty(null)}
         >
           All Difficulties
         </Badge>
@@ -70,7 +59,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
             key={difficulty} 
             variant={selectedDifficulty === difficulty ? "default" : "outline"}
             className="cursor-pointer"
-            onClick={() => handleDifficultyChange(difficulty)}
+            onClick={() => setSelectedDifficulty(difficulty)}
           >
             {difficulty}
           </Badge>

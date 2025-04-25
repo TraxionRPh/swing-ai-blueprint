@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,11 +23,9 @@ const DrillLibrary = () => {
   const { data: drills, isLoading } = useQuery({
     queryKey: ['drills'],
     queryFn: async () => {
-      // Get all drills - make sure to set a high limit to get all records
       const { data, error } = await supabase
         .from('drills')
-        .select('*')
-        .limit(100);
+        .select('*');
       
       if (error) throw error;
       return data as Drill[];
@@ -74,16 +71,13 @@ const DrillLibrary = () => {
     if (!drillsToFilter) return [];
     
     return drillsToFilter.filter(drill => {
-      // Filter by search query
       const matchesSearch = !searchQuery || 
         drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
         drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Filter by category
       const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
       
-      // Filter by difficulty
       const matchesDifficulty = !selectedDifficulty || drill.difficulty === selectedDifficulty;
       
       return matchesSearch && matchesCategory && matchesDifficulty;
