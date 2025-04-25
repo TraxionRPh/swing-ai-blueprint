@@ -2,14 +2,24 @@
 export interface Drill {
   id: string;  
   title: string;
-  description?: string;  // Optional
+  description?: string;
   overview: string;
   category: string;
   focus: string[];
   difficulty: string;
   duration: string;
   video_url: string | null;
-  instructions?: string;  // Optional
+  instruction1?: string;
+  instruction2?: string;
+  instruction3?: string;
+  instruction4?: string;
+  instruction5?: string;
+  common_mistake1?: string;
+  common_mistake2?: string;
+  common_mistake3?: string;
+  common_mistake4?: string;
+  common_mistake5?: string;
+  pro_tip?: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -20,7 +20,6 @@ interface DrillCardProps {
 export const DrillCard = ({ drill }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  // Helper function to get badge variant based on difficulty
   const getDifficultyBadgeClass = (difficulty: string) => {
     switch (difficulty) {
       case "Beginner":
@@ -36,27 +35,21 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
 
   return (
     <>
-      <Card>
+      <Card className="h-full flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-start">
-            <CardTitle>{drill.title}</CardTitle>
+            <CardTitle className="text-xl">{drill.title}</CardTitle>
             <Badge className={getDifficultyBadgeClass(drill.difficulty)}>
               {drill.difficulty}
             </Badge>
           </div>
           <CardDescription>{drill.duration}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            {drill.overview?.substring(0, 100) + '...' || ''}
+        <CardContent className="flex-grow">
+          <p className="text-sm text-muted-foreground">
+            {drill.overview?.substring(0, 150)}
+            {drill.overview?.length > 150 ? '...' : ''}
           </p>
-          <div className="flex flex-wrap gap-2">
-            {drill.focus?.map((tag: string) => (
-              <Badge key={tag} variant="outline">
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
-              </Badge>
-            ))}
-          </div>
         </CardContent>
         <CardFooter>
           <Button 
