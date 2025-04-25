@@ -1,9 +1,7 @@
+
 import { useState } from "react";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CourseSearch } from "./CourseSearch";
-import { RoundsDisplay } from "./RoundsDisplay";
+import { CourseSelectionCard } from "./course-selection/CourseSelectionCard";
+import { SelectedCourseCard } from "./course-selection/SelectedCourseCard";
 import type { Course } from "@/types/round-tracking";
 
 interface CourseSelectorProps {
@@ -32,81 +30,18 @@ export const CourseSelector = ({
   };
 
   if (!selectedCourse) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Select a Course</CardTitle>
-          <CardDescription>
-            Search for a course or select from your recent rounds
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <CourseSearch onCourseSelect={handleCourseSelect} />
-          <RoundsDisplay onCourseSelect={handleCourseSelect} />
-          <div className="text-center py-4 border-t border-gray-200 mt-4">
-            <p className="text-muted-foreground mb-2">Can't find your course?</p>
-            <Button onClick={() => setShowCourseSearch(true)}>
-              Add New Course
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <CourseSelectionCard onCourseSelect={handleCourseSelect} />;
   }
 
-  const currentTee = selectedCourse.course_tees.find(tee => tee.id === selectedTee);
-
-  return <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-semibold">{selectedCourse.name}</h2>
-            {currentTee && <p className="text-sm text-muted-foreground">
-                Tee: {currentTee.color || currentTee.name} • 
-                Course Rating: {currentTee.course_rating} • 
-                Slope: {currentTee.slope_rating}
-              </p>}
-          </div>
-          <Button variant="outline" onClick={() => setShowCourseSearch(true)}>
-            Change Course
-          </Button>
-        </div>
-        
-        {selectedCourse.course_tees && selectedCourse.course_tees.length > 0 && <div className="mt-4">
-            <p className="text-sm mb-2">Select Tee:</p>
-            <div className="flex gap-2 flex-wrap">
-              {selectedCourse.course_tees.map(tee => {
-                // Determine text color based on background for readability
-                const isLightColor = ['white', 'yellow', 'beige', 'gold', 'lightgray'].includes(tee.color?.toLowerCase() || '');
-                const textColor = isLightColor ? 'text-black' : 'text-white';
-                
-                return (
-                <Button 
-                  key={tee.id} 
-                  size="sm" 
-                  variant={selectedTee === tee.id ? "default" : "outline"} 
-                  onClick={() => onTeeSelect(tee.id)} 
-                  style={{ 
-                    backgroundColor: tee.color || undefined, 
-                    color: selectedTee === tee.id ? undefined : (tee.color ? textColor : undefined)
-                  }}
-                  className={`${selectedTee === tee.id ? '' : 'border'}`}
-                >
-                  {tee.color || tee.name}
-                </Button>
-              )})}
-            </div>
-          </div>}
-      </CardContent>
-
-      <Dialog open={showCourseSearch} onOpenChange={setShowCourseSearch}>
-        <DialogContent className="max-w-md sm:max-w-lg">
-          <DialogTitle>Select a Course</DialogTitle>
-          <DialogDescription>
-            Search for a course or enter course details manually
-          </DialogDescription>
-          <CourseSearch onCourseSelect={handleCourseSelect} />
-        </DialogContent>
-      </Dialog>
-    </Card>;
+  return (
+    <SelectedCourseCard
+      course={selectedCourse}
+      selectedTee={selectedTee}
+      onTeeSelect={onTeeSelect}
+      onChangeClick={() => setShowCourseSearch(true)}
+      showCourseSearch={showCourseSearch}
+      setShowCourseSearch={setShowCourseSearch}
+      onCourseSelect={handleCourseSelect}
+    />
+  );
 };
