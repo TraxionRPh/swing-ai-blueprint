@@ -11,7 +11,7 @@ export const useCourseManagement = (currentRoundId: string | null) => {
 
   const handleCourseSelect = async (course: Course) => {
     setSelectedCourse(course);
-    await fetchCourseHoles(course.id);
+    const holes = await fetchCourseHoles(course.id);
     
     if (!currentRoundId) {
       // Get the current user before creating the round
@@ -60,13 +60,32 @@ export const useCourseManagement = (currentRoundId: string | null) => {
 
       if (error) throw error;
 
-      return holes?.map((hole: any) => ({
-        holeNumber: hole.hole_number,
-        par: hole.par,
-        distance: hole.distance_yards,
-        score: 0,
-        putts: 0
-      })) || createDefaultHoles();
+      if (holes && holes.length > 0) {
+        return holes.map((hole: any) => ({
+          holeNumber: hole.hole_number,
+          par: hole.par || 4,
+          distance: hole.distance_yards || 0,
+          score: 0,
+          putts: 0
+        }));
+      }
+
+      // If no holes exist, create them
+      const defaultHoles = createDefaultHoles();
+      for (const hole of defaultHoles) {
+        await supabase
+          .from('course_holes')
+          .upsert({
+            course_id: courseId,
+            hole_number: hole.holeNumber,
+            par: hole.par,
+            distance_yards: hole.distance
+          }, {
+            onConflict: 'course_id,hole_number'
+          });
+      }
+      
+      return defaultHoles;
     } catch (error) {
       toast({
         title: "Error loading course data",
