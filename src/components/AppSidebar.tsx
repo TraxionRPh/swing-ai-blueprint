@@ -9,47 +9,34 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter
+  SidebarFooter 
 } from "@/components/ui/sidebar";
-import { LucideGolf, Home, Award, Dumbbell, Calendar, Brain, List, User } from "./icons/CustomIcons";
+import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
 
-interface AppSidebarProps {
-  currentPath?: string;
-}
-
-const AppSidebar = ({ currentPath }: AppSidebarProps) => {
+const AppSidebar = () => {
   return (
-    <Sidebar className="border-r border-sidebar-border">
+    <Sidebar>
       <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-2 text-sidebar-foreground">
+        <div className="flex items-center space-x-2">
           <LucideGolf className="h-8 w-8 text-primary" />
           <h1 className="font-bold text-xl">ChipAway</h1>
         </div>
       </SidebarHeader>
-      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/dashboard"}
-                  tooltip="Dashboard"
-                >
-                  <Link to="/dashboard" className="text-sidebar-foreground">
+                <SidebarMenuButton asChild>
+                  <Link to="/dashboard">
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/drills"}
-                  tooltip="Drill Library"
-                >
+                <SidebarMenuButton asChild>
                   <Link to="/drills">
                     <Dumbbell className="h-5 w-5" />
                     <span>Drill Library</span>
@@ -57,11 +44,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/challenges"}
-                  tooltip="Challenge Library"
-                >
+                <SidebarMenuButton asChild>
                   <Link to="/challenges">
                     <Award className="h-5 w-5" />
                     <span>Challenge Library</span>
@@ -77,11 +60,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/practice-plans"}
-                  tooltip="Practice Plans"
-                >
+                <SidebarMenuButton asChild>
                   <Link to="/practice-plans">
                     <Calendar className="h-5 w-5" />
                     <span>Practice Plans</span>
@@ -89,11 +68,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/rounds"}
-                  tooltip="Round Tracking"
-                >
+                <SidebarMenuButton asChild>
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
                     <span>Round Tracking</span>
@@ -109,11 +84,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/ai-analysis"}
-                  tooltip="AI Analysis"
-                >
+                <SidebarMenuButton asChild>
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
@@ -129,12 +100,8 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild
-                  isActive={currentPath === "/profile"}
-                  tooltip="Profile"
-                >
-                  <Link to="/profile" className="text-sidebar-foreground">
+                <SidebarMenuButton asChild>
+                  <Link to="/profile">
                     <User className="h-5 w-5" />
                     <span>Profile</span>
                   </Link>
@@ -144,9 +111,8 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
-      <SidebarFooter className="p-4">
-        <div className="text-xs text-sidebar-foreground/60">
+      <SidebarFooter>
+        <div className="px-3 py-2 text-xs text-muted-foreground">
           © 2025 ChipAway - v1.0.0
         </div>
       </SidebarFooter>
