@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Course } from "@/types/round-tracking";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface CourseResultProps {
   course: Course;
@@ -26,20 +27,23 @@ export const CourseResult = ({
   isInProgress = false,
   roundId,
 }: CourseResultProps) => {
-  const [isSelected, setIsSelected] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [holeCount, setHoleCount] = useState<number>(18);
+  const navigate = useNavigate();
 
   const handleSelect = () => {
     if (isInProgress) {
       onSelect(course);
       return;
     }
-    setIsSelected(!isSelected);
+    setIsExpanded(!isExpanded);
   };
 
   const handleStartRound = () => {
     onSelect(course, holeCount);
-    setIsSelected(false);
+    setIsExpanded(false);
+    // Navigate to the rounds page
+    navigate(`/rounds/${roundId || 'new'}`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -51,7 +55,7 @@ export const CourseResult = ({
 
   return (
     <Card 
-      className="p-4 hover:bg-accent/50 transition-colors cursor-pointer relative"
+      className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
       onClick={handleSelect}
     >
       <div className="flex flex-col space-y-4">
@@ -87,9 +91,9 @@ export const CourseResult = ({
           </div>
         </div>
 
-        {isSelected && !isInProgress && (
-          <div className="absolute left-0 right-0 bottom-0 bg-background p-4 rounded-b-lg border-t shadow-lg z-10">
-            <div className="space-y-4 pb-2">
+        {isExpanded && !isInProgress && (
+          <div className="mt-4 border-t pt-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">How many holes?</h4>
                 <RadioGroup 
@@ -111,7 +115,7 @@ export const CourseResult = ({
               <Button 
                 className="w-full" 
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent card collapse
+                  e.stopPropagation();
                   handleStartRound();
                 }}
               >
