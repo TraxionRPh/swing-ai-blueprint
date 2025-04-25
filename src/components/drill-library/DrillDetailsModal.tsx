@@ -44,28 +44,53 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Focus Areas</h3>
-          <div className="flex flex-wrap gap-2">
-            {drill.focus.map(tag => (
-              <Badge key={tag} variant="outline">
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
-              </Badge>
-            ))}
-          </div>
-        </div>
+        <div className="mt-6 space-y-6">
+          {drill.overview && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Overview</h3>
+              <p className="text-sm text-muted-foreground">{drill.overview}</p>
+            </div>
+          )}
 
-        {drill.video_url && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-2">Video Tutorial</h3>
-            <iframe 
-              src={drill.video_url} 
-              title={`${drill.title} Tutorial`} 
-              className="w-full aspect-video"
-              allowFullScreen
-            />
+          {drill.instructions && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Instructions</h3>
+              <div className="prose prose-invert max-w-none space-y-4">
+                <ReactMarkdown
+                  components={{
+                    p: ({node, ...props}) => <p className="text-sm text-muted-foreground" {...props} />,
+                    strong: ({node, ...props}) => <span className="font-bold text-foreground" {...props} />,
+                  }}
+                >
+                  {drill.instructions}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Focus Areas</h3>
+            <div className="flex flex-wrap gap-2">
+              {drill.focus.map(tag => (
+                <Badge key={tag} variant="outline">
+                  {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                </Badge>
+              ))}
+            </div>
           </div>
-        )}
+
+          {drill.video_url && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Video Tutorial</h3>
+              <iframe 
+                src={drill.video_url} 
+                title={`${drill.title} Tutorial`} 
+                className="w-full aspect-video"
+                allowFullScreen
+              />
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
