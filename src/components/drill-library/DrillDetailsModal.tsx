@@ -37,17 +37,17 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
         formattedText += `## How to perform:\n${instructions}\n\n`;
       }
       else if (section.trim().startsWith('Common Mistakes:')) {
-        // Format mistakes and tips
+        // Format mistakes and tips with a blank line after the header
         const mistakes = section.replace('Common Mistakes:', '').trim()
           .split('\n').filter(Boolean)
           .map(mistake => `- ${mistake.trim()}`)
           .join('\n');
         
-        formattedText += `## Common Mistakes:\n${mistakes}\n\n`;
+        formattedText += `## Common Mistakes:\n\n${mistakes}\n\n`;
       }
       else if (section.trim().startsWith('Pro tip:')) {
-        // Format pro tips
-        formattedText += `## Pro tip:\n${section.replace('Pro tip:', '').trim()}\n\n`;
+        // Format pro tips with a blank line after the header
+        formattedText += `## Pro tip:\n\n${section.replace('Pro tip:', '').trim()}\n\n`;
       }
     });
     
