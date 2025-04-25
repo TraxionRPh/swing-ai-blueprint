@@ -1,0 +1,96 @@
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { CourseResult } from "./CourseResult";
+import { useToast } from "@/hooks/use-toast";
+
+interface Course {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  is_verified?: boolean;
+  course_tees: {
+    id: string;
+    name: string;
+    color: string;
+    course_rating: number;
+    slope_rating: number;
+  }[];
+}
+
+interface RecentlyPlayedProps {
+  onCourseSelect: (course: Course) => void;
+}
+
+export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
+  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchRecentCourses = async () => {
+      try {
+        const { data: rounds, error } = await supabase
+          .from('rounds')
+          .select(`
+            course_id,
+            golf_courses (
+              id,
+              name,
+              city,
+              state,
+              is_verified,
+              course_tees (
+                id,
+                name,
+                color,
+                course_rating,
+                slope_rating
+              )
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+
+        // Filter out duplicates and null values
+        const uniqueCourses = rounds
+          ?.map(round => round.golf_courses)
+          .filter((course, index, self) => 
+            course && self.findIndex(c => c?.id === course.id) === index
+          ) as Course[];
+
+        setRecentCourses(uniqueCourses || []);
+      } catch (error) {
+        toast({
+          title: "Error loading recent courses",
+          description: "Please try again later",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentCourses();
+  }, [toast]);
+
+  if (loading || recentCourses.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground">Recently Played</h3>
+      <div className="space-y-2">
+        {recentCourses.map((course) => (
+          <CourseResult
+            key={course.id}
+            course={course}
+            onSelect={onCourseSelect}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};

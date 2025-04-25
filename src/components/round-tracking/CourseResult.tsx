@@ -30,11 +30,11 @@ export const CourseResult = ({ course, onSelect, onEdit, showEditButton }: Cours
   return (
     <Button
       variant="outline"
-      className="w-full justify-between"
+      className="w-full justify-between min-h-[4rem] h-auto py-3 px-4"
       onClick={() => onSelect(course)}
     >
-      <div className="text-left flex-1">
-        <div className="font-semibold flex items-center gap-2">
+      <div className="text-left flex-1 flex flex-col gap-1">
+        <div className="font-semibold flex items-center gap-2 flex-wrap">
           {course.name}
           {course.is_verified && (
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -47,7 +47,7 @@ export const CourseResult = ({ course, onSelect, onEdit, showEditButton }: Cours
           {course.city}, {course.state}
         </div>
         {course.course_tees && course.course_tees.length > 0 && (
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-muted-foreground">
             Tees: {course.course_tees.map(tee => tee.color || tee.name).join(", ")}
           </div>
         )}
@@ -56,7 +56,7 @@ export const CourseResult = ({ course, onSelect, onEdit, showEditButton }: Cours
         <Button
           variant="ghost"
           size="icon"
-          className="ml-2"
+          className="ml-2 shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             onEdit(course);

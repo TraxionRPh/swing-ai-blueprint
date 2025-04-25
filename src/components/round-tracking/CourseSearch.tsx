@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { SearchInput } from "./SearchInput";
 import { CourseResult } from "./CourseResult";
+import { RecentlyPlayed } from "./RecentlyPlayed";
 
 interface Course {
   id: string;
@@ -168,12 +169,15 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
       )}
 
       {!searchQuery && (
-        <div className="text-center py-4 border-t border-gray-200 mt-4">
-          <p className="text-muted-foreground mb-2">Can't find your course?</p>
-          <Button onClick={() => setShowAddForm(true)}>
-            Add New Course
-          </Button>
-        </div>
+        <>
+          <RecentlyPlayed onCourseSelect={onCourseSelect} />
+          <div className="text-center py-4 border-t border-gray-200 mt-4">
+            <p className="text-muted-foreground mb-2">Can't find your course?</p>
+            <Button onClick={() => setShowAddForm(true)}>
+              Add New Course
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
