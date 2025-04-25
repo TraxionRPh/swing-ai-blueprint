@@ -99,9 +99,9 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
           {renderCommonMistakes()}
           
           {drill.pro_tip && (
-            <div className="mt-6 bg-[#221F26] p-4 rounded-md">
-              <h3 className="text-lg font-semibold mb-4 text-white">Pro Tip</h3>
-              <p className="text-sm text-gray-300">{drill.pro_tip}</p>
+            <div className="mt-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-md">
+              <h3 className="text-lg font-semibold mb-4 text-orange-600">Pro Tip</h3>
+              <p className="text-sm text-orange-800">{drill.pro_tip}</p>
             </div>
           )}
 
