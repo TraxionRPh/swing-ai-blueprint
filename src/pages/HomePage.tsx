@@ -59,7 +59,7 @@ const HomePage = () => {
       <header className="max-w-5xl mx-auto mb-10">
         <div className="flex items-center mb-4">
           <LucideGolf className="h-10 w-10 text-primary mr-3" />
-          <h1 className="text-3xl font-bold">SwingAI</h1>
+          <h1 className="text-3xl font-bold">ChipAway</h1>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>

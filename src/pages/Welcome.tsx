@@ -41,15 +41,13 @@ const Welcome = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-black/40" />
-      
-      <Card className="w-full max-w-md z-10">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
             <LucideGolf className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome to SwingAI</CardTitle>
+          <CardTitle className="text-2xl">Welcome to ChipAway</CardTitle>
           <CardDescription>Let's set up your profile to personalize your experience</CardDescription>
         </CardHeader>
         

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,25 +8,15 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
-
-// Pages
-import Auth from "./pages/Auth";
-import DrillLibrary from "./pages/DrillLibrary";
-import ChallengeLibrary from "./pages/ChallengeLibrary";
-import RoundTracking from "./pages/RoundTracking";
-import Dashboard from "./pages/Dashboard";
-import AIAnalysis from "./pages/AIAnalysis";
-import NotFound from "./pages/NotFound";
-import Layout from "./components/Layout";
-import Welcome from "./pages/Welcome";
+import { useProfile } from "@/hooks/useProfile";
 
 const queryClient = new QueryClient();
 
-// Root component to handle conditional rendering based on auth state
 const Root = () => {
-  const { session, loading } = useAuth();
-
-  if (loading) {
+  const { session, loading: authLoading } = useAuth();
+  const { isFirstVisit, loading: profileLoading } = useProfile();
+  
+  if (authLoading || profileLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Card className="p-6">
@@ -37,8 +26,15 @@ const Root = () => {
     );
   }
 
-  // Redirect to welcome if authenticated, otherwise show auth page
-  return session ? <Navigate to="/welcome" replace /> : <Auth />;
+  if (!session) {
+    return <Auth />;
+  }
+
+  if (isFirstVisit) {
+    return <Navigate to="/welcome" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
 };
 
 const App = () => (

@@ -1,6 +1,4 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,7 +54,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Welcome to SwingAI!",
+        title: "Welcome to ChipAway!",
         description: "Please check your email to confirm your account.",
       });
     } catch (error: any) {
@@ -71,15 +69,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-black/40" />
-      
-      <Card className="w-[350px] z-10">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-[350px]">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
             <LucideGolf className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl">SwingAI</CardTitle>
+          <CardTitle className="text-2xl">ChipAway</CardTitle>
           <CardDescription>Elevate your golf game with AI-powered training</CardDescription>
         </CardHeader>
         
