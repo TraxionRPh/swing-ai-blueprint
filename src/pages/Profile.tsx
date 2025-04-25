@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +89,21 @@ const Profile = () => {
                 onChange={(e) => setLocalLastName(e.target.value)}
                 placeholder="Enter your last name"
               />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="targetScore">Target Round Score</Label>
+              <div className="text-muted-foreground">
+                {scoreGoal ? `${scoreGoal} strokes` : 'Not set'}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="targetHandicap">Target Handicap</Label>
+              <div className="text-muted-foreground">
+                {handicapGoal ? `${handicapGoal} handicap` : 'Not set'}
+              </div>
             </div>
           </div>
 
