@@ -362,6 +362,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: string
+          read: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          read?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          read?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -404,6 +437,33 @@ export type Database = {
           score_goal?: number | null
           selected_goals?: string[] | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth_keys: Json
+          created_at: string | null
+          endpoint: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_keys: Json
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_keys?: Json
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
