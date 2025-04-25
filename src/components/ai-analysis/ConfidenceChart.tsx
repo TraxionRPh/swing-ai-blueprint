@@ -12,16 +12,23 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-const aiConfidenceData = [
-  { month: 'Jan', confidence: 65 },
-  { month: 'Feb', confidence: 72 },
-  { month: 'Mar', confidence: 78 },
-  { month: 'Apr', confidence: 85 },
-];
+interface ConfidencePoint {
+  month: string;
+  confidence: number;
+}
 
-export const ConfidenceChart = () => {
+interface ConfidenceChartProps {
+  confidenceData: ConfidencePoint[];
+  currentConfidence: number;
+}
+
+export const ConfidenceChart = ({ confidenceData, currentConfidence }: ConfidenceChartProps) => {
   const isMobile = useIsMobile();
-  const latestConfidence = aiConfidenceData[aiConfidenceData.length - 1].confidence;
+  
+  // Calculate improvement if we have at least two data points
+  const improvement = confidenceData.length >= 2 
+    ? currentConfidence - confidenceData[confidenceData.length - 2].confidence 
+    : 0;
 
   return (
     <Card>
@@ -36,16 +43,16 @@ export const ConfidenceChart = () => {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium leading-none">Current Confidence</p>
-              <p className="text-2xl md:text-3xl font-bold">{latestConfidence}%</p>
+              <p className="text-2xl md:text-3xl font-bold">{currentConfidence}%</p>
             </div>
             <div className="text-sm text-muted-foreground">
-              +7% improvement from last month
+              {improvement > 0 ? `+${improvement}% improvement` : improvement < 0 ? `${improvement}% decrease` : 'No change'} from last month
             </div>
           </div>
-          <Progress value={latestConfidence} className="h-2" />
+          <Progress value={currentConfidence} className="h-2" />
           <div className="h-[200px] md:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={aiConfidenceData}>
+              <LineChart data={confidenceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis
                   dataKey="month"
@@ -83,4 +90,3 @@ export const ConfidenceChart = () => {
     </Card>
   );
 };
-

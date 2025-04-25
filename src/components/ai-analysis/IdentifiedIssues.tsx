@@ -3,7 +3,37 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-export const IdentifiedIssues = () => {
+interface Issue {
+  area: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
+interface IdentifiedIssuesProps {
+  issues?: Issue[];
+}
+
+export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
+  const defaultIssues = [
+    {
+      area: "Driver Path",
+      description: "Data shows a consistent out-to-in swing path with your driver, leading to slices on 68% of drives.",
+      priority: "High" as const
+    },
+    {
+      area: "Bunker Play",
+      description: "Sand save percentage is 22%, well below average for your handicap range.",
+      priority: "Medium" as const
+    },
+    {
+      area: "Iron Distance Control",
+      description: "Your approach shots show inconsistent distance control, with 65% landing short.",
+      priority: "Medium" as const
+    }
+  ];
+
+  const displayIssues = issues || defaultIssues;
+
   return (
     <Card>
       <CardHeader>
@@ -13,34 +43,17 @@ export const IdentifiedIssues = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <h4 className="font-medium">Driver Path</h4>
-            <Badge variant="secondary">High Priority</Badge>
+        {displayIssues.map((issue, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex justify-between">
+              <h4 className="font-medium">{issue.area}</h4>
+              <Badge variant="secondary">{issue.priority} Priority</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {issue.description}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Data shows a consistent out-to-in swing path with your driver, 
-            leading to slices on 68% of drives.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <h4 className="font-medium">Bunker Play</h4>
-            <Badge variant="secondary">Medium Priority</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Sand save percentage is 22%, well below average for your handicap range.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <h4 className="font-medium">Iron Distance Control</h4>
-            <Badge variant="secondary">Medium Priority</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Your approach shots show inconsistent distance control, with 65% landing short.
-          </p>
-        </div>
+        ))}
       </CardContent>
       <CardFooter>
         <Button className="w-full" variant="secondary">

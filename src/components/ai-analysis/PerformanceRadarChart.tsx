@@ -12,16 +12,35 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const perfData = [
-  { area: "Driving", value: 60 },
-  { area: "Iron Play", value: 45 },
-  { area: "Chipping", value: 70 },
-  { area: "Bunker", value: 40 },
-  { area: "Putting", value: 65 },
-];
+interface PerformanceData {
+  driving: number;
+  ironPlay: number;
+  chipping: number;
+  bunker: number;
+  putting: number;
+}
 
-export const PerformanceRadarChart = () => {
+interface PerformanceRadarChartProps {
+  data?: PerformanceData;
+}
+
+export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
   const isMobile = useIsMobile();
+
+  // Format data for the chart
+  const formattedData = data ? [
+    { area: "Driving", value: data.driving },
+    { area: "Iron Play", value: data.ironPlay },
+    { area: "Chipping", value: data.chipping },
+    { area: "Bunker", value: data.bunker },
+    { area: "Putting", value: data.putting },
+  ] : [
+    { area: "Driving", value: 60 },
+    { area: "Iron Play", value: 45 },
+    { area: "Chipping", value: 70 },
+    { area: "Bunker", value: 40 },
+    { area: "Putting", value: 65 },
+  ];
 
   return (
     <Card>
@@ -37,7 +56,7 @@ export const PerformanceRadarChart = () => {
       <CardContent className="pb-2">
         <div className="h-[300px] md:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "65%" : "80%"} data={perfData}>
+            <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "65%" : "80%"} data={formattedData}>
               <PolarGrid stroke="#666" />
               <PolarAngleAxis
                 dataKey="area"
