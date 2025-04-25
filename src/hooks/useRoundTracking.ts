@@ -47,7 +47,18 @@ export const useRoundTracking = () => {
 
   const handleCourseSelect = async (course: Course) => {
     const newRoundId = await handleCourseSelectBase(course);
-    if (newRoundId) setCurrentRoundId(newRoundId);
+    if (newRoundId) {
+      setCurrentRoundId(newRoundId);
+      // Initialize hole scores with default values after creating a new round
+      const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+        holeNumber: i + 1,
+        par: 4,
+        distance: 0,
+        score: 0,
+        putts: 0
+      }));
+      setHoleScores(defaultHoles);
+    }
   };
 
   const handleNext = () => {

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { HoleData } from "@/types/round-tracking";
@@ -8,6 +8,21 @@ export const useScoreTracking = (roundId: string | null) => {
   const [currentHole, setCurrentHole] = useState(1);
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const { toast } = useToast();
+
+  // Add effect to initialize hole scores when roundId changes
+  useEffect(() => {
+    if (roundId && holeScores.length === 0) {
+      // Initialize default hole scores if we have a roundId but no scores yet
+      const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+        holeNumber: i + 1,
+        par: 4,
+        distance: 0,
+        score: 0,
+        putts: 0
+      }));
+      setHoleScores(defaultHoles);
+    }
+  }, [roundId]);
 
   const saveHoleScore = async (holeData: HoleData) => {
     if (!roundId) return;
