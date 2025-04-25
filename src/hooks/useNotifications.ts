@@ -10,8 +10,17 @@ export interface NotificationPreferences {
   ai_insights: boolean;
 }
 
-export interface Notification extends Tables['notifications']['Row'] {
+// Define the Notification interface without extending
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
   type: string;
+  read: boolean | null;
+  data: any;
+  created_at: string | null;
+  updated_at: string | null;
+  user_id: string;
 }
 
 export const useNotifications = () => {
@@ -43,7 +52,7 @@ export const useNotifications = () => {
       const formattedNotifications = (data || []).map(notification => ({
         ...notification,
         type: notification.type || 'general'
-      }));
+      })) as Notification[];
 
       setNotifications(formattedNotifications);
     } catch (error) {
@@ -64,9 +73,9 @@ export const useNotifications = () => {
       
       if (data) {
         setPreferences({
-          practice_reminders: data.practice_reminders,
-          round_completion_reminders: data.round_completion_reminders,
-          ai_insights: data.ai_insights
+          practice_reminders: data.practice_reminders || true,
+          round_completion_reminders: data.round_completion_reminders || true,
+          ai_insights: data.ai_insights || true
         });
       }
     } catch (error) {
