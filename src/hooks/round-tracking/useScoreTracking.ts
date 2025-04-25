@@ -9,16 +9,17 @@ export const useScoreTracking = (roundId: string | null) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const { toast } = useToast();
 
-  // Add effect to initialize hole scores when roundId changes
+  // Initialize hole scores when roundId changes
   useEffect(() => {
     if (roundId && holeScores.length === 0) {
-      // Initialize default hole scores if we have a roundId but no scores yet
       const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
         holeNumber: i + 1,
         par: 4,
         distance: 0,
         score: 0,
-        putts: 0
+        putts: 0,
+        fairwayHit: false,
+        greenInRegulation: false
       }));
       setHoleScores(defaultHoles);
     }
@@ -80,13 +81,14 @@ export const useScoreTracking = (roundId: string | null) => {
     handleHoleUpdate,
     handleNext,
     handlePrevious,
-    currentHoleData: holeScores.find(hole => hole.holeNumber === currentHole) || 
-      (holeScores.length > 0 ? holeScores[0] : {
-        holeNumber: currentHole,
-        par: 4,
-        distance: 0,
-        score: 0,
-        putts: 0
-      })
+    currentHoleData: holeScores.find(hole => hole.holeNumber === currentHole) || {
+      holeNumber: currentHole,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0,
+      fairwayHit: false,
+      greenInRegulation: false
+    }
   };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface HoleData {
   holeNumber: number;
@@ -47,6 +49,13 @@ export const HoleScoreCard = ({
   useEffect(() => {
     setData(holeData);
   }, [holeData.holeNumber]);
+
+  const handleNext = () => {
+    if (onNext) {
+      onNext();
+      // The data will be reset in the useEffect when holeNumber changes
+    }
+  };
   
   const saveCourseHoleData = async (field: 'par' | 'distance', value: number) => {
     if (!courseId) return;
@@ -100,36 +109,76 @@ export const HoleScoreCard = ({
             <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="par">Par</Label>
-              <Input id="par" type="number" placeholder="Enter par" value={data.par || ''} onChange={e => handleChange('par', parseInt(e.target.value) || 0)} min={3} max={6} />
+              <Label>Par</Label>
+              <ToggleGroup 
+                type="single" 
+                value={data.par.toString()}
+                onValueChange={(value) => handleChange('par', parseInt(value) || 3)}
+                className="justify-start"
+              >
+                {[3, 4, 5].map((par) => (
+                  <ToggleGroupItem key={par} value={par.toString()}>
+                    {par}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="distance">Yards</Label>
-              <Input id="distance" type="number" placeholder="Enter yards" value={data.distance || ''} onChange={e => handleChange('distance', parseInt(e.target.value) || 0)} min={0} />
+              <Input 
+                id="distance" 
+                type="number" 
+                placeholder="Enter yards" 
+                value={data.distance || ''} 
+                onChange={e => handleChange('distance', parseInt(e.target.value) || 0)} 
+                min={0} 
+              />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="score">Score</Label>
-              <Input id="score" type="number" placeholder="Enter score" value={data.score || ''} onChange={e => handleChange('score', parseInt(e.target.value) || 0)} min={1} />
+              <Input 
+                id="score" 
+                type="number" 
+                placeholder="Enter score" 
+                value={data.score || ''} 
+                onChange={e => handleChange('score', parseInt(e.target.value) || 0)} 
+                min={1} 
+              />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="putts">Putts</Label>
-              <Input id="putts" type="number" placeholder="Enter putts" value={data.putts || ''} onChange={e => handleChange('putts', parseInt(e.target.value) || 0)} min={0} />
+              <Input 
+                id="putts" 
+                type="number" 
+                placeholder="Enter putts" 
+                value={data.putts || ''} 
+                onChange={e => handleChange('putts', parseInt(e.target.value) || 0)} 
+                min={0} 
+              />
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="fairway">Fairway Hit</Label>
-              <Switch id="fairway" checked={data.fairwayHit} onCheckedChange={checked => handleChange('fairwayHit', checked)} />
+              <Switch 
+                id="fairway" 
+                checked={data.fairwayHit} 
+                onCheckedChange={checked => handleChange('fairwayHit', checked)} 
+              />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="gir">Green in Regulation</Label>
-              <Switch id="gir" checked={data.greenInRegulation} onCheckedChange={checked => handleChange('greenInRegulation', checked)} />
+              <Switch 
+                id="gir" 
+                checked={data.greenInRegulation} 
+                onCheckedChange={checked => handleChange('greenInRegulation', checked)} 
+              />
             </div>
           </div>
 
@@ -137,7 +186,7 @@ export const HoleScoreCard = ({
             <Button variant="outline" onClick={onPrevious} disabled={isFirst}>
               Previous Hole
             </Button>
-            <Button onClick={onNext} disabled={isLast}>
+            <Button onClick={handleNext} disabled={isLast}>
               Next Hole
             </Button>
           </div>
