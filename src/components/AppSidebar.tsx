@@ -20,7 +20,7 @@ const AppSidebar = () => {
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-2">
           <LucideGolf className="h-8 w-8 text-primary" />
-          <h1 className="font-bold text-xl">SwingAI</h1>
+          <h1 className="font-bold text-xl">ChipAway</h1>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -106,7 +106,7 @@ const AppSidebar = () => {
       </SidebarContent>
       <SidebarFooter>
         <div className="px-3 py-2 text-xs text-muted-foreground">
-          © 2025 SwingAI - v1.0.0
+          © 2025 ChipAway - v1.0.0
         </div>
       </SidebarFooter>
     </Sidebar>
