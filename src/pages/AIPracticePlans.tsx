@@ -2,100 +2,68 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Brain } from "lucide-react";
-import { useAIAnalysis } from "@/hooks/useAIAnalysis";
-import { PracticePlanForm } from "@/components/practice-plans/PracticePlanForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
-import { CommonProblem } from "@/types/practice-plan";
-import { Loading } from "@/components/ui/loading";
-
-const commonProblems: CommonProblem[] = [
-  {
-    id: 1,
-    problem: "Slicing my driver",
-    description: "Ball starts straight but curves severely right (for right-handed golfers)",
-    popularity: "Very Common"
-  },
-  {
-    id: 2,
-    problem: "Chunking iron shots",
-    description: "Hitting the ground before the ball, resulting in fat shots",
-    popularity: "Common"
-  },
-  {
-    id: 3,
-    problem: "Three-putting",
-    description: "Taking three or more putts to complete a hole",
-    popularity: "Very Common"
-  },
-  {
-    id: 4,
-    problem: "Topped shots",
-    description: "Hitting the top half of the ball, causing low-flying shots",
-    popularity: "Common"
-  },
-  {
-    id: 5,
-    problem: "Shanking",
-    description: "Ball striking the hosel, causing it to shoot right at a sharp angle",
-    popularity: "Less Common"
-  },
-  {
-    id: 6,
-    problem: "Inconsistent ball striking",
-    description: "Variable contact quality leading to unpredictable distances",
-    popularity: "Very Common"
-  }
-];
+import { PracticePlanForm } from "@/components/practice-plans/PracticePlanForm";
+import { Brain } from "@/components/icons/CustomIcons";
+import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 
 const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
+  const [latestPracticePlan, setLatestPracticePlan] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
-  const { 
-    generateAnalysis, 
-    isGenerating: isAnalyzing,
-    latestPracticePlan,
-    generatePracticePlan,
-    isGeneratingPlan,
-    isLoadingPracticePlan
-  } = useAIAnalysis();
-  
-  const handleSubmit = async () => {
+  const { session } = useAuth();
+  const { generatePracticePlan } = useAIAnalysis();
+
+  const generateAnalysis = async () => {
     if (!inputValue.trim()) {
       toast({
-        title: "Input required",
-        description: "Please describe your golf issue or select from common problems.",
+        title: "Missing Input",
+        description: "Please describe your golf issue",
         variant: "destructive"
       });
       return;
     }
-    
-    await generatePracticePlan(inputValue);
+
+    setIsAnalyzing(true);
+    try {
+      const practicePlan = await generatePracticePlan(inputValue);
+      setLatestPracticePlan(practicePlan);
+      toast({
+        title: "Practice Plan Generated",
+        description: "AI has created a personalized practice plan for you"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate practice plan",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
-  
-  const handleSelectProblem = async (problem: string) => {
-    setInputValue(problem);
-    // Auto-submit when a common problem is selected
-    await generatePracticePlan(problem);
-  };
-  
-  const handleClear = () => {
+
+  const clearPlan = () => {
+    setLatestPracticePlan(null);
     setInputValue("");
   };
 
-  if (isLoadingPracticePlan) {
-    return <Loading message="Loading your practice plan data..." />;
-  }
-  
+  const handleSelectProblem = (problem: string) => {
+    setInputValue(problem);
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Practice Plans</h1>
+    <div className="container mx-auto max-w-2xl space-y-6 p-4">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
         <p className="text-muted-foreground mb-4">
           Get personalized practice plans based on your performance
         </p>
         <Button
-          onClick={() => generateAnalysis()}
+          onClick={generateAnalysis}
           disabled={isAnalyzing}
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
         >
@@ -108,15 +76,28 @@ const AIPracticePlans = () => {
         <PracticePlanForm
           inputValue={inputValue}
           onInputChange={setInputValue}
-          onSubmit={handleSubmit}
+          onSubmit={generateAnalysis}
           onSelectProblem={handleSelectProblem}
-          isGenerating={isGeneratingPlan}
-          commonProblems={commonProblems}
+          isGenerating={isAnalyzing}
+          commonProblems={[
+            {
+              id: 1,
+              problem: "Slicing Driver",
+              description: "Struggling with drives that curve right",
+              popularity: "High"
+            },
+            {
+              id: 2,
+              problem: "Putting Inconsistency",
+              description: "Difficulty maintaining consistent putting",
+              popularity: "Medium"
+            }
+          ]}
         />
       ) : (
-        <GeneratedPlan
-          plan={latestPracticePlan}
-          onClear={handleClear}
+        <GeneratedPlan 
+          plan={latestPracticePlan} 
+          onClear={clearPlan} 
         />
       )}
     </div>
