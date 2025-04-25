@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,17 +141,15 @@ const AIPracticePlans = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Practice Plans</h1>
-          <p className="text-muted-foreground">
-            Get personalized practice plans based on your performance
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Practice Plans</h1>
+        <p className="text-muted-foreground mb-4">
+          Get personalized practice plans based on your performance
+        </p>
         <Button
           onClick={() => generateAnalysis()}
           disabled={isAnalyzing}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
         >
           <Brain className="mr-2 h-4 w-4" />
           {isAnalyzing ? "Analyzing Your Data..." : "Generate AI Practice Plan"}
@@ -307,3 +306,4 @@ const AIPracticePlans = () => {
 };
 
 export default AIPracticePlans;
+
