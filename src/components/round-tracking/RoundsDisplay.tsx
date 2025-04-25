@@ -131,7 +131,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               course={round.golf_courses}
               onSelect={isInProgress ? 
                 () => handleInProgressRoundSelect(round) : 
-                (course, holeCount) => onCourseSelect(course, holeCount)
+                (course) => onCourseSelect(course, round.hole_count || 18)
               }
               isInProgress={isInProgress}
               roundId={isInProgress ? round.id : undefined}

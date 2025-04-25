@@ -9,8 +9,12 @@ interface RecentlyPlayedProps {
   onCourseSelect: (course: Course, holeCount?: number) => void;
 }
 
+interface RecentCourse extends Course {
+  hole_count?: number;
+}
+
 export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
-  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
+  const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -44,10 +48,13 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
 
         // Filter out duplicates and null values
         const uniqueCourses = rounds
-          ?.map(round => round.golf_courses)
+          ?.map(round => ({
+            ...round.golf_courses,
+            hole_count: round.hole_count || 18
+          }))
           .filter((course, index, self) => 
             course && self.findIndex(c => c?.id === course.id) === index
-          ) as Course[];
+          ) as RecentCourse[];
 
         setRecentCourses(uniqueCourses || []);
       } catch (error) {
@@ -74,7 +81,7 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
           <CourseResult
             key={course.id}
             course={course}
-            onSelect={onCourseSelect}
+            onSelect={(selectedCourse) => onCourseSelect(selectedCourse, course.hole_count || 18)}
           />
         ))}
       </div>

@@ -40,6 +40,7 @@ export const CourseResult = ({
   };
 
   const handleStartRound = () => {
+    // Pass the selected hole count to the parent component
     onSelect(course, holeCount);
     setIsSelected(false); // Hide selection after starting
   };
