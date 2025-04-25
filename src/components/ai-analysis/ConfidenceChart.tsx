@@ -12,39 +12,40 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
-const confidenceData = [
-  { month: 'Jan', confidence: 35 },
-  { month: 'Feb', confidence: 42 },
-  { month: 'Mar', confidence: 48 },
-  { month: 'Apr', confidence: 55 },
+const aiConfidenceData = [
+  { month: 'Jan', confidence: 65 },
+  { month: 'Feb', confidence: 72 },
+  { month: 'Mar', confidence: 78 },
+  { month: 'Apr', confidence: 85 },
 ];
 
 export const ConfidenceChart = () => {
   const isMobile = useIsMobile();
+  const latestConfidence = aiConfidenceData[aiConfidenceData.length - 1].confidence;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg md:text-xl">Confidence Score</CardTitle>
+        <CardTitle className="text-lg md:text-xl">AI Analysis Confidence</CardTitle>
         <CardDescription>
-          Your game confidence based on performance trends
+          AI's confidence in the accuracy of its performance analysis
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-sm font-medium leading-none">Current Score</p>
-              <p className="text-2xl md:text-3xl font-bold">55</p>
+              <p className="text-sm font-medium leading-none">Current Confidence</p>
+              <p className="text-2xl md:text-3xl font-bold">{latestConfidence}%</p>
             </div>
             <div className="text-sm text-muted-foreground">
-              +7 pts from last month
+              +7% improvement from last month
             </div>
           </div>
-          <Progress value={55} className="h-2" />
+          <Progress value={latestConfidence} className="h-2" />
           <div className="h-[200px] md:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={confidenceData}>
+              <LineChart data={aiConfidenceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis
                   dataKey="month"
@@ -55,6 +56,7 @@ export const ConfidenceChart = () => {
                   domain={[0, 100]}
                   tick={{ fill: '#888', fontSize: isMobile ? 10 : 12 }}
                   width={35}
+                  tickFormatter={(value) => `${value}%`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -63,11 +65,12 @@ export const ConfidenceChart = () => {
                     borderRadius: '8px',
                     fontSize: isMobile ? '12px' : '14px'
                   }}
+                  formatter={(value) => [`${value}%`, 'Confidence']}
                 />
                 <Line
                   type="monotone"
                   dataKey="confidence"
-                  stroke="#FCA311"
+                  stroke="#10B981" // A green color to represent increasing confidence
                   strokeWidth={2}
                   dot={{ r: isMobile ? 3 : 4 }}
                   activeDot={{ r: isMobile ? 6 : 8 }}
@@ -80,3 +83,4 @@ export const ConfidenceChart = () => {
     </Card>
   );
 };
+
