@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+
 interface HoleData {
   holeNumber: number;
   par: number;
@@ -13,6 +15,7 @@ interface HoleData {
   fairwayHit?: boolean;
   greenInRegulation?: boolean;
 }
+
 interface HoleScoreCardProps {
   holeData: HoleData;
   onUpdate: (data: HoleData) => void;
@@ -22,6 +25,7 @@ interface HoleScoreCardProps {
   isLast?: boolean;
   teeColor?: string;
 }
+
 export const HoleScoreCard = ({
   holeData,
   onUpdate,
@@ -31,7 +35,13 @@ export const HoleScoreCard = ({
   isLast,
   teeColor
 }: HoleScoreCardProps) => {
-  const [data, setData] = useState(holeData);
+  const [data, setData] = useState<HoleData>(holeData);
+  
+  // Reset internal state when holeData changes (when switching holes)
+  useEffect(() => {
+    setData(holeData);
+  }, [holeData.holeNumber]);
+  
   const handleChange = (field: keyof HoleData, value: any) => {
     const newData = {
       ...data,
@@ -40,26 +50,12 @@ export const HoleScoreCard = ({
     setData(newData);
     onUpdate(newData);
   };
-  const getTeeColorStyle = () => {
-    if (!teeColor) return 'bg-secondary';
-    // Convert common tee color names to their CSS equivalents
-    const colorMap: {
-      [key: string]: string;
-    } = {
-      'blue': 'bg-blue-500',
-      'white': 'bg-white text-black',
-      'red': 'bg-red-500',
-      'gold': 'bg-yellow-500',
-      'black': 'bg-black',
-      'green': 'bg-green-500'
-    };
-    return colorMap[teeColor.toLowerCase()] || 'bg-secondary';
-  };
-  return <Card className="w-full max-w-xl mx-auto">
+  
+  return (
+    <Card className="w-full max-w-xl mx-auto">
       <CardContent className="pt-6 space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
-          
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -104,5 +100,6 @@ export const HoleScoreCard = ({
           </Button>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };

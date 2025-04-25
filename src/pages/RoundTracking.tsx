@@ -116,6 +116,16 @@ const RoundTracking = () => {
     ? selectedCourse.course_tees.find(tee => tee.id === selectedTee)?.color 
     : undefined;
 
+  // Get the current hole data
+  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || 
+    (holeScores.length > 0 ? holeScores[0] : {
+      holeNumber: currentHole,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0
+    });
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,17 +146,15 @@ const RoundTracking = () => {
         <>
           <ScoreSummary holeScores={holeScores} />
           
-          {holeScores.length > 0 && (
-            <HoleScoreCard
-              holeData={holeScores.find(hole => hole.holeNumber === currentHole) || holeScores[0]}
-              onUpdate={handleHoleUpdate}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              isFirst={currentHole === 1}
-              isLast={currentHole === 18}
-              teeColor={currentTeeColor}
-            />
-          )}
+          <HoleScoreCard
+            holeData={currentHoleData}
+            onUpdate={handleHoleUpdate}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            isFirst={currentHole === 1}
+            isLast={currentHole === 18}
+            teeColor={currentTeeColor}
+          />
         </>
       )}
     </div>
