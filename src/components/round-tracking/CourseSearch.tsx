@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ interface Course {
   name: string;
   city: string;
   state: string;
+  total_par?: number;
+  is_verified?: boolean;
   course_tees: {
     id: string;
     name: string;
