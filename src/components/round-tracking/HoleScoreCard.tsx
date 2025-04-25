@@ -57,8 +57,9 @@ export const HoleScoreCard = ({
             <Input 
               id="score"
               type="number"
-              value={data.score}
-              onChange={(e) => handleChange('score', parseInt(e.target.value))}
+              placeholder="Enter score"
+              value={data.score || ''}
+              onChange={(e) => handleChange('score', parseInt(e.target.value) || 0)}
               min={1}
             />
           </div>
@@ -67,8 +68,9 @@ export const HoleScoreCard = ({
             <Input 
               id="putts"
               type="number"
-              value={data.putts}
-              onChange={(e) => handleChange('putts', parseInt(e.target.value))}
+              placeholder="Enter putts"
+              value={data.putts || ''}
+              onChange={(e) => handleChange('putts', parseInt(e.target.value) || 0)}
               min={0}
             />
           </div>
