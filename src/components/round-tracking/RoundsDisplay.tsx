@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import type { Course } from "@/types/round-tracking";
 
 interface RoundsDisplayProps {
@@ -13,6 +14,9 @@ interface RoundsDisplayProps {
 interface RoundWithCourse {
   id: string;
   total_score: number | null;
+  hole_scores: {
+    hole_number: number;
+  }[];
   golf_courses: Course;
 }
 
@@ -21,6 +25,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const [completedRounds, setCompletedRounds] = useState<RoundWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRounds = async () => {
@@ -30,6 +35,9 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
           .select(`
             id,
             total_score,
+            hole_scores (
+              hole_number
+            ),
             golf_courses (
               id,
               name,
@@ -68,9 +76,18 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     fetchRounds();
   }, [toast]);
 
+  const handleInProgressRoundSelect = (round: RoundWithCourse) => {
+    // Get the highest hole number recorded to determine where to resume
+    const lastHole = round.hole_scores.reduce((max, score) => 
+      Math.max(max, score.hole_number), 0);
+    
+    // Navigate to the round tracking page with the round ID
+    navigate(`/rounds/${round.id}/${lastHole + 1}`);
+  };
+
   if (loading) return null;
 
-  const renderRoundsList = (rounds: RoundWithCourse[], title: string) => {
+  const renderRoundsList = (rounds: RoundWithCourse[], title: string, isInProgress: boolean) => {
     if (rounds.length === 0) return null;
 
     return (
@@ -83,7 +100,10 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
             <CourseResult
               key={round.id}
               course={round.golf_courses}
-              onSelect={onCourseSelect}
+              onSelect={isInProgress ? 
+                () => handleInProgressRoundSelect(round) : 
+                () => onCourseSelect(round.golf_courses)
+              }
             />
           ))}
         </CardContent>
@@ -93,8 +113,8 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
 
   return (
     <div className="space-y-4">
-      {renderRoundsList(inProgressRounds, "In Progress Rounds")}
-      {renderRoundsList(completedRounds, "Recently Completed Rounds")}
+      {renderRoundsList(inProgressRounds, "In Progress Rounds", true)}
+      {renderRoundsList(completedRounds, "Recently Completed Rounds", false)}
     </div>
   );
 };
