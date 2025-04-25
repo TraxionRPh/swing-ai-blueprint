@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -93,6 +94,14 @@ const AIPracticePlans = () => {
         <p className="text-muted-foreground mb-4">
           Get personalized practice plans based on your performance
         </p>
+        <Button
+          onClick={() => generateAnalysis()}
+          disabled={isAnalyzing}
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+        >
+          <Brain className="mr-2 h-4 w-4" />
+          {isAnalyzing ? "Analyzing Your Data..." : "Generate AI Practice Plan"}
+        </Button>
       </div>
       
       {!latestPracticePlan || inputValue ? (
