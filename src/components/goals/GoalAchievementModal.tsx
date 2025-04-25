@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Party } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 
 interface GoalAchievementModalProps {
   achievedGoal: {
@@ -64,7 +64,7 @@ const GoalAchievementModal = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Party className="h-5 w-5 text-yellow-500" />
+              <PartyPopper className="h-5 w-5 text-yellow-500" />
               Congratulations!
             </DialogTitle>
             <DialogDescription>
