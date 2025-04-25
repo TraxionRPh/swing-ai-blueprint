@@ -53,6 +53,7 @@ export const useRoundTracking = () => {
     const newRoundId = await handleCourseSelectBase(course);
     if (newRoundId) {
       setCurrentRoundId(newRoundId);
+      // Create default holes based on the selected hole count
       const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
         holeNumber: i + 1,
         par: 4,
@@ -72,8 +73,9 @@ export const useRoundTracking = () => {
     }
   };
 
-  const finishRound = async (holeScores: any[]) => {
-    return baseFinishRound(holeScores, holeCount || 18);
+  const finishRound = async () => {
+    if (!holeCount) return false;
+    return baseFinishRound(holeScores.slice(0, holeCount), holeCount);
   };
 
   return {

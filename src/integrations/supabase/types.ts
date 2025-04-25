@@ -414,6 +414,7 @@ export type Database = {
           date: string
           fairways_hit: number | null
           greens_in_regulation: number | null
+          hole_count: number | null
           id: string
           notes: string | null
           total_putts: number | null
@@ -427,6 +428,7 @@ export type Database = {
           date?: string
           fairways_hit?: number | null
           greens_in_regulation?: number | null
+          hole_count?: number | null
           id?: string
           notes?: string | null
           total_putts?: number | null
@@ -440,6 +442,7 @@ export type Database = {
           date?: string
           fairways_hit?: number | null
           greens_in_regulation?: number | null
+          hole_count?: number | null
           id?: string
           notes?: string | null
           total_putts?: number | null

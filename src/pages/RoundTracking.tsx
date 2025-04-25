@@ -38,7 +38,7 @@ const RoundTracking = () => {
   };
 
   const handleConfirmRound = async () => {
-    await finishRound(holeScores);
+    await finishRound();
     setShowFinalScore(false);
   };
 

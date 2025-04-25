@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Course, HoleData } from "@/types/round-tracking";
@@ -16,8 +16,8 @@ export const useRoundManagement = (user: any) => {
         .from('rounds')
         .select(`
           id,
-          course_id,
           hole_count,
+          course_id,
           golf_courses:course_id (
             id,
             name,
@@ -33,6 +33,7 @@ export const useRoundManagement = (user: any) => {
       if (error) throw error;
 
       if (data) {
+        // Get tees for the course
         const courseTeesResponse = data.course_id ? 
           await supabase
             .from('course_tees')
