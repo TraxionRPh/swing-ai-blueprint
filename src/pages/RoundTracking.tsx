@@ -1,18 +1,16 @@
 
 import { useState } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
-import { CourseSearch } from "@/components/round-tracking/CourseSearch";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CourseSelector } from "@/components/round-tracking/CourseSelector";
+import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
-// Updated Course interface to match the structure from CourseSearch
 interface Course {
   id: string;
   name: string;
-  address: string | null;
+  city: string;
+  state: string;
   course_tees: {
     id: string;
     name: string;
@@ -37,23 +35,14 @@ const RoundTracking = () => {
   const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const [currentHole, setCurrentHole] = useState(1);
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
-  const [showCourseSearch, setShowCourseSearch] = useState(false);
   const { toast } = useToast();
 
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
-    setShowCourseSearch(false);
-
-    // Set first tee as default selected tee if available
-    if (course.course_tees && course.course_tees.length > 0) {
-      setSelectedTee(course.course_tees[0].id);
-    }
-
     // Fetch hole data after setting the course
     fetchCourseHoles(course.id);
   };
 
-  // Separate async function to fetch course holes
   const fetchCourseHoles = async (courseId: string) => {
     try {
       const { data: holes, error } = await supabase
@@ -64,7 +53,6 @@ const RoundTracking = () => {
 
       if (error) throw error;
 
-      // Initialize hole scores with course data
       setHoleScores(holes.map((hole: any) => ({
         holeNumber: hole.hole_number,
         par: hole.par,
@@ -97,23 +85,6 @@ const RoundTracking = () => {
     if (currentHole > 1) setCurrentHole(prev => prev - 1);
   };
 
-  const calculateTotals = () => {
-    return holeScores.reduce((acc, hole) => ({
-      score: acc.score + (hole.score || 0),
-      putts: acc.putts + (hole.putts || 0),
-      fairways: acc.fairways + (hole.fairwayHit ? 1 : 0),
-      greens: acc.greens + (hole.greenInRegulation ? 1 : 0),
-    }), { score: 0, putts: 0, fairways: 0, greens: 0 });
-  };
-
-  // Get current tee info
-  const getCurrentTee = () => {
-    if (!selectedCourse || !selectedTee) return null;
-    return selectedCourse.course_tees.find(tee => tee.id === selectedTee);
-  };
-
-  const currentTee = getCurrentTee();
-
   return (
     <div className="space-y-6">
       <div>
@@ -123,58 +94,17 @@ const RoundTracking = () => {
         </p>
       </div>
 
-      {!selectedCourse ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select a Course</CardTitle>
-            <CardDescription>
-              Search for a course or enter course details manually
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CourseSearch onCourseSelect={handleCourseSelect} />
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">{selectedCourse.name}</h2>
-                  {currentTee && (
-                    <p className="text-sm text-muted-foreground">
-                      Tee: {currentTee.color || currentTee.name} • 
-                      Course Rating: {currentTee.course_rating} • 
-                      Slope: {currentTee.slope_rating}
-                    </p>
-                  )}
-                </div>
-                <Button variant="outline" onClick={() => setShowCourseSearch(true)}>
-                  Change Course
-                </Button>
-              </div>
-              
-              {selectedCourse.course_tees && selectedCourse.course_tees.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm mb-2">Select Tee:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {selectedCourse.course_tees.map(tee => (
-                      <Button
-                        key={tee.id}
-                        size="sm"
-                        variant={selectedTee === tee.id ? "default" : "outline"}
-                        onClick={() => setSelectedTee(tee.id)}
-                      >
-                        {tee.color || tee.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      <CourseSelector
+        selectedCourse={selectedCourse}
+        selectedTee={selectedTee}
+        onCourseSelect={handleCourseSelect}
+        onTeeSelect={setSelectedTee}
+      />
 
+      {selectedCourse && holeScores.length > 0 && (
+        <>
+          <ScoreSummary holeScores={holeScores} />
+          
           {holeScores[currentHole - 1] && (
             <HoleScoreCard
               holeData={holeScores[currentHole - 1]}
@@ -187,16 +117,6 @@ const RoundTracking = () => {
           )}
         </>
       )}
-
-      <Dialog open={showCourseSearch} onOpenChange={setShowCourseSearch}>
-        <DialogContent>
-          <DialogTitle>Select a Course</DialogTitle>
-          <DialogDescription>
-            Search for a course or enter course details manually
-          </DialogDescription>
-          <CourseSearch onCourseSelect={handleCourseSelect} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
