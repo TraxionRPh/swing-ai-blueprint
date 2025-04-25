@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
@@ -17,6 +17,7 @@ const Profile = () => {
   const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl, scoreGoal, handicapGoal } = useProfile();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  
   const [localHandicap, setLocalHandicap] = useState<HandicapLevel | null>(handicap);
   const [localGoals, setLocalGoals] = useState<string | null>(goals);
   const [localFirstName, setLocalFirstName] = useState<string | null>(firstName);
@@ -24,6 +25,16 @@ const Profile = () => {
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(avatarUrl);
   const [localScoreGoal, setLocalScoreGoal] = useState<number | null>(scoreGoal);
   const [localHandicapGoal, setLocalHandicapGoal] = useState<number | null>(handicapGoal);
+
+  useEffect(() => {
+    setLocalHandicap(handicap);
+    setLocalGoals(goals);
+    setLocalFirstName(firstName);
+    setLocalLastName(lastName);
+    setLocalAvatarUrl(avatarUrl);
+    setLocalScoreGoal(scoreGoal);
+    setLocalHandicapGoal(handicapGoal);
+  }, [handicap, goals, firstName, lastName, avatarUrl, scoreGoal, handicapGoal]);
 
   const handleSave = async () => {
     setIsSaving(true);
