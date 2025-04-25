@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -31,11 +30,10 @@ const Layout = () => {
   };
 
   const currentPath = location.pathname;
-  console.log("Layout rendered, currentPath:", currentPath);
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="min-h-screen flex w-full">
+      <div className="flex min-h-screen w-full bg-background">
         <AppSidebar currentPath={currentPath} />
         
         <div className="flex-1 flex flex-col">
@@ -50,7 +48,7 @@ const Layout = () => {
                 </SheetTrigger>
                 <SheetContent 
                   side="left"
-                  className="w-[280px] p-0 h-[100dvh] flex flex-col overflow-hidden"
+                  className="w-[var(--sidebar-width)] p-0"
                 >
                   <AppSidebar currentPath={currentPath} />
                 </SheetContent>

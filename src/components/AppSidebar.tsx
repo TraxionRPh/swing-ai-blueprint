@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -20,9 +19,9 @@ interface AppSidebarProps {
 
 const AppSidebar = ({ currentPath }: AppSidebarProps) => {
   return (
-    <Sidebar>
+    <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 text-sidebar-foreground">
           <LucideGolf className="h-8 w-8 text-primary" />
           <h1 className="font-bold text-xl">ChipAway</h1>
         </div>
@@ -39,7 +38,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                   isActive={currentPath === "/dashboard"}
                   tooltip="Dashboard"
                 >
-                  <Link to="/dashboard">
+                  <Link to="/dashboard" className="text-sidebar-foreground">
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
                   </Link>
@@ -135,7 +134,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
                   isActive={currentPath === "/profile"}
                   tooltip="Profile"
                 >
-                  <Link to="/profile">
+                  <Link to="/profile" className="text-sidebar-foreground">
                     <User className="h-5 w-5" />
                     <span>Profile</span>
                   </Link>
@@ -147,7 +146,7 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
       </SidebarContent>
       
       <SidebarFooter className="p-4">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-sidebar-foreground/60">
           © 2025 ChipAway - v1.0.0
         </div>
       </SidebarFooter>
