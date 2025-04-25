@@ -41,16 +41,14 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
           </p>
         </div>
       </div>
-      <div className="border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF] rounded-lg">
-        <Button 
-          onClick={handleAISearch}
-          disabled={isAnalyzing}
-          className="w-full h-full bg-card hover:bg-card/80"
-        >
-          <Brain className="mr-2 h-4 w-4" />
-          {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
-        </Button>
-      </div>
+      <Button 
+        onClick={handleAISearch}
+        disabled={isAnalyzing}
+        className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90"
+      >
+        <Brain className="mr-2 h-4 w-4" />
+        {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
+      </Button>
     </div>
   );
 };
