@@ -1,4 +1,3 @@
-
 export interface Drill {
   id: string;  
   title: string;
@@ -12,4 +11,9 @@ export interface Drill {
   instructions?: string;  // Make this optional
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ConfidencePoint {
+  date: string;
+  confidence: number;
 }

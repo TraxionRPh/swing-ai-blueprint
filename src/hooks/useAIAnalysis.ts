@@ -8,7 +8,7 @@ export const useAIAnalysis = () => {
   const [analysis, setAnalysis] = useState<AIAnalysisForPracticePlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiConfidenceHistory, setAiConfidenceHistory] = useState([
+  const [aiConfidenceHistory, setAiConfidenceHistory] = useState<ConfidencePoint[]>([
     { date: '3 weeks ago', confidence: 65 },
     { date: '2 weeks ago', confidence: 72 },
     { date: 'Last week', confidence: 83 },
@@ -119,3 +119,4 @@ export const useAIAnalysis = () => {
     aiConfidenceHistory
   };
 };
+
