@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,15 +53,18 @@ export const HoleScoreCard = ({
     
     setIsSaving(true);
     try {
+      // Always include both par and distance when updating
+      const updateData = {
+        course_id: courseId,
+        hole_number: data.holeNumber,
+        par: field === 'par' ? value : data.par,
+        distance_yards: field === 'distance' ? value : data.distance
+      };
+
       const { error } = await supabase
         .from('course_holes')
-        .upsert({
-          course_id: courseId,
-          hole_number: data.holeNumber,
-          [field]: value,
-          ...(field === 'par' ? { distance_yards: data.distance } : { par: data.par })
-        }, {
-          onConflict: '(course_id, hole_number)'
+        .upsert(updateData, {
+          onConflict: 'course_id,hole_number'
         });
 
       if (error) throw error;
