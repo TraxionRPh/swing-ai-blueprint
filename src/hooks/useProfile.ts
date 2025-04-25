@@ -25,13 +25,22 @@ export const useProfile = (): UseProfileReturn => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user?.id) return;
+    let mounted = true;
     
     const checkUserProfile = async () => {
+      // If no user, reset states and return
+      if (!user?.id) {
+        if (mounted) {
+          setLoading(false);
+          setIsFirstVisit(null);
+        }
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('has_onboarded')
+          .select('has_onboarded, handicap_level, goals')
           .eq('id', user.id)
           .maybeSingle();
         
@@ -44,9 +53,18 @@ export const useProfile = (): UseProfileReturn => {
             .insert({ id: user.id });
             
           if (insertError) throw insertError;
-          setIsFirstVisit(true);
+          
+          if (mounted) {
+            setIsFirstVisit(true);
+            setHandicap("beginner");
+            setGoals("");
+          }
         } else {
-          setIsFirstVisit(!data.has_onboarded);
+          if (mounted) {
+            setIsFirstVisit(!data.has_onboarded);
+            setHandicap(data.handicap_level as HandicapLevel || "beginner");
+            setGoals(data.goals || "");
+          }
         }
       } catch (error: any) {
         console.error('Error checking user profile:', error);
@@ -55,13 +73,18 @@ export const useProfile = (): UseProfileReturn => {
           description: error.message,
           variant: "destructive",
         });
-        setIsFirstVisit(false);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
     
     checkUserProfile();
+    
+    return () => {
+      mounted = false;
+    };
   }, [user?.id, toast]);
 
   const saveProfile = async () => {

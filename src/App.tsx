@@ -29,7 +29,22 @@ const Root = () => {
   const { session, loading: authLoading } = useAuth();
   const { isFirstVisit, loading: profileLoading } = useProfile();
   
-  if (authLoading || profileLoading) {
+  // Only show loading when checking authentication
+  if (authLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <Loading message="Checking authentication..." />
+      </div>
+    );
+  }
+
+  // If not authenticated, show login page
+  if (!session) {
+    return <Auth />;
+  }
+
+  // Only show profile loading when we have a session
+  if (profileLoading) {
     return (
       <div className="container mx-auto p-4">
         <Loading message="Setting up your account..." />
@@ -37,10 +52,7 @@ const Root = () => {
     );
   }
 
-  if (!session) {
-    return <Auth />;
-  }
-
+  // After profile is loaded, handle redirects
   if (isFirstVisit) {
     return <Navigate to="/welcome" replace />;
   }
