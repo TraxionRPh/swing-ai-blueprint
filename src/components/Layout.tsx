@@ -44,9 +44,11 @@ const Layout = () => {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-3/4 sm:w-60 border-r p-0 pt-8"
+              className="p-0 w-[280px]"
             >
-              <AppSidebar />
+              <div className="h-full pt-8">
+                <AppSidebar />
+              </div>
             </SheetContent>
           </Sheet>
           
