@@ -1,3 +1,5 @@
+
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,54 +59,56 @@ const Root = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <SidebarProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Root />} />
-              <Route
-                path="/welcome"
-                element={
-                  <ProtectedRoute>
-                    <Welcome />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/drills" element={<DrillLibrary />} />
-                <Route path="/challenges" element={<ChallengeLibrary />} />
-                <Route path="/rounds" element={<RoundTracking />} />
-                <Route path="/ai-analysis" element={<AIAnalysis />} />
-                <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
-                <Route path="/practice-plans" element={<AIPracticePlans />} />
-                <Route path="/profile" element={<Profile />} />
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <SidebarProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Root />} />
                 <Route
-                  path="/subscription"
+                  path="/welcome"
                   element={
                     <ProtectedRoute>
-                      <Subscription />
+                      <Welcome />
                     </ProtectedRoute>
                   }
                 />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </SidebarProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/drills" element={<DrillLibrary />} />
+                  <Route path="/challenges" element={<ChallengeLibrary />} />
+                  <Route path="/rounds" element={<RoundTracking />} />
+                  <Route path="/ai-analysis" element={<AIAnalysis />} />
+                  <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
+                  <Route path="/practice-plans" element={<AIPracticePlans />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route
+                    path="/subscription"
+                    element={
+                      <ProtectedRoute>
+                        <Subscription />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </SidebarProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
