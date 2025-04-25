@@ -81,6 +81,41 @@ export type Database = {
         }
         Relationships: []
       }
+      course_edit_history: {
+        Row: {
+          changes: Json | null
+          course_id: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          previous_state: Json | null
+        }
+        Insert: {
+          changes?: Json | null
+          course_id?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          previous_state?: Json | null
+        }
+        Update: {
+          changes?: Json | null
+          course_id?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          previous_state?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_edit_history_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "golf_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_holes: {
         Row: {
           course_id: string | null
@@ -241,30 +276,39 @@ export type Database = {
           course_rating: number | null
           created_at: string | null
           id: string
+          is_verified: boolean | null
+          last_verified_at: string | null
           name: string
           slope_rating: number | null
           state: string
           total_par: number | null
+          verified_by: string | null
         }
         Insert: {
           city: string
           course_rating?: number | null
           created_at?: string | null
           id?: string
+          is_verified?: boolean | null
+          last_verified_at?: string | null
           name: string
           slope_rating?: number | null
           state: string
           total_par?: number | null
+          verified_by?: string | null
         }
         Update: {
           city?: string
           course_rating?: number | null
           created_at?: string | null
           id?: string
+          is_verified?: boolean | null
+          last_verified_at?: string | null
           name?: string
           slope_rating?: number | null
           state?: string
           total_par?: number | null
+          verified_by?: string | null
         }
         Relationships: []
       }

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseForm } from "./CourseForm";
 import { Card } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, BadgeCheck, Edit2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 interface Course {
   id: string;
@@ -31,6 +32,7 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const searchCourses = useCallback(async (query: string) => {
@@ -72,11 +74,41 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
     }
   }, [toast]);
 
+  const handleEdit = async (course: Course) => {
+    const previousState = {
+      name: course.name,
+      city: course.city,
+      state: course.state,
+      total_par: course.total_par
+    };
+
+    try {
+      const { error } = await supabase
+        .from('course_edit_history')
+        .insert({
+          course_id: course.id,
+          edited_by: user?.id,
+          previous_state: previousState,
+          changes: {} // Will be updated when changes are saved
+        });
+
+      if (error) throw error;
+
+      setShowAddForm(true);
+      onCourseSelect(course);
+    } catch (error) {
+      toast({
+        title: "Error starting edit",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    // Debounce search - only search after 2 characters
     if (query.length >= 2) {
       searchCourses(query);
     } else {
@@ -132,13 +164,21 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
             <Button
               key={course.id}
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-between"
               onClick={() => onCourseSelect(course)}
             >
-              <div className="text-left">
-                <div className="font-semibold">{course.name}</div>
+              <div className="text-left flex-1">
+                <div className="font-semibold flex items-center gap-2">
+                  {course.name}
+                  {course.is_verified && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <BadgeCheck className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground">
-                  ({course.city}, {course.state})
+                  {course.city}, {course.state}
                 </div>
                 {course.course_tees && course.course_tees.length > 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
@@ -146,6 +186,19 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
                   </div>
                 )}
               </div>
+              {user && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(course);
+                  }}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
             </Button>
           ))}
         </div>
