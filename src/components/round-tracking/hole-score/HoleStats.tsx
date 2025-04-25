@@ -36,7 +36,7 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
           placeholder="Enter yards" 
           value={data.distance || ''} 
           onChange={e => onDataChange('distance', parseInt(e.target.value) || 0)} 
-          min={0} 
+          min={0}
         />
       </div>
 

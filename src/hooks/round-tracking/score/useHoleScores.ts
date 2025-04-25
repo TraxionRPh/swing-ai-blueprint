@@ -16,6 +16,7 @@ export const useHoleScores = (roundId: string | null) => {
 
   const fetchHoleScores = async () => {
     try {
+      // First get the scores for this round
       const { data: holeScoresData, error: holeScoresError } = await supabase
         .from('hole_scores')
         .select('*')
@@ -35,11 +36,13 @@ export const useHoleScores = (roundId: string | null) => {
       
       let holeInfo: any[] = [];
       if (roundData?.course_id) {
-        const { data: courseHoles } = await supabase
+        const { data: courseHoles, error: courseHolesError } = await supabase
           .from('course_holes')
           .select('*')
-          .eq('course_id', roundData.course_id);
+          .eq('course_id', roundData.course_id)
+          .order('hole_number');
           
+        if (courseHolesError) throw courseHolesError;
         holeInfo = courseHoles || [];
       }
 
