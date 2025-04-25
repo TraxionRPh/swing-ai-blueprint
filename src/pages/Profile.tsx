@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Shield } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
 
 const Profile = () => {
   const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl } = useProfile();
@@ -138,6 +138,8 @@ const Profile = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <NotificationPreferences />
 
       <Card>
         <CardHeader>
