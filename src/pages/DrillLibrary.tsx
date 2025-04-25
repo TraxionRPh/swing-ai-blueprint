@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { AISearchBar } from "@/components/drill-library/AISearchBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { LucideGolf, Brain } from "@/components/icons/CustomIcons";
+import { LucideGolf } from "@/components/icons/CustomIcons";
 import { useToast } from "@/hooks/use-toast";
 
 const drillsData = {
@@ -135,6 +135,19 @@ const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
+
+  const handleAISearch = async (query: string) => {
+    setIsAnalyzing(true);
+    setSearchQuery(query);
+    
+    setTimeout(() => {
+      toast({
+        title: "AI Analysis Complete",
+        description: "We've analyzed your issue and highlighted the most relevant drills.",
+      });
+      setIsAnalyzing(false);
+    }, 1500);
+  };
   
   const filterDrills = (drills: any[]) => {
     if (!searchQuery) return drills;
@@ -144,27 +157,6 @@ const DrillLibrary = () => {
       drill.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       drill.focus.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  };
-  
-  const handleAISearch = async () => {
-    if (!searchQuery.trim()) {
-      toast({
-        title: "Please describe your issue",
-        description: "Tell us what's happening with your game and we'll find the best drills to help.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsAnalyzing(true);
-    
-    setTimeout(() => {
-      toast({
-        title: "AI Analysis Complete",
-        description: "We've analyzed your issue and highlighted the most relevant drills.",
-      });
-      setIsAnalyzing(false);
-    }, 1500);
   };
   
   return (
@@ -178,27 +170,7 @@ const DrillLibrary = () => {
       
       <Card className="bg-muted/50">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search drills or describe an issue (e.g., 'I'm hitting behind the ball' or 'My drives are slicing')"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Button 
-              onClick={handleAISearch}
-              disabled={isAnalyzing}
-              className="md:w-auto w-full"
-            >
-              <Brain className="mr-2 h-4 w-4" />
-              {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Try asking AI about specific issues like "topping my irons" or "three-putting too often"
-          </p>
+          <AISearchBar onSearch={handleAISearch} isAnalyzing={isAnalyzing} />
         </CardContent>
       </Card>
       

@@ -11,7 +11,6 @@ import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
 import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeLibrary from "./pages/ChallengeLibrary";
-import PracticePlanGenerator from "./pages/PracticePlanGenerator";
 import RoundTracking from "./pages/RoundTracking";
 import Dashboard from "./pages/Dashboard";
 import AIAnalysis from "./pages/AIAnalysis";
@@ -33,7 +32,6 @@ const App = () => (
             <Route element={<Layout />}>
               <Route path="/drills" element={<DrillLibrary />} />
               <Route path="/challenges" element={<ChallengeLibrary />} />
-              <Route path="/practice-plans" element={<PracticePlanGenerator />} />
               <Route path="/rounds" element={<RoundTracking />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/ai-analysis" element={<AIAnalysis />} />

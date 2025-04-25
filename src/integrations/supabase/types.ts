@@ -9,7 +9,165 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      course_holes: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          distance_yards: number | null
+          hole_number: number
+          id: string
+          par: number
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          distance_yards?: number | null
+          hole_number: number
+          id?: string
+          par: number
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          distance_yards?: number | null
+          hole_number?: number
+          id?: string
+          par?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_holes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "golf_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      golf_courses: {
+        Row: {
+          address: string | null
+          course_rating: number | null
+          created_at: string | null
+          id: string
+          name: string
+          slope_rating: number | null
+          total_par: number | null
+        }
+        Insert: {
+          address?: string | null
+          course_rating?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+          slope_rating?: number | null
+          total_par?: number | null
+        }
+        Update: {
+          address?: string | null
+          course_rating?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          slope_rating?: number | null
+          total_par?: number | null
+        }
+        Relationships: []
+      }
+      hole_scores: {
+        Row: {
+          created_at: string | null
+          fairway_hit: boolean | null
+          green_in_regulation: boolean | null
+          hole_number: number
+          id: string
+          notes: string | null
+          putts: number | null
+          round_id: string | null
+          score: number
+        }
+        Insert: {
+          created_at?: string | null
+          fairway_hit?: boolean | null
+          green_in_regulation?: boolean | null
+          hole_number: number
+          id?: string
+          notes?: string | null
+          putts?: number | null
+          round_id?: string | null
+          score: number
+        }
+        Update: {
+          created_at?: string | null
+          fairway_hit?: boolean | null
+          green_in_regulation?: boolean | null
+          hole_number?: number
+          id?: string
+          notes?: string | null
+          putts?: number | null
+          round_id?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hole_scores_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounds: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          date: string
+          fairways_hit: number | null
+          greens_in_regulation: number | null
+          id: string
+          notes: string | null
+          total_putts: number | null
+          total_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          date?: string
+          fairways_hit?: number | null
+          greens_in_regulation?: number | null
+          id?: string
+          notes?: string | null
+          total_putts?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          date?: string
+          fairways_hit?: number | null
+          greens_in_regulation?: number | null
+          id?: string
+          notes?: string | null
+          total_putts?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounds_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "golf_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
