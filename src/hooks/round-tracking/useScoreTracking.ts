@@ -59,6 +59,7 @@ export const useScoreTracking = (roundId: string | null) => {
         hole.holeNumber === data.holeNumber ? data : hole
       )
     );
+    // Autosave whenever data changes
     saveHoleScore(data);
   };
 

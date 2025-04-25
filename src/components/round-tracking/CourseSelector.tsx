@@ -3,20 +3,8 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CourseSearch } from "./CourseSearch";
-
-interface Course {
-  id: string;
-  name: string;
-  city: string;
-  state: string;
-  course_tees: {
-    id: string;
-    name: string;
-    color: string;
-    course_rating: number;
-    slope_rating: number;
-  }[];
-}
+import { RoundsDisplay } from "./RoundsDisplay";
+import type { Course } from "@/types/round-tracking";
 
 interface CourseSelectorProps {
   selectedCourse: Course | null;
@@ -44,17 +32,26 @@ export const CourseSelector = ({
   };
 
   if (!selectedCourse) {
-    return <Card>
+    return (
+      <Card>
         <CardHeader>
           <CardTitle>Select a Course</CardTitle>
           <CardDescription>
-            Search for a course or enter course details manually
+            Search for a course or select from your recent rounds
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <CourseSearch onCourseSelect={handleCourseSelect} />
+          <RoundsDisplay onCourseSelect={handleCourseSelect} />
+          <div className="text-center py-4 border-t border-gray-200 mt-4">
+            <p className="text-muted-foreground mb-2">Can't find your course?</p>
+            <Button onClick={() => setShowCourseSearch(true)}>
+              Add New Course
+            </Button>
+          </div>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
 
   const currentTee = selectedCourse.course_tees.find(tee => tee.id === selectedTee);
