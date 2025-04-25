@@ -66,13 +66,6 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
             />
           </div>
         )}
-
-        {drill.metric && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-2">Success Metric</h3>
-            <p className="text-sm">{drill.metric}</p>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

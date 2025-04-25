@@ -22,6 +22,8 @@ import RoundTracking from "@/pages/RoundTracking";
 import AIAnalysis from "@/pages/AIAnalysis";
 import NotFound from "@/pages/NotFound";
 import Layout from "@/components/Layout";
+import PracticePlanGenerator from "@/pages/PracticePlanGenerator";
+import AIPracticePlans from "@/pages/AIPracticePlans";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +92,8 @@ const App = () => (
                 <Route path="/challenges" element={<ChallengeLibrary />} />
                 <Route path="/rounds" element={<RoundTracking />} />
                 <Route path="/ai-analysis" element={<AIAnalysis />} />
+                <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
+                <Route path="/practice-plans" element={<AIPracticePlans />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

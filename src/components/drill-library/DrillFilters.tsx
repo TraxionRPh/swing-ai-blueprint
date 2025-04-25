@@ -1,66 +1,84 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LucideGolf } from "@/components/icons/CustomIcons";
-import { DrillCard } from "./DrillCard";
-import { DrillDetailsModal } from "./DrillDetailsModal";
-import { useState } from "react";
-import { Drill } from "@/types/drill";
+import React from 'react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface DrillFiltersProps {
-  drills: Drill[] | undefined;
-  filterDrills: (drills: Drill[]) => Drill[];
+  categories: string[];
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
+  focusAreas: string[];
+  selectedFocus: string | null;
+  onFocusChange: (focus: string | null) => void;
+  difficulties: string[];
+  selectedDifficulty: string | null;
+  onDifficultyChange: (difficulty: string | null) => void;
 }
 
-export const DrillFilters = ({ drills, filterDrills }: DrillFiltersProps) => {
-  const categories = ['driving', 'irons', 'chipping', 'putting'];
-  const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
-
-  const handleDrillDetails = (drill: Drill) => {
-    setSelectedDrill(drill);
-  };
-
+export const DrillFilters: React.FC<DrillFiltersProps> = ({
+  categories,
+  selectedCategory,
+  onCategoryChange,
+  focusAreas,
+  selectedFocus,
+  onFocusChange,
+  difficulties,
+  selectedDifficulty,
+  onDifficultyChange
+}) => {
   return (
     <>
-      <Tabs defaultValue="driving" className="sticky top-0 z-10 bg-background shadow-sm">
-        <TabsList className="grid grid-cols-4 mb-4 w-full">
-          {categories.map(category => (
-            <TabsTrigger key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        {categories.map(category => (
-          <TabsContent key={category} value={category} className="animate-fade-in">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filterDrills(drills?.filter(drill => drill.category === category) || []).map(drill => (
-                <div 
-                  key={drill.id} 
-                  onClick={() => handleDrillDetails(drill)}
-                  className="cursor-pointer"
-                >
-                  <DrillCard drill={drill} />
-                </div>
-              ))}
-              {filterDrills(drills?.filter(drill => drill.category === category) || []).length === 0 && (
-                <div className="col-span-full text-center py-10">
-                  <LucideGolf className="mx-auto h-12 w-12 text-muted-foreground/60" />
-                  <h3 className="mt-4 text-lg font-medium">No drills found</h3>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Try adjusting your search or filters
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+      <div className="sticky top-0 z-10 bg-background shadow-sm pb-4">
+        <Tabs value={selectedCategory} onValueChange={onCategoryChange}>
+          <TabsList className="grid grid-cols-4 w-full">
+            {categories.map(category => (
+              <TabsTrigger key={category} value={category}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
-      <DrillDetailsModal 
-        drill={selectedDrill} 
-        isOpen={!!selectedDrill} 
-        onClose={() => setSelectedDrill(null)} 
-      />
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Badge 
+          variant={selectedFocus === null ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => onFocusChange(null)}
+        >
+          All Focus Areas
+        </Badge>
+        {focusAreas.map(focus => (
+          <Badge 
+            key={focus} 
+            variant={selectedFocus === focus ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => onFocusChange(focus)}
+          >
+            {focus}
+          </Badge>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Badge 
+          variant={selectedDifficulty === null ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => onDifficultyChange(null)}
+        >
+          All Difficulties
+        </Badge>
+        {difficulties.map(difficulty => (
+          <Badge 
+            key={difficulty} 
+            variant={selectedDifficulty === difficulty ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => onDifficultyChange(difficulty)}
+          >
+            {difficulty}
+          </Badge>
+        ))}
+      </div>
     </>
   );
 };

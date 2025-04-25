@@ -42,7 +42,7 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
         <Carousel className="w-full max-w-xs mx-auto">
           <CarouselContent>
             {drills.map((drill) => (
-              <CarouselItem key={drill.id}>
+              <CarouselItem key={drill.id} className="pl-4">
                 <DrillCard drill={drill} />
               </CarouselItem>
             ))}
