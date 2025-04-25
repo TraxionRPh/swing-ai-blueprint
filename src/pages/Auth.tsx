@@ -7,28 +7,69 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LucideGolf } from "@/components/icons/CustomIcons";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // In a real app, we would connect this to a backend
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
-        title: "Welcome to SwingAI!",
+        title: "Welcome back!",
         description: "You've successfully signed in.",
       });
-      navigate("/welcome");
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Error signing in",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome to SwingAI!",
+        description: "Please check your email to confirm your account.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error creating account",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center">
       <div className="absolute inset-0 bg-black/40" />
@@ -49,12 +90,14 @@ const Auth = () => {
           </TabsList>
           
           <TabsContent value="login">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleLogin}>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Input
                     type="email"
                     placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -62,13 +105,10 @@ const Auth = () => {
                   <Input
                     type="password"
                     placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                </div>
-                <div className="text-right">
-                  <a href="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                  </a>
                 </div>
               </CardContent>
               <CardFooter>
@@ -80,18 +120,14 @@ const Auth = () => {
           </TabsContent>
           
           <TabsContent value="register">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSignUp}>
               <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Name"
-                    required
-                  />
-                </div>
                 <div className="space-y-2">
                   <Input
                     type="email"
                     placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -99,7 +135,10 @@ const Auth = () => {
                   <Input
                     type="password"
                     placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
               </CardContent>

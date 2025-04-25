@@ -8,10 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface Course {
   id: string;
   name: string;
-  address: string;
-  courseRating: number;
-  slopeRating: number;
-  totalPar: number;
+  address: string | null;
+  course_rating: number | null;
+  slope_rating: number | null;
+  total_par: number | null;
 }
 
 interface CourseSearchProps {
@@ -37,7 +37,7 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
       if (error) throw error;
 
-      setCourses(data);
+      setCourses(data || []);
     } catch (error) {
       toast({
         title: "Error searching courses",
