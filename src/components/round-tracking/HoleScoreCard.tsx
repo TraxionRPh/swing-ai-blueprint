@@ -23,6 +23,7 @@ interface HoleScoreCardProps {
   onPrevious?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  teeColor?: string;
 }
 
 export const HoleScoreCard = ({ 
@@ -31,7 +32,8 @@ export const HoleScoreCard = ({
   onNext, 
   onPrevious,
   isFirst,
-  isLast 
+  isLast,
+  teeColor 
 }: HoleScoreCardProps) => {
   const [data, setData] = useState(holeData);
 
@@ -41,13 +43,51 @@ export const HoleScoreCard = ({
     onUpdate(newData);
   };
 
+  const getTeeColorStyle = () => {
+    if (!teeColor) return 'bg-secondary';
+    // Convert common tee color names to their CSS equivalents
+    const colorMap: { [key: string]: string } = {
+      'blue': 'bg-blue-500',
+      'white': 'bg-white text-black',
+      'red': 'bg-red-500',
+      'gold': 'bg-yellow-500',
+      'black': 'bg-black',
+      'green': 'bg-green-500'
+    };
+    return colorMap[teeColor.toLowerCase()] || 'bg-secondary';
+  };
+
   return (
     <Card className="w-full max-w-xl mx-auto">
       <CardContent className="pt-6 space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
-          <div className="text-sm text-muted-foreground">
-            Par {data.par} • {data.distance} yards
+          <div className={`text-sm px-3 py-1 rounded-md ${getTeeColorStyle()}`}>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="par">Par</Label>
+                <Input 
+                  id="par"
+                  type="number"
+                  placeholder="Enter par"
+                  value={data.par || ''}
+                  onChange={(e) => handleChange('par', parseInt(e.target.value) || 0)}
+                  min={3}
+                  max={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="distance">Yards</Label>
+                <Input 
+                  id="distance"
+                  type="number"
+                  placeholder="Enter yards"
+                  value={data.distance || ''}
+                  onChange={(e) => handleChange('distance', parseInt(e.target.value) || 0)}
+                  min={0}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

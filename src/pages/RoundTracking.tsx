@@ -135,6 +135,7 @@ const RoundTracking = () => {
               onPrevious={handlePrevious}
               isFirst={currentHole === 1}
               isLast={currentHole === 18}
+              teeColor={selectedTee ? selectedCourse.course_tees.find(tee => tee.id === selectedTee)?.color : undefined}
             />
           )}
         </>
