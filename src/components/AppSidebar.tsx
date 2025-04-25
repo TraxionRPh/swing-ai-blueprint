@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -19,11 +20,11 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ currentPath }: AppSidebarProps) => {
-  const { state } = useSidebar();
-  console.log("AppSidebar rendered with:", { currentPath, sidebarState: state });
+  const { state, isMobile } = useSidebar();
+  console.log("AppSidebar rendered:", { currentPath, sidebarState: state, isMobile });
 
   return (
-    <Sidebar className="h-full">
+    <Sidebar className="h-full w-full">
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-2">
           <LucideGolf className="h-8 w-8 text-primary" />

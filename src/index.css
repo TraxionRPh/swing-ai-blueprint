@@ -42,6 +42,9 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 40% 16%;
     --sidebar-ring: 142 48% 50%;
+    --sidebar-width: 280px;
+    --sidebar-height: 100dvh;
+    --sidebar-mobile-width: 280px;
   }
 }
 

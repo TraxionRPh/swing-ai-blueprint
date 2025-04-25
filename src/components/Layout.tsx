@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -19,7 +20,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 
 const Layout = () => {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -30,7 +31,7 @@ const Layout = () => {
   };
 
   const currentPath = location.pathname;
-  console.log("Layout rendered, currentPath:", currentPath);
+  console.log("Layout rendered, currentPath:", currentPath, "isSidebarOpen:", isSidebarOpen);
 
   return (
     <SidebarProvider defaultOpen>
@@ -41,11 +42,12 @@ const Layout = () => {
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="sm" className="px-2.5">
                   <Icons.menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent
+              <SheetContent 
                 side="left"
-                className="w-[280px] p-0"
+                className="w-[280px] p-0 h-[100dvh] flex flex-col overflow-hidden"
               >
                 <AppSidebar currentPath={currentPath} />
               </SheetContent>
