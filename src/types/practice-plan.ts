@@ -27,3 +27,33 @@ export interface GeneratedPracticePlan {
     }[];
   };
 }
+
+export interface AIAnalysisForPracticePlan {
+  performanceAnalysis: {
+    driving: number;
+    ironPlay: number;
+    chipping: number;
+    bunker: number;
+    putting: number;
+  };
+  aiConfidence: number;
+  identifiedIssues: Array<{
+    area: string;
+    description: string;
+    priority: 'High' | 'Medium' | 'Low';
+  }>;
+  recommendedPractice: {
+    weeklyFocus: string;
+    primaryDrill: {
+      name: string;
+      description: string;
+      frequency: string;
+    };
+    secondaryDrill: {
+      name: string;
+      description: string;
+      frequency: string;
+    };
+    weeklyAssignment: string;
+  };
+}

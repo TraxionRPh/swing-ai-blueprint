@@ -120,11 +120,12 @@ export type Database = {
         Row: {
           category: string
           created_at: string
-          description: string
           difficulty: string
           duration: string
           focus: string[]
           id: string
+          instructions: string | null
+          overview: string
           title: string
           updated_at: string
           video_url: string | null
@@ -132,11 +133,12 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
-          description: string
           difficulty: string
           duration: string
           focus: string[]
           id?: string
+          instructions?: string | null
+          overview: string
           title: string
           updated_at?: string
           video_url?: string | null
@@ -144,11 +146,12 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
-          description?: string
           difficulty?: string
           duration?: string
           focus?: string[]
           id?: string
+          instructions?: string | null
+          overview?: string
           title?: string
           updated_at?: string
           video_url?: string | null

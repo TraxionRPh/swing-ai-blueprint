@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -5,7 +6,8 @@ import { Brain } from "lucide-react";
 import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { PracticePlanForm } from "@/components/practice-plans/PracticePlanForm";
 import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
-import { CommonProblem, GeneratedPracticePlan } from "@/types/practice-plan";
+import { CommonProblem } from "@/types/practice-plan";
+import { Loading } from "@/components/ui/loading";
 
 const commonProblems: CommonProblem[] = [
   {
@@ -48,10 +50,15 @@ const commonProblems: CommonProblem[] = [
 
 const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPlan, setGeneratedPlan] = useState<GeneratedPracticePlan | null>(null);
   const { toast } = useToast();
-  const { generateAnalysis, isGenerating: isAnalyzing } = useAIAnalysis();
+  const { 
+    generateAnalysis, 
+    isGenerating: isAnalyzing,
+    latestPracticePlan,
+    generatePracticePlan,
+    isGeneratingPlan,
+    isLoadingPracticePlan
+  } = useAIAnalysis();
   
   const handleSubmit = () => {
     if (!inputValue.trim()) {
@@ -63,67 +70,7 @@ const AIPracticePlans = () => {
       return;
     }
     
-    setIsGenerating(true);
-    
-    setTimeout(() => {
-      const mockPlan: GeneratedPracticePlan = {
-        problem: inputValue,
-        diagnosis: "Based on your description, you're experiencing an out-to-in swing path combined with an open clubface at impact. This is a common issue that causes the ball to start left and curve significantly to the right (for right-handed golfers).",
-        rootCauses: [
-          "Out-to-in swing path (coming over the top)",
-          "Open clubface at impact",
-          "Potential grip issues (too weak)",
-          "Poor setup alignment"
-        ],
-        recommendedDrills: [
-          {
-            name: "Alignment Stick Path Drill",
-            description: "Place two alignment sticks on the ground - one pointing at the target and another parallel to it, creating a channel. Practice swinging along this channel to groove an in-to-out path.",
-            difficulty: "Beginner",
-            duration: "15 minutes",
-            focus: ["Swing Path", "Alignment"]
-          },
-          {
-            name: "Half-Swing Control Drill",
-            description: "Make half swings focusing on the feeling of the clubface rotating through impact. This helps develop awareness of face control.",
-            difficulty: "Beginner",
-            duration: "10 minutes",
-            focus: ["Face Control", "Impact"]
-          },
-          {
-            name: "Headcover Drill",
-            description: "Place a headcover under your trailing armpit and make swings without dropping it. This prevents the over-the-top move that causes slices.",
-            difficulty: "Intermediate",
-            duration: "15 minutes",
-            focus: ["Swing Path", "Connection"]
-          }
-        ],
-        practicePlan: {
-          duration: "2 weeks",
-          frequency: "3-4 sessions per week",
-          sessions: [
-            {
-              focus: "Path Correction",
-              drills: ["Alignment Stick Path Drill", "Headcover Drill"],
-              duration: "30 minutes"
-            },
-            {
-              focus: "Face Control",
-              drills: ["Half-Swing Control Drill", "Mirror Work"],
-              duration: "25 minutes"
-            }
-          ]
-        }
-      };
-      
-      setGeneratedPlan(mockPlan);
-      setIsGenerating(false);
-      
-      toast({
-        title: "Practice plan generated",
-        description: "Your personalized practice plan is ready!",
-      });
-    }, 3000);
+    generatePracticePlan(inputValue);
   };
   
   const handleSelectProblem = (problem: string) => {
@@ -131,9 +78,12 @@ const AIPracticePlans = () => {
   };
   
   const handleClear = () => {
-    setGeneratedPlan(null);
     setInputValue("");
   };
+
+  if (isLoadingPracticePlan) {
+    return <Loading message="Loading your practice plan data..." />;
+  }
   
   return (
     <div className="space-y-6">
@@ -152,18 +102,18 @@ const AIPracticePlans = () => {
         </Button>
       </div>
       
-      {!generatedPlan ? (
+      {!latestPracticePlan || inputValue ? (
         <PracticePlanForm
           inputValue={inputValue}
           onInputChange={setInputValue}
           onSubmit={handleSubmit}
           onSelectProblem={handleSelectProblem}
-          isGenerating={isGenerating}
+          isGenerating={isGeneratingPlan}
           commonProblems={commonProblems}
         />
       ) : (
         <GeneratedPlan
-          plan={generatedPlan}
+          plan={latestPracticePlan}
           onClear={handleClear}
         />
       )}

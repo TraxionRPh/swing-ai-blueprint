@@ -20,7 +20,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { userId, roundData, handicapLevel, goals } = await req.json();
+    const { userId, roundData, handicapLevel, goals, specificProblem } = await req.json();
 
     if (!userId) {
       throw new Error('User ID is required');
@@ -35,6 +35,7 @@ serve(async (req) => {
       Player Data:
       - Handicap Level: ${handicapLevel || 'Not specified'}
       - Goals: ${goals || 'Improve overall game'}
+      ${specificProblem ? `- Specific Problem: ${specificProblem}` : ''}
       
       Recent Performance:
       ${JSON.stringify(roundData || {})}
@@ -71,6 +72,35 @@ serve(async (req) => {
           "weeklyAssignment": string
         }
       }
+      
+      ${specificProblem ? `
+      Additionally, since the player mentioned a specific problem ("${specificProblem}"), please provide a tailored practice plan in this format:
+      {
+        "problem": string,
+        "diagnosis": string,
+        "rootCauses": string[],
+        "recommendedDrills": [
+          {
+            "name": string,
+            "description": string,
+            "difficulty": "Beginner" | "Intermediate" | "Advanced",
+            "duration": string,
+            "focus": string[]
+          }
+        ],
+        "practicePlan": {
+          "duration": string,
+          "frequency": string,
+          "sessions": [
+            {
+              "focus": string,
+              "drills": string[],
+              "duration": string
+            }
+          ]
+        }
+      }
+      ` : ''}
     `;
 
     // Call OpenAI API
@@ -85,7 +115,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional golf coach and analyst specialized in providing performance analysis.'
+            content: 'You are a professional golf coach and analyst specialized in providing performance analysis and practice plans.'
           },
           { role: 'user', content: prompt }
         ],
@@ -104,10 +134,33 @@ serve(async (req) => {
     
     // Parse the JSON response from OpenAI
     let analysisData;
+    let practicePlanData = null;
     try {
-      analysisData = JSON.parse(analysisText);
+      // The response might contain both analysis and practice plan
+      const responseData = JSON.parse(analysisText);
+      
+      // If specificProblem was provided, extract the practice plan part
+      if (specificProblem && responseData.problem) {
+        analysisData = { 
+          performanceAnalysis: responseData.performanceAnalysis || {},
+          aiConfidence: responseData.aiConfidence || 70,
+          identifiedIssues: responseData.identifiedIssues || [],
+          recommendedPractice: responseData.recommendedPractice || {}
+        };
+        
+        practicePlanData = {
+          problem: responseData.problem,
+          diagnosis: responseData.diagnosis,
+          rootCauses: responseData.rootCauses,
+          recommendedDrills: responseData.recommendedDrills,
+          practicePlan: responseData.practicePlan
+        };
+      } else {
+        // Just regular analysis
+        analysisData = responseData;
+      }
     } catch (e) {
-      console.error('Failed to parse OpenAI response:', e);
+      console.error('Failed to parse OpenAI response:', e, analysisText);
       throw new Error('Failed to parse AI analysis');
     }
 
@@ -121,14 +174,14 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         user_id: userId,
-        problem: "Golf performance optimization",
-        diagnosis: "AI-generated performance analysis",
-        root_causes: analysisData.identifiedIssues,
-        recommended_drills: [
+        problem: specificProblem || "Golf performance optimization",
+        diagnosis: practicePlanData?.diagnosis || "AI-generated performance analysis",
+        root_causes: practicePlanData?.rootCauses || analysisData.identifiedIssues,
+        recommended_drills: practicePlanData?.recommendedDrills || [
           analysisData.recommendedPractice.primaryDrill,
           analysisData.recommendedPractice.secondaryDrill
         ],
-        practice_plan: analysisData
+        practice_plan: practicePlanData || analysisData
       })
     }).then(res => res.json());
 
@@ -139,7 +192,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      analysis: analysisData
+      analysis: analysisData,
+      practicePlan: practicePlanData
     }), {
       headers: { 
         ...corsHeaders, 
