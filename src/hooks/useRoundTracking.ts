@@ -50,7 +50,7 @@ export const useRoundTracking = () => {
   }, [user]);
 
   const handleCourseSelect = async (course: Course) => {
-    // Pass the holeCount parameter to handleCourseSelectBase
+    // We always want to use the holeCount that's already been set
     const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
     if (newRoundId) {
       setCurrentRoundId(newRoundId);

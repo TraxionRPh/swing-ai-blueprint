@@ -31,14 +31,17 @@ export const CourseResult = ({
 
   const handleSelect = () => {
     if (isInProgress) {
+      // For in-progress rounds, just continue the round
       onSelect(course);
       return;
     }
+    // For new rounds, show hole count selection
     setIsSelected(!isSelected);
   };
 
   const handleStartRound = () => {
     onSelect(course, holeCount);
+    setIsSelected(false); // Hide selection after starting
   };
 
   const handleDelete = (e: React.MouseEvent) => {

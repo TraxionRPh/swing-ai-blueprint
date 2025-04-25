@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,8 +64,14 @@ const RoundTracking = () => {
   const handleCourseSelection = (course: Course, selectedHoleCount?: number) => {
     if (selectedHoleCount) {
       setHoleCount(selectedHoleCount);
+      handleCourseSelect(course);
+    } else if (!holeCount) {
+      // Only show the hole count selector if holeCount hasn't been set yet
+      // and wasn't provided by the course selection
+      return;
+    } else {
+      handleCourseSelect(course);
     }
-    handleCourseSelect(course);
   };
 
   return (
@@ -102,7 +107,12 @@ const RoundTracking = () => {
           <RadioGroup 
             defaultValue="18" 
             className="grid grid-cols-2 gap-4"
-            onValueChange={(value) => setHoleCount(parseInt(value))}
+            onValueChange={(value) => {
+              const count = parseInt(value);
+              setHoleCount(count);
+              // After setting hole count, automatically continue with the selected course
+              handleCourseSelect(selectedCourse);
+            }}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="9" id="nine" />
@@ -113,12 +123,6 @@ const RoundTracking = () => {
               <Label htmlFor="eighteen">18 Holes</Label>
             </div>
           </RadioGroup>
-          <Button 
-            className="mt-4 w-full" 
-            onClick={() => setHoleCount(18)}
-          >
-            Start Round
-          </Button>
         </div>
       )}
 
