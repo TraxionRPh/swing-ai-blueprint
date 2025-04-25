@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { supabase } from "@/integrations/supabase/client";
 
 const Layout = () => {
   const { user, session, loading, } = useAuth();
@@ -39,11 +41,10 @@ const Layout = () => {
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
-          <Sheet>
+          <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger
               asChild
               className="md:hidden"
-              onClick={() => setIsSidebarOpen(true)}
             >
               <Button variant="ghost" size="sm" className="px-2.5">
                 <Icons.menu className="h-5 w-5" />
@@ -52,13 +53,8 @@ const Layout = () => {
             <SheetContent
               side="left"
               className="w-3/4 sm:w-60 border-r p-0 pt-8"
-              onClose={() => setIsSidebarOpen(false)}
-              open={isSidebarOpen}
             >
-              <Sidebar
-                closeSidebar={() => setIsSidebarOpen(false)}
-                location={location}
-              />
+              <Sidebar />
             </SheetContent>
           </Sheet>
           <div className="ml-auto flex items-center space-x-4">
@@ -87,19 +83,18 @@ const Layout = () => {
             </DropdownMenu>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-4">
             <NotificationBell />
-            
           </div>
         </div>
       </header>
       
       <div className="container relative flex min-h-[calc(100vh-theme(spacing.14))]">
         <aside className="hidden h-full border-r md:block">
-          <Sidebar location={location} />
+          <Sidebar />
         </aside>
         <main className="flex-1 pt-6 md:p-8 w-full">
-          <div className="mx-auto max-w-7xl w-full">{/* Page content here */}
+          <div className="mx-auto max-w-7xl w-full">
             <Outlet />
           </div>
         </main>

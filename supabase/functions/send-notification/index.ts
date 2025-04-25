@@ -46,23 +46,30 @@ serve(async (req) => {
 
     // Send push notification to all subscribed devices
     const pushPromises = subscriptions.map(async (subscription) => {
-      const pushSubscription = {
-        endpoint: subscription.endpoint,
-        keys: subscription.auth_keys
+      try {
+        const pushSubscription = {
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: atob(subscription.auth_keys.p256dh),
+            auth: atob(subscription.auth_keys.auth)
+          }
+        }
+  
+        const payload = JSON.stringify({
+          title,
+          body,
+          data
+        })
+  
+        // In a production environment, you would use web-push library
+        // Here we'll just log it for demo purposes
+        console.log('Sending push notification:', {
+          subscription: pushSubscription,
+          payload
+        })
+      } catch (error) {
+        console.error('Error sending push notification:', error)
       }
-
-      const payload = JSON.stringify({
-        title,
-        body,
-        data
-      })
-
-      // Here you would typically use the web-push library to send the notification
-      // For demo purposes, we'll just log it
-      console.log('Sending push notification:', {
-        subscription: pushSubscription,
-        payload
-      })
     })
 
     await Promise.all(pushPromises)

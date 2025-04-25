@@ -79,16 +79,22 @@ export const useNotifications = () => {
             applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY' // You'll need to set this up
           });
 
+          // Convert ArrayBuffer to base64 string for storage
+          const p256dhKey = subscription.getKey('p256dh');
+          const authKey = subscription.getKey('auth');
+          
+          const authKeysForStorage = {
+            p256dh: p256dhKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(p256dhKey))) : '',
+            auth: authKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(authKey))) : ''
+          };
+
           // Store subscription in Supabase
           const { error } = await supabase
             .from('push_subscriptions')
             .upsert({
               user_id: user.id,
               endpoint: subscription.endpoint,
-              auth_keys: {
-                p256dh: subscription.getKey('p256dh'),
-                auth: subscription.getKey('auth')
-              }
+              auth_keys: authKeysForStorage
             });
 
           if (error) throw error;
@@ -127,9 +133,12 @@ export const useNotifications = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const unsubscribe = subscribeToNotifications();
+    const unsubscribePromise = subscribeToNotifications();
+    
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) unsubscribe();
+      });
     };
   }, [user]);
 
