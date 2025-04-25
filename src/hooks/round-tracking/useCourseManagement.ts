@@ -9,7 +9,7 @@ export const useCourseManagement = (currentRoundId: string | null) => {
   const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleCourseSelect = async (course: Course) => {
+  const handleCourseSelect = async (course: Course, holeCount?: number) => {
     setSelectedCourse(course);
     const holes = await fetchCourseHoles(course.id);
     
@@ -31,7 +31,8 @@ export const useCourseManagement = (currentRoundId: string | null) => {
         .insert({
           course_id: course.id,
           user_id: user.id,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          hole_count: holeCount || 18 // Store the hole count with the round
         })
         .select()
         .single();

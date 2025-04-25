@@ -50,7 +50,8 @@ export const useRoundTracking = () => {
   }, [user]);
 
   const handleCourseSelect = async (course: Course) => {
-    const newRoundId = await handleCourseSelectBase(course, holeCount);
+    // Pass the holeCount parameter to handleCourseSelectBase
+    const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
     if (newRoundId) {
       setCurrentRoundId(newRoundId);
       // Create default holes based on the selected hole count
