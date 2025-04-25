@@ -1,23 +1,22 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { LucideGolf } from "@/components/icons/CustomIcons";
-import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import Home from "./Home";
+import HomePage from "./HomePage";
+import SkillLevelStep from "@/components/onboarding/SkillLevelStep";
+import GoalsStep from "@/components/onboarding/GoalsStep";
+import ProfileSummaryStep from "@/components/onboarding/ProfileSummaryStep";
+import ProgressIndicator from "@/components/onboarding/ProgressIndicator";
 
 const Welcome = () => {
   const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
   const [step, setStep] = useState(1);
   const [handicap, setHandicap] = useState<string>("beginner");
   const [goals, setGoals] = useState("");
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -29,7 +28,7 @@ const Welcome = () => {
         .from('profiles')
         .select('has_onboarded')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error checking user profile:', error);
@@ -37,7 +36,7 @@ const Welcome = () => {
         return;
       }
       
-      setIsFirstVisit(data?.has_onboarded !== true);
+      setIsFirstVisit(!data?.has_onboarded);
     };
     
     checkUserProfile();
@@ -49,18 +48,18 @@ const Welcome = () => {
   
   const handleComplete = async () => {
     try {
-      if (user?.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            handicap_level: handicap,
-            goals: goals,
-            has_onboarded: true
-          });
-          
-        if (error) throw error;
-      }
+      if (!user?.id) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          handicap_level: handicap,
+          goals: goals,
+          has_onboarded: true
+        });
+        
+      if (error) throw error;
       
       toast({
         title: "Profile set up successfully!",
@@ -88,7 +87,7 @@ const Welcome = () => {
   }
   
   if (!isFirstVisit) {
-    return <Home />;
+    return <HomePage />;
   }
   
   return (
@@ -105,71 +104,18 @@ const Welcome = () => {
         </CardHeader>
         
         <CardContent>
-          <div className="flex justify-between mb-6">
-            <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`}></div>
-            <div className="w-2"></div>
-            <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`}></div>
-            <div className="w-2"></div>
-            <div className={`h-2 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`}></div>
-          </div>
+          <ProgressIndicator currentStep={step} totalSteps={3} />
           
           {step === 1 && (
-            <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-medium">What's your golf skill level?</h3>
-              <RadioGroup value={handicap} onValueChange={setHandicap}>
-                <div className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value="beginner" id="beginner" />
-                  <Label htmlFor="beginner">Beginner (36+ handicap)</Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value="novice" id="novice" />
-                  <Label htmlFor="novice">Novice (25-36 handicap)</Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value="intermediate" id="intermediate" />
-                  <Label htmlFor="intermediate">Intermediate (15-24 handicap)</Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value="advanced" id="advanced" />
-                  <Label htmlFor="advanced">Advanced (5-14 handicap)</Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value="expert" id="expert" />
-                  <Label htmlFor="expert">Expert (0-4 handicap)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="pro" id="pro" />
-                  <Label htmlFor="pro">Professional (+ handicap)</Label>
-                </div>
-              </RadioGroup>
-            </div>
+            <SkillLevelStep handicap={handicap} setHandicap={setHandicap} />
           )}
           
           {step === 2 && (
-            <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-medium">What are your golf goals?</h3>
-              <Textarea 
-                placeholder="e.g., Lower my handicap, improve driving distance, better putting, etc."
-                className="min-h-32"
-                value={goals}
-                onChange={(e) => setGoals(e.target.value)}
-              />
-            </div>
+            <GoalsStep goals={goals} setGoals={setGoals} />
           )}
           
           {step === 3 && (
-            <div className="space-y-6 animate-fade-in">
-              <h3 className="text-lg font-medium">Your SwingAI Profile</h3>
-              <div className="space-y-2">
-                <p className="font-medium">Skill Level:</p>
-                <p className="text-muted-foreground capitalize">{handicap}</p>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <p className="font-medium">Your Goals:</p>
-                <p className="text-muted-foreground">{goals || "No specific goals provided"}</p>
-              </div>
-            </div>
+            <ProfileSummaryStep handicap={handicap} goals={goals} />
           )}
         </CardContent>
         

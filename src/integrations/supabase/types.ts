@@ -118,6 +118,33 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          goals: string | null
+          handicap_level: string | null
+          has_onboarded: boolean | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          goals?: string | null
+          handicap_level?: string | null
+          has_onboarded?: boolean | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          goals?: string | null
+          handicap_level?: string | null
+          has_onboarded?: boolean | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rounds: {
         Row: {
           course_id: string | null
