@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Confetti } from "lucide-react";
+import { Party } from "lucide-react";
 
 interface GoalAchievementModalProps {
   achievedGoal: {
@@ -46,7 +46,7 @@ const GoalAchievementModal = ({
 
       return () => clearTimeout(timer);
     }
-  }, [achievedGoal]);
+  }, [achievedGoal, toast]);
 
   if (!achievedGoal) return null;
 
@@ -64,7 +64,7 @@ const GoalAchievementModal = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Confetti className="h-5 w-5 text-yellow-500" />
+              <Party className="h-5 w-5 text-yellow-500" />
               Congratulations!
             </DialogTitle>
             <DialogDescription>
