@@ -118,42 +118,42 @@ export type Database = {
       }
       drills: {
         Row: {
-          category: string
-          created_at: string
-          difficulty: string
-          duration: string
-          focus: string[]
+          category: string | null
+          created_at: string | null
+          difficulty: string | null
+          duration: string | null
+          focus: string[] | null
           id: string
           instructions: string | null
-          overview: string
-          title: string
-          updated_at: string
+          overview: string | null
+          title: string | null
+          updated_at: string | null
           video_url: string | null
         }
         Insert: {
-          category: string
-          created_at?: string
-          difficulty: string
-          duration: string
-          focus: string[]
+          category?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          duration?: string | null
+          focus?: string[] | null
           id?: string
           instructions?: string | null
-          overview: string
-          title: string
-          updated_at?: string
+          overview?: string | null
+          title?: string | null
+          updated_at?: string | null
           video_url?: string | null
         }
         Update: {
-          category?: string
-          created_at?: string
-          difficulty?: string
-          duration?: string
-          focus?: string[]
+          category?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          duration?: string | null
+          focus?: string[] | null
           id?: string
           instructions?: string | null
-          overview?: string
-          title?: string
-          updated_at?: string
+          overview?: string | null
+          title?: string | null
+          updated_at?: string | null
           video_url?: string | null
         }
         Relationships: []

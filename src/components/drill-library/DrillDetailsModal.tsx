@@ -72,16 +72,19 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
             </div>
           )}
 
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Focus Areas</h3>
-            <div className="flex flex-wrap gap-2">
-              {drill.focus.map(tag => (
-                <Badge key={tag} variant="outline">
-                  {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                </Badge>
-              ))}
+          {/* Add null check for focus */}
+          {drill.focus && Array.isArray(drill.focus) && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Focus Areas</h3>
+              <div className="flex flex-wrap gap-2">
+                {drill.focus.map(tag => (
+                  <Badge key={tag} variant="outline">
+                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {drill.video_url && (
             <div>
