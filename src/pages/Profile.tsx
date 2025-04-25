@@ -15,7 +15,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
 
 const Profile = () => {
-  const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl } = useProfile();
+  const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl, scoreGoal, handicapGoal } = useProfile();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [localHandicap, setLocalHandicap] = useState<HandicapLevel | null>(handicap);

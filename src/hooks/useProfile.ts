@@ -14,6 +14,8 @@ export const useProfile = () => {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [scoreGoal, setScoreGoal] = useState<number | null>(null);
+  const [handicapGoal, setHandicapGoal] = useState<number | null>(null);
 
   const saveProfile = async (profileData: { 
     handicap?: HandicapLevel; 
@@ -88,6 +90,8 @@ export const useProfile = () => {
           setFirstName(profileData.first_name);
           setLastName(profileData.last_name);
           setAvatarUrl(profileData.avatar_url);
+          setScoreGoal(profileData.score_goal);
+          setHandicapGoal(profileData.handicap_goal);
         }
 
         const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -118,6 +122,8 @@ export const useProfile = () => {
     firstName,
     lastName,
     avatarUrl,
+    scoreGoal,
+    handicapGoal,
     setHandicap,
     setGoals,
     saveProfile 
