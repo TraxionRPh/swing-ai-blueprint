@@ -8,11 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
+// Updated Course interface to match the structure from CourseSearch
 interface Course {
   id: string;
   name: string;
-  courseRating: number | null;
-  slopeRating: number | null;
+  address: string | null;
+  course_tees: {
+    id: string;
+    name: string;
+    color: string;
+    course_rating: number;
+    slope_rating: number;
+  }[];
 }
 
 interface HoleData {
@@ -27,6 +34,7 @@ interface HoleData {
 
 const RoundTracking = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const [currentHole, setCurrentHole] = useState(1);
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [showCourseSearch, setShowCourseSearch] = useState(false);
@@ -35,6 +43,11 @@ const RoundTracking = () => {
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
     setShowCourseSearch(false);
+
+    // Set first tee as default selected tee if available
+    if (course.course_tees && course.course_tees.length > 0) {
+      setSelectedTee(course.course_tees[0].id);
+    }
 
     // Fetch hole data after setting the course
     fetchCourseHoles(course.id);
@@ -93,6 +106,14 @@ const RoundTracking = () => {
     }), { score: 0, putts: 0, fairways: 0, greens: 0 });
   };
 
+  // Get current tee info
+  const getCurrentTee = () => {
+    if (!selectedCourse || !selectedTee) return null;
+    return selectedCourse.course_tees.find(tee => tee.id === selectedTee);
+  };
+
+  const currentTee = getCurrentTee();
+
   return (
     <div className="space-y-6">
       <div>
@@ -121,15 +142,36 @@ const RoundTracking = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-semibold">{selectedCourse.name}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Course Rating: {selectedCourse.courseRating} • 
-                    Slope: {selectedCourse.slopeRating}
-                  </p>
+                  {currentTee && (
+                    <p className="text-sm text-muted-foreground">
+                      Tee: {currentTee.color || currentTee.name} • 
+                      Course Rating: {currentTee.course_rating} • 
+                      Slope: {currentTee.slope_rating}
+                    </p>
+                  )}
                 </div>
                 <Button variant="outline" onClick={() => setShowCourseSearch(true)}>
                   Change Course
                 </Button>
               </div>
+              
+              {selectedCourse.course_tees && selectedCourse.course_tees.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm mb-2">Select Tee:</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedCourse.course_tees.map(tee => (
+                      <Button
+                        key={tee.id}
+                        size="sm"
+                        variant={selectedTee === tee.id ? "default" : "outline"}
+                        onClick={() => setSelectedTee(tee.id)}
+                      >
+                        {tee.color || tee.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
