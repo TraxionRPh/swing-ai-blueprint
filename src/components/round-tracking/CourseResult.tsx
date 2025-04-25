@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -32,18 +31,18 @@ export const CourseResult = ({
   const navigate = useNavigate();
 
   const handleSelect = () => {
-    if (isInProgress) {
-      onSelect(course);
+    if (isInProgress && roundId) {
+      navigate(`/rounds/${roundId}`);
       return;
     }
     setIsExpanded(!isExpanded);
   };
 
-  const handleStartRound = () => {
+  const handleStartRound = async () => {
     onSelect(course, holeCount);
     setIsExpanded(false);
-    // Navigate to the rounds page
-    navigate(`/rounds/${roundId || 'new'}`);
+    // Start a new round and navigate to the scoring interface
+    navigate('/rounds/new');
   };
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -128,4 +127,3 @@ export const CourseResult = ({
     </Card>
   );
 };
-
