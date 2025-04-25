@@ -6,18 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
+interface CourseTee {
+  id: string;
+  name: string;
+  color: string;
+  course_rating: number;
+  slope_rating: number;
+}
+
 interface Course {
   id: string;
   name: string;
   city: string;
   state: string;
-  course_tees: {
-    id: string;
-    name: string;
-    color: string;
-    course_rating: number;
-    slope_rating: number;
-  }[];
+  course_tees: CourseTee[];
 }
 
 interface HoleData {
@@ -46,7 +48,18 @@ const RoundTracking = () => {
       try {
         const { data: rounds, error } = await supabase
           .from('rounds')
-          .select('id, course_id, golf_courses(id, name, city, state, course_tees(*)), hole_scores(*)')
+          .select(`
+            id, 
+            course_id, 
+            golf_courses:course_id (
+              id, 
+              name, 
+              city, 
+              state, 
+              course_tees (*)
+            ), 
+            hole_scores (*)
+          `)
           .eq('user_id', user.id)
           .eq('is_in_progress', true)
           .single();
