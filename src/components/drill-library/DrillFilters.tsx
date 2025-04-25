@@ -24,7 +24,23 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
     const uniqueCategories = ['all', ...new Set(drills.map(drill => drill.category))];
     setCategories(uniqueCategories);
     
-    const uniqueDifficulties = [...new Set(drills.map(drill => drill.difficulty))];
+    // Predefined order for difficulties
+    const difficultyOrder = ['Beginner', 'Intermediate', 'Advanced'];
+    const uniqueDifficulties = [...new Set(drills.map(drill => drill.difficulty))]
+      .sort((a, b) => {
+        const indexA = difficultyOrder.indexOf(a);
+        const indexB = difficultyOrder.indexOf(b);
+        
+        if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+        }
+        
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        
+        return a.localeCompare(b);
+      });
+    
     setDifficulties(uniqueDifficulties);
   }, [drills]);
 
