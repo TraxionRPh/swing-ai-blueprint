@@ -1,13 +1,4 @@
-
-import { Drill } from "@/components/drill-library/DrillCard";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Drill } from "@/types/drill";
 import { DrillCard } from "./DrillCard";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
