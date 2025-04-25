@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const Welcome = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [scoreGoal, setScoreGoal] = useState<number | null>(null);
+  const [handicapGoal, setHandicapGoal] = useState<number | null>(null);
 
   const handleNextStep = () => {
     if (currentStep < 3) {
@@ -42,7 +44,8 @@ const Welcome = () => {
         handicap, 
         goals, 
         selected_goals: selectedGoals,
-        score_goal: scoreGoal 
+        score_goal: scoreGoal,
+        handicap_goal: handicapGoal
       });
       navigate('/dashboard');
     } catch (error) {
@@ -81,6 +84,8 @@ const Welcome = () => {
               setSelectedGoals={setSelectedGoals}
               scoreGoal={scoreGoal}
               setScoreGoal={setScoreGoal}
+              handicapGoal={handicapGoal}
+              setHandicapGoal={setHandicapGoal}
             />
           )}
           {currentStep === 3 && (
@@ -89,6 +94,7 @@ const Welcome = () => {
               goals={goals}
               selectedGoals={selectedGoals}
               scoreGoal={scoreGoal}
+              handicapGoal={handicapGoal}
             />
           )}
           

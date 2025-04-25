@@ -7,9 +7,16 @@ interface ProfileSummaryStepProps {
   goals: string;
   selectedGoals: string[];
   scoreGoal: number | null;
+  handicapGoal: number | null;
 }
 
-const ProfileSummaryStep = ({ handicap, goals, selectedGoals, scoreGoal }: ProfileSummaryStepProps) => {
+const ProfileSummaryStep = ({ 
+  handicap, 
+  goals, 
+  selectedGoals, 
+  scoreGoal, 
+  handicapGoal 
+}: ProfileSummaryStepProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
       <h3 className="text-lg font-medium">Your SwingAI Profile</h3>
@@ -33,6 +40,9 @@ const ProfileSummaryStep = ({ handicap, goals, selectedGoals, scoreGoal }: Profi
                 <span>{goal.label}</span>
                 {goalId === "lower-score" && scoreGoal && (
                   <span className="text-sm">(Target: {scoreGoal})</span>
+                )}
+                {goalId === "handicap" && handicapGoal && (
+                  <span className="text-sm">(Target: {handicapGoal})</span>
                 )}
               </li>
             );

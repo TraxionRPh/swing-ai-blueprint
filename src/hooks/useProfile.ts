@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,6 +21,9 @@ export const useProfile = () => {
     firstName?: string;
     lastName?: string;
     avatarUrl?: string;
+    selected_goals?: string[];
+    score_goal?: number | null;
+    handicap_goal?: number | null;
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +40,10 @@ export const useProfile = () => {
           first_name: profileData.firstName,
           last_name: profileData.lastName,
           avatar_url: profileData.avatarUrl,
-          has_onboarded: true
+          has_onboarded: true,
+          selected_goals: profileData.selected_goals,
+          score_goal: profileData.score_goal,
+          handicap_goal: profileData.handicap_goal
         })
         .eq('id', user.id);
 
@@ -66,7 +73,7 @@ export const useProfile = () => {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('has_onboarded, handicap_level, goals, first_name, last_name, avatar_url')
+          .select('has_onboarded, handicap_level, goals, first_name, last_name, avatar_url, selected_goals, score_goal, handicap_goal')
           .eq('id', user.id)
           .single();
 

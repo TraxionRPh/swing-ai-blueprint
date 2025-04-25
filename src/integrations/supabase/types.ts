@@ -238,6 +238,7 @@ export type Database = {
           created_at: string | null
           first_name: string | null
           goals: string | null
+          handicap_goal: number | null
           handicap_level: string | null
           has_onboarded: boolean | null
           id: string
@@ -251,6 +252,7 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           goals?: string | null
+          handicap_goal?: number | null
           handicap_level?: string | null
           has_onboarded?: boolean | null
           id: string
@@ -264,6 +266,7 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           goals?: string | null
+          handicap_goal?: number | null
           handicap_level?: string | null
           has_onboarded?: boolean | null
           id?: string

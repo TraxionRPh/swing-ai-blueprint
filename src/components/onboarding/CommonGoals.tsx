@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Target, Goal, Check, ListCheck } from "lucide-react";
+import { HandicapLevel } from "@/hooks/useProfile";
 
 export const commonGolfGoals = [
   {
@@ -14,28 +15,40 @@ export const commonGolfGoals = [
   {
     id: "consistency",
     label: "Improve consistency",
-    icon: ListCheck
+    icon: ListCheck,
+    requiresNumber: false
   },
   {
     id: "technique",
     label: "Better technique",
-    icon: Check
+    icon: Check,
+    requiresNumber: false
   },
   {
     id: "handicap",
     label: "Lower my handicap",
-    icon: Goal
+    icon: Goal,
+    requiresNumber: true
   }
 ] as const;
 
 interface CommonGoalsProps {
   selectedGoals: string[];
   scoreGoal: number | null;
+  handicapGoal: number | null;
   onGoalToggle: (goalId: string, checked: boolean) => void;
-  onScoreGoalChange: (value: number) => void;
+  onScoreGoalChange: (value: number | null) => void;
+  onHandicapGoalChange: (value: number | null) => void;
 }
 
-const CommonGoals = ({ selectedGoals, scoreGoal, onGoalToggle, onScoreGoalChange }: CommonGoalsProps) => {
+const CommonGoals = ({ 
+  selectedGoals, 
+  scoreGoal, 
+  handicapGoal,
+  onGoalToggle, 
+  onScoreGoalChange, 
+  onHandicapGoalChange 
+}: CommonGoalsProps) => {
   return (
     <div className="space-y-4">
       {commonGolfGoals.map((goal) => (
@@ -52,7 +65,7 @@ const CommonGoals = ({ selectedGoals, scoreGoal, onGoalToggle, onScoreGoalChange
                 {goal.label}
               </Label>
             </div>
-            {goal.requiresNumber && selectedGoals.includes(goal.id) && (
+            {goal.id === "lower-score" && selectedGoals.includes(goal.id) && (
               <div className="mt-2 ml-6">
                 <Label htmlFor="score-goal" className="text-sm text-muted-foreground">
                   What's your target score?
@@ -61,10 +74,26 @@ const CommonGoals = ({ selectedGoals, scoreGoal, onGoalToggle, onScoreGoalChange
                   id="score-goal"
                   type="number"
                   value={scoreGoal || ""}
-                  onChange={(e) => onScoreGoalChange(parseInt(e.target.value))}
+                  onChange={(e) => onScoreGoalChange(e.target.value ? parseInt(e.target.value) : null)}
                   className="w-24 mt-1"
                   min={30}
                   max={150}
+                />
+              </div>
+            )}
+            {goal.id === "handicap" && selectedGoals.includes(goal.id) && (
+              <div className="mt-2 ml-6">
+                <Label htmlFor="handicap-goal" className="text-sm text-muted-foreground">
+                  What's your target handicap?
+                </Label>
+                <Input
+                  id="handicap-goal"
+                  type="number"
+                  value={handicapGoal || ""}
+                  onChange={(e) => onHandicapGoalChange(e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-24 mt-1"
+                  min={0}
+                  max={36}
                 />
               </div>
             )}

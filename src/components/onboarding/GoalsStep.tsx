@@ -9,6 +9,8 @@ interface GoalsStepProps {
   setSelectedGoals: (goals: string[]) => void;
   scoreGoal: number | null;
   setScoreGoal: (score: number | null) => void;
+  handicapGoal: number | null;
+  setHandicapGoal: (handicap: number | null) => void;
 }
 
 const GoalsStep = ({ 
@@ -17,7 +19,9 @@ const GoalsStep = ({
   selectedGoals, 
   setSelectedGoals,
   scoreGoal,
-  setScoreGoal
+  setScoreGoal,
+  handicapGoal,
+  setHandicapGoal
 }: GoalsStepProps) => {
   const handleGoalToggle = (goalId: string, checked: boolean) => {
     if (checked) {
@@ -26,6 +30,9 @@ const GoalsStep = ({
       setSelectedGoals(selectedGoals.filter(g => g !== goalId));
       if (goalId === "lower-score") {
         setScoreGoal(null);
+      }
+      if (goalId === "handicap") {
+        setHandicapGoal(null);
       }
     }
   };
@@ -37,8 +44,10 @@ const GoalsStep = ({
       <CommonGoals
         selectedGoals={selectedGoals}
         scoreGoal={scoreGoal}
+        handicapGoal={handicapGoal}
         onGoalToggle={handleGoalToggle}
         onScoreGoalChange={setScoreGoal}
+        onHandicapGoalChange={setHandicapGoal}
       />
       
       <div className="space-y-2">
