@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -10,32 +9,38 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter 
+  SidebarFooter,
+  useSidebar 
 } from "@/components/ui/sidebar";
-import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
+import { LucideGolf, Home, Award, Dumbbell, Calendar, Brain, List, User } from "./icons/CustomIcons";
 
 interface AppSidebarProps {
   currentPath?: string;
 }
 
 const AppSidebar = ({ currentPath }: AppSidebarProps) => {
-  console.log("AppSidebar rendered with currentPath:", currentPath);
+  const { state } = useSidebar();
+  console.log("AppSidebar rendered with:", { currentPath, sidebarState: state });
 
   return (
-    <Sidebar>
+    <Sidebar className="h-full">
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-2">
           <LucideGolf className="h-8 w-8 text-primary" />
           <h1 className="font-bold text-xl">ChipAway</h1>
         </div>
       </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton 
+                  asChild
+                  isActive={currentPath === "/dashboard"}
+                >
                   <Link to="/dashboard">
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
@@ -136,8 +141,9 @@ const AppSidebar = ({ currentPath }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="px-3 py-2 text-xs text-muted-foreground">
+      
+      <SidebarFooter className="p-4">
+        <div className="text-xs text-muted-foreground">
           © 2025 ChipAway - v1.0.0
         </div>
       </SidebarFooter>
