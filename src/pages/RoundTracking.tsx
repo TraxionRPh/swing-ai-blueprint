@@ -4,6 +4,7 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 interface Course {
   id: string;
@@ -34,11 +35,115 @@ const RoundTracking = () => {
   const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const [currentHole, setCurrentHole] = useState(1);
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleCourseSelect = (course: Course) => {
+  useEffect(() => {
+    const fetchInProgressRound = async () => {
+      if (!user) return;
+
+      try {
+        const { data: rounds, error } = await supabase
+          .from('rounds')
+          .select('id, course_id, golf_courses(id, name, city, state, course_tees(*)), hole_scores(*)')
+          .eq('user_id', user.id)
+          .eq('is_in_progress', true)
+          .single();
+
+        if (error) throw error;
+
+        if (rounds) {
+          setCurrentRoundId(rounds.id);
+          setSelectedCourse(rounds.golf_courses);
+          
+          if (rounds.hole_scores && rounds.hole_scores.length > 0) {
+            const restoredHoleScores = rounds.hole_scores.map((hole: any) => ({
+              holeNumber: hole.hole_number,
+              par: hole.par || 4,
+              distance: hole.distance || 0,
+              score: hole.score,
+              putts: hole.putts,
+              fairwayHit: hole.fairway_hit,
+              greenInRegulation: hole.green_in_regulation
+            }));
+            
+            setHoleScores(restoredHoleScores);
+            setCurrentHole(restoredHoleScores.length);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching in-progress round:', error);
+      }
+    };
+
+    fetchInProgressRound();
+  }, [user]);
+
+  const handleCourseSelect = async (course: Course) => {
     setSelectedCourse(course);
-    fetchCourseHoles(course.id);
+    await fetchCourseHoles(course.id);
+    
+    if (!currentRoundId) {
+      const { data, error } = await supabase
+        .from('rounds')
+        .insert({
+          course_id: course.id,
+          user_id: user?.id,
+          is_in_progress: true,
+          date: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error starting round",
+          description: "Could not start a new round. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCurrentRoundId(data.id);
+    }
+  };
+
+  const saveHoleScore = async (holeData: HoleData) => {
+    if (!currentRoundId) return;
+
+    try {
+      const { error } = await supabase
+        .from('hole_scores')
+        .upsert({
+          round_id: currentRoundId,
+          hole_number: holeData.holeNumber,
+          score: holeData.score,
+          putts: holeData.putts,
+          fairway_hit: holeData.fairwayHit,
+          green_in_regulation: holeData.greenInRegulation
+        }, {
+          onConflict: 'round_id,hole_number'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving hole score:', error);
+      toast({
+        title: "Error saving hole score",
+        description: "Could not save your progress. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleHoleUpdate = (data: HoleData) => {
+    setHoleScores(prev => 
+      prev.map(hole => 
+        hole.holeNumber === data.holeNumber ? data : hole
+      )
+    );
+    saveHoleScore(data);
   };
 
   const fetchCourseHoles = async (courseId: string) => {
@@ -87,17 +192,45 @@ const RoundTracking = () => {
     }
   };
 
-  const handleHoleUpdate = (data: HoleData) => {
-    setHoleScores(prev => 
-      prev.map(hole => 
-        hole.holeNumber === data.holeNumber ? data : hole
-      )
-    );
-  };
-
   const handleNext = () => {
     if (currentHole < 18) {
       setCurrentHole(prev => prev + 1);
+    } else {
+      finishRound();
+    }
+  };
+
+  const finishRound = async () => {
+    if (!currentRoundId) return;
+
+    try {
+      await supabase
+        .from('rounds')
+        .update({ 
+          is_in_progress: false,
+          total_score: holeScores.reduce((sum, hole) => sum + hole.score, 0),
+          total_putts: holeScores.reduce((sum, hole) => sum + hole.putts, 0),
+          fairways_hit: holeScores.filter(hole => hole.fairwayHit).length,
+          greens_in_regulation: holeScores.filter(hole => hole.greenInRegulation).length
+        })
+        .eq('id', currentRoundId);
+
+      toast({
+        title: "Round Completed",
+        description: "Your round has been saved successfully!"
+      });
+
+      setCurrentRoundId(null);
+      setCurrentHole(1);
+      setHoleScores([]);
+      setSelectedCourse(null);
+    } catch (error) {
+      console.error('Error finishing round:', error);
+      toast({
+        title: "Error finishing round",
+        description: "Could not save round details. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
