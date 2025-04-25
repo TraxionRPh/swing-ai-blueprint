@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
+// Define separate interfaces to avoid circular references
 export interface CourseTee {
   id: string;
   name: string;
@@ -47,7 +48,8 @@ export const useRoundTracking = () => {
     if (!user) return;
 
     try {
-      const { data: rounds, error } = await supabase
+      // Fix the query to avoid recursive type issues
+      const { data, error } = await supabase
         .from('rounds')
         .select(`
           id,
@@ -56,8 +58,7 @@ export const useRoundTracking = () => {
             id,
             name,
             city,
-            state,
-            course_tees (*)
+            state
           ),
           hole_scores (*)
         `)
@@ -67,12 +68,30 @@ export const useRoundTracking = () => {
 
       if (error) throw error;
 
-      if (rounds) {
-        setCurrentRoundId(rounds.id);
-        setSelectedCourse(rounds.golf_courses);
+      if (data) {
+        setCurrentRoundId(data.id);
         
-        if (rounds.hole_scores && rounds.hole_scores.length > 0) {
-          const restoredHoleScores = rounds.hole_scores.map((hole: any) => ({
+        // Fetch course tees separately to avoid circular reference
+        if (data.course_id) {
+          const { data: courseTees, error: teesError } = await supabase
+            .from('course_tees')
+            .select('*')
+            .eq('course_id', data.course_id);
+            
+          if (teesError) throw teesError;
+          
+          // Safely set the course with its tees
+          if (data.golf_courses) {
+            const course: Course = {
+              ...data.golf_courses,
+              course_tees: courseTees || []
+            };
+            setSelectedCourse(course);
+          }
+        }
+        
+        if (data.hole_scores && data.hole_scores.length > 0) {
+          const restoredHoleScores = data.hole_scores.map((hole: any) => ({
             holeNumber: hole.hole_number,
             par: hole.par || 4,
             distance: hole.distance || 0,
