@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Brain } from "lucide-react";
+import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 
-// Mock data for common problems
 const commonProblems = [
   {
     id: 1,
@@ -52,6 +52,7 @@ const AIPracticePlans = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const { toast } = useToast();
+  const { generateAnalysis, isGenerating: isAnalyzing } = useAIAnalysis();
   
   const handleSubmit = () => {
     if (!inputValue.trim()) {
@@ -139,11 +140,21 @@ const AIPracticePlans = () => {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">AI Practice Plans</h1>
-        <p className="text-muted-foreground">
-          Get personalized practice plans for specific golf issues
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Practice Plans</h1>
+          <p className="text-muted-foreground">
+            Get personalized practice plans based on your performance
+          </p>
+        </div>
+        <Button
+          onClick={() => generateAnalysis()}
+          disabled={isAnalyzing}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+        >
+          <Brain className="mr-2 h-4 w-4" />
+          {isAnalyzing ? "Analyzing Your Data..." : "Generate AI Practice Plan"}
+        </Button>
       </div>
       
       {!generatedPlan ? (
