@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CourseForm } from "./CourseForm";
+import { Card } from "@/components/ui/card";
 
 interface Course {
   id: string;
@@ -22,6 +24,7 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
 
   const searchCourses = async () => {
@@ -37,7 +40,6 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
       if (error) throw error;
 
-      // Transform the data to match our Course interface with camelCase properties
       const transformedData = (data || []).map(course => ({
         id: course.id,
         name: course.name,
@@ -59,6 +61,22 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
     }
   };
 
+  const handleCourseCreated = (course: Course) => {
+    setShowAddForm(false);
+    onCourseSelect(course);
+  };
+
+  if (showAddForm) {
+    return (
+      <Card className="p-4">
+        <CourseForm 
+          onCourseCreated={handleCourseCreated}
+          onCancel={() => setShowAddForm(false)}
+        />
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -76,7 +94,7 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
         </Button>
       </div>
 
-      {courses.length > 0 && (
+      {courses.length > 0 ? (
         <div className="space-y-2">
           {courses.map((course) => (
             <Button
@@ -91,6 +109,13 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
               </div>
             </Button>
           ))}
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-muted-foreground mb-2">No courses found</p>
+          <Button onClick={() => setShowAddForm(true)}>
+            Add New Course
+          </Button>
         </div>
       )}
     </div>
