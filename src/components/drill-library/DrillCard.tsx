@@ -9,17 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-export type Drill = {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  duration: string;
-  focus: string[];
-  video_url: string | null;
-  category: string;
-};
+import { Drill } from "@/types/drill";
 
 interface DrillCardProps {
   drill: Drill;
