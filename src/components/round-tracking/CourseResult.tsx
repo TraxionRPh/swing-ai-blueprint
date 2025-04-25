@@ -1,23 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { BadgeCheck, Edit2 } from "lucide-react";
-
-interface Course {
-  id: string;
-  name: string;
-  city: string;
-  state: string;
-  total_par?: number;
-  is_verified?: boolean;
-  course_tees: {
-    id: string;
-    name: string;
-    color: string;
-    course_rating: number;
-    slope_rating: number;
-  }[];
-}
+import { Card } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Course } from "@/types/round-tracking";
+import { useState } from "react";
 
 interface CourseResultProps {
   course: Course;
@@ -26,45 +13,76 @@ interface CourseResultProps {
   showEditButton?: boolean;
 }
 
-export const CourseResult = ({ course, onSelect, onEdit, showEditButton }: CourseResultProps) => {
+export const CourseResult = ({
+  course,
+  onSelect,
+  onEdit,
+  showEditButton = false,
+}: CourseResultProps) => {
+  const [isSelected, setIsSelected] = useState(false);
+  const [holeCount, setHoleCount] = useState<number>(18);
+
+  const handleSelect = () => {
+    setIsSelected(true);
+  };
+
+  const handleStartRound = () => {
+    onSelect(course);
+  };
+
   return (
-    <Button
-      variant="outline"
-      className="w-full justify-between min-h-[4rem] h-auto py-3 px-4"
-      onClick={() => onSelect(course)}
-    >
-      <div className="text-left flex-1 flex flex-col gap-1">
-        <div className="font-semibold flex items-center gap-2 flex-wrap">
-          {course.name}
-          {course.is_verified && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <BadgeCheck className="h-3 w-3" />
-              Verified
-            </Badge>
+    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+      <div className="flex flex-col space-y-4">
+        <div className="flex justify-between items-start">
+          <div onClick={handleSelect}>
+            <h3 className="font-medium">{course.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {course.city}, {course.state}
+            </p>
+          </div>
+          {showEditButton && onEdit && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(course);
+              }}
+            >
+              Edit
+            </Button>
           )}
         </div>
-        <div className="text-sm text-muted-foreground">
-          {course.city}, {course.state}
-        </div>
-        {course.course_tees && course.course_tees.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            Tees: {course.course_tees.map(tee => tee.color || tee.name).join(", ")}
+
+        {isSelected && (
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">How many holes?</h4>
+              <RadioGroup 
+                defaultValue="18" 
+                className="grid grid-cols-2 gap-4"
+                onValueChange={(value) => setHoleCount(parseInt(value))}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="9" id={`nine-${course.id}`} />
+                  <Label htmlFor={`nine-${course.id}`}>9 Holes</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="18" id={`eighteen-${course.id}`} />
+                  <Label htmlFor={`eighteen-${course.id}`}>18 Holes</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <Button 
+              className="w-full" 
+              onClick={handleStartRound}
+            >
+              Start Round
+            </Button>
           </div>
         )}
       </div>
-      {showEditButton && onEdit && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-2 shrink-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(course);
-          }}
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-      )}
-    </Button>
+    </Card>
   );
 };

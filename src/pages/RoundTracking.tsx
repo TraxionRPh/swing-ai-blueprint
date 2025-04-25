@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,20 @@ const RoundTracking = () => {
   } = useRoundTracking();
 
   const handleBack = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1);
+  };
+
+  const handleNext = () => {
+    if (currentHole === holeCount) {
+      setShowFinalScore(true);
+    } else {
+      baseHandleNext();
+    }
+  };
+
+  const handleConfirmRound = async () => {
+    await finishRound();
+    setShowFinalScore(false);
   };
 
   return (
@@ -119,4 +131,3 @@ const RoundTracking = () => {
 };
 
 export default RoundTracking;
-
