@@ -56,6 +56,8 @@ export const useProfile = () => {
       if (profileData.firstName) setFirstName(profileData.firstName);
       if (profileData.lastName) setLastName(profileData.lastName);
       if (profileData.avatarUrl) setAvatarUrl(profileData.avatarUrl);
+      if (profileData.score_goal !== undefined) setScoreGoal(profileData.score_goal);
+      if (profileData.handicap_goal !== undefined) setHandicapGoal(profileData.handicap_goal);
     } catch (error) {
       console.error('Error saving profile:', error);
       throw error;

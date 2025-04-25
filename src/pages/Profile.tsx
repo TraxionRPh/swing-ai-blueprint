@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +22,8 @@ const Profile = () => {
   const [localFirstName, setLocalFirstName] = useState<string | null>(firstName);
   const [localLastName, setLocalLastName] = useState<string | null>(lastName);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(avatarUrl);
+  const [localScoreGoal, setLocalScoreGoal] = useState<number | null>(scoreGoal);
+  const [localHandicapGoal, setLocalHandicapGoal] = useState<number | null>(handicapGoal);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -33,6 +34,8 @@ const Profile = () => {
         firstName: localFirstName || undefined,
         lastName: localLastName || undefined,
         avatarUrl: localAvatarUrl || undefined,
+        score_goal: localScoreGoal,
+        handicap_goal: localHandicapGoal
       });
       toast({
         title: "Profile Updated",
@@ -95,15 +98,27 @@ const Profile = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="targetScore">Target Round Score</Label>
-              <div className="text-muted-foreground">
-                {scoreGoal ? `${scoreGoal} strokes` : 'Not set'}
-              </div>
+              <Input
+                id="targetScore"
+                type="number"
+                min={30}
+                max={150}
+                value={localScoreGoal || ''}
+                onChange={(e) => setLocalScoreGoal(e.target.value ? Number(e.target.value) : null)}
+                placeholder="Enter target score"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="targetHandicap">Target Handicap</Label>
-              <div className="text-muted-foreground">
-                {handicapGoal ? `${handicapGoal} handicap` : 'Not set'}
-              </div>
+              <Input
+                id="targetHandicap"
+                type="number"
+                min={0}
+                max={36}
+                value={localHandicapGoal || ''}
+                onChange={(e) => setLocalHandicapGoal(e.target.value ? Number(e.target.value) : null)}
+                placeholder="Enter target handicap"
+              />
             </div>
           </div>
 
