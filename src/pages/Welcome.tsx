@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [scoreGoal, setScoreGoal] = useState<number | null>(null);
 
   const handleNextStep = () => {
     if (currentStep < 3) {
@@ -37,7 +38,12 @@ const Welcome = () => {
 
   const handleCompleteOnboarding = async () => {
     try {
-      await saveProfile({ handicap, goals });
+      await saveProfile({ 
+        handicap, 
+        goals, 
+        selected_goals: selectedGoals,
+        score_goal: scoreGoal 
+      });
       navigate('/dashboard');
     } catch (error) {
       console.error('Onboarding error:', error);
@@ -70,13 +76,19 @@ const Welcome = () => {
           {currentStep === 2 && (
             <GoalsStep 
               goals={goals} 
-              setGoals={setGoals} 
+              setGoals={setGoals}
+              selectedGoals={selectedGoals}
+              setSelectedGoals={setSelectedGoals}
+              scoreGoal={scoreGoal}
+              setScoreGoal={setScoreGoal}
             />
           )}
           {currentStep === 3 && (
             <ProfileSummaryStep 
               handicap={handicap} 
-              goals={goals} 
+              goals={goals}
+              selectedGoals={selectedGoals}
+              scoreGoal={scoreGoal}
             />
           )}
           

@@ -242,6 +242,8 @@ export type Database = {
           has_onboarded: boolean | null
           id: string
           last_name: string | null
+          score_goal: number | null
+          selected_goals: string[] | null
           updated_at: string | null
         }
         Insert: {
@@ -253,6 +255,8 @@ export type Database = {
           has_onboarded?: boolean | null
           id: string
           last_name?: string | null
+          score_goal?: number | null
+          selected_goals?: string[] | null
           updated_at?: string | null
         }
         Update: {
@@ -264,6 +268,8 @@ export type Database = {
           has_onboarded?: boolean | null
           id?: string
           last_name?: string | null
+          score_goal?: number | null
+          selected_goals?: string[] | null
           updated_at?: string | null
         }
         Relationships: []
