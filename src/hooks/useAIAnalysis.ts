@@ -1,10 +1,15 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
 import { ConfidencePoint } from "@/types/drill";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const useAIAnalysis = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [analysis, setAnalysis] = useState<AIAnalysisForPracticePlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -15,8 +20,54 @@ export const useAIAnalysis = () => {
     { date: 'This week', confidence: 90 }
   ]);
 
+  const checkAPIUsage = async () => {
+    if (!user) {
+      toast({
+        title: "Not Authorized",
+        description: "Please log in to use AI features.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-api-usage', {
+        body: { 
+          user_id: user.id, 
+          type: 'ai_analysis' 
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "API Limit Reached",
+          description: "You've reached your daily limit of 5 AI-powered analyses.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('API usage check failed:', err);
+      toast({
+        title: "Error",
+        description: "Failed to check API usage. Please try again later.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const generateAnalysis = async () => {
     setIsGenerating(true);
+    
+    // First check API usage
+    const canProceed = await checkAPIUsage();
+    if (!canProceed) {
+      setIsGenerating(false);
+      return;
+    }
     
     try {
       // Mock data - in a real app, this would call the backend
@@ -80,6 +131,12 @@ export const useAIAnalysis = () => {
   };
 
   const generatePracticePlan = async (issue: string): Promise<GeneratedPracticePlan> => {
+    // First check API usage
+    const canProceed = await checkAPIUsage();
+    if (!canProceed) {
+      throw new Error('Daily API limit reached');
+    }
+
     const { data, error } = await supabase.functions.invoke('search-drills', {
       body: { query: issue }
     });

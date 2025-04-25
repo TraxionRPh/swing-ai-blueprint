@@ -1,5 +1,5 @@
 
 project_id = "xocrhthipvspkndtkxeq"
 
-[functions.analyze-golf-performance]
+[functions.check-api-usage]
 verify_jwt = true
