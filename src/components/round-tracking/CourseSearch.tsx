@@ -129,12 +129,10 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
   if (showAddForm) {
     return (
-      <Card className="p-4">
-        <CourseForm 
-          onCourseCreated={handleCourseCreated}
-          onCancel={() => setShowAddForm(false)}
-        />
-      </Card>
+      <CourseForm 
+        onCourseCreated={handleCourseCreated}
+        onCancel={() => setShowAddForm(false)}
+      />
     );
   }
 
@@ -167,6 +165,15 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
             </Button>
           </div>
         )
+      )}
+
+      {!searchQuery && (
+        <div className="text-center py-4 border-t border-gray-200 mt-4">
+          <p className="text-muted-foreground mb-2">Can't find your course?</p>
+          <Button onClick={() => setShowAddForm(true)}>
+            Add New Course
+          </Button>
+        </div>
       )}
     </div>
   );

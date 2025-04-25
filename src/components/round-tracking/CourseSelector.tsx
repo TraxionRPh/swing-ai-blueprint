@@ -32,7 +32,7 @@ export const CourseSelector = ({
   onCourseSelect,
   onTeeSelect,
 }: CourseSelectorProps) => {
-  const [showCourseSearch, setShowCourseSearch] = useState(false);
+  const [showCourseSearch, setShowCourseSearch] = useState(!selectedCourse);
 
   const handleCourseSelect = (course: Course) => {
     onCourseSelect(course);
@@ -101,7 +101,7 @@ export const CourseSelector = ({
       </CardContent>
 
       <Dialog open={showCourseSearch} onOpenChange={setShowCourseSearch}>
-        <DialogContent>
+        <DialogContent className="max-w-md sm:max-w-lg">
           <DialogTitle>Select a Course</DialogTitle>
           <DialogDescription>
             Search for a course or enter course details manually

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
@@ -53,19 +53,41 @@ const RoundTracking = () => {
 
       if (error) throw error;
 
-      setHoleScores(holes.map((hole: any) => ({
-        holeNumber: hole.hole_number,
-        par: hole.par,
-        distance: hole.distance_yards,
-        score: 0,
-        putts: 0
-      })));
+      if (holes && holes.length > 0) {
+        setHoleScores(holes.map((hole: any) => ({
+          holeNumber: hole.hole_number,
+          par: hole.par,
+          distance: hole.distance_yards,
+          score: 0,
+          putts: 0
+        })));
+      } else {
+        // If no holes data, create default 18 holes
+        const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+          holeNumber: i + 1,
+          par: 4, // Default par
+          distance: 0,
+          score: 0,
+          putts: 0
+        }));
+        setHoleScores(defaultHoles);
+      }
     } catch (error) {
       toast({
         title: "Error loading course data",
         description: "Please try again or enter the data manually",
         variant: "destructive"
       });
+      
+      // Create default holes on error
+      const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+        holeNumber: i + 1,
+        par: 4, // Default par
+        distance: 0,
+        score: 0,
+        putts: 0
+      }));
+      setHoleScores(defaultHoles);
     }
   };
 
