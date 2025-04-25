@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   LineChart, 
@@ -158,10 +157,10 @@ const Dashboard = () => {
         </Card>
         
         <Card className="md:col-span-2 border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
-          <div className="bg-card h-full rounded-lg">
-            <CardHeader className="pb-2 bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white rounded-t-lg">
+          <div className="bg-transparent h-full rounded-lg">
+            <CardHeader className="pb-2 bg-transparent text-foreground rounded-t-lg border-b border-purple-500/20">
               <CardTitle>AI Insights</CardTitle>
-              <CardDescription className="text-white/90">Personalized recommendations based on your data</CardDescription>
+              <CardDescription>Personalized recommendations based on your data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-muted/20 rounded-lg border border-[#EA384C]/20">
