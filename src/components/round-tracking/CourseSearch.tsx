@@ -1,16 +1,18 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseForm } from "./CourseForm";
 import { Card } from "@/components/ui/card";
+import { X } from "lucide-react";
 
 interface Course {
   id: string;
   name: string;
-  address: string | null;
+  city: string;
+  state: string;
   course_tees: {
     id: string;
     name: string;
@@ -31,8 +33,11 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
 
-  const searchCourses = async () => {
-    if (!searchQuery.trim()) return;
+  const searchCourses = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setCourses([]);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -48,7 +53,9 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
             slope_rating
           )
         `)
-        .ilike('name', `%${searchQuery}%`)
+        .or(
+          `name.ilike.%${query}%,city.ilike.%${query}%,state.ilike.%${query}%`
+        )
         .limit(5);
 
       if (error) throw error;
@@ -63,6 +70,23 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
     } finally {
       setIsLoading(false);
     }
+  }, [toast]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Debounce search - only search after 2 characters
+    if (query.length >= 2) {
+      searchCourses(query);
+    } else {
+      setCourses([]);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setCourses([]);
   };
 
   const handleCourseCreated = (course: Course) => {
@@ -83,19 +107,23 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="relative flex items-center">
         <Input
-          placeholder="Search for a golf course..."
+          placeholder="Search for a golf course (name, city, or state)..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
+          onChange={handleSearchChange}
+          className="flex-1 pr-10"
         />
-        <Button 
-          onClick={searchCourses}
-          disabled={isLoading}
-        >
-          {isLoading ? "Searching..." : "Search"}
-        </Button>
+        {searchQuery && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+            onClick={clearSearch}
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        )}
       </div>
 
       {courses.length > 0 ? (
@@ -108,10 +136,12 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
               onClick={() => onCourseSelect(course)}
             >
               <div className="text-left">
-                <div>{course.name}</div>
-                <div className="text-sm text-muted-foreground">{course.address}</div>
+                <div className="font-semibold">{course.name}</div>
+                <div className="text-sm text-muted-foreground">
+                  ({course.city}, {course.state})
+                </div>
                 {course.course_tees && course.course_tees.length > 0 && (
-                  <div className="text-sm text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     Tees: {course.course_tees.map(tee => tee.color || tee.name).join(", ")}
                   </div>
                 )}
@@ -120,12 +150,14 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-4">
-          <p className="text-muted-foreground mb-2">No courses found</p>
-          <Button onClick={() => setShowAddForm(true)}>
-            Add New Course
-          </Button>
-        </div>
+        searchQuery.length >= 2 && !isLoading && (
+          <div className="text-center py-4">
+            <p className="text-muted-foreground mb-2">No courses found</p>
+            <Button onClick={() => setShowAddForm(true)}>
+              Add New Course
+            </Button>
+          </div>
+        )
       )}
     </div>
   );

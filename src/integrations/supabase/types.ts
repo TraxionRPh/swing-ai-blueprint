@@ -237,30 +237,33 @@ export type Database = {
       }
       golf_courses: {
         Row: {
-          address: string | null
+          city: string
           course_rating: number | null
           created_at: string | null
           id: string
           name: string
           slope_rating: number | null
+          state: string
           total_par: number | null
         }
         Insert: {
-          address?: string | null
+          city: string
           course_rating?: number | null
           created_at?: string | null
           id?: string
           name: string
           slope_rating?: number | null
+          state: string
           total_par?: number | null
         }
         Update: {
-          address?: string | null
+          city?: string
           course_rating?: number | null
           created_at?: string | null
           id?: string
           name?: string
           slope_rating?: number | null
+          state?: string
           total_par?: number | null
         }
         Relationships: []

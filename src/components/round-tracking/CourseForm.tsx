@@ -1,17 +1,39 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { 
+  Form, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormControl, 
+  FormMessage 
+} from "@/components/ui/form";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TeesForm } from "./TeesForm";
 import { Card } from "@/components/ui/card";
 
+const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", 
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+];
+
 interface CourseFormData {
   name: string;
-  address: string;
+  city: string;
+  state: string;
   totalPar: string;
 }
 
@@ -37,7 +59,8 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
   const form = useForm<CourseFormData>({
     defaultValues: {
       name: "",
-      address: "",
+      city: "",
+      state: "",
       totalPar: "",
     },
   });
@@ -49,7 +72,8 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
         .from('golf_courses')
         .insert({
           name: data.name,
-          address: data.address,
+          city: data.city,
+          state: data.state.toUpperCase(),
           total_par: parseInt(data.totalPar),
         })
         .select()
@@ -134,6 +158,7 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
         <FormField
           control={form.control}
           name="name"
+          rules={{ required: "Course name is required" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Course Name</FormLabel>
@@ -147,12 +172,43 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
 
         <FormField
           control={form.control}
-          name="address"
+          name="city"
+          rules={{ required: "City is required" }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Address</FormLabel>
+              <FormLabel>City</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter course address" />
+                <Input {...field} placeholder="Enter city" required />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="state"
+          rules={{ required: "State is required" }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>State</FormLabel>
+              <FormControl>
+                <Select 
+                  value={field.value} 
+                  onValueChange={field.onChange}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {US_STATES.map(state => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -162,11 +218,22 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
         <FormField
           control={form.control}
           name="totalPar"
+          rules={{ 
+            required: "Total par is required",
+            validate: (value) => {
+              const numValue = parseInt(value);
+              return (numValue > 0 && numValue < 100) || "Invalid par value";
+            }
+          }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Total Par</FormLabel>
               <FormControl>
-                <Input {...field} type="number" placeholder="72" />
+                <Input 
+                  {...field} 
+                  type="number" 
+                  placeholder="Enter total par (e.g., 72)" 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
