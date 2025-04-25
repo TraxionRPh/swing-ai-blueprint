@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
@@ -9,12 +10,11 @@ import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useParams } from "react-router-dom";
 import type { Course } from "@/types/round-tracking";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
-  const { roundId } = useParams();
+  const { roundId, holeNumber } = useParams();
   const [showFinalScore, setShowFinalScore] = useState(false);
   const {
     selectedCourse,
@@ -31,10 +31,19 @@ const RoundTracking = () => {
     isSaving,
     finishRound,
     holeCount,
-    setHoleCount
+    setHoleCount,
+    setCurrentRoundId
   } = useRoundTracking();
 
   useEffect(() => {
+    // If we have a roundId from URL params, set it in the context
+    if (roundId && roundId !== 'new') {
+      setCurrentRoundId(roundId);
+      
+      // If we also have a holeNumber, we might want to navigate to that specific hole
+      // This would require additional handling in the useRoundTracking hook
+    }
+    
     // If we have a roundId from URL params, check if there's a stored hole count
     if (roundId) {
       const storedHoleCount = sessionStorage.getItem('current-hole-count');
@@ -42,7 +51,7 @@ const RoundTracking = () => {
         setHoleCount(parseInt(storedHoleCount));
       }
     }
-  }, [roundId, setHoleCount]);
+  }, [roundId, holeNumber, setHoleCount, setCurrentRoundId]);
 
   const handleBack = () => {
     navigate(-1);

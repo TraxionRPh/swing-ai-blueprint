@@ -96,6 +96,7 @@ export const useRoundTracking = () => {
     isSaving,
     finishRound,
     holeCount,
-    setHoleCount
+    setHoleCount,
+    setCurrentRoundId
   };
 };

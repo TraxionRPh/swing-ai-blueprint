@@ -88,6 +88,8 @@ const App = () => (
                   <Route path="/drills" element={<DrillLibrary />} />
                   <Route path="/challenges" element={<ChallengeLibrary />} />
                   <Route path="/rounds" element={<RoundTracking />} />
+                  <Route path="/rounds/:roundId" element={<RoundTracking />} />
+                  <Route path="/rounds/:roundId/:holeNumber" element={<RoundTracking />} />
                   <Route path="/ai-analysis" element={<AIAnalysis />} />
                   <Route path="/practice-plan-generator" element={<PracticePlanGenerator />} />
                   <Route path="/practice-plans" element={<AIPracticePlans />} />
