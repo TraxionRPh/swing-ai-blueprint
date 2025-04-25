@@ -89,6 +89,7 @@ export type Database = {
           hole_number: number
           id: string
           par: number
+          tee_distances: Json | null
         }
         Insert: {
           course_id?: string | null
@@ -97,6 +98,7 @@ export type Database = {
           hole_number: number
           id?: string
           par: number
+          tee_distances?: Json | null
         }
         Update: {
           course_id?: string | null
@@ -105,10 +107,52 @@ export type Database = {
           hole_number?: number
           id?: string
           par?: number
+          tee_distances?: Json | null
         }
         Relationships: [
           {
             foreignKeyName: "course_holes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "golf_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_tees: {
+        Row: {
+          color: string | null
+          course_id: string | null
+          course_rating: number | null
+          created_at: string | null
+          id: string
+          name: string
+          slope_rating: number | null
+          total_yards: number | null
+        }
+        Insert: {
+          color?: string | null
+          course_id?: string | null
+          course_rating?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+          slope_rating?: number | null
+          total_yards?: number | null
+        }
+        Update: {
+          color?: string | null
+          course_id?: string | null
+          course_rating?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          slope_rating?: number | null
+          total_yards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_tees_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "golf_courses"

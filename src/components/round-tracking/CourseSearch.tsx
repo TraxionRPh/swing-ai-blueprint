@@ -11,9 +11,13 @@ interface Course {
   id: string;
   name: string;
   address: string | null;
-  courseRating: number | null;
-  slopeRating: number | null;
-  total_par: number | null;
+  course_tees: {
+    id: string;
+    name: string;
+    color: string;
+    course_rating: number;
+    slope_rating: number;
+  }[];
 }
 
 interface CourseSearchProps {
@@ -34,22 +38,22 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
     try {
       const { data, error } = await supabase
         .from('golf_courses')
-        .select('*')
+        .select(`
+          *,
+          course_tees (
+            id,
+            name,
+            color,
+            course_rating,
+            slope_rating
+          )
+        `)
         .ilike('name', `%${searchQuery}%`)
         .limit(5);
 
       if (error) throw error;
 
-      const transformedData = (data || []).map(course => ({
-        id: course.id,
-        name: course.name,
-        address: course.address,
-        courseRating: course.course_rating,
-        slopeRating: course.slope_rating,
-        total_par: course.total_par
-      }));
-
-      setCourses(transformedData);
+      setCourses(data || []);
     } catch (error) {
       toast({
         title: "Error searching courses",
@@ -106,6 +110,11 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
               <div className="text-left">
                 <div>{course.name}</div>
                 <div className="text-sm text-muted-foreground">{course.address}</div>
+                {course.course_tees && course.course_tees.length > 0 && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Tees: {course.course_tees.map(tee => tee.color || tee.name).join(", ")}
+                  </div>
+                )}
               </div>
             </Button>
           ))}

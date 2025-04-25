@@ -6,13 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TeesForm } from "./TeesForm";
+import { Card } from "@/components/ui/card";
 
 interface CourseFormData {
   name: string;
   address: string;
+  totalPar: string;
+}
+
+interface TeeData {
+  name: string;
+  color: string;
   courseRating: string;
   slopeRating: string;
-  totalPar: string;
+  totalYards: string;
 }
 
 interface CourseFormProps {
@@ -22,13 +30,14 @@ interface CourseFormProps {
 
 export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTeesForm, setShowTeesForm] = useState(false);
+  const [courseId, setCourseId] = useState<string | null>(null);
   const { toast } = useToast();
+  
   const form = useForm<CourseFormData>({
     defaultValues: {
       name: "",
       address: "",
-      courseRating: "",
-      slopeRating: "",
       totalPar: "",
     },
   });
@@ -41,8 +50,6 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
         .insert({
           name: data.name,
           address: data.address,
-          course_rating: parseFloat(data.courseRating),
-          slope_rating: parseInt(data.slopeRating),
           total_par: parseInt(data.totalPar),
         })
         .select()
@@ -50,22 +57,76 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
 
       if (error) throw error;
 
+      setCourseId(course.id);
+      setShowTeesForm(true);
+      
       toast({
         title: "Course created",
-        description: "The golf course has been added successfully.",
+        description: "Now let's add the tee information.",
       });
-      
-      onCourseCreated(course);
     } catch (error) {
       toast({
         title: "Error creating course",
         description: "There was a problem adding the golf course. Please try again.",
         variant: "destructive",
       });
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleTeesSubmit = async (tees: TeeData[]) => {
+    if (!courseId) return;
+
+    try {
+      const { error } = await supabase
+        .from('course_tees')
+        .insert(
+          tees.map(tee => ({
+            course_id: courseId,
+            name: tee.name,
+            color: tee.color,
+            course_rating: parseFloat(tee.courseRating),
+            slope_rating: parseInt(tee.slopeRating),
+            total_yards: parseInt(tee.totalYards),
+          }))
+        );
+
+      if (error) throw error;
+
+      toast({
+        title: "Course and tees created",
+        description: "The golf course has been added successfully with all tee information.",
+      });
+      
+      const { data: course } = await supabase
+        .from('golf_courses')
+        .select(`
+          *,
+          course_tees (*)
+        `)
+        .eq('id', courseId)
+        .single();
+
+      onCourseCreated(course);
+    } catch (error) {
+      toast({
+        title: "Error saving tees",
+        description: "There was a problem adding the tee information. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (showTeesForm && courseId) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-2xl font-bold mb-6">Add Tee Information</h2>
+        <TeesForm onTeesSubmit={handleTeesSubmit} />
+      </Card>
+    );
+  }
 
   return (
     <Form {...form}>
@@ -100,34 +161,6 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
 
         <FormField
           control={form.control}
-          name="courseRating"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Course Rating</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" step="0.1" placeholder="72.0" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="slopeRating"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slope Rating</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" placeholder="113" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="totalPar"
           render={({ field }) => (
             <FormItem>
@@ -145,7 +178,7 @@ export const CourseForm = ({ onCourseCreated, onCancel }: CourseFormProps) => {
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Course"}
+            {isSubmitting ? "Creating..." : "Next: Add Tees"}
           </Button>
         </div>
       </form>
