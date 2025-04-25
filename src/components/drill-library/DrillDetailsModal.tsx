@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -69,24 +70,24 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="relative">
-          <div className="flex items-center justify-between space-x-4">
-            <DialogTitle className="text-xl font-bold flex-grow truncate">
+        <DialogHeader className="relative pt-8">
+          <div className="flex flex-col items-center space-y-4">
+            <DialogTitle className="text-xl font-bold text-center">
               {drill.title}
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">{drill.duration}</p>
             <Badge 
               className={
                 drill.difficulty === 'Beginner' 
-                  ? 'bg-emerald-500 text-white shrink-0' 
+                  ? 'bg-emerald-500 text-white' 
                   : drill.difficulty === 'Intermediate' 
-                    ? 'bg-amber-500 text-white shrink-0' 
-                    : 'bg-rose-500 text-white shrink-0'
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-rose-500 text-white'
               }
             >
               {drill.difficulty}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">{drill.duration}</p>
         </DialogHeader>
         
         <div className="mt-6">
