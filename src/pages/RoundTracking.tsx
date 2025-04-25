@@ -100,12 +100,21 @@ const RoundTracking = () => {
   };
 
   const handleNext = () => {
-    if (currentHole < 18) setCurrentHole(prev => prev + 1);
+    if (currentHole < 18) {
+      setCurrentHole(prev => prev + 1);
+    }
   };
 
   const handlePrevious = () => {
-    if (currentHole > 1) setCurrentHole(prev => prev - 1);
+    if (currentHole > 1) {
+      setCurrentHole(prev => prev - 1);
+    }
   };
+
+  // Get current tee color
+  const currentTeeColor = selectedTee && selectedCourse 
+    ? selectedCourse.course_tees.find(tee => tee.id === selectedTee)?.color 
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -127,15 +136,15 @@ const RoundTracking = () => {
         <>
           <ScoreSummary holeScores={holeScores} />
           
-          {holeScores[currentHole - 1] && (
+          {holeScores.length > 0 && (
             <HoleScoreCard
-              holeData={holeScores[currentHole - 1]}
+              holeData={holeScores.find(hole => hole.holeNumber === currentHole) || holeScores[0]}
               onUpdate={handleHoleUpdate}
               onNext={handleNext}
               onPrevious={handlePrevious}
               isFirst={currentHole === 1}
               isLast={currentHole === 18}
-              teeColor={selectedTee ? selectedCourse.course_tees.find(tee => tee.id === selectedTee)?.color : undefined}
+              teeColor={currentTeeColor}
             />
           )}
         </>
