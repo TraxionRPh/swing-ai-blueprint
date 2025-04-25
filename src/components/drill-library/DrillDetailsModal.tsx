@@ -20,9 +20,9 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{drill.title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">{drill.title}</DialogTitle>
           <div className="flex items-center justify-between mt-2">
             <Badge 
               className={
@@ -38,7 +38,9 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
             <span className="text-sm text-muted-foreground">{drill.duration}</span>
           </div>
           <DialogDescription className="mt-4">
-            <ReactMarkdown>{drill.description}</ReactMarkdown>
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown>{drill.description}</ReactMarkdown>
+            </div>
           </DialogDescription>
         </DialogHeader>
         
@@ -62,6 +64,13 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
               className="w-full aspect-video"
               allowFullScreen
             />
+          </div>
+        )}
+
+        {drill.metric && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">Success Metric</h3>
+            <p className="text-sm">{drill.metric}</p>
           </div>
         )}
       </DialogContent>

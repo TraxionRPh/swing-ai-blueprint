@@ -21,8 +21,8 @@ export const DrillFilters = ({ drills, filterDrills }: DrillFiltersProps) => {
 
   return (
     <>
-      <Tabs defaultValue="driving" className="sticky top-0 z-10 bg-white">
-        <TabsList className="grid grid-cols-4 mb-8 w-full">
+      <Tabs defaultValue="driving" className="sticky top-0 z-10 bg-background shadow-sm">
+        <TabsList className="grid grid-cols-4 mb-4 w-full">
           {categories.map(category => (
             <TabsTrigger key={category} value={category}>
               {category.charAt(0).toUpperCase() + category.slice(1)}

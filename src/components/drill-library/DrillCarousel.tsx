@@ -1,7 +1,19 @@
+
 import { Drill } from "@/types/drill";
 import { DrillCard } from "./DrillCard";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent
+} from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from "@/components/ui/carousel";
 
 interface DrillCarouselProps {
   drills: Drill[];
