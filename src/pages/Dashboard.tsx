@@ -41,129 +41,123 @@ const COLORS = ['#10B981', '#FFC300', '#EA384C'];
 
 const Dashboard = () => {
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="h-[calc(100vh-theme(spacing.16))] flex flex-col">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
         <p className="text-muted-foreground">
           Welcome back! Here's an overview of your golf performance.
         </p>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-fr">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle>Handicap</CardTitle>
             <CardDescription>Current handicap index</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center items-center pt-4">
-            <div className="text-5xl font-bold text-[#10B981]">18.2</div>
+          <CardContent>
+            <div className="text-4xl font-bold text-[#10B981]">18.2</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle>Best Round</CardTitle>
             <CardDescription>Your lowest round in past 90 days</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center items-center pt-4">
-            <div className="text-5xl font-bold text-[#10B981]">83</div>
+          <CardContent>
+            <div className="text-4xl font-bold text-[#10B981]">83</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle>Practice Time</CardTitle>
             <CardDescription>Hours practiced this month</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center items-center pt-4">
-            <div className="text-5xl font-bold text-[#FFC300]">12</div>
+          <CardContent>
+            <div className="text-4xl font-bold text-[#FFC300]">12</div>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 mt-4">
+        <Card className="flex flex-col">
+          <CardHeader className="pb-2">
             <CardTitle>Recent Scores</CardTitle>
             <CardDescription>Your last 6 rounds</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={scoreData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={['dataMin - 5', 'dataMax + 5']} reversed />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#FFC300"
-                    strokeWidth={2}
-                    activeDot={{ r: 8 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={scoreData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={['dataMin - 5', 'dataMax + 5']} reversed />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#FFC300"
+                  strokeWidth={2}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
+        <Card className="flex flex-col">
+          <CardHeader className="pb-2">
             <CardTitle>Practice Focus</CardTitle>
             <CardDescription>Hours spent by category</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={practiceFocusData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="hours" fill="#10B981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={practiceFocusData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="hours" fill="#10B981" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="col-span-1">
-          <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <Card>
+          <CardHeader className="pb-2">
             <CardTitle>Performance Stats</CardTitle>
             <CardDescription>Key metrics from recent rounds</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {statData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="flex-1">
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie
+                  data={statData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={70}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {statData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card className="col-span-2">
-          <CardHeader>
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-2">
             <CardTitle>AI Insights</CardTitle>
             <CardDescription>Personalized recommendations based on your data</CardDescription>
           </CardHeader>
@@ -181,9 +175,6 @@ const Dashboard = () => {
                 Your driving accuracy is improving but could benefit from more consistency. 
                 Focus on the "Alignment Stick Path" drill to improve your swing path.
               </p>
-            </div>
-            <div className="text-sm text-center mt-2">
-              <a href="/ai-analysis" className="text-primary hover:underline">View full AI analysis →</a>
             </div>
           </CardContent>
         </Card>
