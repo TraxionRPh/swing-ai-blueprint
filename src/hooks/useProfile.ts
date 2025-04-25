@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -60,7 +61,9 @@ export const useProfile = () => {
           setIsFirstVisit(true);
         } else {
           setIsFirstVisit(profileData.has_onboarded === false);
-          setHandicap(profileData.handicap_level);
+          if (profileData.handicap_level) {
+            setHandicap(profileData.handicap_level as HandicapLevel);
+          }
           setGoals(profileData.goals);
         }
 

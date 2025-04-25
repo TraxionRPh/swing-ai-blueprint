@@ -27,7 +27,7 @@ export const LucideGolf = forwardRef<SVGSVGElement, LucideProps>((props, ref) =>
 LucideGolf.displayName = "LucideGolf";
 
 // Re-export needed Lucide icons
-export { Home, Award, Calendar, Clock, Brain, List } from "lucide-react";
+export { Home, Award, Calendar, Clock, Brain, List, User } from "lucide-react";
 
 // Custom Dumbbell icon for workouts/training
 export const Dumbbell = forwardRef<SVGSVGElement, LucideProps>((props, ref) => (
