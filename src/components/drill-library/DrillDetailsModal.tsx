@@ -18,6 +18,12 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
 }) => {
   if (!drill) return null;
 
+  // Format instructions by replacing n/n1 with line breaks
+  const formatInstructions = (text: string | undefined) => {
+    if (!text) return '';
+    return text.replace(/n\/n1/g, '\n\n');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -62,7 +68,7 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
                     strong: ({node, ...props}) => <span className="font-bold text-foreground" {...props} />,
                   }}
                 >
-                  {drill.instructions}
+                  {formatInstructions(drill.instructions)}
                 </ReactMarkdown>
               </div>
             </div>
@@ -95,3 +101,4 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
     </Dialog>
   );
 };
+
