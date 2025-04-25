@@ -1,14 +1,12 @@
-
 import { useState, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseForm } from "./CourseForm";
 import { Card } from "@/components/ui/card";
-import { X, BadgeCheck, Edit2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { Badge } from "@/components/ui/badge";
+import { SearchInput } from "./SearchInput";
+import { CourseResult } from "./CourseResult";
 
 interface Course {
   id: string;
@@ -142,67 +140,22 @@ export const CourseSearch = ({ onCourseSelect }: CourseSearchProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="relative flex items-center">
-        <Input
-          placeholder="Search for a golf course (name, city, or state)..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="flex-1 pr-10"
-        />
-        {searchQuery && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-2 top-1/2 -translate-y-1/2"
-            onClick={clearSearch}
-          >
-            <X className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        )}
-      </div>
+      <SearchInput
+        searchQuery={searchQuery}
+        onChange={handleSearchChange}
+        onClear={clearSearch}
+      />
 
       {courses.length > 0 ? (
         <div className="space-y-2">
           {courses.map((course) => (
-            <Button
+            <CourseResult
               key={course.id}
-              variant="outline"
-              className="w-full justify-between"
-              onClick={() => onCourseSelect(course)}
-            >
-              <div className="text-left flex-1">
-                <div className="font-semibold flex items-center gap-2">
-                  {course.name}
-                  {course.is_verified && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <BadgeCheck className="h-3 w-3" />
-                      Verified
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {course.city}, {course.state}
-                </div>
-                {course.course_tees && course.course_tees.length > 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Tees: {course.course_tees.map(tee => tee.color || tee.name).join(", ")}
-                  </div>
-                )}
-              </div>
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(course);
-                  }}
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              )}
-            </Button>
+              course={course}
+              onSelect={onCourseSelect}
+              onEdit={handleEdit}
+              showEditButton={!!user}
+            />
           ))}
         </div>
       ) : (
