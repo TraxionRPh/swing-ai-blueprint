@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,17 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { Card } from "@/components/ui/card";
 import { useProfile } from "@/hooks/useProfile";
+
+// Import all page components
+import Auth from "@/pages/Auth";
+import Welcome from "@/pages/Welcome";
+import Dashboard from "@/pages/Dashboard";
+import DrillLibrary from "@/pages/DrillLibrary";
+import ChallengeLibrary from "@/pages/ChallengeLibrary";
+import RoundTracking from "@/pages/RoundTracking";
+import AIAnalysis from "@/pages/AIAnalysis";
+import NotFound from "@/pages/NotFound";
+import Layout from "@/components/Layout";
 
 const queryClient = new QueryClient();
 
