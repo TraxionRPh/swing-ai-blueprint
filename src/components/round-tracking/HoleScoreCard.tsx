@@ -30,6 +30,7 @@ interface HoleScoreCardProps {
   isLast?: boolean;
   teeColor?: string;
   courseId?: string;
+  isSaving?: boolean;
 }
 
 export const HoleScoreCard = ({
@@ -40,10 +41,11 @@ export const HoleScoreCard = ({
   isFirst,
   isLast,
   teeColor,
-  courseId
+  courseId,
+  isSaving = false
 }: HoleScoreCardProps) => {
   const [data, setData] = useState<HoleData>(holeData);
-  const [isSaving, setIsSaving] = useState(false);
+  const [localIsSaving, setLocalIsSaving] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -60,7 +62,7 @@ export const HoleScoreCard = ({
   const saveCourseHoleData = async (field: 'par' | 'distance', value: number) => {
     if (!courseId) return;
     
-    setIsSaving(true);
+    setLocalIsSaving(true);
     try {
       const updateData = {
         course_id: courseId,
@@ -84,7 +86,7 @@ export const HoleScoreCard = ({
         variant: "destructive"
       });
     } finally {
-      setIsSaving(false);
+      setLocalIsSaving(false);
     }
   };
 
@@ -193,9 +195,12 @@ export const HoleScoreCard = ({
         </CardContent>
       </Card>
       
-      {isSaving && (
+      {(isSaving || localIsSaving) && (
         <div className="fixed bottom-4 right-4 z-50">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div className="flex items-center bg-primary/10 text-primary px-3 py-2 rounded-md">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span className="text-sm font-medium">Saving...</span>
+          </div>
         </div>
       )}
     </>

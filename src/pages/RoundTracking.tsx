@@ -16,7 +16,8 @@ const RoundTracking = () => {
     handlePrevious,
     currentHole,
     currentTeeColor,
-    currentHoleData
+    currentHoleData,
+    isSaving
   } = useRoundTracking();
 
   return (
@@ -48,6 +49,7 @@ const RoundTracking = () => {
             isLast={currentHole === 18}
             teeColor={currentTeeColor}
             courseId={selectedCourse.id}
+            isSaving={isSaving}
           />
         </>
       )}

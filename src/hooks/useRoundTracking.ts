@@ -30,7 +30,8 @@ export const useRoundTracking = () => {
     handleHoleUpdate,
     handleNext: handleNextBase,
     handlePrevious,
-    currentHoleData
+    currentHoleData,
+    isSaving
   } = useScoreTracking(currentRoundId);
 
   useEffect(() => {
@@ -81,5 +82,6 @@ export const useRoundTracking = () => {
     handlePrevious,
     currentTeeColor,
     currentHoleData,
+    isSaving
   };
 };
