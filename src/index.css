@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -43,6 +44,7 @@
     --sidebar-border: 220 40% 16%;
     --sidebar-ring: 142 48% 50%;
     --sidebar-width: 280px;
+    --sidebar-width-icon: 56px;
     --sidebar-height: 100dvh;
     --sidebar-mobile-width: 280px;
   }
