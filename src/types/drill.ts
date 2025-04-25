@@ -1,8 +1,13 @@
 
 export interface Drill {
-  id: number;
+  id: string;  // Changed from number to string to match UUID
   title: string;
   description: string;
+  category: string;
   focus: string[];
-  // Add any other properties as needed
+  difficulty: string;
+  duration: string;
+  video_url: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
