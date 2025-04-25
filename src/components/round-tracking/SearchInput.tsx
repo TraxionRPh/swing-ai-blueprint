@@ -16,7 +16,7 @@ export const SearchInput = ({ searchQuery, onChange, onClear }: SearchInputProps
         placeholder="Search for a golf course (name, city, or state)..."
         value={searchQuery}
         onChange={onChange}
-        className="flex-1 pr-10"
+        className="flex-1 pr-10 text-base truncate placeholder:text-muted-foreground placeholder:opacity-100"
       />
       {searchQuery && (
         <Button 

@@ -81,7 +81,10 @@ export const RecentlyPlayed = ({ onCourseSelect }: RecentlyPlayedProps) => {
           <CourseResult
             key={course.id}
             course={course}
-            onSelect={(selectedCourse) => onCourseSelect(selectedCourse, course.hole_count || 18)}
+            onSelect={(selectedCourse) => {
+              onCourseSelect(selectedCourse, course.hole_count);
+              sessionStorage.setItem('current-hole-count', course.hole_count?.toString() || '18');
+            }}
           />
         ))}
       </div>
