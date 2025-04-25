@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-type Drill = {
+export type Drill = {
   id: string;
   title: string;
   description: string;

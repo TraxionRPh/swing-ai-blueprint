@@ -78,7 +78,7 @@ export const useAIAnalysis = () => {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 is for "no rows returned"
-      return data?.practice_plan as AIAnalysisData | null;
+      return data?.practice_plan as unknown as AIAnalysisData | null;
     },
     enabled: !!user?.id,
   });
