@@ -17,6 +17,7 @@ export interface Notification {
   read: boolean;
   data: any;
   created_at: string;
+  user_id: string;
 }
 
 export const useNotifications = () => {
@@ -43,7 +44,14 @@ export const useNotifications = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotifications(data || []);
+      
+      // Ensure all notifications have a type
+      const formattedNotifications = (data || []).map(notification => ({
+        ...notification,
+        type: notification.type || 'general'
+      }));
+
+      setNotifications(formattedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -59,6 +67,7 @@ export const useNotifications = () => {
         .single();
 
       if (error) throw error;
+      
       if (data) {
         setPreferences({
           practice_reminders: data.practice_reminders,
@@ -76,7 +85,7 @@ export const useNotifications = () => {
       const { error } = await supabase
         .from('notification_preferences')
         .update(newPreferences)
-        .not('id', 'is', null);
+        .eq('user_id', supabase.auth.getUser().data.user?.id);
 
       if (error) throw error;
       
@@ -123,7 +132,13 @@ export const useNotifications = () => {
           table: 'notifications'
         },
         (payload) => {
-          setNotifications(prev => [payload.new as Notification, ...prev]);
+          // Ensure the new notification has a type
+          const newNotification = {
+            ...payload.new,
+            type: payload.new.type || 'general'
+          } as Notification;
+
+          setNotifications(prev => [newNotification, ...prev]);
           toast({
             title: payload.new.title,
             description: payload.new.body,
