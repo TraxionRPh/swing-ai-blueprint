@@ -45,7 +45,7 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
             {challenge.difficulty}
           </Badge>
         </div>
-        <CardDescription>Your Challenge Results</CardDescription>
+        <CardDescription>Challenge Results</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{challenge.description}</p>
@@ -53,13 +53,13 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
           {progress?.best_score && (
             <div className="flex justify-between text-sm">
               <span className="font-medium">Best Score:</span>
-              <span className="text-muted-foreground">{progress.best_score}</span>
+              <Badge variant="success" className="ml-2">{progress.best_score}</Badge>
             </div>
           )}
           {progress?.recent_score && (
             <div className="flex justify-between text-sm">
               <span className="font-medium">Recent Score:</span>
-              <span className="text-muted-foreground">{progress.recent_score}</span>
+              <Badge variant="secondary" className="ml-2">{progress.recent_score}</Badge>
             </div>
           )}
           {!progress?.best_score && !progress?.recent_score && (
@@ -70,7 +70,7 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
         </div>
         <div className="flex flex-wrap gap-2 pt-2">
           {challenge.metrics && challenge.metrics.map((metric: string) => (
-            <Badge key={metric} variant="secondary">{metric}</Badge>
+            <Badge key={metric} variant="outline">{metric}</Badge>
           ))}
         </div>
       </CardContent>

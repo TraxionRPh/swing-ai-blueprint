@@ -11,7 +11,10 @@ export const useChallengeLibrary = () => {
         .from('challenges')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching challenges:', error);
+        throw error;
+      }
       return data as Challenge[];
     }
   });
@@ -42,7 +45,7 @@ export const useChallengeLibrary = () => {
   const formattedProgress: UserProgress[] = (progressData || []).map((item: any) => ({
     challenge_id: item.challenge_id,
     best_score: item.best_score,
-    recent_score: item.best_score
+    recent_score: item.recent_score
   }));
 
   return {
