@@ -23,29 +23,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Signed out",
-            description: "You have been signed out successfully.",
-          });
+      (event, currentSession) => {
+        if (mounted) {
+          if (event === 'SIGNED_OUT') {
+            toast({
+              title: "Signed out",
+              description: "You have been signed out successfully.",
+            });
+          }
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          setLoading(false);
         }
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (mounted) {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        setLoading(false);
+      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [toast]);

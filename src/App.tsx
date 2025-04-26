@@ -13,6 +13,8 @@ import ChallengeLibrary from "./pages/ChallengeLibrary";
 import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
+import Auth from "./pages/Auth";
+import { AuthProvider } from "./context/AuthContext";
 
 const router = createBrowserRouter([
   {
@@ -99,11 +101,17 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/auth",
+    element: <Auth />,
+  }
 ]);
 
 function App() {
   return (
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }
 

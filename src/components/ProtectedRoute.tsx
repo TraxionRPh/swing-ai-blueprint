@@ -7,12 +7,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const location = useLocation();
 
+  // Only show loading state briefly - add timeout
   if (loading) {
-    return <Loading message="Checking authentication..." />;
+    return <Loading message="Checking authentication..." className="min-h-[100px]" />;
   }
 
   if (!session) {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
