@@ -1,10 +1,10 @@
 
 import { Outlet, useLocation } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useEffect } from "react";
 
-const Layout = () => {
+const LayoutContent = () => {
   const location = useLocation();
   const { setOpenMobile } = useSidebar();
 
@@ -14,7 +14,7 @@ const Layout = () => {
   }, [location, setOpenMobile]);
 
   return (
-    <div className="min-h-screen flex w-full">
+    <>
       <AppSidebar />
       <main className="flex-1 w-full min-h-screen overflow-x-hidden">
         <div className="container mx-auto px-4 sm:px-6 md:px-8">
@@ -26,7 +26,17 @@ const Layout = () => {
           </div>
         </div>
       </main>
-    </div>
+    </>
+  );
+};
+
+const Layout = () => {
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <LayoutContent />
+      </div>
+    </SidebarProvider>
   );
 };
 
