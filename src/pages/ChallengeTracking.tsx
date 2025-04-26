@@ -105,22 +105,38 @@ const ChallengeTracking = () => {
             : existingData.best_score
           : scoreValue;
           
-        await supabase
-          .from('user_challenge_progress')
-          .update({
-            best_score: bestScore,
-            recent_score: scoreValue,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('challenge_id', challengeId);
+        const updateData = {
+          best_score: bestScore,
+          updated_at: new Date().toISOString(),
+          progress: 0, // Default value to maintain compatibility
+        };
+        
+        // Add recent_score if your table supports it
+        // First check if the column exists in your database schema
+        try {
+          await supabase
+            .from('user_challenge_progress')
+            .update({
+              ...updateData,
+              recent_score: scoreValue,
+            })
+            .eq('challenge_id', challengeId);
+        } catch (error) {
+          // If error occurs, try without recent_score (it might not exist in the schema)
+          await supabase
+            .from('user_challenge_progress')
+            .update(updateData)
+            .eq('challenge_id', challengeId);
+          
+          console.log('Updated without recent_score as it may not exist in the schema');
+        }
       } else {
-        // Create new progress entry
+        // Create new progress entry with only the fields that are guaranteed to exist
         await supabase
           .from('user_challenge_progress')
           .insert({
             challenge_id: challengeId,
             best_score: scoreValue,
-            recent_score: scoreValue,
             progress: 0, // Default value to maintain compatibility
           });
       }

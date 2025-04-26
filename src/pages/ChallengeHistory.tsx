@@ -69,7 +69,15 @@ const ChallengeHistory = () => {
         console.error('Error fetching challenge progress:', error);
       }
       
-      return data as ChallengeResult;
+      // Add the recent_score property if it doesn't exist in the database result
+      if (data) {
+        return {
+          ...data,
+          recent_score: data.recent_score || data.best_score, // Fallback to best_score if recent_score is not available
+        } as ChallengeResult;
+      }
+      
+      return null;
     },
   });
   

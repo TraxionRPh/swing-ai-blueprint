@@ -1,24 +1,18 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
 } from "react-router-dom";
-import { useAuth } from "./hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import RoundTracking from "./pages/RoundTracking";
 import ChallengeLibrary from "./pages/ChallengeLibrary";
 import DrillLibrary from "./pages/DrillLibrary";
-import Settings from "./pages/Settings";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn } = useAuth();
-  return isLoggedIn ? children : <Navigate to="/login" />;
-};
 
 const router = createBrowserRouter([
   {
@@ -34,14 +28,6 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
     ],
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
   },
   {
     path: "/rounds/:roundId",
@@ -82,20 +68,6 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <DrillLibrary />,
-      },
-    ],
-  },
-  {
-    path: "/settings",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <Settings />,
       },
     ],
   },
