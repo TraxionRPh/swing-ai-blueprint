@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,14 +35,13 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     navigate(`/challenge-history/${challenge.id}`);
   };
 
-  // Helper function to determine score background color
   const getScoreBackgroundColor = (score: string | null) => {
     if (!score) return '';
     const numScore = Number(score);
     
-    if (numScore >= 8) return 'bg-green-100'; // Good score
-    if (numScore >= 5) return 'bg-yellow-100'; // Okay score
-    return 'bg-red-100'; // Bad score
+    if (numScore >= 8) return 'bg-[#F2FCE2]'; // Soft green for good score
+    if (numScore >= 5) return 'bg-[#FEF7CD]'; // Soft yellow for okay score
+    return 'bg-[#FFDEE2]'; // Soft pink for bad score
   };
 
   const hasProgress = progress && (progress.best_score || progress.recent_score);
@@ -110,4 +108,3 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     </Card>
   );
 };
-
