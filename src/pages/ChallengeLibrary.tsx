@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loading } from "@/components/ui/loading";
 import { ChallengeCard } from "@/components/challenge/ChallengeCard";
@@ -8,7 +8,23 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const ChallengeLibrary = () => {
   const { challenges, isLoading, progress } = useChallengeLibrary();
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [filteredChallenges, setFilteredChallenges] = useState(challenges);
   const queryClient = useQueryClient();
+
+  // Filter challenges when category or challenges change
+  useEffect(() => {
+    if (!challenges) return;
+    
+    if (selectedCategory === 'all') {
+      setFilteredChallenges(challenges);
+    } else {
+      const filtered = challenges.filter(challenge => 
+        challenge.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
+      setFilteredChallenges(filtered);
+    }
+  }, [selectedCategory, challenges]);
 
   // Force refresh data when component mounts
   useEffect(() => {
@@ -22,9 +38,6 @@ const ChallengeLibrary = () => {
     
     refreshData();
   }, [queryClient]);
-
-  console.log(`ChallengeLibrary: ${challenges.length} challenges, ${progress.length} progress records`);
-  console.log("Progress data:", progress);
 
   if (isLoading) {
     return (
@@ -43,7 +56,7 @@ const ChallengeLibrary = () => {
         </p>
       </div>
       
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
         <TabsList className="w-full h-auto flex flex-wrap gap-1 bg-background p-1">
           <TabsTrigger 
             value="all" 
@@ -62,12 +75,10 @@ const ChallengeLibrary = () => {
           ))}
         </TabsList>
         
-        <TabsContent value="all" className="mt-6">
+        <div className="mt-6">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {challenges.map(challenge => {
+            {filteredChallenges.map(challenge => {
               const challengeProgress = progress.find(p => p.challenge_id === challenge.id);
-              console.log(`Challenge ${challenge.id} progress:`, challengeProgress);
-              
               return (
                 <ChallengeCard 
                   key={challenge.id} 
@@ -77,26 +88,7 @@ const ChallengeLibrary = () => {
               );
             })}
           </div>
-        </TabsContent>
-        
-        {['driving', 'irons', 'chipping', 'putting'].map(category => (
-          <TabsContent key={category} value={category} className="mt-6">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {challenges
-                .filter(c => c.category === category)
-                .map(challenge => {
-                  const challengeProgress = progress.find(p => p.challenge_id === challenge.id);
-                  return (
-                    <ChallengeCard 
-                      key={challenge.id} 
-                      challenge={challenge}
-                      progress={challengeProgress}
-                    />
-                  );
-                })}
-            </div>
-          </TabsContent>
-        ))}
+        </div>
       </Tabs>
     </div>
   );
