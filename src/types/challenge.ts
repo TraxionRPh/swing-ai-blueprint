@@ -10,4 +10,6 @@ export type Challenge = {
   instruction1?: string;
   instruction2?: string;
   instruction3?: string;
+  attempts?: number; // Calculated field based on instructions
 };
+

@@ -7,7 +7,6 @@ import * as z from 'zod';
 
 export const formSchema = z.object({
   score: z.string().min(1, 'Score is required'),
-  notes: z.string().optional(),
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -37,18 +36,14 @@ export const useSubmitChallenge = (challengeId: string | undefined) => {
         .eq('challenge_id', challengeId)
         .maybeSingle();
       
-      const scoreValue = values.score;
-      
       if (existingData) {
-        const updateData = {
-          best_score: scoreValue,
-          updated_at: new Date().toISOString(),
-          progress: 0,
-        };
-        
         await supabase
           .from('user_challenge_progress')
-          .update(updateData)
+          .update({
+            best_score: values.score,
+            updated_at: new Date().toISOString(),
+            progress: 0,
+          })
           .eq('challenge_id', challengeId);
         
       } else {
@@ -56,7 +51,7 @@ export const useSubmitChallenge = (challengeId: string | undefined) => {
           .from('user_challenge_progress')
           .insert({
             challenge_id: challengeId,
-            best_score: scoreValue,
+            best_score: values.score,
             progress: 0,
             user_id: userId
           });
@@ -88,3 +83,4 @@ export const useSubmitChallenge = (challengeId: string | undefined) => {
     isPersisting
   };
 };
+

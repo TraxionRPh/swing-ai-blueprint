@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,24 @@ import { useChallenge } from '@/hooks/useChallenge';
 import { TrackingForm } from '@/components/challenge/TrackingForm';
 import { useSubmitChallenge } from '@/hooks/useSubmitChallenge';
 
+const extractAttemptsFromInstructions = (challenge: any): number | undefined => {
+  const instructions = [
+    challenge.instruction1,
+    challenge.instruction2,
+    challenge.instruction3
+  ];
+  
+  for (const instruction of instructions) {
+    if (!instruction) continue;
+    const match = instruction.match(/(\d+)\s*(?:balls?|drives?|shots?|attempts?)/i);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  
+  return undefined;
+};
+
 const ChallengeTracking = () => {
   const { challengeId } = useParams();
   const navigate = useNavigate();
@@ -18,6 +35,8 @@ const ChallengeTracking = () => {
   const handleBack = () => {
     navigate(-1);
   };
+  
+  const totalAttempts = challenge ? extractAttemptsFromInstructions(challenge) : undefined;
   
   if (isLoading) {
     return (
@@ -82,7 +101,11 @@ const ChallengeTracking = () => {
             ))}
           </div>
           
-          <TrackingForm onSubmit={onSubmit} isPersisting={isPersisting} />
+          <TrackingForm 
+            onSubmit={onSubmit} 
+            isPersisting={isPersisting} 
+            totalAttempts={totalAttempts}
+          />
         </CardContent>
       </Card>
     </div>
