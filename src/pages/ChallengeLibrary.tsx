@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Loading } from "@/components/ui/loading";
 
 type Challenge = {
@@ -18,8 +17,8 @@ type Challenge = {
 
 type UserProgress = {
   challenge_id: string;
-  progress: number;
   best_score: string | null;
+  recent_score: string | null;
 };
 
 const ChallengeCard = ({ challenge, progress }: { 
@@ -38,23 +37,29 @@ const ChallengeCard = ({ challenge, progress }: {
             {challenge.difficulty}
           </Badge>
         </div>
-        <CardDescription>Track your progress</CardDescription>
+        <CardDescription>Your Challenge Results</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{challenge.description}</p>
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Progress</span>
-            <span>{progress?.progress || 0}%</span>
-          </div>
-          <Progress value={progress?.progress || 0} />
+          {progress?.best_score && (
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">Best Score:</span>
+              <span className="text-muted-foreground">{progress.best_score}</span>
+            </div>
+          )}
+          {progress?.recent_score && (
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">Recent Score:</span>
+              <span className="text-muted-foreground">{progress.recent_score}</span>
+            </div>
+          )}
+          {!progress?.best_score && !progress?.recent_score && (
+            <div className="text-sm text-muted-foreground">
+              No attempts yet
+            </div>
+          )}
         </div>
-        {progress?.best_score && (
-          <div className="text-sm">
-            <span className="font-medium">Best Result: </span>
-            <span className="text-muted-foreground">{progress.best_score}</span>
-          </div>
-        )}
         <div className="flex flex-wrap gap-2 pt-2">
           {challenge.metrics && challenge.metrics.map((metric: string) => (
             <Badge key={metric} variant="secondary">{metric}</Badge>
