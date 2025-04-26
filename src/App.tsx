@@ -14,7 +14,13 @@ import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
 import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Create a client for React Query
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -26,10 +32,15 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "/",
+        index: true,
+        element: <Navigate to="/dashboard" replace />
+      },
+      {
+        path: "dashboard",
         element: <Dashboard />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/rounds/:roundId",
@@ -44,6 +55,7 @@ const router = createBrowserRouter([
         element: <RoundTracking />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/challenges",
@@ -58,6 +70,7 @@ const router = createBrowserRouter([
         element: <ChallengeLibrary />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/drills",
@@ -72,6 +85,7 @@ const router = createBrowserRouter([
         element: <DrillLibrary />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/challenge-tracking/:challengeId",
@@ -86,6 +100,7 @@ const router = createBrowserRouter([
         element: <ChallengeTracking />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/challenge-history/:challengeId",
@@ -100,18 +115,28 @@ const router = createBrowserRouter([
         element: <ChallengeHistory />,
       },
     ],
+    errorElement: <NotFound />,
   },
   {
     path: "/auth",
     element: <Auth />,
+    errorElement: <NotFound />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   }
 ]);
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
