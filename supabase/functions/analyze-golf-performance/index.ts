@@ -29,6 +29,7 @@ serve(async (req) => {
 
     // Generate the prompt with plan duration
     const prompt = generatePrompt({ userId, roundData, handicapLevel, goals, specificProblem, planDuration });
+    console.log('Generated prompt:', prompt);
 
     // Get analysis from OpenAI
     const analysisText = await generateAnalysis(prompt, OPENAI_API_KEY);
