@@ -5,9 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { CommonProblemCard } from "./CommonProblemCard";
 import { CommonProblem } from "@/types/practice-plan";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Brain } from "@/components/icons/CustomIcons";
+import { useState } from "react";
+import { PlanDurationDialog } from "./PlanDurationDialog";
 
 interface PracticePlanFormProps {
   inputValue: string;
@@ -30,6 +30,19 @@ export const PracticePlanForm = ({
   planDuration,
   onPlanDurationChange,
 }: PracticePlanFormProps) => {
+  const [showDurationDialog, setShowDurationDialog] = useState(false);
+  const [isAIGeneration, setIsAIGeneration] = useState(false);
+
+  const handleGenerateClick = (isAI: boolean) => {
+    setIsAIGeneration(isAI);
+    setShowDurationDialog(true);
+  };
+
+  const handleConfirmDuration = () => {
+    setShowDurationDialog(false);
+    onSubmit();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -40,34 +53,13 @@ export const PracticePlanForm = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-4">
-            <h3 className="text-md font-medium">Practice Plan Duration</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Choose the length of your practice plan (applies to both AI and manual plans)
-            </p>
-            <RadioGroup value={planDuration} onValueChange={onPlanDurationChange} className="flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="1" id="day-1" />
-                <Label htmlFor="day-1">1 Day</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3" id="day-3" />
-                <Label htmlFor="day-3">3 Days</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="5" id="day-5" />
-                <Label htmlFor="day-5">5 Days</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
           <Button 
-            onClick={onSubmit}
+            onClick={() => handleGenerateClick(true)}
             disabled={isGenerating}
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
           >
             <Brain className="mr-2 h-4 w-4" />
-            {isGenerating ? "Analyzing Your Data..." : "Generate AI Practice Plan"}
+            {isGenerating ? "Analyzing Your Data..." : "Let AI Create Your Personalized Plan"}
           </Button>
         </div>
         
@@ -87,7 +79,7 @@ export const PracticePlanForm = ({
           
           <Button 
             className="w-full" 
-            onClick={onSubmit}
+            onClick={() => handleGenerateClick(false)}
             disabled={isGenerating}
           >
             {isGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
@@ -106,6 +98,14 @@ export const PracticePlanForm = ({
             ))}
           </div>
         </div>
+
+        <PlanDurationDialog
+          isOpen={showDurationDialog}
+          onClose={() => setShowDurationDialog(false)}
+          planDuration={planDuration}
+          onPlanDurationChange={onPlanDurationChange}
+          onConfirm={handleConfirmDuration}
+        />
       </CardContent>
     </Card>
   );
