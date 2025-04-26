@@ -22,7 +22,11 @@ const AIAnalysis = () => {
   } = useAIAnalysis();
   
   if (isLoading) {
-    return <Loading message="Analyzing your golf performance data..." />;
+    return <Loading message="Loading your golf performance data..." />;
+  }
+
+  if (isGenerating) {
+    return <Loading message="AI is analyzing your performance data..." className="min-h-[600px]" />;
   }
 
   return (
@@ -58,7 +62,7 @@ const AIAnalysis = () => {
           <CardHeader>
             <CardTitle className="text-primary">No Analysis Yet</CardTitle>
             <CardDescription>
-              Click "Update Analysis" to generate your personalized golf performance analysis 
+              Click "Generate Analysis" to get your personalized golf performance insights
               based on your tracked rounds and practice data.
             </CardDescription>
           </CardHeader>
