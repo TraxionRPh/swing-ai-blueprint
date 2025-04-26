@@ -8,7 +8,6 @@ import * as z from 'zod';
 export const formSchema = z.object({
   score: z.string()
     .min(1, 'Score is required')
-    .transform((val) => parseInt(val, 10))
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -62,7 +61,7 @@ export const useSubmitChallenge = (challengeId: string | undefined) => {
           .from('user_challenge_progress')
           .update({
             best_score: values.score,
-            total_attempts: totalAttempts,
+            total_attempts: totalAttempts.toString(), // Convert to string to match the DB column type
             updated_at: new Date().toISOString(),
             progress: 0,
           })
@@ -73,15 +72,18 @@ export const useSubmitChallenge = (challengeId: string | undefined) => {
           .insert({
             challenge_id: challengeId,
             best_score: values.score,
-            total_attempts: totalAttempts,
+            total_attempts: totalAttempts.toString(), // Convert to string to match the DB column type
             progress: 0,
             user_id: userId
           });
       }
       
+      const scoreNum = parseInt(values.score, 10);
+      const percentage = Math.round((scoreNum / totalAttempts) * 100);
+      
       toast({
         title: 'Challenge complete!',
-        description: `Score recorded: ${values.score}/${totalAttempts} (${Math.round((values.score / totalAttempts) * 100)}%)`,
+        description: `Score recorded: ${values.score}/${totalAttempts} (${percentage}%)`,
       });
       
       setTimeout(() => {
