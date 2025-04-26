@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +28,19 @@ const ChallengeCard = ({ challenge, progress }: {
 }) => {
   const navigate = useNavigate();
 
+  const getDifficultyBadgeClass = (difficulty: string) => {
+    switch (difficulty) {
+      case "Beginner":
+        return "bg-emerald-500 hover:bg-emerald-600 text-white border-0";
+      case "Intermediate":
+        return "bg-amber-500 hover:bg-amber-600 text-white border-0";
+      case "Advanced":
+        return "bg-rose-500 hover:bg-rose-600 text-white border-0";
+      default:
+        return "bg-slate-500 hover:bg-slate-600 text-white border-0";
+    }
+  };
+
   const handleStartChallenge = () => {
     navigate(`/challenge-tracking/${challenge.id}`);
   };
@@ -42,10 +54,7 @@ const ChallengeCard = ({ challenge, progress }: {
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{challenge.title}</CardTitle>
-          <Badge variant={
-            challenge.difficulty === "Beginner" ? "outline" : 
-            challenge.difficulty === "Intermediate" ? "secondary" : "default"
-          }>
+          <Badge className={getDifficultyBadgeClass(challenge.difficulty)}>
             {challenge.difficulty}
           </Badge>
         </div>
@@ -125,11 +134,10 @@ const ChallengeLibrary = () => {
 
   const challengesData = challenges || [];
   
-  // Transform progress data to match expected type
   const formattedProgress: UserProgress[] = (progressData || []).map((item: any) => ({
     challenge_id: item.challenge_id,
     best_score: item.best_score,
-    recent_score: item.best_score // Using best_score as recent_score for now since the DB doesn't have recent_score yet
+    recent_score: item.best_score
   }));
 
   return (
