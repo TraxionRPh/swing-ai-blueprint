@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loading } from "@/components/ui/loading";
+import { useNavigate } from "react-router-dom";
 
 type Challenge = {
   id: string;
@@ -25,6 +27,16 @@ const ChallengeCard = ({ challenge, progress }: {
   challenge: Challenge; 
   progress?: UserProgress;
 }) => {
+  const navigate = useNavigate();
+
+  const handleStartChallenge = () => {
+    navigate(`/challenge-tracking/${challenge.id}`);
+  };
+
+  const handleViewHistory = () => {
+    navigate(`/challenge-history/${challenge.id}`);
+  };
+  
   return (
     <Card className="w-full">
       <CardHeader>
@@ -67,10 +79,10 @@ const ChallengeCard = ({ challenge, progress }: {
         </div>
       </CardContent>
       <CardFooter className="flex gap-2">
-        <Button variant="default" size="sm" className="flex-1">
+        <Button variant="default" size="sm" className="flex-1" onClick={handleStartChallenge}>
           Start Challenge
         </Button>
-        <Button variant="outline" size="sm" className="flex-1">
+        <Button variant="outline" size="sm" className="flex-1" onClick={handleViewHistory}>
           View History
         </Button>
       </CardFooter>
@@ -91,7 +103,7 @@ const ChallengeLibrary = () => {
     }
   });
 
-  const { data: progress, isLoading: progressLoading } = useQuery({
+  const { data: progressData, isLoading: progressLoading } = useQuery({
     queryKey: ['user-challenge-progress'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -99,7 +111,7 @@ const ChallengeLibrary = () => {
         .select('*');
       
       if (error) throw error;
-      return data as UserProgress[];
+      return data;
     }
   });
 
@@ -112,7 +124,13 @@ const ChallengeLibrary = () => {
   }
 
   const challengesData = challenges || [];
-  const progressData = progress || [];
+  
+  // Transform progress data to match expected type
+  const formattedProgress: UserProgress[] = (progressData || []).map((item: any) => ({
+    challenge_id: item.challenge_id,
+    best_score: item.best_score,
+    recent_score: item.best_score // Using best_score as recent_score for now since the DB doesn't have recent_score yet
+  }));
 
   return (
     <div className="w-full space-y-6">
@@ -148,7 +166,7 @@ const ChallengeLibrary = () => {
               <ChallengeCard 
                 key={challenge.id} 
                 challenge={challenge}
-                progress={progressData.find(p => p.challenge_id === challenge.id)}
+                progress={formattedProgress.find(p => p.challenge_id === challenge.id)}
               />
             ))}
           </div>
@@ -163,7 +181,7 @@ const ChallengeLibrary = () => {
                   <ChallengeCard 
                     key={challenge.id} 
                     challenge={challenge}
-                    progress={progressData.find(p => p.challenge_id === challenge.id)}
+                    progress={formattedProgress.find(p => p.challenge_id === challenge.id)}
                   />
                 ))}
             </div>
