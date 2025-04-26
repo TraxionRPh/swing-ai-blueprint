@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -45,13 +46,17 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
 
   return (
     <div className="space-y-4">
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="w-full grid grid-cols-6 p-0 h-12">
+      <Tabs 
+        value={selectedCategory} 
+        onValueChange={setSelectedCategory} 
+        className="w-full"
+      >
+        <TabsList className="w-full h-auto flex flex-wrap gap-1 bg-background p-1">
           {categories.map(category => (
             <TabsTrigger 
               key={category} 
               value={category} 
-              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex-none px-4 py-2 text-sm rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
             >
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </TabsTrigger>
@@ -62,7 +67,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
       <div className="flex flex-wrap gap-2">
         <Badge 
           variant={selectedDifficulty === null ? "default" : "outline"}
-          className="cursor-pointer"
+          className="cursor-pointer hover:bg-primary/90 transition-colors"
           onClick={() => setSelectedDifficulty(null)}
         >
           All Difficulties
@@ -71,7 +76,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
           <Badge 
             key={difficulty} 
             variant={selectedDifficulty === difficulty ? "default" : "outline"}
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-primary/90 transition-colors"
             onClick={() => setSelectedDifficulty(difficulty)}
           >
             {difficulty}
