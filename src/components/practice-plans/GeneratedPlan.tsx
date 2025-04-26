@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -24,6 +25,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Save completed drills to localStorage whenever they change
   useEffect(() => {
     if (planId) {
       localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(completedDrills));
@@ -74,6 +76,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   
   return (
     <div className="space-y-6">
+      {/* Plan Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Practice Plan: {plan.problem}</h2>
         <Button variant="outline" onClick={onClear}>
@@ -81,13 +84,19 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         </Button>
       </div>
       
+      {/* Progress Challenge - Before */}
       <ProgressChallengeCard 
         {...progressChallenge} 
         planId={planId}
       />
+
+      {/* AI Diagnosis */}
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
+
+      {/* Recommended Drills Summary */}
       <RecommendedDrillsCard drills={plan.recommendedDrills} />
       
+      {/* Daily Plan Cards */}
       <Card className="bg-card">
         <div className="p-6 space-y-4">
           <div className="p-3 bg-muted rounded-lg text-sm">
@@ -112,6 +121,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
             </div>
           )}
           
+          {/* Final Challenge Reminder */}
           <Card className="bg-accent/10 border-accent/20">
             <div className="p-4">
               <h3 className="text-base font-semibold mb-2">Complete the Challenge</h3>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -24,6 +23,7 @@ const MyPracticePlans = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<SavedPracticePlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<GeneratedPracticePlan | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>(() => {
     // Initialize from localStorage
     const savedIds = localStorage.getItem(DELETED_PLANS_STORAGE_KEY);
@@ -124,11 +124,13 @@ const MyPracticePlans = () => {
 
   const clearSelectedPlan = () => {
     setSelectedPlan(null);
+    setSelectedPlanId(null);
     navigate(location.pathname, { replace: true });
   };
   
   const viewPlan = (plan: SavedPracticePlan) => {
     setSelectedPlan(plan.practice_plan);
+    setSelectedPlanId(plan.id);
   };
 
   return (
@@ -147,6 +149,7 @@ const MyPracticePlans = () => {
             plan={selectedPlan}
             onClear={clearSelectedPlan}
             planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
+            planId={selectedPlanId}
           />
         </div>
       ) : (
