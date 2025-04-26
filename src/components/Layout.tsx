@@ -21,7 +21,7 @@ const LayoutContent = () => {
           <div className="mb-4">
             <SidebarTrigger />
           </div>
-          <div className="w-full max-w-[1400px] mx-auto">
+          <div className="w-full max-w-[1400px] mx-auto [&>div>h1]:text-center [&>div>p]:text-center [&>div>div>h1]:text-center [&>div>div>p]:text-center">
             <Outlet />
           </div>
         </div>
