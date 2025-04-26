@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +55,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
             <TabsTrigger 
               key={category} 
               value={category} 
-              className="flex-none px-4 py-2 text-sm rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors"
+              className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors border border-transparent data-[state=active]:border-primary/50"
             >
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </TabsTrigger>
