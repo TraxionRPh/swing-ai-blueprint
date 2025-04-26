@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,7 +58,7 @@ export const PracticePlanForm = ({
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
           >
             <Brain className="mr-2 h-4 w-4" />
-            {isGenerating ? "Analyzing Your Data..." : "Let AI Create Your Personalized Plan"}
+            {isGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
           </Button>
         </div>
         
