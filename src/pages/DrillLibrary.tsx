@@ -113,7 +113,7 @@ const DrillLibrary = () => {
         </div>
       )}
       
-      <ScrollArea className="h-[600px] rounded-md border p-4">
+      <ScrollArea className="h-[600px]">
         {drills && (
           <DrillFilters 
             drills={drills} 
