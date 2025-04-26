@@ -38,6 +38,8 @@ serve(async (req) => {
     let practicePlanData = null;
     try {
       console.log('Raw analysis text:', analysisText);
+      
+      // Try to parse the response as JSON
       analysisData = JSON.parse(analysisText);
       
       if ((specificProblem || planDuration) && analysisData.problem) {
