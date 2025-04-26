@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getDifficultyBadgeClass } from "@/utils/challengeUtils";
 
 interface Issue {
   area: string;
@@ -28,11 +29,24 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
     {
       area: "Iron Distance Control",
       description: "Your approach shots from 150-175 yards show inconsistent distance control, with 65% landing short.",
-      priority: "Medium" as const
+      priority: "Low" as const
     }
   ];
 
   const displayIssues = issues || defaultIssues;
+
+  const getPriorityBadgeClass = (priority: Issue['priority']) => {
+    switch (priority) {
+      case 'High':
+        return "bg-rose-500 hover:bg-rose-600 text-white border-0";
+      case 'Medium':
+        return getDifficultyBadgeClass("Intermediate");
+      case 'Low':
+        return getDifficultyBadgeClass("Beginner");
+      default:
+        return "bg-slate-500 hover:bg-slate-600 text-white border-0";
+    }
+  };
 
   return (
     <Card className="bg-card border-2 border-primary/20">
@@ -51,8 +65,8 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
             <div className="flex justify-between items-start">
               <h4 className="font-medium text-primary">{issue.area}</h4>
               <Badge 
-                variant={issue.priority === 'High' ? "destructive" : "secondary"}
-                className="ml-2"
+                variant="secondary"
+                className={`ml-2 ${getPriorityBadgeClass(issue.priority)}`}
               >
                 {issue.priority} Priority
               </Badge>
@@ -74,3 +88,4 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
     </Card>
   );
 };
+
