@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { CarFront, Golf, CircleDashed, Flag, BookOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Drill } from "@/types/drill";
 
 interface DrillFiltersProps {
@@ -45,14 +43,6 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
     setDifficulties(uniqueDifficulties);
   }, [drills]);
 
-  const categoryIcons = {
-    'driving': CarFront,
-    'irons': Golf,
-    'chipping': CircleDashed,
-    'putting': Flag,
-    'fundamentals': BookOpen
-  };
-
   return (
     <div className="space-y-4">
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -69,36 +59,25 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
         </TabsList>
       </Tabs>
 
-      <ToggleGroup
-        type="single"
-        value={selectedDifficulty || "all"}
-        onValueChange={(value) => setSelectedDifficulty(value === "all" ? null : value)}
-        className="flex flex-wrap justify-start gap-2"
-      >
-        <ToggleGroupItem 
-          value="all"
-          variant="outline" 
-          size="sm"
-          className={`flex items-center gap-2 px-4 py-2 ${!selectedDifficulty ? 'bg-primary text-primary-foreground' : ''}`}
+      <div className="flex flex-wrap gap-2">
+        <Badge 
+          variant={selectedDifficulty === null ? "default" : "outline"}
+          className="cursor-pointer"
+          onClick={() => setSelectedDifficulty(null)}
         >
-          All Levels
-        </ToggleGroupItem>
-        {difficulties.map(difficulty => {
-          const Icon = categoryIcons[difficulty.toLowerCase() as keyof typeof categoryIcons];
-          return (
-            <ToggleGroupItem
-              key={difficulty}
-              value={difficulty}
-              variant="outline"
-              size="sm"
-              className={`flex items-center gap-2 px-4 py-2 ${selectedDifficulty === difficulty ? 'bg-primary text-primary-foreground' : ''}`}
-            >
-              {Icon && <Icon className="h-4 w-4" />}
-              {difficulty}
-            </ToggleGroupItem>
-          );
-        })}
-      </ToggleGroup>
+          All Difficulties
+        </Badge>
+        {difficulties.map(difficulty => (
+          <Badge 
+            key={difficulty} 
+            variant={selectedDifficulty === difficulty ? "default" : "outline"}
+            className="cursor-pointer"
+            onClick={() => setSelectedDifficulty(difficulty)}
+          >
+            {difficulty}
+          </Badge>
+        ))}
+      </div>
     </div>
   );
 };
