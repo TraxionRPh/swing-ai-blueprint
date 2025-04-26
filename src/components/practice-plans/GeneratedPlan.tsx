@@ -1,14 +1,15 @@
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { GeneratedPracticePlan } from "@/types/practice-plan";
-import { Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { useToast } from "@/hooks/use-toast";
-import { ProgressChallengeCard } from "./ProgressChallengeCard";
+import { Button } from "@/components/ui/button";
 import { DiagnosisCard } from "./DiagnosisCard";
-import { RecommendedDrillsCard } from "./RecommendedDrillsCard";
-import { DailyPlanCard } from "./DailyPlanCard";
+import { DailyPlanSection } from "./DailyPlanSection";
+import { ProgressChallengeCard } from "./ProgressChallengeCard";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle, Info, ArrowLeft } from "lucide-react";
+import { useChallenge } from "@/hooks/useChallenge";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -19,30 +20,28 @@ interface GeneratedPlanProps {
 
 export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
   const { toast } = useToast();
-  const [isCompleted, setIsCompleted] = useState(false);
   const [completedDrills, setCompletedDrills] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem(`completed-drills-${planId}`);
     return saved ? JSON.parse(saved) : {};
   });
+  const [initialScore, setInitialScore] = useState(() => {
+    const saved = localStorage.getItem(`challenge-initial-${planId}`);
+    return saved || '';
+  });
+  const [finalScore, setFinalScore] = useState(() => {
+    const saved = localStorage.getItem(`challenge-final-${planId}`);
+    return saved || '';
+  });
+  
+  // Use first recommended drill for finding a matching challenge
+  const focusArea = plan.recommendedDrills[0]?.focus?.[0] || ""; 
+  const { data: challengeData } = useChallenge("1"); // Placeholder ID, will need proper integration
 
-  // Save completed drills to localStorage whenever they change
   useEffect(() => {
     if (planId) {
       localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(completedDrills));
     }
   }, [completedDrills, planId]);
-
-  const planData = plan.practicePlan?.plan || [];
-  const durationNum = parseInt(planDuration) || 1;
-  const filteredDays = planData.slice(0, durationNum);
-
-  const handleCompletePlan = () => {
-    setIsCompleted(true);
-    toast({
-      title: "Plan Completed",
-      description: "Congratulations on completing your practice plan!"
-    });
-  };
 
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
@@ -60,90 +59,180 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     });
   };
 
-  const getProgressChallengeInfo = () => {
-    return {
-      name: `${plan.problem} Assessment`,
-      description: `This challenge helps you measure your improvement in ${plan.problem.toLowerCase()}.`,
-      instructions: [
-        "Record your performance before starting the practice plan.",
-        "Complete all drills in the practice plan over the specified duration.",
-        "Repeat the assessment after completing the plan to measure your progress."
-      ]
-    };
+  const planData = plan.practicePlan?.plan || [];
+  const durationNum = parseInt(planDuration) || 1;
+  const filteredDays = planData.slice(0, durationNum);
+
+  const saveScore = (type: 'initial' | 'final', score: string) => {
+    if (planId) {
+      localStorage.setItem(`challenge-${type}-${planId}`, score);
+      if (type === 'initial') {
+        setInitialScore(score);
+      } else {
+        setFinalScore(score);
+      }
+      
+      toast({
+        title: "Score Saved",
+        description: `Your ${type} score has been saved.`
+      });
+    }
   };
 
-  const progressChallenge = getProgressChallengeInfo();
-  
+  const getProgressStatus = () => {
+    if (!initialScore || !finalScore) return null;
+    
+    const initial = parseFloat(initialScore);
+    const final = parseFloat(finalScore);
+    
+    if (isNaN(initial) || isNaN(final)) return null;
+    
+    if (final > initial) return "improved";
+    if (final === initial) return "same";
+    return "worse";
+  };
+
+  const progressStatus = getProgressStatus();
+  const challengeName = challengeData?.title || `${plan.problem} Challenge`;
+
   return (
     <div className="space-y-6">
-      {/* Plan Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Practice Plan: {plan.problem}</h2>
-        <Button variant="outline" onClick={onClear}>
-          New Plan
-        </Button>
-      </div>
+      {/* Back Button */}
+      <Button variant="outline" onClick={onClear} className="mb-2">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Plans
+      </Button>
       
-      {/* Progress Challenge - Before */}
-      <ProgressChallengeCard 
-        {...progressChallenge} 
-        planId={planId}
-      />
-
+      {/* Plan Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Practice Plan: {plan.problem}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            This practice plan is designed to improve your {plan.problem.toLowerCase()} through targeted drills and exercises.
+            Complete the recommended drills over {planDuration} {parseInt(planDuration) === 1 ? 'day' : 'days'} to see improvement.
+          </p>
+        </CardContent>
+      </Card>
+      
+      {/* Initial Challenge */}
+      <Card className="border-primary/20">
+        <CardHeader className="bg-primary/5 border-b border-primary/10">
+          <CardTitle className="text-xl flex items-center gap-2 text-primary">
+            <Info className="h-5 w-5" />
+            Before You Start: {challengeName}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <p className="mb-4">Complete this challenge to measure your current skill level with {plan.problem}.</p>
+          
+          <div className="space-y-4">
+            {challengeData && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Instructions:</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {[challengeData.instruction1, challengeData.instruction2, challengeData.instruction3]
+                    .filter(Boolean)
+                    .map((instruction, i) => (
+                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Initial Score</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={initialScore}
+                  onChange={(e) => setInitialScore(e.target.value)}
+                  placeholder="Enter your starting score"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <Button onClick={() => saveScore('initial', initialScore)}>Save</Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* AI Diagnosis */}
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
-
-      {/* Recommended Drills Summary */}
-      <RecommendedDrillsCard drills={plan.recommendedDrills} />
       
-      {/* Daily Plan Cards */}
-      <Card className="bg-card">
-        <div className="p-6 space-y-4">
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            <span className="font-medium">Recommended practice: </span>
-            <span className="text-muted-foreground">{plan.practicePlan?.frequency || 'Daily'}, focusing on the drills below.</span>
+      {/* Daily Plans */}
+      {filteredDays.map((dayPlan, i) => (
+        <DailyPlanSection
+          key={i}
+          dayPlan={dayPlan}
+          dayNumber={i + 1}
+          completedDrills={completedDrills}
+          onDrillComplete={toggleDrillCompletion}
+        />
+      ))}
+      
+      {/* Final Challenge */}
+      <Card className="border-primary/20">
+        <CardHeader className="bg-primary/5 border-b border-primary/10">
+          <CardTitle className="text-xl flex items-center gap-2 text-primary">
+            <CheckCircle className="h-5 w-5" />
+            After Completion: {challengeName}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <p className="mb-4">Now that you've completed the practice plan, take the challenge again to measure your improvement.</p>
+          
+          <div className="space-y-4">
+            {challengeData && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Instructions:</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {[challengeData.instruction1, challengeData.instruction2, challengeData.instruction3]
+                    .filter(Boolean)
+                    .map((instruction, i) => (
+                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Final Score</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={finalScore}
+                  onChange={(e) => setFinalScore(e.target.value)}
+                  placeholder="Enter your final score"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <Button onClick={() => saveScore('final', finalScore)}>Save</Button>
+              </div>
+            </div>
+            
+            {progressStatus && (
+              <Alert className={
+                progressStatus === "improved" ? "bg-green-50 border-green-200 text-green-800" :
+                progressStatus === "same" ? "bg-amber-50 border-amber-200 text-amber-800" : 
+                "bg-rose-50 border-rose-200 text-rose-800"
+              }>
+                <AlertTitle>
+                  {progressStatus === "improved" ? "You've improved!" : 
+                   progressStatus === "same" ? "You maintained your level" : 
+                   "Your score decreased"}
+                </AlertTitle>
+                <AlertDescription>
+                  {progressStatus === "improved" ? 
+                    `Great job! Your score improved from ${initialScore} to ${finalScore}.` : 
+                   progressStatus === "same" ? 
+                    `You maintained your score of ${finalScore}.` : 
+                    `Your score went from ${initialScore} to ${finalScore}. Keep practicing!`}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
-          
-          {filteredDays.length > 0 ? (
-            filteredDays.map((dayPlan, i) => (
-              <DailyPlanCard
-                key={i}
-                dayPlan={dayPlan}
-                dayNumber={i + 1}
-                completedDrills={completedDrills}
-                onDrillComplete={toggleDrillCompletion}
-                planId={planId}
-              />
-            ))
-          ) : (
-            <div className="p-4 bg-muted/30 rounded-lg text-center">
-              <p className="text-muted-foreground">No daily plan data available.</p>
-            </div>
-          )}
-          
-          {/* Final Challenge Reminder */}
-          <Card className="bg-accent/10 border-accent/20">
-            <div className="p-4">
-              <h3 className="text-base font-semibold mb-2">Complete the Challenge</h3>
-              <p className="text-sm text-muted-foreground">
-                After completing all the drills in your plan, do the {progressChallenge.name} again to measure your progress.
-              </p>
-            </div>
-          </Card>
-        </div>
-        
-        <div className="flex justify-between p-6 pt-0">
-          <Button variant="outline" onClick={onClear}>Back</Button>
-          {!isCompleted && (
-            <Button 
-              onClick={handleCompletePlan}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Complete Plan
-            </Button>
-          )}
-        </div>
+        </CardContent>
       </Card>
     </div>
   );

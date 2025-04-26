@@ -141,17 +141,12 @@ const MyPracticePlans = () => {
       </div>
 
       {selectedPlan ? (
-        <div>
-          <Button variant="outline" onClick={clearSelectedPlan} className="mb-4">
-            Back to Plans
-          </Button>
-          <GeneratedPlan
-            plan={selectedPlan}
-            onClear={clearSelectedPlan}
-            planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
-            planId={selectedPlanId}
-          />
-        </div>
+        <GeneratedPlan
+          plan={selectedPlan}
+          onClear={clearSelectedPlan}
+          planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
+          planId={selectedPlanId}
+        />
       ) : (
         <div className="space-y-6">
           {isLoading ? (
