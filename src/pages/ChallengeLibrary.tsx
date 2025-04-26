@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +27,7 @@ const ChallengeCard = ({ challenge, progress }: {
   progress?: UserProgress;
 }) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{challenge.title}</CardTitle>
@@ -107,21 +106,20 @@ const ChallengeLibrary = () => {
     );
   }
 
-  // Ensure we have challenge data before rendering
   const challengesData = challenges || [];
   const progressData = progress || [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Challenge Library</h1>
+    <div className="w-full space-y-6">
+      <div className="w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Challenge Library</h1>
         <p className="text-muted-foreground">
           Track your progress with measurable golf challenges
         </p>
       </div>
       
-      <Tabs defaultValue="all">
-        <TabsList>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="w-full flex-wrap">
           <TabsTrigger value="all">All Challenges</TabsTrigger>
           <TabsTrigger value="driving">Driving</TabsTrigger>
           <TabsTrigger value="irons">Irons</TabsTrigger>
@@ -130,7 +128,7 @@ const ChallengeLibrary = () => {
         </TabsList>
         
         <TabsContent value="all" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {challengesData.map(challenge => (
               <ChallengeCard 
                 key={challenge.id} 
@@ -143,7 +141,7 @@ const ChallengeLibrary = () => {
         
         {['driving', 'irons', 'chipping', 'putting'].map(category => (
           <TabsContent key={category} value={category} className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {challengesData
                 .filter(c => c.category === category)
                 .map(challenge => (

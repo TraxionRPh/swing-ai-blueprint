@@ -16,11 +16,15 @@ const Layout = () => {
   return (
     <div className="min-h-screen flex w-full">
       <AppSidebar />
-      <main className="flex-1 p-4 lg:p-6">
-        <div className="mb-4">
-          <SidebarTrigger />
+      <main className="flex-1 w-full min-h-screen overflow-x-hidden">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
+          <div className="mb-4">
+            <SidebarTrigger />
+          </div>
+          <div className="w-full max-w-[1400px] mx-auto">
+            <Outlet />
+          </div>
         </div>
-        <Outlet />
       </main>
     </div>
   );
