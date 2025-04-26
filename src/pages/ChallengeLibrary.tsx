@@ -119,12 +119,22 @@ const ChallengeLibrary = () => {
       </div>
       
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="w-full flex-wrap">
-          <TabsTrigger value="all">All Challenges</TabsTrigger>
-          <TabsTrigger value="driving">Driving</TabsTrigger>
-          <TabsTrigger value="irons">Irons</TabsTrigger>
-          <TabsTrigger value="chipping">Chipping</TabsTrigger>
-          <TabsTrigger value="putting">Putting</TabsTrigger>
+        <TabsList className="w-full h-auto flex flex-wrap gap-1 bg-background p-1">
+          <TabsTrigger 
+            value="all" 
+            className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors border border-transparent data-[state=active]:border-primary/50"
+          >
+            All Challenges
+          </TabsTrigger>
+          {['driving', 'irons', 'chipping', 'putting'].map(category => (
+            <TabsTrigger 
+              key={category}
+              value={category}
+              className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors border border-transparent data-[state=active]:border-primary/50"
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </TabsTrigger>
+          ))}
         </TabsList>
         
         <TabsContent value="all" className="mt-6">
