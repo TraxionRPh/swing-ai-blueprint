@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -5,15 +6,19 @@ import { Drill } from "@/types/drill";
 
 interface DrillFiltersProps {
   drills: Drill[];
-  filterDrills: (drills?: Drill[]) => Drill[];
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  selectedDifficulty: string | null;
+  setSelectedDifficulty: (difficulty: string | null) => void;
 }
 
 export const DrillFilters: React.FC<DrillFiltersProps> = ({
   drills,
-  filterDrills
+  selectedCategory,
+  setSelectedCategory,
+  selectedDifficulty,
+  setSelectedDifficulty
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(['all']);
   const [difficulties, setDifficulties] = useState<string[]>([]);
 

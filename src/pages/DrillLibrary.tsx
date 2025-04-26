@@ -118,13 +118,11 @@ const DrillLibrary = () => {
       <ScrollArea className="h-[600px]">
         {drills && (
           <DrillFilters 
-            drills={drills} 
-            filterDrills={(filtered) => {
-              if (filtered) {
-                setFilteredDrills(filtered);
-              }
-              return filteredDrills;
-            }}
+            drills={drills}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            selectedDifficulty={selectedDifficulty}
+            setSelectedDifficulty={setSelectedDifficulty}
           />
         )}
         
