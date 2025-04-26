@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,6 +87,15 @@ const ChallengeTracking = () => {
     setIsPersisting(true);
     
     try {
+      // Get the current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.id) {
+        throw new Error('User is not authenticated');
+      }
+      
+      const userId = session.user.id;
+      
       // First check if there's an existing record
       const { data: existingData } = await supabase
         .from('user_challenge_progress')
@@ -131,13 +139,14 @@ const ChallengeTracking = () => {
           console.log('Updated without recent_score as it may not exist in the schema');
         }
       } else {
-        // Create new progress entry with only the fields that are guaranteed to exist
+        // Create new progress entry with required fields
         await supabase
           .from('user_challenge_progress')
           .insert({
             challenge_id: challengeId,
             best_score: scoreValue,
             progress: 0, // Default value to maintain compatibility
+            user_id: userId // Add the user_id which is required
           });
       }
       

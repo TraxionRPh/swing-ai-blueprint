@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -23,9 +22,10 @@ type ChallengeResult = {
   id: string;
   challenge_id: string;
   best_score: string;
-  recent_score: string;
+  recent_score?: string;
   created_at: string;
   updated_at: string;
+  user_id: string;
 };
 
 const ChallengeHistory = () => {
@@ -69,12 +69,12 @@ const ChallengeHistory = () => {
         console.error('Error fetching challenge progress:', error);
       }
       
-      // Add the recent_score property if it doesn't exist in the database result
       if (data) {
-        return {
+        const result: ChallengeResult = {
           ...data,
-          recent_score: data.recent_score || data.best_score, // Fallback to best_score if recent_score is not available
-        } as ChallengeResult;
+          recent_score: data.recent_score || data.best_score
+        };
+        return result;
       }
       
       return null;
@@ -153,7 +153,7 @@ const ChallengeHistory = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Recent Score:</span>
-                    <Badge variant="outline">{progress.recent_score}</Badge>
+                    <Badge variant="outline">{progress.recent_score || progress.best_score}</Badge>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span className="flex items-center">
