@@ -33,6 +33,7 @@ export const useChallengeLibrary = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user?.id) {
+        console.log("No user session found");
         return [];
       }
       
@@ -51,6 +52,7 @@ export const useChallengeLibrary = () => {
         return [];
       }
       
+      console.log("User progress data:", data);
       return data;
     }
   });
@@ -60,6 +62,8 @@ export const useChallengeLibrary = () => {
     best_score: item.best_score,
     recent_score: item.recent_score
   }));
+
+  console.log("Formatted progress:", formattedProgress);
 
   return {
     challenges: challenges || [],

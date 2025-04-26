@@ -36,6 +36,8 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     navigate(`/challenge-history/${challenge.id}`);
   };
 
+  console.log("Card progress data:", progress);
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -62,7 +64,7 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
               <Badge variant="outline" className="ml-2">{progress.recent_score}</Badge>
             </div>
           )}
-          {!progress?.best_score && !progress?.recent_score && (
+          {(!progress?.best_score && !progress?.recent_score) && (
             <div className="text-sm text-muted-foreground">
               No attempts yet
             </div>

@@ -7,6 +7,9 @@ import { useChallengeLibrary } from "@/hooks/useChallengeLibrary";
 const ChallengeLibrary = () => {
   const { challenges, isLoading, progress } = useChallengeLibrary();
 
+  console.log("Library challenges:", challenges);
+  console.log("Library progress data:", progress);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
