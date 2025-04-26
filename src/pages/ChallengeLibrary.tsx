@@ -57,7 +57,7 @@ const ChallengeCard = ({ challenge, progress }: {
           </div>
         )}
         <div className="flex flex-wrap gap-2 pt-2">
-          {challenge.metrics.map((metric: string) => (
+          {challenge.metrics && challenge.metrics.map((metric: string) => (
             <Badge key={metric} variant="secondary">{metric}</Badge>
           ))}
         </div>
@@ -107,6 +107,10 @@ const ChallengeLibrary = () => {
     );
   }
 
+  // Ensure we have challenge data before rendering
+  const challengesData = challenges || [];
+  const progressData = progress || [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -127,11 +131,11 @@ const ChallengeLibrary = () => {
         
         <TabsContent value="all" className="mt-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {challenges?.map(challenge => (
+            {challengesData.map(challenge => (
               <ChallengeCard 
                 key={challenge.id} 
                 challenge={challenge}
-                progress={progress?.find(p => p.challenge_id === challenge.id)}
+                progress={progressData.find(p => p.challenge_id === challenge.id)}
               />
             ))}
           </div>
@@ -140,13 +144,13 @@ const ChallengeLibrary = () => {
         {['driving', 'irons', 'chipping', 'putting'].map(category => (
           <TabsContent key={category} value={category} className="mt-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {challenges
-                ?.filter(c => c.category === category)
+              {challengesData
+                .filter(c => c.category === category)
                 .map(challenge => (
                   <ChallengeCard 
                     key={challenge.id} 
                     challenge={challenge}
-                    progress={progress?.find(p => p.challenge_id === challenge.id)}
+                    progress={progressData.find(p => p.challenge_id === challenge.id)}
                   />
                 ))}
             </div>
