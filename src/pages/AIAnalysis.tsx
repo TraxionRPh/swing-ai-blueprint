@@ -5,10 +5,12 @@ import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
 import { IdentifiedIssues } from "@/components/ai-analysis/IdentifiedIssues";
 import { PracticeRecommendations } from "@/components/ai-analysis/PracticeRecommendations";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Info } from "lucide-react";
 import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { Loading } from "@/components/ui/loading";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AIAnalysis = () => {
   const { 
@@ -20,7 +22,7 @@ const AIAnalysis = () => {
   } = useAIAnalysis();
   
   if (isLoading) {
-    return <Loading message="Loading your golf performance data..." />;
+    return <Loading message="Analyzing your golf performance data..." />;
   }
 
   return (
@@ -29,7 +31,7 @@ const AIAnalysis = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">AI Analysis</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Personalized insights and recommendations based on your performance data
+            Personalized insights based on your actual performance data
           </p>
         </div>
         <Button 
@@ -43,12 +45,21 @@ const AIAnalysis = () => {
         </Button>
       </div>
       
+      <div className="bg-muted/30 rounded-lg p-3 flex items-center gap-3 text-sm border border-muted">
+        <Info className="h-5 w-5 text-muted-foreground" />
+        <p className="text-muted-foreground">
+          AI analysis improves as you track more rounds and practice sessions. 
+          The confidence score reflects how much data our AI has to assess your game.
+        </p>
+      </div>
+      
       {!analysis ? (
         <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="text-primary">No Analysis Yet</CardTitle>
             <CardDescription>
-              Click "Update Analysis" to generate your first personalized golf performance analysis.
+              Click "Update Analysis" to generate your personalized golf performance analysis 
+              based on your tracked rounds and practice data.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center py-12">
@@ -66,7 +77,20 @@ const AIAnalysis = () => {
           <PerformanceRadarChart data={analysis.performanceAnalysis} />
           
           <div className="grid gap-4 md:grid-cols-2">
-            <ConfidenceChart confidenceData={aiConfidenceHistory} currentConfidence={analysis.aiConfidence} />
+            <div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <ConfidenceChart confidenceData={aiConfidenceHistory} currentConfidence={analysis.aiConfidence} />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>This represents how confident the AI is in its analysis of your golf game based on the amount of data available. The more rounds and practice sessions you track, the more accurate the analysis becomes.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <IdentifiedIssues issues={analysis.identifiedIssues} />
           </div>
           
