@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,11 +116,22 @@ const ChallengeLibrary = () => {
   const { data: progressData, isLoading: progressLoading } = useQuery({
     queryKey: ['user-challenge-progress'],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.id) {
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('user_challenge_progress')
-        .select('*');
+        .select('*')
+        .eq('user_id', session.user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching progress:', error);
+        return [];
+      }
+      
       return data;
     }
   });
@@ -137,7 +149,7 @@ const ChallengeLibrary = () => {
   const formattedProgress: UserProgress[] = (progressData || []).map((item: any) => ({
     challenge_id: item.challenge_id,
     best_score: item.best_score,
-    recent_score: item.best_score
+    recent_score: item.best_score // Best score is also used as recent score for now
   }));
 
   return (
