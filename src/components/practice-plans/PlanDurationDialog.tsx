@@ -49,6 +49,5 @@ export const PlanDurationDialog = ({
         </div>
       </DialogContent>
     </Dialog>
-  </div>
-);
-
+  );
+};
