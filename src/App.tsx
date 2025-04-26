@@ -52,7 +52,7 @@ const router = createBrowserRouter([
         element: <ChallengeLibrary />,
       },
       {
-        path: "drills",
+        path: "drills", // This route is correct for DrillLibrary
         element: <DrillLibrary />,
       },
       {

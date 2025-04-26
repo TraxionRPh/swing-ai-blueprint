@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +75,8 @@ const DrillLibrary = () => {
       const matchesSearch = !searchQuery || 
         drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+        // Safely check if focus exists and is an array before calling .some()
+        (Array.isArray(drill.focus) && drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
       
       const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
       

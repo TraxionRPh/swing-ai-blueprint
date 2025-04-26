@@ -5,7 +5,7 @@ export interface Drill {
   description?: string;
   overview: string;
   category: string;
-  focus: string[];
+  focus: string[] | null;
   difficulty: string;
   duration: string;
   video_url: string | null;
