@@ -53,13 +53,13 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
           {progress?.best_score && (
             <div className="flex justify-between text-sm">
               <span className="font-medium">Best Score:</span>
-              <Badge variant="success" className="ml-2">{progress.best_score}</Badge>
+              <Badge variant="secondary" className="ml-2">{progress.best_score}</Badge>
             </div>
           )}
           {progress?.recent_score && (
             <div className="flex justify-between text-sm">
               <span className="font-medium">Recent Score:</span>
-              <Badge variant="secondary" className="ml-2">{progress.recent_score}</Badge>
+              <Badge variant="outline" className="ml-2">{progress.recent_score}</Badge>
             </div>
           )}
           {!progress?.best_score && !progress?.recent_score && (
