@@ -38,13 +38,10 @@ serve(async (req) => {
     let practicePlanData = null;
     try {
       console.log('Raw analysis text:', analysisText);
-      // Clean the response if it contains any markdown or code block formatting
-      const cleanedText = analysisText.replace(/```json|```/g, '').trim();
-      const parsedResponse = JSON.parse(cleanedText);
-      analysisData = parsedResponse;
+      analysisData = JSON.parse(analysisText);
       
-      if ((specificProblem || planDuration) && parsedResponse.problem) {
-        practicePlanData = parsedResponse;
+      if ((specificProblem || planDuration) && analysisData.problem) {
+        practicePlanData = analysisData;
         
         // Ensure the practice plan has the right number of sessions based on planDuration
         if (planDuration && practicePlanData.practicePlan && practicePlanData.practicePlan.sessions) {

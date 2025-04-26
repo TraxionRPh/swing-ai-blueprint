@@ -21,7 +21,7 @@ export function generatePrompt({
   return `
     You are a professional golf coach and analyst. Based on the following data about a golfer,
     provide a detailed analysis of their performance, identify their strengths and weaknesses,
-    and recommend specific practice drills. Return only JSON without markdown code blocks.
+    and recommend specific practice drills. Return only pure JSON without markdown code blocks.
     
     Player Data:
     - Handicap Level: ${handicapLevel || 'Not specified'}
@@ -94,7 +94,7 @@ export function generatePrompt({
     }
     
     IMPORTANT INSTRUCTIONS:
-    1. Do not use markdown code blocks or ```json format. Return only a valid JSON object.
+    1. Return only pure JSON. Do not include any markdown code blocks, ```json tags, or any formatting outside of valid JSON.
     2. If the golfer is a beginner (high handicap), focus more on fundamental drills.
     3. If the specific problem mentions "slicing driver", ensure your recommendations directly address swing path issues and face angle control.
     4. Create exactly ${days} sessions in the practice plan, one for each day.
