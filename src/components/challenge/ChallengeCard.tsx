@@ -35,13 +35,13 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     navigate(`/challenge-history/${challenge.id}`);
   };
 
-  const getScoreBackgroundColor = (score: string | null) => {
+  const getScoreBackgroundClass = (score: string | null) => {
     if (!score) return '';
     const numScore = Number(score);
     
-    if (numScore >= 8) return 'bg-[#F2FCE2]'; // Soft green for good score
-    if (numScore >= 5) return 'bg-[#FEF7CD]'; // Soft yellow for okay score
-    return 'bg-[#FFDEE2]'; // Soft pink for bad score
+    if (numScore >= 8) return 'bg-green-500 hover:bg-green-600 text-white border-0'; // Good score
+    if (numScore >= 5) return 'bg-amber-500 hover:bg-amber-600 text-white border-0'; // Okay score
+    return 'bg-rose-500 hover:bg-rose-600 text-white border-0'; // Bad score
   };
 
   const hasProgress = progress && (progress.best_score || progress.recent_score);
@@ -67,7 +67,7 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
                   <span className="font-medium">Best Score:</span>
                   <Badge 
                     variant="secondary" 
-                    className={`ml-2 ${getScoreBackgroundColor(progress.best_score)}`}
+                    className={`ml-2 ${getScoreBackgroundClass(progress.best_score)}`}
                   >
                     {progress.best_score}
                   </Badge>
@@ -78,7 +78,7 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
                   <span className="font-medium">Recent Score:</span>
                   <Badge 
                     variant="outline" 
-                    className={`ml-2 ${getScoreBackgroundColor(progress.recent_score)}`}
+                    className={`ml-2 ${getScoreBackgroundClass(progress.recent_score)}`}
                   >
                     {progress.recent_score}
                   </Badge>
