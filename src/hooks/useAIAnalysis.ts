@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
 import { useAIConfidence } from './useAIConfidence';
@@ -15,7 +14,6 @@ export const useAIAnalysis = () => {
   const { aiConfidenceHistory, updateConfidence } = useAIConfidence();
   const { generatePlan, isGenerating } = usePracticePlanGeneration();
 
-  // Load any existing analysis when the component mounts
   useEffect(() => {
     const fetchExistingAnalysis = async () => {
       if (!user) {
@@ -24,10 +22,9 @@ export const useAIAnalysis = () => {
       }
 
       try {
-        // Get the most recent analysis for this user
         const { data, error } = await supabase
           .from('ai_practice_plans')
-          .select('*')
+          .select('practice_plan')
           .eq('user_id', user.id)
           .eq('problem', 'Golf performance optimization')
           .order('created_at', { ascending: false })
@@ -38,11 +35,11 @@ export const useAIAnalysis = () => {
         }
 
         if (data && data.length > 0 && data[0].practice_plan) {
-          setAnalysis(data[0].practice_plan);
+          const practicePlan = data[0].practice_plan as AIAnalysisForPracticePlan;
+          setAnalysis(practicePlan);
           
-          // Update confidence if it exists in the data
-          if (data[0].practice_plan.aiConfidence) {
-            updateConfidence(data[0].practice_plan.aiConfidence);
+          if (practicePlan.aiConfidence) {
+            updateConfidence(practicePlan.aiConfidence);
           }
         }
       } catch (error) {
@@ -72,11 +69,9 @@ export const useAIAnalysis = () => {
 
     setIsLoading(true);
     try {
-      // Call Supabase edge function to generate analysis based on real user data
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
         body: { 
           userId: user.id
-          // No specificProblem or planDuration to indicate this is a full analysis
         }
       });
 
@@ -93,15 +88,12 @@ export const useAIAnalysis = () => {
         throw new Error("No analysis data received");
       }
       
-      // Use the real data from the edge function
       const realAnalysis = data.analysis;
       setAnalysis(realAnalysis);
       
-      // Update confidence level from the analysis
       if (typeof realAnalysis.aiConfidence === 'number') {
         updateConfidence(realAnalysis.aiConfidence);
       } else {
-        // Default confidence if not provided
         updateConfidence(Math.floor(70 + Math.random() * 15));
       }
       
@@ -113,7 +105,6 @@ export const useAIAnalysis = () => {
     } catch (error) {
       console.error('Error generating analysis:', error);
       
-      // In case of error, fall back to mock data but with lower confidence level
       const mockAnalysis: AIAnalysisForPracticePlan = {
         performanceAnalysis: {
           driving: Math.floor(Math.random() * 100),
@@ -122,7 +113,7 @@ export const useAIAnalysis = () => {
           bunker: Math.floor(Math.random() * 100),
           putting: Math.floor(Math.random() * 100)
         },
-        aiConfidence: Math.floor(40 + Math.random() * 20), // Lower confidence for mock data
+        aiConfidence: Math.floor(40 + Math.random() * 20),
         identifiedIssues: [
           {
             area: 'Driving',

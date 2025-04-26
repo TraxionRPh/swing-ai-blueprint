@@ -1,14 +1,49 @@
 
 import { useState, useEffect } from 'react';
 import { ConfidencePoint } from "@/types/drill";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { differenceInWeeks, subWeeks } from 'date-fns';
 
 export const useAIConfidence = () => {
-  const [aiConfidenceHistory, setAiConfidenceHistory] = useState<ConfidencePoint[]>([
-    { date: '4 weeks ago', confidence: 35 },
-    { date: '3 weeks ago', confidence: 48 },
-    { date: '2 weeks ago', confidence: 62 },
-    { date: 'Last week', confidence: 71 }
-  ]);
+  const { user } = useAuth();
+  const [aiConfidenceHistory, setAiConfidenceHistory] = useState<ConfidencePoint[]>([]);
+
+  useEffect(() => {
+    const loadInitialConfidence = async () => {
+      if (!user) return;
+
+      try {
+        // Get user's profile creation date
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('created_at')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile) return;
+
+        const userStartDate = new Date(profile.created_at);
+        const now = new Date();
+        const weeksActive = Math.min(4, differenceInWeeks(now, userStartDate));
+
+        // Generate confidence points only for weeks since user joined
+        const initialPoints: ConfidencePoint[] = [];
+        for (let i = weeksActive; i > 0; i--) {
+          initialPoints.push({
+            date: `${i} week${i > 1 ? 's' : ''} ago`,
+            confidence: 35 + (i * 10) // Simple progression for initial data
+          });
+        }
+
+        setAiConfidenceHistory(initialPoints);
+      } catch (error) {
+        console.error("Error loading confidence history:", error);
+      }
+    };
+
+    loadInitialConfidence();
+  }, [user]);
 
   const updateConfidence = (newConfidence: number) => {
     setAiConfidenceHistory(prev => {
