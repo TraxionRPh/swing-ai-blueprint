@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,10 +158,10 @@ const DrillLibrary = () => {
             <h2 className="text-2xl font-semibold mb-4">Recommended Drills for Your Issue</h2>
             
             {searchAnalysis && (
-              <Alert className="mb-6 bg-blue-50 border-blue-200">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
-                <AlertTitle className="text-blue-800">Coach's Analysis</AlertTitle>
-                <AlertDescription className="text-blue-700">
+              <Alert className="bg-gradient-to-r from-[#9b87f5]/10 to-[#D946EF]/10 border-[#9b87f5]/20 mb-6">
+                <AlertCircle className="h-4 w-4 text-[#9b87f5]" />
+                <AlertTitle className="text-[#9b87f5] font-semibold text-lg mb-2">Coach's Analysis</AlertTitle>
+                <AlertDescription className="text-foreground/90 leading-relaxed">
                   {searchAnalysis}
                 </AlertDescription>
               </Alert>
