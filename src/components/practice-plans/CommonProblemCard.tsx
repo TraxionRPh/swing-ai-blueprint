@@ -28,11 +28,10 @@ export const CommonProblemCard = ({ item, onSelect }: CommonProblemCardProps) =>
       onClick={() => onSelect(item.problem)}
     >
       <div className="flex justify-between items-start mb-1">
-        <h4 className="font-medium">{item.problem}</h4>
-        <Badge variant="outline" className="text-xs text-right">{getPopularityText(item.popularity)}</Badge>
+        <h4 className="font-medium line-clamp-1">{item.problem}</h4>
+        <Badge variant="outline" className="text-xs text-nowrap">{getPopularityText(item.popularity)}</Badge>
       </div>
-      <p className="text-xs text-muted-foreground">{item.description}</p>
+      <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
     </button>
   );
 };
-

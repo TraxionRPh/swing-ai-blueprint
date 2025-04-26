@@ -41,7 +41,10 @@ export const PracticePlanForm = ({
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-4">
-            <h3 className="text-md font-medium">Plan Duration</h3>
+            <h3 className="text-md font-medium">Practice Plan Duration</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+              Choose the length of your practice plan (applies to both AI and manual plans)
+            </p>
             <RadioGroup value={planDuration} onValueChange={onPlanDurationChange} className="flex space-x-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="1" id="day-1" />
@@ -107,4 +110,3 @@ export const PracticePlanForm = ({
     </Card>
   );
 };
-
