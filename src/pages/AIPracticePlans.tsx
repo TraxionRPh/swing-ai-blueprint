@@ -16,7 +16,8 @@ const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
   const [planDuration, setPlanDuration] = useState("1");
   const [latestPracticePlan, setLatestPracticePlan] = useState(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [isManualAnalyzing, setIsManualAnalyzing] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
   const { generatePracticePlan } = useAIAnalysis();
@@ -56,8 +57,8 @@ const AIPracticePlans = () => {
     }
   ];
 
-  const generateAnalysis = async () => {
-    if (!inputValue.trim() && !handicap) {
+  const generateAnalysis = async (isAI: boolean) => {
+    if (!isAI && !inputValue.trim() && !handicap) {
       toast({
         title: "Missing Input",
         description: "Please describe your golf issue or click the AI Generate button",
@@ -66,10 +67,15 @@ const AIPracticePlans = () => {
       return;
     }
 
-    setIsAnalyzing(true);
+    if (isAI) {
+      setIsAiAnalyzing(true);
+    } else {
+      setIsManualAnalyzing(true);
+    }
+
     try {
       // Pass user skill level, selected problem and plan duration to the AI
-      const practicePlan = await generatePracticePlan(inputValue, handicap as HandicapLevel, planDuration);
+      const practicePlan = await generatePracticePlan(isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
       setLatestPracticePlan(practicePlan);
       toast({
         title: "Practice Plan Generated",
@@ -83,7 +89,8 @@ const AIPracticePlans = () => {
       });
       console.error("Error generating practice plan:", error);
     } finally {
-      setIsAnalyzing(false);
+      setIsAiAnalyzing(false);
+      setIsManualAnalyzing(false);
     }
   };
 
@@ -110,22 +117,24 @@ const AIPracticePlans = () => {
               Get personalized practice plans based on your performance
             </p>
           </div>
-          <Button variant="outline" asChild>
-            <Link to="/my-practice-plans">
-              <ListTodo className="mr-2 h-4 w-4" />
-              My Plans
-            </Link>
-          </Button>
         </div>
+        
+        <Button variant="outline" asChild className="mb-4">
+          <Link to="/my-practice-plans">
+            <ListTodo className="mr-2 h-4 w-4" />
+            My Plans
+          </Link>
+        </Button>
       </div>
       
       {!latestPracticePlan ? (
         <PracticePlanForm
           inputValue={inputValue}
           onInputChange={setInputValue}
-          onSubmit={generateAnalysis}
+          onSubmit={(isAI) => generateAnalysis(isAI)}
           onSelectProblem={handleSelectProblem}
-          isGenerating={isAnalyzing}
+          isAiGenerating={isAiAnalyzing}
+          isManualGenerating={isManualAnalyzing}
           commonProblems={commonProblems}
           planDuration={planDuration}
           onPlanDurationChange={handlePlanDurationChange}

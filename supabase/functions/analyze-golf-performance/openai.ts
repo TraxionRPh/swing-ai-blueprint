@@ -14,10 +14,11 @@ export async function generateAnalysis(prompt: string, OPENAI_API_KEY: string) {
       messages: [
         { 
           role: 'system', 
-          content: 'You are a professional golf coach and analyst specialized in providing performance analysis and practice plans.'
+          content: 'You are a professional golf coach and analyst specialized in providing performance analysis and practice plans. Always format your response as pure JSON without code blocks or markdown formatting.'
         },
         { role: 'user', content: prompt }
       ],
+      response_format: { type: "json_object" },
       temperature: 0.7,
     }),
   });

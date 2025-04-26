@@ -12,9 +12,10 @@ import { PlanDurationDialog } from "./PlanDurationDialog";
 interface PracticePlanFormProps {
   inputValue: string;
   onInputChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (isAI: boolean) => void;
   onSelectProblem: (problem: string) => void;
-  isGenerating: boolean;
+  isAiGenerating: boolean;
+  isManualGenerating: boolean;
   commonProblems: CommonProblem[];
   planDuration: string;
   onPlanDurationChange: (duration: string) => void;
@@ -25,7 +26,8 @@ export const PracticePlanForm = ({
   onInputChange,
   onSubmit,
   onSelectProblem,
-  isGenerating,
+  isAiGenerating,
+  isManualGenerating,
   commonProblems,
   planDuration,
   onPlanDurationChange,
@@ -40,7 +42,7 @@ export const PracticePlanForm = ({
 
   const handleConfirmDuration = () => {
     setShowDurationDialog(false);
-    onSubmit();
+    onSubmit(isAIGeneration);
   };
 
   return (
@@ -55,11 +57,11 @@ export const PracticePlanForm = ({
         <div className="space-y-4">
           <Button 
             onClick={() => handleGenerateClick(true)}
-            disabled={isGenerating}
+            disabled={isAiGenerating || isManualGenerating}
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs md:text-sm"
           >
             <Brain className="mr-2 h-4 w-4" />
-            {isGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
+            {isAiGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
           </Button>
         </div>
         
@@ -80,9 +82,9 @@ export const PracticePlanForm = ({
           <Button 
             className="w-full" 
             onClick={() => handleGenerateClick(false)}
-            disabled={isGenerating}
+            disabled={isAiGenerating || isManualGenerating}
           >
-            {isGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
+            {isManualGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
           </Button>
         </div>
         

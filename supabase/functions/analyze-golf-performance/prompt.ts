@@ -21,7 +21,7 @@ export function generatePrompt({
   return `
     You are a professional golf coach and analyst. Based on the following data about a golfer,
     provide a detailed analysis of their performance, identify their strengths and weaknesses,
-    and recommend specific practice drills.
+    and recommend specific practice drills. Return only JSON without markdown code blocks.
     
     Player Data:
     - Handicap Level: ${handicapLevel || 'Not specified'}
@@ -32,7 +32,7 @@ export function generatePrompt({
     Recent Performance:
     ${JSON.stringify(roundData || {})}
     
-    Format your response as JSON with the following structure:
+    Format your response as a clean JSON object with the following structure:
     {
       "performanceAnalysis": {
         "driving": number (0-100),
@@ -66,7 +66,7 @@ export function generatePrompt({
     }
     
     ${specificProblem || days > 1 ? `
-    Additionally, ${specificProblem ? `since the player mentioned a specific problem ("${specificProblem}")` : ''}${specificProblem && days > 1 ? ' and' : ''}${days > 1 ? ` needs a ${days}-day practice plan` : ''}, please provide a tailored practice plan in this format:
+    Additionally, ${specificProblem ? `since the player mentioned a specific problem ("${specificProblem}")` : ''}${specificProblem && days > 1 ? ' and' : ''}${days > 1 ? ` needs a ${days}-day practice plan` : ''}, extend the JSON response to include:
     {
       "problem": string,
       "diagnosis": string,
@@ -94,11 +94,12 @@ export function generatePrompt({
     }
     
     IMPORTANT INSTRUCTIONS:
-    1. If the golfer is a beginner (high handicap), focus more on fundamental drills.
-    2. If the specific problem mentions "slicing driver", ensure your recommendations directly address swing path issues and face angle control.
-    3. Create exactly ${days} sessions in the practice plan, one for each day.
-    4. Make each session focused on a specific area with appropriate drill recommendations.
-    5. If the golfer has limited performance data, make reasonable assumptions based on handicap level.
+    1. Do not use markdown code blocks or ```json format. Return only a valid JSON object.
+    2. If the golfer is a beginner (high handicap), focus more on fundamental drills.
+    3. If the specific problem mentions "slicing driver", ensure your recommendations directly address swing path issues and face angle control.
+    4. Create exactly ${days} sessions in the practice plan, one for each day.
+    5. Make each session focused on a specific area with appropriate drill recommendations.
+    6. If the golfer has limited performance data, make reasonable assumptions based on handicap level.
     ` : ''}
   `;
 }

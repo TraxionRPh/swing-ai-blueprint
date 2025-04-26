@@ -37,7 +37,10 @@ serve(async (req) => {
     let analysisData;
     let practicePlanData = null;
     try {
-      const parsedResponse = JSON.parse(analysisText);
+      console.log('Raw analysis text:', analysisText);
+      // Clean the response if it contains any markdown or code block formatting
+      const cleanedText = analysisText.replace(/```json|```/g, '').trim();
+      const parsedResponse = JSON.parse(cleanedText);
       analysisData = parsedResponse;
       
       if ((specificProblem || planDuration) && parsedResponse.problem) {
@@ -85,10 +88,12 @@ serve(async (req) => {
       });
 
     } catch (error) {
-      console.error('Error in analyze-golf-performance function:', error);
+      console.error('Error parsing OpenAI response:', error);
+      console.error('Problematic response:', analysisText);
       return new Response(JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: `Error parsing OpenAI response: ${error.message}`,
+        rawResponse: analysisText 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
