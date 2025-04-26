@@ -16,6 +16,7 @@ const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendedDrills, setRecommendedDrills] = useState<Drill[]>([]);
+  const [searchAnalysis, setSearchAnalysis] = useState<string>("");
   const [filteredDrills, setFilteredDrills] = useState<Drill[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
@@ -50,12 +51,25 @@ const DrillLibrary = () => {
 
       if (error) throw error;
       
-      setRecommendedDrills(data.drills);
-      
-      toast({
-        title: "Drills Found",
-        description: "We've found the best drills to help with your issue.",
-      });
+      if (data.drills && Array.isArray(data.drills)) {
+        setRecommendedDrills(data.drills);
+        setSearchAnalysis(data.analysis || "");
+        
+        if (data.drills.length > 0) {
+          toast({
+            title: `${data.drills.length} Drills Found`,
+            description: "We've found the best drills to help with your issue.",
+          });
+        } else {
+          toast({
+            title: "No matching drills found",
+            description: "Try rephrasing your issue or using different terms.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
       console.error('Search error:', error);
       toast({
@@ -111,6 +125,7 @@ const DrillLibrary = () => {
 
       {recommendedDrills.length > 0 && (
         <div className="my-8">
+          <h3 className="text-xl font-semibold mb-4">Recommended Drills for Your Issue</h3>
           <DrillCarousel drills={recommendedDrills} />
         </div>
       )}

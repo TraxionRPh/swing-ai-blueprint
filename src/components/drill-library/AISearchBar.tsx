@@ -4,8 +4,6 @@ import { Brain } from "@/components/icons/CustomIcons";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { DrillCarousel } from "./DrillCarousel";
 import { Loading } from "@/components/ui/loading";
 
 interface AISearchBarProps {
@@ -15,8 +13,6 @@ interface AISearchBarProps {
 
 export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [recommendedDrills, setRecommendedDrills] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
 
   const handleAISearch = async () => {
@@ -29,31 +25,14 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
       return;
     }
 
-    setIsSearching(true);
     onSearch(searchQuery);
+  };
 
-    try {
-      const { data, error } = await supabase.functions.invoke('search-drills', {
-        body: { query: searchQuery }
-      });
-
-      if (error) throw error;
-      
-      setRecommendedDrills(data.drills);
-      
-      toast({
-        title: "Drills Found",
-        description: "We've found the best drills to help with your issue.",
-      });
-    } catch (error) {
-      console.error('Search error:', error);
-      toast({
-        title: "Search Failed",
-        description: "Failed to find matching drills. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Submit on Ctrl+Enter or Cmd+Enter
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleAISearch();
+      e.preventDefault();
     }
   };
 
@@ -63,32 +42,29 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
         <div className="flex-1 border border-primary/50 bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF] rounded-lg">
           <div className="bg-card rounded-lg w-full flex flex-col">
             <Textarea
-              placeholder="Describe your golf issue (e.g., 'I'm hitting behind the ball' or 'My drives are slicing')"
+              placeholder="Describe your golf issue in detail (e.g., 'I'm hitting behind the ball with my irons' or 'My drives are consistently slicing to the right')"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="w-full bg-transparent border-0 shadow-none focus-visible:ring-0 text-sm min-h-[100px] resize-y"
             />
           </div>
         </div>
         <Button 
           onClick={handleAISearch}
-          disabled={isSearching}
+          disabled={isAnalyzing}
           className="bg-gradient-to-r from-[#9b87f5] to-[#D946EF] text-white hover:opacity-90 w-full md:w-auto"
         >
           <Brain className="mr-2 h-4 w-4" />
-          {isSearching ? "Analyzing..." : "Analyze with AI"}
+          {isAnalyzing ? "Analyzing..." : "Find Perfect Drills"}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground px-3">
-        Try asking about specific issues like "topping my irons" or "three-putting too often"
+        For best results, be specific about your issue: mention club type, ball flight, and when the problem occurs
       </p>
 
-      {isSearching ? (
-        <Loading message="Finding the best drills for your issue..." />
-      ) : (
-        recommendedDrills.length > 0 && (
-          <DrillCarousel drills={recommendedDrills} />
-        )
+      {isAnalyzing && (
+        <Loading message="Analyzing your golf issue to find the most effective drills..." />
       )}
     </div>
   );

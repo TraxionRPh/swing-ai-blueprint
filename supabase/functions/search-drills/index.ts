@@ -48,7 +48,15 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a golf coach assistant. Your task is to analyze the user\'s golf issue and select the top 3 most relevant drills from the provided list. Return only the IDs of the three best matching drills in order of relevance.'
+            content: `You are a professional golf coach assistant with deep expertise in analyzing golf mechanics and training methods. Your task is to carefully analyze the user's golf issue and select the top 3-5 most relevant drills that will directly address their specific problem.
+
+Consider:
+1. The exact technical cause of the issue described
+2. How each drill's focus, difficulty, and mechanics match the user's needs
+3. A progression of drills that builds skills logically
+
+Look at drill titles, descriptions, focus areas, categories, and difficulty levels to make ideal matches.
+Return only the IDs of the best matching drills in order of relevance, with the most effective drill first.`
           },
           {
             role: 'user',
@@ -67,18 +75,25 @@ serve(async (req) => {
 
     const aiResponse = await openAIResponse.json();
     const recommendationText = aiResponse.choices[0].message.content;
+    console.log("AI recommendation text:", recommendationText);
     
     // Extract drill IDs from AI response
     const drillIds = recommendationText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g) || [];
+    console.log("Extracted drill IDs:", drillIds);
     
     // Get the recommended drills in order
     const recommendedDrills = drillIds
       .map(id => drills.find(d => d.id === id))
       .filter(Boolean)
-      .slice(0, 3);
+      .slice(0, 5); // Limit to top 5 drills
+    
+    console.log(`Found ${recommendedDrills.length} recommended drills`);
 
     return new Response(
-      JSON.stringify({ drills: recommendedDrills }),
+      JSON.stringify({ 
+        drills: recommendedDrills,
+        analysis: recommendationText // Include the full analysis for debugging
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

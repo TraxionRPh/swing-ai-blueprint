@@ -34,12 +34,12 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
     <Card className="w-full">
       <CardContent className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold">Recommended Drills</h3>
+          <h3 className="text-lg font-semibold">Perfect Drills for Your Issue</h3>
           <p className="text-sm text-muted-foreground">
-            Swipe through these drills to improve your game
+            These drills specifically address your problem - swipe through them or create a complete practice plan
           </p>
         </div>
-        <Carousel className="w-full max-w-xs mx-auto">
+        <Carousel className="w-full max-w-md mx-auto mb-6">
           <CarouselContent>
             {drills.map((drill) => (
               <CarouselItem key={drill.id} className="pl-4">
@@ -53,7 +53,7 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
         <div className="mt-6">
           <Button 
             onClick={handleCreatePracticePlan} 
-            className="w-full"
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
           >
             Create Practice Plan with These Drills
           </Button>
