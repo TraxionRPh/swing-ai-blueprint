@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
+import { Check } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -12,9 +15,18 @@ interface GeneratedPlanProps {
 }
 
 export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
-  // Filter sessions based on plan duration
+  const { toast } = useToast();
+  const [isCompleted, setIsCompleted] = useState(false);
   const filteredSessions = plan.practicePlan.sessions.slice(0, parseInt(planDuration));
   
+  const handleCompletePlan = () => {
+    setIsCompleted(true);
+    toast({
+      title: "Plan Completed",
+      description: "Congratulations on completing your practice plan!"
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -110,7 +122,15 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={onClear}>Back</Button>
-          <Button>Add to Practice Schedule</Button>
+          {!isCompleted && (
+            <Button 
+              onClick={handleCompletePlan}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Complete Plan
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>

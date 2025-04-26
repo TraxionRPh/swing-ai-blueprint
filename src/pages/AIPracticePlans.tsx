@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -9,10 +8,11 @@ import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
 import { CommonProblem } from "@/types/practice-plan";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ListTodo } from "lucide-react";
 
 const AIPracticePlans = () => {
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [planDuration, setPlanDuration] = useState("1");
   const [latestPracticePlan, setLatestPracticePlan] = useState(null);
@@ -79,6 +79,7 @@ const AIPracticePlans = () => {
         title: "Practice Plan Generated",
         description: "AI has created a personalized practice plan for you"
       });
+      navigate("/my-practice-plans");
     } catch (error) {
       toast({
         title: "Error",
