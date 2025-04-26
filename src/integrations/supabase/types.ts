@@ -48,34 +48,58 @@ export type Database = {
       challenges: {
         Row: {
           category: string
+          commonmistake1: string | null
+          commonmistake2: string | null
+          commonmistake3: string | null
           created_at: string
           description: string
           difficulty: string
+          Focus: string | null
           id: string
+          instruction1: string | null
+          instruction2: string | null
+          instruction3: string | null
           metric: string
-          metrics: string[]
+          metrics: string[] | null
+          protip: string | null
           title: string
           updated_at: string
         }
         Insert: {
           category: string
+          commonmistake1?: string | null
+          commonmistake2?: string | null
+          commonmistake3?: string | null
           created_at?: string
           description: string
           difficulty: string
+          Focus?: string | null
           id?: string
+          instruction1?: string | null
+          instruction2?: string | null
+          instruction3?: string | null
           metric?: string
-          metrics: string[]
+          metrics?: string[] | null
+          protip?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           category?: string
+          commonmistake1?: string | null
+          commonmistake2?: string | null
+          commonmistake3?: string | null
           created_at?: string
           description?: string
           difficulty?: string
+          Focus?: string | null
           id?: string
+          instruction1?: string | null
+          instruction2?: string | null
+          instruction3?: string | null
           metric?: string
-          metrics?: string[]
+          metrics?: string[] | null
+          protip?: string | null
           title?: string
           updated_at?: string
         }

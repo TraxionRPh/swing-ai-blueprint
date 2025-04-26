@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -45,24 +44,22 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
   }, [drills]);
 
   return (
-    <>
-      <div className="sticky top-0 z-10 bg-background shadow-sm pb-4">
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-          <TabsList className="w-full grid grid-cols-5">
-            {categories.map(category => (
-              <TabsTrigger 
-                key={category} 
-                value={category} 
-                className="flex-1"
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+    <div className="space-y-4">
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+        <TabsList className="w-full grid grid-cols-6 p-0 h-12">
+          {categories.map(category => (
+            <TabsTrigger 
+              key={category} 
+              value={category} 
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2">
         <Badge 
           variant={selectedDifficulty === null ? "default" : "outline"}
           className="cursor-pointer"
@@ -81,6 +78,6 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
           </Badge>
         ))}
       </div>
-    </>
+    </div>
   );
 };
