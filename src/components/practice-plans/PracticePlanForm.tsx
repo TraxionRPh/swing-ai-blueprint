@@ -43,7 +43,7 @@ export const PracticePlanForm = ({
   };
 
   return (
-    <Card>
+    <Card className="max-w-none">
       <CardHeader>
         <CardTitle>Create Your Practice Plan</CardTitle>
         <CardDescription>

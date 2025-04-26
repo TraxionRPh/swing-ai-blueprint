@@ -97,7 +97,7 @@ const AIPracticePlans = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl space-y-6 p-4">
+    <div className="container mx-auto space-y-6 p-4">
       <div className="space-y-4">
         <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
         <p className="text-muted-foreground mb-4">
