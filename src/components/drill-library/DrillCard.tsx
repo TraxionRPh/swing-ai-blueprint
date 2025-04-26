@@ -1,5 +1,4 @@
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +11,7 @@ import {
 import { Drill } from "@/types/drill";
 import { useState } from "react";
 import { DrillDetailsModal } from "./DrillDetailsModal";
+import { DifficultyBadge } from "./DifficultyBadge";
 
 interface DrillCardProps {
   drill: Drill;
@@ -20,28 +20,13 @@ interface DrillCardProps {
 export const DrillCard = ({ drill }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  const getDifficultyBadgeClass = (difficulty: string) => {
-    switch (difficulty) {
-      case "Beginner":
-        return "bg-emerald-500 hover:bg-emerald-600 text-white border-0";
-      case "Intermediate":
-        return "bg-amber-500 hover:bg-amber-600 text-white border-0";
-      case "Advanced":
-        return "bg-rose-500 hover:bg-rose-600 text-white border-0";
-      default:
-        return "bg-slate-500 hover:bg-slate-600 text-white border-0";
-    }
-  };
-
   return (
     <>
       <Card className="h-full flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-xl">{drill.title}</CardTitle>
-            <Badge className={getDifficultyBadgeClass(drill.difficulty)}>
-              {drill.difficulty}
-            </Badge>
+            <DifficultyBadge difficulty={drill.difficulty} />
           </div>
           <CardDescription>{drill.duration}</CardDescription>
         </CardHeader>
