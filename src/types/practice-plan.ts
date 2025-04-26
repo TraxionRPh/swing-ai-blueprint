@@ -1,8 +1,14 @@
+
 import { Drill } from "./drill";
 
 export interface GeneratedPracticePlan {
+  problem: string;
+  diagnosis: string;
+  rootCauses: string[];
+  recommendedDrills: Drill[];
   practicePlan: {
     duration: string;
+    frequency: string;
     plan: DayPlan[];
   };
 }
@@ -10,6 +16,8 @@ export interface GeneratedPracticePlan {
 export interface DayPlan {
   day: number;
   drills: DrillWithSets[];
+  focus: string;
+  duration: string;
 }
 
 export interface DrillWithSets {
@@ -34,3 +42,41 @@ export interface ConfidencePoint {
   date: string;
   confidence: number;
 }
+
+export interface CommonProblem {
+  id: number;
+  problem: string;
+  description: string;
+  popularity: string;
+}
+
+export interface AIAnalysisForPracticePlan {
+  performanceAnalysis: {
+    driving: number;
+    ironPlay: number;
+    chipping: number;
+    bunker: number;
+    putting: number;
+  };
+  aiConfidence: number;
+  identifiedIssues: {
+    area: string;
+    description: string;
+    priority: string;
+  }[];
+  recommendedPractice: {
+    weeklyFocus: string;
+    primaryDrill: {
+      name: string;
+      description: string;
+      frequency: string;
+    };
+    secondaryDrill: {
+      name: string;
+      description: string;
+      frequency: string;
+    };
+    weeklyAssignment: string;
+  };
+}
+
