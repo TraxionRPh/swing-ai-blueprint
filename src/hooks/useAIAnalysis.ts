@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
 import { useAIConfidence } from './useAIConfidence';
 import { usePracticePlanGeneration } from './usePracticePlanGeneration';
@@ -11,9 +11,54 @@ export const useAIAnalysis = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<AIAnalysisForPracticePlan | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { aiConfidenceHistory, updateConfidence } = useAIConfidence();
   const { generatePlan, isGenerating } = usePracticePlanGeneration();
+
+  // Load any existing analysis when the component mounts
+  useEffect(() => {
+    const fetchExistingAnalysis = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Get the most recent analysis for this user
+        const { data, error } = await supabase
+          .from('ai_practice_plans')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('problem', 'Golf performance optimization')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          throw error;
+        }
+
+        if (data && data.length > 0 && data[0].practice_plan) {
+          setAnalysis(data[0].practice_plan);
+          
+          // Update confidence if it exists in the data
+          if (data[0].practice_plan.aiConfidence) {
+            updateConfidence(data[0].practice_plan.aiConfidence);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching existing analysis:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your previous analysis.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExistingAnalysis();
+  }, [user, toast, updateConfidence]);
 
   const generateAnalysis = async () => {
     if (!user) {
