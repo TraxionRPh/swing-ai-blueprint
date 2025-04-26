@@ -2,12 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { LucideGolf } from "@/components/icons/CustomIcons";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { PlanTypeSelector } from "@/components/practice-plans/PlanTypeSelector";
+import { PlanDurationSelector } from "@/components/practice-plans/PlanDurationSelector";
+import { FocusAreaSelector } from "@/components/practice-plans/FocusAreaSelector";
+import { LucideGolf } from "@/components/icons/CustomIcons";
 
 const PracticePlanGenerator = () => {
   const [planType, setPlanType] = useState<string>("ai");
@@ -117,77 +117,9 @@ const PracticePlanGenerator = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Plan Type</h3>
-              <Tabs value={planType} onValueChange={setPlanType} className="w-full">
-                <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="ai">AI-Generated</TabsTrigger>
-                  <TabsTrigger value="manual">Manual Selection</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              
-              {planType === "ai" && (
-                <p className="text-sm text-muted-foreground">
-                  Our AI will analyze your performance data and create a plan tailored to your needs.
-                </p>
-              )}
-              
-              {planType === "manual" && (
-                <p className="text-sm text-muted-foreground">
-                  Select specific drills and exercises to create your own custom practice plan.
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Plan Duration</h3>
-              <RadioGroup value={duration} onValueChange={setDuration} className="flex space-x-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1" id="day-1" />
-                  <Label htmlFor="day-1">1 Day</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="3" id="day-3" />
-                  <Label htmlFor="day-3">3 Days</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="5" id="day-5" />
-                  <Label htmlFor="day-5">5 Days</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Focus Areas</h3>
-              <RadioGroup value={focus} onValueChange={setFocus}>
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="balanced" id="focus-balanced" />
-                    <Label htmlFor="focus-balanced">Balanced Practice</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="driving" id="focus-driving" />
-                    <Label htmlFor="focus-driving">Driving Improvement</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="iron-play" id="focus-iron" />
-                    <Label htmlFor="focus-iron">Iron Play</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="short-game" id="focus-short" />
-                    <Label htmlFor="focus-short">Short Game</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="putting" id="focus-putting" />
-                    <Label htmlFor="focus-putting">Putting</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="weaknesses" id="focus-weaknesses" />
-                    <Label htmlFor="focus-weaknesses">Target Weaknesses</Label>
-                  </div>
-                </div>
-              </RadioGroup>
-            </div>
+            <PlanTypeSelector planType={planType} onChange={setPlanType} />
+            <PlanDurationSelector duration={duration} onChange={setDuration} />
+            <FocusAreaSelector focus={focus} onChange={setFocus} />
           </CardContent>
           <CardFooter>
             <Button 
