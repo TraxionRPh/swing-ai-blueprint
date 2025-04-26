@@ -36,7 +36,15 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     navigate(`/challenge-history/${challenge.id}`);
   };
 
-  console.log(`Card for challenge ${challenge.id}, progress:`, progress);
+  // Helper function to determine score background color
+  const getScoreBackgroundColor = (score: string | null) => {
+    if (!score) return '';
+    const numScore = Number(score);
+    
+    if (numScore >= 8) return 'bg-green-100'; // Good score
+    if (numScore >= 5) return 'bg-yellow-100'; // Okay score
+    return 'bg-red-100'; // Bad score
+  };
 
   const hasProgress = progress && (progress.best_score || progress.recent_score);
 
@@ -59,13 +67,23 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
               {progress?.best_score && (
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">Best Score:</span>
-                  <Badge variant="secondary" className="ml-2">{progress.best_score}</Badge>
+                  <Badge 
+                    variant="secondary" 
+                    className={`ml-2 ${getScoreBackgroundColor(progress.best_score)}`}
+                  >
+                    {progress.best_score}
+                  </Badge>
                 </div>
               )}
               {progress?.recent_score && (
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">Recent Score:</span>
-                  <Badge variant="outline" className="ml-2">{progress.recent_score}</Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`ml-2 ${getScoreBackgroundColor(progress.recent_score)}`}
+                  >
+                    {progress.recent_score}
+                  </Badge>
                 </div>
               )}
             </>
@@ -92,3 +110,4 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     </Card>
   );
 };
+
