@@ -1,100 +1,22 @@
 
-import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loading } from '@/components/ui/loading';
 import { useChallenge } from '@/hooks/useChallenge';
 import { TrackingForm } from '@/components/challenge/TrackingForm';
-import { compareScores } from '@/utils/scoreUtils';
-import * as z from 'zod';
+import { useSubmitChallenge } from '@/hooks/useSubmitChallenge';
 
 const ChallengeTracking = () => {
   const { challengeId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isPersisting, setIsPersisting] = useState(false);
-  
   const { data: challenge, isLoading } = useChallenge(challengeId);
+  const { onSubmit, isPersisting } = useSubmitChallenge(challengeId);
 
   const handleBack = () => {
     navigate(-1);
-  };
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!challengeId) return;
-    
-    setIsPersisting(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user?.id) {
-        throw new Error('User is not authenticated');
-      }
-      
-      const userId = session.user.id;
-      
-      const { data: existingData } = await supabase
-        .from('user_challenge_progress')
-        .select('*')
-        .eq('challenge_id', challengeId)
-        .maybeSingle();
-      
-      const scoreValue = values.score;
-      
-      if (existingData) {
-        const bestScore = existingData.best_score 
-          ? compareScores(existingData.best_score, scoreValue, challenge?.metric) 
-            ? scoreValue 
-            : existingData.best_score
-          : scoreValue;
-          
-        const updateData = {
-          best_score: bestScore,
-          updated_at: new Date().toISOString(),
-          progress: 0,
-        };
-        
-        await supabase
-          .from('user_challenge_progress')
-          .update(updateData)
-          .eq('challenge_id', challengeId);
-        
-      } else {
-        await supabase
-          .from('user_challenge_progress')
-          .insert({
-            challenge_id: challengeId,
-            best_score: scoreValue,
-            progress: 0,
-            user_id: userId
-          });
-      }
-      
-      toast({
-        title: 'Challenge complete!',
-        description: 'Your progress has been saved',
-      });
-      
-      setTimeout(() => {
-        navigate('/challenges');
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Error saving challenge progress:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save your progress',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsPersisting(false);
-    }
   };
   
   if (isLoading) {

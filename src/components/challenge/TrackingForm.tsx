@@ -1,26 +1,21 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
 import { Loading } from '@/components/ui/loading';
-
-const formSchema = z.object({
-  score: z.string().min(1, 'Score is required'),
-  notes: z.string().optional(),
-});
+import { formSchema, FormSchema } from '@/hooks/useSubmitChallenge';
 
 type TrackingFormProps = {
-  onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
+  onSubmit: (values: FormSchema) => Promise<void>;
   isPersisting: boolean;
 };
 
 export const TrackingForm = ({ onSubmit, isPersisting }: TrackingFormProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       score: '',
