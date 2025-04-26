@@ -94,7 +94,7 @@ export function generatePrompt({
     }
     
     IMPORTANT INSTRUCTIONS:
-    1. Return only pure JSON. Do not include any markdown code blocks, or any formatting outside of valid JSON.
+    1. Return only pure JSON. Do not include any markdown code blocks or any formatting outside of valid JSON.
     2. If the golfer is a beginner (high handicap), focus more on fundamental drills.
     3. If the specific problem mentions "slicing driver", ensure your recommendations directly address swing path issues and face angle control.
     4. Create exactly ${days} sessions in the practice plan, one for each day.

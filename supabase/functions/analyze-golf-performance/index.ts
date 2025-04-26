@@ -67,14 +67,19 @@ serve(async (req) => {
       }
 
       // Save to database
-      await savePracticePlan(
-        userId,
-        specificProblem,
-        practicePlanData,
-        analysisData,
-        Deno.env.get('SUPABASE_URL') || '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-      );
+      try {
+        await savePracticePlan(
+          userId,
+          specificProblem,
+          practicePlanData,
+          analysisData,
+          Deno.env.get('SUPABASE_URL') || '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+        );
+      } catch (dbError) {
+        console.error('Failed to save to database:', dbError);
+        // Continue execution even if saving fails, to at least return the analysis
+      }
 
       return new Response(JSON.stringify({
         success: true,
