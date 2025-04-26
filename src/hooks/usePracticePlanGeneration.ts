@@ -75,13 +75,15 @@ export const usePracticePlanGeneration = () => {
           roundData: roundData || [],
           handicapLevel: handicapLevel || 'intermediate',
           specificProblem: issue || 'Improve overall golf performance',
-          planDuration
+          planDuration,
+          includeProgressChallenge: true // Signal to include a challenge that measures progress
         }
       });
 
       if (error) throw error;
 
-      return data.practicePlan || {
+      // Ensure we have a complete practice plan structure with detailed drill information
+      const practicePlan = data.practicePlan || {
         problem: issue || "Golf performance optimization",
         diagnosis: "AI analysis of your golf game",
         rootCauses: ["Technique", "Equipment"],
@@ -91,7 +93,12 @@ export const usePracticePlanGeneration = () => {
             description: "Practice proper alignment with targets",
             difficulty: "Beginner",
             duration: "15 minutes",
-            focus: ["Fundamentals", "Setup"]
+            focus: ["Fundamentals", "Setup"],
+            instructions: [
+              "Set alignment sticks on the ground pointing at your target",
+              "Place a club across your toes to ensure proper alignment",
+              "Practice making swings while maintaining proper alignment"
+            ]
           }
         ],
         practicePlan: {
@@ -104,8 +111,19 @@ export const usePracticePlanGeneration = () => {
               duration: "45 minutes"
             }
           ]
+        },
+        progressChallenge: {
+          name: `${issue || "Golf Performance"} Assessment`,
+          description: "Measure your improvement before and after completing this practice plan",
+          steps: [
+            "Record your current performance",
+            "Complete all drills in the practice plan",
+            "Re-test your performance to measure improvement"
+          ]
         }
       };
+
+      return practicePlan;
     } catch (error) {
       console.error("Error generating practice plan:", error);
       throw error;

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +16,6 @@ const AIPracticePlans = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [planDuration, setPlanDuration] = useState("1");
-  const [latestPracticePlan, setLatestPracticePlan] = useState(null);
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [isManualAnalyzing, setIsManualAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -73,13 +73,14 @@ const AIPracticePlans = () => {
     }
 
     try {
-      const practicePlan = await generatePlan(user?.id, isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
-      setLatestPracticePlan(practicePlan);
+      await generatePlan(user?.id, isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
       toast({
         title: "Practice Plan Generated",
         description: "AI has created a personalized practice plan for you"
       });
-      navigate("/my-practice-plans");
+      
+      // Navigate directly to the newly created plan
+      navigate("/my-practice-plans", { state: { showLatest: true } });
     } catch (error) {
       toast({
         title: "Error",
@@ -91,11 +92,6 @@ const AIPracticePlans = () => {
       setIsAiAnalyzing(false);
       setIsManualAnalyzing(false);
     }
-  };
-
-  const clearPlan = () => {
-    setLatestPracticePlan(null);
-    setInputValue("");
   };
 
   const handleSelectProblem = (problem: string) => {
@@ -124,25 +120,17 @@ const AIPracticePlans = () => {
         </Button>
       </div>
       
-      {!latestPracticePlan ? (
-        <PracticePlanForm
-          inputValue={inputValue}
-          onInputChange={setInputValue}
-          onSubmit={(isAI) => generateAnalysis(isAI)}
-          onSelectProblem={handleSelectProblem}
-          isAiGenerating={isAiAnalyzing}
-          isManualGenerating={isManualAnalyzing}
-          commonProblems={commonProblems}
-          planDuration={planDuration}
-          onPlanDurationChange={handlePlanDurationChange}
-        />
-      ) : (
-        <GeneratedPlan 
-          plan={latestPracticePlan} 
-          onClear={clearPlan}
-          planDuration={planDuration} 
-        />
-      )}
+      <PracticePlanForm
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onSubmit={(isAI) => generateAnalysis(isAI)}
+        onSelectProblem={handleSelectProblem}
+        isAiGenerating={isAiAnalyzing}
+        isManualGenerating={isManualAnalyzing}
+        commonProblems={commonProblems}
+        planDuration={planDuration}
+        onPlanDurationChange={handlePlanDurationChange}
+      />
     </div>
   );
 };

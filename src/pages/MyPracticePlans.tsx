@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,9 @@ import { Trash2, Clock } from "lucide-react";
 const MyPracticePlans = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
+  const showLatest = location.state?.showLatest || false;
+  
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<GeneratedPracticePlan | null>(null);
@@ -41,6 +45,11 @@ const MyPracticePlans = () => {
       }
 
       setPlans(data || []);
+      
+      // If showLatest flag is set and we have plans, automatically select the first (most recent) one
+      if (showLatest && data && data.length > 0) {
+        setSelectedPlan(data[0].practice_plan);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -84,6 +93,8 @@ const MyPracticePlans = () => {
 
   const clearSelectedPlan = () => {
     setSelectedPlan(null);
+    // Clear the location state
+    window.history.replaceState({}, document.title);
   };
   
   const viewPlan = (plan: any) => {

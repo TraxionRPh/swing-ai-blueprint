@@ -17,6 +17,7 @@ export interface GeneratedPracticePlan {
     difficulty: string;
     duration: string;
     focus: string[];
+    instructions?: string[];
   }[];
   practicePlan: {
     duration: string;
@@ -26,6 +27,11 @@ export interface GeneratedPracticePlan {
       drills: string[];
       duration: string;
     }[];
+  };
+  progressChallenge?: {
+    name: string;
+    description: string;
+    steps: string[];
   };
 }
 
