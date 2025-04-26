@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,12 +20,9 @@ const MyPracticePlans = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<SavedPracticePlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<GeneratedPracticePlan | null>(null);
+  const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadPracticePlans();
-  }, [user]);
-
-  const loadPracticePlans = async () => {
+  const loadPracticePlans = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -42,7 +38,6 @@ const MyPracticePlans = () => {
       }
 
       if (data) {
-        // Properly cast the data to match our SavedPracticePlan type
         const typedPlans: SavedPracticePlan[] = data.map(plan => ({
           ...plan,
           root_causes: plan.root_causes as unknown as string[],
@@ -50,13 +45,15 @@ const MyPracticePlans = () => {
           practice_plan: plan.practice_plan as unknown as GeneratedPracticePlan
         }));
         
-        setPlans(typedPlans);
+        const filteredPlans = typedPlans.filter(plan => !deletedPlanIds.includes(plan.id));
+        setPlans(filteredPlans);
         
-        if (showLatest && typedPlans.length > 0) {
-          setSelectedPlan(typedPlans[0].practice_plan);
+        if (showLatest && filteredPlans.length > 0) {
+          setSelectedPlan(filteredPlans[0].practice_plan);
         }
       }
     } catch (error) {
+      console.error("Error loading practice plans:", error);
       toast({
         title: "Error",
         description: "Failed to load practice plans",
@@ -65,10 +62,22 @@ const MyPracticePlans = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, deletedPlanIds, showLatest, toast]);
+
+  useEffect(() => {
+    loadPracticePlans();
+  }, [loadPracticePlans]);
 
   const deletePracticePlan = async (planId: string) => {
     try {
+      setPlans(plans.filter(plan => plan.id !== planId));
+      
+      if (selectedPlan && plans.find(p => p.id === planId)?.practice_plan.id === selectedPlan.id) {
+        setSelectedPlan(null);
+      }
+
+      setDeletedPlanIds(prev => [...prev, planId]);
+
       const { error } = await supabase
         .from('ai_practice_plans')
         .delete()
@@ -78,31 +87,27 @@ const MyPracticePlans = () => {
         throw error;
       }
 
-      // Update local state to remove the deleted plan
-      setPlans(plans.filter(plan => plan.id !== planId));
-      
-      // If the deleted plan is currently selected, clear the selection
-      if (selectedPlan && plans.find(p => p.id === planId)?.practice_plan.id === selectedPlan.id) {
-        setSelectedPlan(null);
-      }
-
       toast({
         title: "Success",
         description: "Practice plan deleted"
       });
     } catch (error) {
+      console.error("Error deleting practice plan:", error);
+      
+      setDeletedPlanIds(prev => prev.filter(id => id !== planId));
+      
+      loadPracticePlans();
+      
       toast({
         title: "Error",
         description: "Failed to delete practice plan",
         variant: "destructive"
       });
-      console.error("Error deleting practice plan:", error);
     }
   };
 
   const clearSelectedPlan = () => {
     setSelectedPlan(null);
-    // Remove any state params by replacing the current URL without query params
     navigate(location.pathname, { replace: true });
   };
   
