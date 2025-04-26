@@ -1,4 +1,6 @@
+
 import { ConfidencePoint } from "@/types/drill";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ConfidenceChartProps {
@@ -8,18 +10,58 @@ interface ConfidenceChartProps {
 
 export const ConfidenceChart = ({ confidenceData, currentConfidence }: ConfidenceChartProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <h3 className="text-lg font-semibold mb-2">AI Confidence Over Time</h3>
-      <p className="text-sm text-gray-500 mb-4">Current Confidence: {currentConfidence}%</p>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={confidenceData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-          <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-          <XAxis dataKey="date" />
-          <YAxis domain={[0, 100]} />
-          <Tooltip />
-          <Line type="monotone" dataKey="confidence" stroke="#8884d8" />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <Card className="border-2 border-primary/20">
+      <CardHeader>
+        <CardTitle className="text-lg md:text-xl text-primary">AI Confidence Level</CardTitle>
+        <CardDescription>
+          Our AI's growing understanding of your game: {currentConfidence}%
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={confidenceData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="date" 
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+              />
+              <YAxis 
+                domain={[0, 100]} 
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '0.5rem',
+                }}
+                labelStyle={{ color: 'hsl(var(--foreground))' }}
+                itemStyle={{ color: 'hsl(var(--primary))' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="confidence" 
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ 
+                  fill: 'hsl(var(--card))',
+                  stroke: 'hsl(var(--primary))',
+                  strokeWidth: 2,
+                }}
+                activeDot={{
+                  fill: 'hsl(var(--primary))',
+                  stroke: 'hsl(var(--card))',
+                  strokeWidth: 2,
+                  r: 6,
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
