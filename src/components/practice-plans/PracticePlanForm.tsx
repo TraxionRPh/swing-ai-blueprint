@@ -40,6 +40,24 @@ export const PracticePlanForm = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
+          <div className="space-y-4">
+            <h3 className="text-md font-medium">Plan Duration</h3>
+            <RadioGroup value={planDuration} onValueChange={onPlanDurationChange} className="flex space-x-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="1" id="day-1" />
+                <Label htmlFor="day-1">1 Day</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="3" id="day-3" />
+                <Label htmlFor="day-3">3 Days</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="5" id="day-5" />
+                <Label htmlFor="day-5">5 Days</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <Button 
             onClick={onSubmit}
             disabled={isGenerating}
@@ -85,25 +103,8 @@ export const PracticePlanForm = ({
             ))}
           </div>
         </div>
-        
-        <div className="space-y-4 pt-2">
-          <h3 className="text-md font-medium">Plan Duration</h3>
-          <RadioGroup value={planDuration} onValueChange={onPlanDurationChange} className="flex space-x-4">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="1" id="day-1" />
-              <Label htmlFor="day-1">1 Day</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="3" id="day-3" />
-              <Label htmlFor="day-3">3 Days</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="5" id="day-5" />
-              <Label htmlFor="day-5">5 Days</Label>
-            </div>
-          </RadioGroup>
-        </div>
       </CardContent>
     </Card>
   );
 };
+

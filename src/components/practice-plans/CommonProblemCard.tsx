@@ -29,9 +29,10 @@ export const CommonProblemCard = ({ item, onSelect }: CommonProblemCardProps) =>
     >
       <div className="flex justify-between items-start mb-1">
         <h4 className="font-medium">{item.problem}</h4>
-        <Badge variant="outline" className="text-xs">{getPopularityText(item.popularity)}</Badge>
+        <Badge variant="outline" className="text-xs text-right">{getPopularityText(item.popularity)}</Badge>
       </div>
       <p className="text-xs text-muted-foreground">{item.description}</p>
     </button>
   );
 };
+
