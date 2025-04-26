@@ -21,14 +21,14 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const { userId, roundData, handicapLevel, goals, specificProblem } = await req.json();
+    const { userId, roundData, handicapLevel, goals, specificProblem, planDuration } = await req.json();
 
     if (!userId) {
       throw new Error('User ID is required');
     }
 
-    // Generate the prompt
-    const prompt = generatePrompt({ userId, roundData, handicapLevel, goals, specificProblem });
+    // Generate the prompt with plan duration
+    const prompt = generatePrompt({ userId, roundData, handicapLevel, goals, specificProblem, planDuration });
 
     // Get analysis from OpenAI
     const analysisText = await generateAnalysis(prompt, OPENAI_API_KEY);
@@ -40,8 +40,27 @@ serve(async (req) => {
       const parsedResponse = JSON.parse(analysisText);
       analysisData = parsedResponse;
       
-      if (specificProblem && parsedResponse.problem) {
+      if ((specificProblem || planDuration) && parsedResponse.problem) {
         practicePlanData = parsedResponse;
+        
+        // Ensure the practice plan has the right number of sessions based on planDuration
+        if (planDuration && practicePlanData.practicePlan && practicePlanData.practicePlan.sessions) {
+          const days = parseInt(planDuration) || 1;
+          // If we have fewer sessions than requested days, add more
+          while (practicePlanData.practicePlan.sessions.length < days) {
+            const dayNum = practicePlanData.practicePlan.sessions.length + 1;
+            practicePlanData.practicePlan.sessions.push({
+              focus: `Day ${dayNum} Practice`,
+              drills: practicePlanData.recommendedDrills.slice(0, 2).map(d => d.name),
+              duration: "45 minutes"
+            });
+          }
+          
+          // If we have more sessions than requested days, trim the list
+          if (practicePlanData.practicePlan.sessions.length > days) {
+            practicePlanData.practicePlan.sessions = practicePlanData.practicePlan.sessions.slice(0, days);
+          }
+        }
       }
 
       // Save to database

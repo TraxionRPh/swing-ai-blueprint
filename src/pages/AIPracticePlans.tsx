@@ -1,27 +1,63 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
 import { PracticePlanForm } from "@/components/practice-plans/PracticePlanForm";
 import { Brain } from "@/components/icons/CustomIcons";
 import { useAIAnalysis } from "@/hooks/useAIAnalysis";
+import { useProfile, HandicapLevel } from "@/hooks/useProfile";
+import { CommonProblem } from "@/types/practice-plan";
 
 const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
+  const [planDuration, setPlanDuration] = useState("1");
   const [latestPracticePlan, setLatestPracticePlan] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
   const { generatePracticePlan } = useAIAnalysis();
+  const { handicap, firstName } = useProfile();
+
+  // Expanded list of common golf problems
+  const commonProblems: CommonProblem[] = [
+    {
+      id: 1,
+      problem: "Slicing Driver",
+      description: "Ball curves dramatically right (for right-handed golfers)",
+      popularity: "High"
+    },
+    {
+      id: 2,
+      problem: "Inconsistent Putting",
+      description: "Difficulty controlling distance and direction on the green",
+      popularity: "High"
+    },
+    {
+      id: 3,
+      problem: "Topping the Ball",
+      description: "Hitting the top half of the ball, resulting in a low shot",
+      popularity: "Medium"
+    },
+    {
+      id: 4,
+      problem: "Chunking Iron Shots",
+      description: "Hitting the ground before the ball, taking too much turf",
+      popularity: "Medium"
+    },
+    {
+      id: 5,
+      problem: "Poor Bunker Play",
+      description: "Difficulty getting out of sand traps consistently",
+      popularity: "Medium"
+    }
+  ];
 
   const generateAnalysis = async () => {
-    if (!inputValue.trim()) {
+    if (!inputValue.trim() && !handicap) {
       toast({
         title: "Missing Input",
-        description: "Please describe your golf issue",
+        description: "Please describe your golf issue or click the AI Generate button",
         variant: "destructive"
       });
       return;
@@ -29,7 +65,8 @@ const AIPracticePlans = () => {
 
     setIsAnalyzing(true);
     try {
-      const practicePlan = await generatePracticePlan(inputValue);
+      // Pass user skill level, selected problem and plan duration to the AI
+      const practicePlan = await generatePracticePlan(inputValue, handicap as HandicapLevel, planDuration);
       setLatestPracticePlan(practicePlan);
       toast({
         title: "Practice Plan Generated",
@@ -55,6 +92,10 @@ const AIPracticePlans = () => {
     setInputValue(problem);
   };
 
+  const handlePlanDurationChange = (duration: string) => {
+    setPlanDuration(duration);
+  };
+
   return (
     <div className="container mx-auto max-w-2xl space-y-6 p-4">
       <div className="space-y-4">
@@ -62,42 +103,24 @@ const AIPracticePlans = () => {
         <p className="text-muted-foreground mb-4">
           Get personalized practice plans based on your performance
         </p>
-        <Button
-          onClick={generateAnalysis}
-          disabled={isAnalyzing}
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-        >
-          <Brain className="mr-2 h-4 w-4" />
-          {isAnalyzing ? "Analyzing Your Data..." : "Generate AI Practice Plan"}
-        </Button>
       </div>
       
-      {!latestPracticePlan || inputValue ? (
+      {!latestPracticePlan ? (
         <PracticePlanForm
           inputValue={inputValue}
           onInputChange={setInputValue}
           onSubmit={generateAnalysis}
           onSelectProblem={handleSelectProblem}
           isGenerating={isAnalyzing}
-          commonProblems={[
-            {
-              id: 1,
-              problem: "Slicing Driver",
-              description: "Struggling with drives that curve right",
-              popularity: "High"
-            },
-            {
-              id: 2,
-              problem: "Putting Inconsistency",
-              description: "Difficulty maintaining consistent putting",
-              popularity: "Medium"
-            }
-          ]}
+          commonProblems={commonProblems}
+          planDuration={planDuration}
+          onPlanDurationChange={handlePlanDurationChange}
         />
       ) : (
         <GeneratedPlan 
           plan={latestPracticePlan} 
-          onClear={clearPlan} 
+          onClear={clearPlan}
+          planDuration={planDuration} 
         />
       )}
     </div>

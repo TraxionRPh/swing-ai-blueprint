@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -6,6 +5,7 @@ import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
 import { ConfidencePoint } from "@/types/drill";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { HandicapLevel } from "@/hooks/useProfile";
 
 export const useAIAnalysis = () => {
   const { user } = useAuth();
@@ -130,41 +130,104 @@ export const useAIAnalysis = () => {
     }
   };
 
-  const generatePracticePlan = async (issue: string): Promise<GeneratedPracticePlan> => {
+  const generatePracticePlan = async (
+    issue: string, 
+    handicapLevel?: HandicapLevel, 
+    planDuration: string = "1"
+  ): Promise<GeneratedPracticePlan> => {
     // First check API usage
     const canProceed = await checkAPIUsage();
     if (!canProceed) {
       throw new Error('Daily API limit reached');
     }
 
-    const { data, error } = await supabase.functions.invoke('search-drills', {
-      body: { query: issue }
-    });
+    try {
+      // Get user round data if available
+      const { data: roundData } = await supabase
+        .from('rounds')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-    if (error) throw error;
+      // Call the analyze-golf-performance edge function with user data
+      const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
+        body: { 
+          userId: user?.id, 
+          roundData: roundData || [],
+          handicapLevel: handicapLevel || 'intermediate',
+          specificProblem: issue || 'Improve overall golf performance',
+          planDuration
+        }
+      });
 
-    // Construct a practice plan
-    return {
-      problem: issue,
-      diagnosis: "AI analysis of your golf issue",
-      rootCauses: ["Technique", "Equipment"],
-      recommendedDrills: data.drills.map(drill => ({
-        name: drill.title,
-        description: drill.overview,
-        difficulty: drill.difficulty,
-        duration: drill.duration,
-        focus: drill.focus
-      })),
-      practicePlan: {
-        duration: "4 weeks",
-        frequency: "3 times per week",
-        sessions: [{
-          focus: "Improving Technique",
-          drills: data.drills.map(drill => drill.title),
-          duration: "1 hour"
-        }]
+      if (error) throw error;
+
+      // If this is a beginner with little data and no specific issue,
+      // adjust the response to focus on fundamentals
+      if (
+        handicapLevel === 'beginner' && 
+        (!roundData || roundData.length < 2) && 
+        (!issue || issue.trim() === '')
+      ) {
+        // Add fundamentals focus
+        if (data.practicePlan) {
+          data.practicePlan.rootCauses = [
+            ...(data.practicePlan.rootCauses || []),
+            "Beginner fundamentals need development"
+          ];
+          
+          if (data.practicePlan.sessions && data.practicePlan.sessions.length > 0) {
+            data.practicePlan.sessions[0].focus = "Building Fundamentals";
+          }
+        }
       }
-    };
+
+      // Check for specific problems and ensure drills match
+      if (issue && issue.toLowerCase().includes("slice") && issue.toLowerCase().includes("driver")) {
+        // Add a specific focus for slicing driver
+        if (data.practicePlan) {
+          data.practicePlan.problem = "Slicing Driver";
+          data.practicePlan.diagnosis = "Analysis indicates an out-to-in swing path causing a slice with your driver";
+        }
+      }
+
+      return data.practicePlan || {
+        problem: issue || "Golf performance optimization",
+        diagnosis: "AI analysis of your golf game",
+        rootCauses: ["Technique", "Equipment"],
+        recommendedDrills: [
+          {
+            name: "Alignment Drill",
+            description: "Practice proper alignment with targets",
+            difficulty: "Beginner",
+            duration: "15 minutes",
+            focus: ["Fundamentals", "Setup"]
+          },
+          {
+            name: "Tempo Training",
+            description: "Work on consistent tempo throughout the swing",
+            difficulty: "Intermediate",
+            duration: "20 minutes",
+            focus: ["Swing", "Rhythm"]
+          }
+        ],
+        practicePlan: {
+          duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
+          frequency: "Daily",
+          sessions: [
+            {
+              focus: "Building Fundamentals",
+              drills: ["Alignment Drill", "Tempo Training"],
+              duration: "45 minutes"
+            }
+          ]
+        }
+      };
+    } catch (error) {
+      console.error("Error generating practice plan:", error);
+      throw error;
+    }
   };
 
   return { 

@@ -7,9 +7,13 @@ import { GeneratedPracticePlan } from "@/types/practice-plan";
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
   onClear: () => void;
+  planDuration?: string;
 }
 
-export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
+export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPlanProps) => {
+  // Filter sessions based on plan duration
+  const filteredSessions = plan.practicePlan.sessions.slice(0, parseInt(planDuration));
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -51,7 +55,7 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
               </div>
               <p className="text-sm text-muted-foreground mb-3">{drill.description}</p>
               <div className="flex justify-between items-center">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {drill.focus.map((tag) => (
                     <Badge key={tag} variant="outline">{tag}</Badge>
                   ))}
@@ -65,9 +69,9 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Suggested Practice Plan</CardTitle>
+          <CardTitle>{parseInt(planDuration) > 1 ? `${planDuration}-Day Practice Plan` : `1-Day Practice Plan`}</CardTitle>
           <CardDescription>
-            Follow this plan for {plan.practicePlan.duration} to address your {plan.problem} issue
+            Follow this plan to address your {plan.problem} issue
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -76,10 +80,10 @@ export const GeneratedPlan = ({ plan, onClear }: GeneratedPlanProps) => {
             <span className="text-muted-foreground">{plan.practicePlan.frequency}, focusing on the drills below.</span>
           </div>
           
-          {plan.practicePlan.sessions.map((session, i) => (
+          {filteredSessions.map((session, i) => (
             <div key={i} className="border rounded-lg overflow-hidden">
               <div className="bg-secondary/10 p-3 border-b">
-                <h4 className="font-medium">Session {i+1}: {session.focus}</h4>
+                <h4 className="font-medium">Day {i+1}: {session.focus}</h4>
                 <p className="text-xs text-muted-foreground">{session.duration}</p>
               </div>
               <div className="p-3">
