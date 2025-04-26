@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { PerformanceRadarChart } from "@/components/ai-analysis/PerformanceRadarChart";
 import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
-import { IdentifiedIssues } from "@/components/ai-analysis/IdentifiedIssues";
+import { IdentifiedIssues, Issue } from "@/components/ai-analysis/IdentifiedIssues";
 import { PracticeRecommendations } from "@/components/ai-analysis/PracticeRecommendations";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Info } from "lucide-react";
@@ -21,12 +21,17 @@ const AIAnalysis = () => {
     aiConfidenceHistory 
   } = useAIAnalysis();
   
-  if (isLoading) {
-    return <Loading message="Loading your golf performance data..." />;
-  }
-
-  if (isGenerating) {
-    return <Loading message="AI is analyzing your performance data..." className="min-h-[600px]" />;
+  // Show loading state when either loading or generating is true
+  if (isLoading || isGenerating) {
+    return (
+      <Loading 
+        message={isGenerating 
+          ? "AI is analyzing your performance data..." 
+          : "Loading your golf performance data..."
+        } 
+        className="min-h-[80vh] flex flex-col items-center justify-center" 
+      />
+    );
   }
 
   return (

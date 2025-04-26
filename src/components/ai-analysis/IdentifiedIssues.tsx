@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDifficultyBadgeClass } from "@/utils/challengeUtils";
 
-interface Issue {
+export interface Issue {
   area: string;
   description: string;
   priority: 'High' | 'Medium' | 'Low';
@@ -88,4 +88,3 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
     </Card>
   );
 };
-

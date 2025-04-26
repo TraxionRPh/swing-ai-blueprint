@@ -6,6 +6,7 @@ import { usePracticePlanGeneration } from './usePracticePlanGeneration';
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Issue } from '@/components/ai-analysis/IdentifiedIssues';
 
 export const useAIAnalysis = () => {
   const { user } = useAuth();
@@ -121,12 +122,12 @@ export const useAIAnalysis = () => {
           {
             area: 'Driving',
             description: 'Insufficient data for detailed driving analysis. Please complete more rounds for better insights.',
-            priority: 'Medium'
+            priority: 'Medium' as const
           },
           {
             area: 'Putting',
             description: 'Analysis based on limited data. Track more rounds to improve accuracy.',
-            priority: 'Low'
+            priority: 'Low' as const
           }
         ],
         recommendedPractice: {
