@@ -8,6 +8,9 @@ import { Brain } from "@/components/icons/CustomIcons";
 import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
 import { CommonProblem } from "@/types/practice-plan";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ListTodo } from "lucide-react";
 
 const AIPracticePlans = () => {
   const [inputValue, setInputValue] = useState("");
@@ -78,6 +81,7 @@ const AIPracticePlans = () => {
         description: "Failed to generate practice plan",
         variant: "destructive"
       });
+      console.error("Error generating practice plan:", error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -99,10 +103,20 @@ const AIPracticePlans = () => {
   return (
     <div className="container mx-auto space-y-6 p-4">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
-        <p className="text-muted-foreground mb-4">
-          Get personalized practice plans based on your performance
-        </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
+            <p className="text-muted-foreground mb-4">
+              Get personalized practice plans based on your performance
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link to="/my-practice-plans">
+              <ListTodo className="mr-2 h-4 w-4" />
+              My Plans
+            </Link>
+          </Button>
+        </div>
       </div>
       
       {!latestPracticePlan ? (

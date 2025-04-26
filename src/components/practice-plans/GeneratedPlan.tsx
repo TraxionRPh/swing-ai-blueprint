@@ -8,9 +8,10 @@ interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
   onClear: () => void;
   planDuration?: string;
+  planId?: string;
 }
 
-export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPlanProps) => {
+export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
   // Filter sessions based on plan duration
   const filteredSessions = plan.practicePlan.sessions.slice(0, parseInt(planDuration));
   
@@ -108,7 +109,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPl
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline">Save Plan</Button>
+          <Button variant="outline" onClick={onClear}>Back</Button>
           <Button>Add to Practice Schedule</Button>
         </CardFooter>
       </Card>

@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -96,6 +95,16 @@ const router = createBrowserRouter([
     path: "/auth",
     element: <Auth />,
     errorElement: <NotFound />,
+  },
+  {
+    path: "/my-practice-plans",
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <MyPracticePlans />
+        </Layout>
+      </ProtectedRoute>
+    ),
   },
   {
     path: "*",

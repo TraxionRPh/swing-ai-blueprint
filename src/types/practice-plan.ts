@@ -7,6 +7,7 @@ export interface CommonProblem {
 }
 
 export interface GeneratedPracticePlan {
+  id?: string;
   problem: string;
   diagnosis: string;
   rootCauses: string[];
@@ -56,4 +57,16 @@ export interface AIAnalysisForPracticePlan {
     };
     weeklyAssignment: string;
   };
+}
+
+export interface SavedPracticePlan {
+  id: string;
+  user_id: string;
+  problem: string;
+  diagnosis: string;
+  root_causes: string[];
+  recommended_drills: any[];
+  practice_plan: GeneratedPracticePlan;
+  created_at: string;
+  updated_at: string;
 }
