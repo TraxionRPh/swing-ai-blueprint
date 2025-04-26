@@ -77,9 +77,10 @@ export const PracticeRecommendations = ({ recommendations }: PracticeRecommendat
           </p>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row gap-2">
-        <Button variant="outline" className="w-full sm:w-auto">Download PDF Report</Button>
-        <Button className="w-full sm:w-auto">Generate Full Practice Plan</Button>
+      <CardFooter>
+        <Button className="w-full" onClick={() => window.location.href = '/practice-plans'}>
+          Generate Full Practice Plan
+        </Button>
       </CardFooter>
     </Card>
   );
