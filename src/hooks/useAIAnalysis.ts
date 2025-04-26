@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { AIAnalysisForPracticePlan } from "@/types/practice-plan";
 import { useAIConfidence } from './useAIConfidence';
@@ -35,7 +36,8 @@ export const useAIAnalysis = () => {
         }
 
         if (data && data.length > 0 && data[0].practice_plan) {
-          const practicePlan = data[0].practice_plan as AIAnalysisForPracticePlan;
+          // Explicitly cast the data to AIAnalysisForPracticePlan
+          const practicePlan = data[0].practice_plan as unknown as AIAnalysisForPracticePlan;
           setAnalysis(practicePlan);
           
           if (practicePlan.aiConfidence) {
@@ -88,7 +90,8 @@ export const useAIAnalysis = () => {
         throw new Error("No analysis data received");
       }
       
-      const realAnalysis = data.analysis;
+      // Cast the response to our expected type
+      const realAnalysis = data.analysis as AIAnalysisForPracticePlan;
       setAnalysis(realAnalysis);
       
       if (typeof realAnalysis.aiConfidence === 'number') {

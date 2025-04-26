@@ -25,7 +25,7 @@ export const useAIConfidence = () => {
 
         const userStartDate = new Date(profile.created_at);
         const now = new Date();
-        const weeksActive = Math.min(4, differenceInWeeks(now, userStartDate));
+        const weeksActive = Math.min(4, Math.max(1, differenceInWeeks(now, userStartDate)));
 
         // Generate confidence points only for weeks since user joined
         const initialPoints: ConfidencePoint[] = [];
