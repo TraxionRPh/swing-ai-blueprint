@@ -46,6 +46,10 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
 
   const handleExampleClick = (example: string) => {
     setSearchQuery(example);
+    // Auto-search when clicking an example
+    setTimeout(() => {
+      onSearch(example);
+    }, 100);
   };
 
   return (

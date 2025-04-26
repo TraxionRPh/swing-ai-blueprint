@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DrillCarousel } from "@/components/drill-library/DrillCarousel";
 import { Drill } from "@/types/drill";
 import { DrillCard } from "@/components/drill-library/DrillCard";
-import { AlertCircle, MoveDown } from "lucide-react";
+import { AlertCircle, Bug, MoveDown } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const DrillLibrary = () => {
@@ -22,17 +22,24 @@ const DrillLibrary = () => {
   const [filteredDrills, setFilteredDrills] = useState<Drill[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: drills, isLoading } = useQuery({
     queryKey: ['drills'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('drills')
-        .select('*');
-      
-      if (error) throw error;
-      return data as Drill[];
+      try {
+        const { data, error } = await supabase
+          .from('drills')
+          .select('*');
+        
+        if (error) throw error;
+        console.log(`Fetched ${data?.length || 0} drills from the database`);
+        return data as Drill[];
+      } catch (error) {
+        console.error('Error fetching drills:', error);
+        throw error;
+      }
     }
   });
 
@@ -45,8 +52,10 @@ const DrillLibrary = () => {
   const handleAISearch = async (query: string) => {
     setIsAnalyzing(true);
     setSearchQuery(query);
+    setSearchError(null);
     
     try {
+      console.log("Sending search query to edge function:", query);
       const { data, error } = await supabase.functions.invoke('search-drills', {
         body: { query }
       });
@@ -82,6 +91,7 @@ const DrillLibrary = () => {
       }
     } catch (error) {
       console.error('Search error:', error);
+      setSearchError(error.message || "Failed to search drills");
       toast({
         title: "Search Failed",
         description: "Failed to find matching drills. Please try again.",
@@ -130,6 +140,16 @@ const DrillLibrary = () => {
       <Card className="bg-muted/50">
         <CardContent className="pt-6">
           <AISearchBar onSearch={handleAISearch} isAnalyzing={isAnalyzing} />
+          
+          {searchError && (
+            <Alert variant="destructive" className="mt-4">
+              <Bug className="h-4 w-4" />
+              <AlertTitle>Search Error</AlertTitle>
+              <AlertDescription>
+                {searchError}. Please try again or browse drills below.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 

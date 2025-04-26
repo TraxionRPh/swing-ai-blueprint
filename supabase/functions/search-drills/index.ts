@@ -24,22 +24,24 @@ serve(async (req) => {
     const { query } = await req.json();
     console.log("Received search query:", query);
 
-    // First, get all drills from the database
+    // First, get all drills from the database using the REST API
     console.log("Fetching drills from database...");
-    const { data: drills, error: dbError } = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/rest/v1/drills`,
+    
+    const response = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/rest/v1/drills?select=*`,
       {
         headers: {
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
           'Apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
         },
       }
-    ).then(res => res.json());
-
-    if (dbError) {
-      console.error("Database error:", dbError);
-      throw dbError;
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch drills: ${response.status} ${response.statusText}`);
     }
+    
+    const drills = await response.json();
     
     console.log(`Fetched ${drills?.length || 0} drills from database`);
     
