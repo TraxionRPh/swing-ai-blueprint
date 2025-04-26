@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { CarFront, Golf, CircleDashed, Flag, BookOpen } from "lucide-react";
+import { CarFront, Golf as GolfIcon, CircleDashed, Flag, BookOpen } from "lucide-react";
 import { Drill } from "@/types/drill";
 
 interface DrillFiltersProps {
@@ -47,7 +47,7 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
 
   const categoryIcons = {
     'driving': CarFront,
-    'irons': Golf,
+    'irons': GolfIcon,
     'chipping': CircleDashed,
     'putting': Flag,
     'fundamentals': BookOpen
