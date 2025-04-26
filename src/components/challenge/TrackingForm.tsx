@@ -1,7 +1,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
@@ -22,6 +22,12 @@ export const TrackingForm = ({ onSubmit, isPersisting, totalAttempts }: Tracking
     },
   });
 
+  const currentScore = form.watch('score');
+  const scoreNum = parseInt(currentScore, 10);
+  const successPercentage = !isNaN(scoreNum) && totalAttempts 
+    ? Math.round((scoreNum / totalAttempts) * 100) 
+    : null;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
@@ -40,9 +46,15 @@ export const TrackingForm = ({ onSubmit, isPersisting, totalAttempts }: Tracking
                   {...field} 
                 />
               </FormControl>
-              <FormDescription>
-                Enter how many successful attempts you had
+              <FormDescription className="flex justify-between">
+                <span>Enter how many successful attempts you had</span>
+                {successPercentage !== null && (
+                  <span className="font-medium">
+                    Success rate: {successPercentage}%
+                  </span>
+                )}
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -50,7 +62,7 @@ export const TrackingForm = ({ onSubmit, isPersisting, totalAttempts }: Tracking
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isPersisting}
+          disabled={isPersisting || (totalAttempts ? parseInt(form.watch('score'), 10) > totalAttempts : false)}
         >
           {isPersisting ? (
             <Loading message="Saving..." />
@@ -65,4 +77,3 @@ export const TrackingForm = ({ onSubmit, isPersisting, totalAttempts }: Tracking
     </Form>
   );
 };
-
