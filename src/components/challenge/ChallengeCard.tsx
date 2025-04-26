@@ -36,7 +36,9 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
     navigate(`/challenge-history/${challenge.id}`);
   };
 
-  console.log("Card progress data:", progress);
+  console.log(`Card for challenge ${challenge.id}, progress:`, progress);
+
+  const hasProgress = progress && (progress.best_score || progress.recent_score);
 
   return (
     <Card className="w-full">
@@ -52,19 +54,22 @@ export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{challenge.description}</p>
         <div className="space-y-2">
-          {progress?.best_score && (
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">Best Score:</span>
-              <Badge variant="secondary" className="ml-2">{progress.best_score}</Badge>
-            </div>
-          )}
-          {progress?.recent_score && (
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">Recent Score:</span>
-              <Badge variant="outline" className="ml-2">{progress.recent_score}</Badge>
-            </div>
-          )}
-          {(!progress?.best_score && !progress?.recent_score) && (
+          {hasProgress ? (
+            <>
+              {progress?.best_score && (
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">Best Score:</span>
+                  <Badge variant="secondary" className="ml-2">{progress.best_score}</Badge>
+                </div>
+              )}
+              {progress?.recent_score && (
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">Recent Score:</span>
+                  <Badge variant="outline" className="ml-2">{progress.recent_score}</Badge>
+                </div>
+              )}
+            </>
+          ) : (
             <div className="text-sm text-muted-foreground">
               No attempts yet
             </div>

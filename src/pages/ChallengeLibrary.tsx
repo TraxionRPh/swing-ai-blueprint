@@ -1,14 +1,30 @@
 
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loading } from "@/components/ui/loading";
 import { ChallengeCard } from "@/components/challenge/ChallengeCard";
 import { useChallengeLibrary } from "@/hooks/useChallengeLibrary";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ChallengeLibrary = () => {
   const { challenges, isLoading, progress } = useChallengeLibrary();
+  const queryClient = useQueryClient();
 
-  console.log("Library challenges:", challenges);
-  console.log("Library progress data:", progress);
+  // Force refresh data when component mounts
+  useEffect(() => {
+    const refreshData = async () => {
+      console.log("Manual refresh of challenge data");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-challenge-progress'] }),
+        queryClient.invalidateQueries({ queryKey: ['challenges'] })
+      ]);
+    };
+    
+    refreshData();
+  }, [queryClient]);
+
+  console.log(`ChallengeLibrary: ${challenges.length} challenges, ${progress.length} progress records`);
+  console.log("Progress data:", progress);
 
   if (isLoading) {
     return (
@@ -48,13 +64,18 @@ const ChallengeLibrary = () => {
         
         <TabsContent value="all" className="mt-6">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {challenges.map(challenge => (
-              <ChallengeCard 
-                key={challenge.id} 
-                challenge={challenge}
-                progress={progress.find(p => p.challenge_id === challenge.id)}
-              />
-            ))}
+            {challenges.map(challenge => {
+              const challengeProgress = progress.find(p => p.challenge_id === challenge.id);
+              console.log(`Challenge ${challenge.id} progress:`, challengeProgress);
+              
+              return (
+                <ChallengeCard 
+                  key={challenge.id} 
+                  challenge={challenge}
+                  progress={challengeProgress}
+                />
+              );
+            })}
           </div>
         </TabsContent>
         
@@ -63,13 +84,16 @@ const ChallengeLibrary = () => {
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {challenges
                 .filter(c => c.category === category)
-                .map(challenge => (
-                  <ChallengeCard 
-                    key={challenge.id} 
-                    challenge={challenge}
-                    progress={progress.find(p => p.challenge_id === challenge.id)}
-                  />
-                ))}
+                .map(challenge => {
+                  const challengeProgress = progress.find(p => p.challenge_id === challenge.id);
+                  return (
+                    <ChallengeCard 
+                      key={challenge.id} 
+                      challenge={challenge}
+                      progress={challengeProgress}
+                    />
+                  );
+                })}
             </div>
           </TabsContent>
         ))}

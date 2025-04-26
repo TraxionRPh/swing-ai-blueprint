@@ -23,6 +23,8 @@ export const useChallengeLibrary = () => {
         });
         throw error;
       }
+      
+      console.log(`Fetched ${data?.length || 0} challenges`);
       return data as Challenge[];
     }
   });
@@ -30,17 +32,25 @@ export const useChallengeLibrary = () => {
   const { data: progressData, isLoading: progressLoading } = useQuery({
     queryKey: ['user-challenge-progress'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        return [];
+      }
       
       if (!session?.user?.id) {
         console.log("No user session found");
         return [];
       }
       
+      const userId = session.user.id;
+      console.log(`Fetching progress for user ID: ${userId}`);
+      
       const { data, error } = await supabase
         .from('user_challenge_progress')
         .select('*')
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
       
       if (error) {
         console.error('Error fetching progress:', error);
@@ -52,18 +62,27 @@ export const useChallengeLibrary = () => {
         return [];
       }
       
-      console.log("User progress data:", data);
-      return data;
-    }
+      console.log(`Fetched ${data?.length || 0} progress records:`, data);
+      return data || [];
+    },
+    staleTime: 0, // Always refetch on component mount
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
-  const formattedProgress: UserProgress[] = (progressData || []).map((item: any) => ({
-    challenge_id: item.challenge_id,
-    best_score: item.best_score,
-    recent_score: item.recent_score
-  }));
+  // Ensure we have properly formatted progress data
+  const formattedProgress: UserProgress[] = Array.isArray(progressData) ? progressData.map((item: any) => {
+    if (!item) return null;
+    console.log(`Formatting progress for challenge ${item.challenge_id}:`, item);
+    
+    return {
+      challenge_id: item.challenge_id,
+      best_score: item.best_score,
+      recent_score: item.recent_score
+    };
+  }).filter(Boolean) : [];
 
-  console.log("Formatted progress:", formattedProgress);
+  console.log("Formatted progress records:", formattedProgress);
 
   return {
     challenges: challenges || [],
