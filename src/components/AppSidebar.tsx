@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { 
   Sidebar, 
@@ -118,6 +119,6 @@ const AppSidebar = () => {
       </SidebarFooter>
     </Sidebar>
   );
-};
+}
 
 export default AppSidebar;

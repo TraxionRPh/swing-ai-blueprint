@@ -60,6 +60,10 @@ const router = createBrowserRouter([
         path: "challenge-history/:challengeId",
         element: <ChallengeHistory />,
       },
+      {
+        path: "rounds",
+        element: <RoundTracking />,
+      },
     ],
     errorElement: <NotFound />,
   },
