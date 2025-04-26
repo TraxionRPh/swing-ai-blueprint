@@ -48,11 +48,15 @@ const router = createBrowserRouter([
         element: <AIPracticePlans />,
       },
       {
+        path: "my-practice-plans",
+        element: <MyPracticePlans />,
+      },
+      {
         path: "challenges",
         element: <ChallengeLibrary />,
       },
       {
-        path: "drills", // This route is correct for DrillLibrary
+        path: "drills",
         element: <DrillLibrary />,
       },
       {
@@ -74,10 +78,6 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      },
-      {
-        path: "my-practice-plans",
-        element: <MyPracticePlans />,
       },
     ],
     errorElement: <NotFound />,

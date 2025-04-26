@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,6 +11,9 @@ import { PlanCard } from "@/components/practice-plans/PlanCard";
 import { EmptyPlansState } from "@/components/practice-plans/EmptyPlansState";
 import { PlansLoadingState } from "@/components/practice-plans/PlansLoadingState";
 
+// Local storage key for deleted plan IDs
+const DELETED_PLANS_STORAGE_KEY = "golf-app-deleted-plan-ids";
+
 const MyPracticePlans = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -20,7 +24,16 @@ const MyPracticePlans = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<SavedPracticePlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<GeneratedPracticePlan | null>(null);
-  const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>([]);
+  const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>(() => {
+    // Initialize from localStorage
+    const savedIds = localStorage.getItem(DELETED_PLANS_STORAGE_KEY);
+    return savedIds ? JSON.parse(savedIds) : [];
+  });
+
+  // Update localStorage whenever deletedPlanIds changes
+  useEffect(() => {
+    localStorage.setItem(DELETED_PLANS_STORAGE_KEY, JSON.stringify(deletedPlanIds));
+  }, [deletedPlanIds]);
 
   const loadPracticePlans = useCallback(async () => {
     if (!user) return;
@@ -70,12 +83,14 @@ const MyPracticePlans = () => {
 
   const deletePracticePlan = async (planId: string) => {
     try {
+      // Optimistically update UI
       setPlans(plans.filter(plan => plan.id !== planId));
       
       if (selectedPlan && plans.find(p => p.id === planId)?.practice_plan.id === selectedPlan.id) {
         setSelectedPlan(null);
       }
 
+      // Add to deleted IDs list (which will update localStorage via effect)
       setDeletedPlanIds(prev => [...prev, planId]);
 
       const { error } = await supabase
@@ -94,6 +109,7 @@ const MyPracticePlans = () => {
     } catch (error) {
       console.error("Error deleting practice plan:", error);
       
+      // Roll back optimistic updates
       setDeletedPlanIds(prev => prev.filter(id => id !== planId));
       
       loadPracticePlans();

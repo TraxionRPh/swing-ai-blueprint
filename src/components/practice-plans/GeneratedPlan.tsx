@@ -21,7 +21,11 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPl
   const { toast } = useToast();
   const [isCompleted, setIsCompleted] = useState(false);
   const [completedDrills, setCompletedDrills] = useState<Record<string, boolean>>({});
-  const filteredDays = plan.practicePlan.plan.slice(0, parseInt(planDuration));
+  
+  // Safely access the plan.practicePlan.plan array with fallbacks to prevent 404 errors
+  const planData = plan.practicePlan?.plan || [];
+  const durationNum = parseInt(planDuration) || 1;
+  const filteredDays = planData.slice(0, durationNum);
   
   const handleCompletePlan = () => {
     setIsCompleted(true);
@@ -78,18 +82,24 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPl
         <div className="p-6 space-y-4">
           <div className="p-3 bg-muted/50 rounded-lg text-sm">
             <span className="font-medium">Recommended practice: </span>
-            <span className="text-muted-foreground">{plan.practicePlan.frequency}, focusing on the drills below.</span>
+            <span className="text-muted-foreground">{plan.practicePlan?.frequency || 'Daily'}, focusing on the drills below.</span>
           </div>
           
-          {filteredDays.map((dayPlan, i) => (
-            <DailyPlanCard
-              key={i}
-              dayPlan={dayPlan}
-              dayNumber={i + 1}
-              completedDrills={completedDrills}
-              onDrillComplete={toggleDrillCompletion}
-            />
-          ))}
+          {filteredDays.length > 0 ? (
+            filteredDays.map((dayPlan, i) => (
+              <DailyPlanCard
+                key={i}
+                dayPlan={dayPlan}
+                dayNumber={i + 1}
+                completedDrills={completedDrills}
+                onDrillComplete={toggleDrillCompletion}
+              />
+            ))
+          ) : (
+            <div className="p-4 bg-muted/30 rounded-lg text-center">
+              <p className="text-muted-foreground">No daily plan data available.</p>
+            </div>
+          )}
           
           <Card className="bg-accent/10 border-accent/20">
             <div className="p-4">
