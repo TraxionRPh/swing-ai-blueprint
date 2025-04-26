@@ -27,7 +27,7 @@ const AIAnalysis = () => {
     <div className="space-y-4 max-w-full overflow-x-hidden">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">AI Analysis</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">AI Analysis</h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Personalized insights and recommendations based on your performance data
           </p>
@@ -36,7 +36,7 @@ const AIAnalysis = () => {
           onClick={() => generateAnalysis()} 
           disabled={isGenerating}
           size="sm"
-          className="gap-2"
+          className="gap-2 bg-primary hover:bg-primary/90"
         >
           <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
           {isGenerating ? 'Analyzing...' : 'Update Analysis'}
@@ -44,15 +44,19 @@ const AIAnalysis = () => {
       </div>
       
       {!analysis ? (
-        <Card>
+        <Card className="border-2 border-primary/20">
           <CardHeader>
-            <CardTitle>No Analysis Yet</CardTitle>
+            <CardTitle className="text-primary">No Analysis Yet</CardTitle>
             <CardDescription>
               Click "Update Analysis" to generate your first personalized golf performance analysis.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center py-12">
-            <Button onClick={() => generateAnalysis()} disabled={isGenerating}>
+            <Button 
+              onClick={() => generateAnalysis()} 
+              disabled={isGenerating}
+              className="bg-primary hover:bg-primary/90"
+            >
               {isGenerating ? 'Analyzing...' : 'Generate Analysis'}
             </Button>
           </CardContent>
