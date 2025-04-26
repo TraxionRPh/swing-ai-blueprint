@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -23,7 +22,6 @@ const AIPracticePlans = () => {
   const { generatePracticePlan } = useAIAnalysis();
   const { handicap, firstName } = useProfile();
 
-  // Expanded list of common golf problems
   const commonProblems: CommonProblem[] = [
     {
       id: 1,
@@ -74,7 +72,6 @@ const AIPracticePlans = () => {
     }
 
     try {
-      // Pass user skill level, selected problem and plan duration to the AI
       const practicePlan = await generatePracticePlan(isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
       setLatestPracticePlan(practicePlan);
       toast({
@@ -110,16 +107,14 @@ const AIPracticePlans = () => {
   return (
     <div className="container mx-auto space-y-6 p-4">
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
-            <p className="text-muted-foreground mb-4">
-              Get personalized practice plans based on your performance
-            </p>
-          </div>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
+          <p className="text-muted-foreground mb-4">
+            Get personalized practice plans based on your performance
+          </p>
         </div>
         
-        <Button variant="outline" asChild className="mb-4">
+        <Button variant="outline" asChild className="w-full">
           <Link to="/my-practice-plans">
             <ListTodo className="mr-2 h-4 w-4" />
             My Plans
