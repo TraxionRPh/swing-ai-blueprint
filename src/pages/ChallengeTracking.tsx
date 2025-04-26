@@ -1,94 +1,36 @@
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trophy } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Loading } from '@/components/ui/loading';
-
-type Challenge = {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  category: string;
-  metrics: string[];
-  metric: string;
-  instruction1?: string;
-  instruction2?: string;
-  instruction3?: string;
-};
-
-// Form schema
-const formSchema = z.object({
-  score: z.string().min(1, 'Score is required'),
-  notes: z.string().optional(),
-});
+import { useChallenge } from '@/hooks/useChallenge';
+import { TrackingForm } from '@/components/challenge/TrackingForm';
+import { compareScores } from '@/utils/scoreUtils';
+import * as z from 'zod';
 
 const ChallengeTracking = () => {
   const { challengeId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isPersisting, setIsPersisting] = useState(false);
+  
+  const { data: challenge, isLoading } = useChallenge(challengeId);
 
-  // Form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      score: '',
-      notes: '',
-    },
-  });
-
-  // Fetch challenge details
-  const { data: challenge, isLoading } = useQuery({
-    queryKey: ['challenge', challengeId],
-    queryFn: async () => {
-      if (!challengeId) return null;
-      
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('id', challengeId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching challenge:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load challenge details',
-          variant: 'destructive',
-        });
-        return null;
-      }
-      
-      return data as Challenge;
-    },
-  });
-
-  // Handle back button
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Submit form
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!challengeId) return;
     
     setIsPersisting(true);
     
     try {
-      // Get the current user session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user?.id) {
@@ -97,7 +39,6 @@ const ChallengeTracking = () => {
       
       const userId = session.user.id;
       
-      // First check if there's an existing record
       const { data: existingData } = await supabase
         .from('user_challenge_progress')
         .select('*')
@@ -107,7 +48,6 @@ const ChallengeTracking = () => {
       const scoreValue = values.score;
       
       if (existingData) {
-        // Update existing progress
         const bestScore = existingData.best_score 
           ? compareScores(existingData.best_score, scoreValue, challenge?.metric) 
             ? scoreValue 
@@ -117,24 +57,22 @@ const ChallengeTracking = () => {
         const updateData = {
           best_score: bestScore,
           updated_at: new Date().toISOString(),
-          progress: 0, // Default value to maintain compatibility
+          progress: 0,
         };
         
-        // Update the record
         await supabase
           .from('user_challenge_progress')
           .update(updateData)
           .eq('challenge_id', challengeId);
         
       } else {
-        // Create new progress entry with required fields
         await supabase
           .from('user_challenge_progress')
           .insert({
             challenge_id: challengeId,
             best_score: scoreValue,
-            progress: 0, // Default value to maintain compatibility
-            user_id: userId // Add the user_id which is required
+            progress: 0,
+            user_id: userId
           });
       }
       
@@ -143,7 +81,6 @@ const ChallengeTracking = () => {
         description: 'Your progress has been saved',
       });
       
-      // Navigate back to the challenge library after a short delay
       setTimeout(() => {
         navigate('/challenges');
       }, 1500);
@@ -158,42 +95,6 @@ const ChallengeTracking = () => {
     } finally {
       setIsPersisting(false);
     }
-  };
-  
-  // Helper function to compare scores based on metric type
-  // For golf, lower is usually better (except for metrics like "distance")
-  const compareScores = (oldScore: string, newScore: string, metric?: string): boolean => {
-    // Default behavior: lower score is better
-    const parseScore = (score: string) => {
-      // Handle percentage scores
-      if (score.includes('%')) {
-        return parseFloat(score);
-      }
-      // Handle distance scores
-      else if (score.includes('yards') || score.includes('yd')) {
-        return parseFloat(score);
-      }
-      // Handle numeric scores
-      else {
-        return parseFloat(score);
-      }
-    };
-    
-    const oldValue = parseScore(oldScore);
-    const newValue = parseScore(newScore);
-    
-    // For distance metrics, higher is better
-    if (metric && ['distance', 'yards', 'feet'].some(m => metric.toLowerCase().includes(m))) {
-      return newValue > oldValue;
-    }
-    
-    // For accuracy metrics, higher percentage is better
-    if (metric && ['accuracy', 'percentage', 'success'].some(m => metric.toLowerCase().includes(m))) {
-      return newValue > oldValue;
-    }
-    
-    // Default: lower is better (like golf scores)
-    return newValue < oldValue;
   };
   
   if (isLoading) {
@@ -259,57 +160,7 @@ const ChallengeTracking = () => {
             ))}
           </div>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
-              <FormField
-                control={form.control}
-                name="score"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Your Score</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 7 out of 10" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Enter your performance result for this challenge
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Add any notes about your performance..." 
-                        {...field}
-                        className="min-h-[100px]" 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isPersisting}
-              >
-                {isPersisting ? (
-                  <Loading message="Saving..." />
-                ) : (
-                  <>
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Complete Challenge
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
+          <TrackingForm onSubmit={onSubmit} isPersisting={isPersisting} />
         </CardContent>
       </Card>
     </div>
