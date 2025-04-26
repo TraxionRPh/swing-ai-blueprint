@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PerformanceRadarChart } from "@/components/ai-analysis/PerformanceRadarChart";
 import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
 import { IdentifiedIssues, Issue } from "@/components/ai-analysis/IdentifiedIssues";
@@ -21,9 +21,15 @@ const AIAnalysis = () => {
     aiConfidenceHistory 
   } = useAIAnalysis();
   
-  // Combined loading state to ensure it stays visible
+  // For debugging purposes
+  useEffect(() => {
+    console.log("State changed - isLoading:", isLoading, "isGenerating:", isGenerating);
+  }, [isLoading, isGenerating]);
+  
+  // Combined loading state with a more descriptive name
   const isProcessing = isLoading || isGenerating;
 
+  // Display loading indicator with appropriate message based on current state
   if (isProcessing) {
     return (
       <Loading 
@@ -32,6 +38,7 @@ const AIAnalysis = () => {
           : "Loading your golf performance data..."
         } 
         className="min-h-[80vh] flex flex-col items-center justify-center" 
+        fixed={isGenerating} // Use fixed positioning when generating to ensure it stays on screen
       />
     );
   }

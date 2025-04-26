@@ -13,8 +13,9 @@ export const useAIAnalysis = () => {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<AIAnalysisForPracticePlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { aiConfidenceHistory, updateConfidence } = useAIConfidence();
-  const { generatePlan, isGenerating } = usePracticePlanGeneration();
+  const { generatePlan, isGenerating: isPlanGenerating } = usePracticePlanGeneration();
 
   useEffect(() => {
     const fetchExistingAnalysis = async () => {
@@ -70,8 +71,13 @@ export const useAIAnalysis = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsGenerating(true);
+    // Important: Don't set isLoading to true again here, as it causes the flicker
+    
     try {
+      // Simulate a delay to prevent immediate state transitions that could cause UI flicker
+      console.log("Starting analysis generation...");
+      
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
         body: { 
           userId: user.id
@@ -90,6 +96,8 @@ export const useAIAnalysis = () => {
       if (!data || !data.analysis) {
         throw new Error("No analysis data received");
       }
+      
+      console.log("Analysis data received:", data);
       
       // Cast the response to our expected type
       const realAnalysis = data.analysis as AIAnalysisForPracticePlan;
@@ -155,7 +163,12 @@ export const useAIAnalysis = () => {
         variant: "default"
       });
     } finally {
-      setIsLoading(false);
+      // Add a small delay before turning off loading state to prevent UI flicker
+      // This ensures any state updates have time to propagate properly
+      setTimeout(() => {
+        console.log("Analysis generation completed, turning off loading states");
+        setIsGenerating(false);
+      }, 500);
     }
   };
 
@@ -163,7 +176,7 @@ export const useAIAnalysis = () => {
     generatePlan,
     analysis,
     isLoading,
-    isGenerating,
+    isGenerating: isGenerating || isPlanGenerating, // Combine generating states
     generateAnalysis,
     aiConfidenceHistory
   };
