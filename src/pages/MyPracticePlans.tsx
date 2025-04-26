@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ const MyPracticePlans = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const showLatest = location.state?.showLatest || false;
   
   const [isLoading, setIsLoading] = useState(true);
@@ -77,9 +78,11 @@ const MyPracticePlans = () => {
         throw error;
       }
 
+      // Update local state to remove the deleted plan
       setPlans(plans.filter(plan => plan.id !== planId));
       
-      if (selectedPlan && selectedPlan.id === planId) {
+      // If the deleted plan is currently selected, clear the selection
+      if (selectedPlan && plans.find(p => p.id === planId)?.practice_plan.id === selectedPlan.id) {
         setSelectedPlan(null);
       }
 
@@ -93,12 +96,14 @@ const MyPracticePlans = () => {
         description: "Failed to delete practice plan",
         variant: "destructive"
       });
+      console.error("Error deleting practice plan:", error);
     }
   };
 
   const clearSelectedPlan = () => {
     setSelectedPlan(null);
-    window.history.replaceState({}, document.title);
+    // Remove any state params by replacing the current URL without query params
+    navigate(location.pathname, { replace: true });
   };
   
   const viewPlan = (plan: SavedPracticePlan) => {
