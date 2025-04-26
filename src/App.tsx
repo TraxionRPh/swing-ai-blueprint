@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -13,6 +14,7 @@ import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
 import AIPracticePlans from "./pages/AIPracticePlans";
+import MyPracticePlans from "./pages/MyPracticePlans";
 import AIAnalysis from "./pages/AIAnalysis";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
@@ -73,6 +75,10 @@ const router = createBrowserRouter([
         path: "profile",
         element: <Profile />,
       },
+      {
+        path: "my-practice-plans",
+        element: <MyPracticePlans />,
+      },
     ],
     errorElement: <NotFound />,
   },
@@ -95,16 +101,6 @@ const router = createBrowserRouter([
     path: "/auth",
     element: <Auth />,
     errorElement: <NotFound />,
-  },
-  {
-    path: "/my-practice-plans",
-    element: (
-      <ProtectedRoute>
-        <Layout>
-          <MyPracticePlans />
-        </Layout>
-      </ProtectedRoute>
-    ),
   },
   {
     path: "*",
