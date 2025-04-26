@@ -10,10 +10,10 @@ interface ProgressChallengeProps {
 
 export const ProgressChallengeCard = ({ name, description, instructions }: ProgressChallengeProps) => {
   return (
-    <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+    <Card className="bg-background border-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ListTodo className="h-5 w-5 text-emerald-600" />
+        <CardTitle className="flex items-center gap-2 text-primary">
+          <ListTodo className="h-5 w-5" />
           <span>Progress Challenge: {name}</span>
         </CardTitle>
       </CardHeader>
@@ -23,10 +23,10 @@ export const ProgressChallengeCard = ({ name, description, instructions }: Progr
         <div className="space-y-3">
           {instructions.map((instruction, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center text-sm text-emerald-700 font-medium flex-shrink-0">
+              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-sm text-primary font-medium flex-shrink-0">
                 {i + 1}
               </div>
-              <p className="text-sm">{instruction}</p>
+              <p className="text-sm text-foreground">{instruction}</p>
             </div>
           ))}
         </div>

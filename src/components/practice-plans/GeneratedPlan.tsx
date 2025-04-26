@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ProgressChallengeCard } from "./ProgressChallengeCard";
 import { DiagnosisCard } from "./DiagnosisCard";
@@ -17,16 +16,24 @@ interface GeneratedPlanProps {
   planId?: string;
 }
 
-export const GeneratedPlan = ({ plan, onClear, planDuration = "1" }: GeneratedPlanProps) => {
+export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
   const { toast } = useToast();
   const [isCompleted, setIsCompleted] = useState(false);
-  const [completedDrills, setCompletedDrills] = useState<Record<string, boolean>>({});
-  
-  // Safely access the plan.practicePlan.plan array with fallbacks to prevent 404 errors
+  const [completedDrills, setCompletedDrills] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem(`completed-drills-${planId}`);
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    if (planId) {
+      localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(completedDrills));
+    }
+  }, [completedDrills, planId]);
+
   const planData = plan.practicePlan?.plan || [];
   const durationNum = parseInt(planDuration) || 1;
   const filteredDays = planData.slice(0, durationNum);
-  
+
   const handleCompletePlan = () => {
     setIsCompleted(true);
     toast({

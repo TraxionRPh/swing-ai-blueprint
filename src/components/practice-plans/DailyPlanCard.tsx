@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { DayPlan } from "@/types/practice-plan";
 import { useToast } from "@/hooks/use-toast";
+import { DrillDetailsDialog } from "./DrillDetailsDialog";
 
 interface DailyPlanCardProps {
   dayPlan: DayPlan;
@@ -21,6 +22,7 @@ export const DailyPlanCard = ({
   onDrillComplete
 }: DailyPlanCardProps) => {
   const [expandedDrills, setExpandedDrills] = useState<Record<string, boolean>>({});
+  const [selectedDrill, setSelectedDrill] = useState(null);
   const { toast } = useToast();
 
   const toggleDrillExpand = (drillName: string) => {
@@ -30,17 +32,21 @@ export const DailyPlanCard = ({
     }));
   };
 
+  const handleDrillClick = (drill) => {
+    setSelectedDrill(drill);
+  };
+
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="bg-secondary/10 p-3 border-b">
+    <div className="border rounded-lg overflow-hidden bg-card">
+      <div className="bg-muted/10 p-3 border-b">
         <h4 className="font-medium">Day {dayNumber}: {dayPlan.focus}</h4>
         <p className="text-xs text-muted-foreground">{dayPlan.duration}</p>
       </div>
       <div className="p-3">
         <ul className="space-y-3">
           {dayPlan.drills.map((drillWithSets, j) => (
-            <li key={j} className="border rounded-md overflow-hidden">
-              <div className="flex items-center p-3 bg-muted/30">
+            <li key={j} className="border rounded-md overflow-hidden bg-background">
+              <div className="flex items-center p-3">
                 <Checkbox
                   id={`drill-${dayNumber}-${j}`}
                   checked={completedDrills[drillWithSets.drill.title]}
@@ -52,62 +58,40 @@ export const DailyPlanCard = ({
                   onClick={() => toggleDrillExpand(drillWithSets.drill.title)}
                 >
                   <div className="flex justify-between items-center">
-                    <label 
-                      htmlFor={`drill-${dayNumber}-${j}`}
-                      className={`text-sm font-medium ${completedDrills[drillWithSets.drill.title] ? 'text-muted-foreground line-through' : ''}`}
+                    <div>
+                      <label 
+                        htmlFor={`drill-${dayNumber}-${j}`}
+                        className={`text-sm font-medium ${completedDrills[drillWithSets.drill.title] ? 'text-muted-foreground line-through' : ''}`}
+                      >
+                        {drillWithSets.drill.title}
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        {drillWithSets.sets} sets of {drillWithSets.reps} reps
+                      </p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDrillClick(drillWithSets.drill);
+                      }}
+                      className="px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
                     >
-                      {drillWithSets.drill.title}
-                    </label>
-                    {expandedDrills[drillWithSets.drill.title] ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
+                      View Details
+                    </button>
                   </div>
                 </div>
               </div>
-              
-              <Collapsible open={expandedDrills[drillWithSets.drill.title]} className="w-full">
-                <CollapsibleContent className="p-3 bg-background">
-                  <div className="space-y-3">
-                    <p className="text-sm">{drillWithSets.drill.description}</p>
-                    
-                    <div>
-                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Instructions</p>
-                      <ul className="space-y-2">
-                        {[drillWithSets.drill.instruction1, drillWithSets.drill.instruction2, drillWithSets.drill.instruction3]
-                          .filter(Boolean)
-                          .map((instruction, idx) => (
-                            <li key={idx} className="text-sm flex items-start gap-2">
-                              <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0">
-                                {idx + 1}
-                              </span>
-                              <span>{instruction}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Sets and Reps</p>
-                      <p className="text-sm">{drillWithSets.sets} sets of {drillWithSets.reps} reps</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">Focus Areas</p>
-                      <div className="flex flex-wrap gap-1">
-                        {drillWithSets.drill.focus?.map(area => (
-                          <Badge key={area} variant="outline" className="text-xs">{area}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
             </li>
           ))}
         </ul>
       </div>
+
+      <DrillDetailsDialog
+        drill={selectedDrill}
+        isOpen={!!selectedDrill}
+        onClose={() => setSelectedDrill(null)}
+      />
     </div>
   );
 };
