@@ -11,6 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DrillCarousel } from "@/components/drill-library/DrillCarousel";
 import { Drill } from "@/types/drill";
 import { DrillCard } from "@/components/drill-library/DrillCard";
+import { AlertCircle, MoveDown } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,8 +60,16 @@ const DrillLibrary = () => {
         if (data.drills.length > 0) {
           toast({
             title: `${data.drills.length} Drills Found`,
-            description: "We've found the best drills to help with your issue.",
+            description: "We've found the perfect drills to help with your issue.",
           });
+          
+          // Auto-scroll to results
+          setTimeout(() => {
+            const resultsSection = document.getElementById('recommended-drills');
+            if (resultsSection) {
+              resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 500);
         } else {
           toast({
             title: "No matching drills found",
@@ -124,35 +134,56 @@ const DrillLibrary = () => {
       </Card>
 
       {recommendedDrills.length > 0 && (
-        <div className="my-8">
-          <h3 className="text-xl font-semibold mb-4">Recommended Drills for Your Issue</h3>
+        <div id="recommended-drills" className="my-8 scroll-mt-16">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-4">Recommended Drills for Your Issue</h2>
+            
+            {searchAnalysis && (
+              <Alert className="mb-6 bg-blue-50 border-blue-200">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertTitle className="text-blue-800">Coach's Analysis</AlertTitle>
+                <AlertDescription className="text-blue-700">
+                  {searchAnalysis}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+              <MoveDown className="h-4 w-4" />
+              <p>Swipe through these personalized recommendations or create a complete practice plan</p>
+            </div>
+          </div>
+          
           <DrillCarousel drills={recommendedDrills} />
         </div>
       )}
       
-      <ScrollArea className="h-[600px]">
-        {drills && (
-          <DrillFilters 
-            drills={drills}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            selectedDifficulty={selectedDifficulty}
-            setSelectedDifficulty={setSelectedDifficulty}
-          />
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          {filteredDrills.map((drill) => (
-            <DrillCard key={drill.id} drill={drill} />
-          ))}
-        </div>
-        
-        {filteredDrills.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No drills match your filters.</p>
+      <div>
+        <h2 className="text-xl font-semibold mb-4">All Drills</h2>
+        <ScrollArea className="h-[600px]">
+          {drills && (
+            <DrillFilters 
+              drills={drills}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              selectedDifficulty={selectedDifficulty}
+              setSelectedDifficulty={setSelectedDifficulty}
+            />
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+            {filteredDrills.map((drill) => (
+              <DrillCard key={drill.id} drill={drill} />
+            ))}
           </div>
-        )}
-      </ScrollArea>
+          
+          {filteredDrills.length === 0 && (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">No drills match your filters.</p>
+            </div>
+          )}
+        </ScrollArea>
+      </div>
     </div>
   );
 };

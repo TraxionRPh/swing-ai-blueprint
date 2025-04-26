@@ -22,8 +22,10 @@ serve(async (req) => {
     }
 
     const { query } = await req.json();
+    console.log("Received search query:", query);
 
     // First, get all drills from the database
+    console.log("Fetching drills from database...");
     const { data: drills, error: dbError } = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/rest/v1/drills`,
       {
@@ -34,9 +36,20 @@ serve(async (req) => {
       }
     ).then(res => res.json());
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error("Database error:", dbError);
+      throw dbError;
+    }
+    
+    console.log(`Fetched ${drills?.length || 0} drills from database`);
+    
+    if (!drills || drills.length === 0) {
+      console.error("No drills found in database");
+      throw new Error("No drills available in the database");
+    }
 
     // Use OpenAI with strictly enforced model
+    console.log("Calling OpenAI API...");
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -48,22 +61,30 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional golf coach assistant with deep expertise in analyzing golf mechanics and training methods. Your task is to carefully analyze the user's golf issue and select the top 3-5 most relevant drills that will directly address their specific problem.
+            content: `You are a professional golf coach assistant with deep expertise in analyzing golf swing mechanics and training methods. Your task is to carefully analyze the user's golf issue and select the top 3-5 most relevant drills that will directly address their specific problem.
 
 Consider:
-1. The exact technical cause of the issue described
-2. How each drill's focus, difficulty, and mechanics match the user's needs
+1. The exact technical cause of the issue described (e.g., for a hook: closed clubface, in-to-out swing path)
+2. How each drill's focus, difficulty, and mechanics match the user's specific needs
 3. A progression of drills that builds skills logically
 
-Look at drill titles, descriptions, focus areas, categories, and difficulty levels to make ideal matches.
-Return only the IDs of the best matching drills in order of relevance, with the most effective drill first.`
+Common golf swing issues and what to look for:
+- Hook/Draw issues: Look for drills focused on grip, swing path, clubface control
+- Slice/Fade issues: Look for drills about swing path, wrist position, shoulder alignment
+- Topped/Fat shots: Look for drills on posture, ball position, weight transfer
+- Distance problems: Look for drills on tempo, sequencing, core rotation
+- Consistency issues: Look for fundamentals drills on setup, alignment
+
+Look at drill titles, descriptions, focus areas, categories, and difficulty levels to make optimal matches.
+Return ONLY the IDs of the best matching drills in order of relevance, with the most effective drill first.
+Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" separated by commas or line breaks.`
           },
           {
             role: 'user',
             content: `User's golf issue: "${query}"\n\nAvailable drills:\n${JSON.stringify(drills, null, 2)}`
           }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
@@ -77,7 +98,7 @@ Return only the IDs of the best matching drills in order of relevance, with the 
     const recommendationText = aiResponse.choices[0].message.content;
     console.log("AI recommendation text:", recommendationText);
     
-    // Extract drill IDs from AI response
+    // Extract drill IDs from AI response - look for UUID pattern
     const drillIds = recommendationText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g) || [];
     console.log("Extracted drill IDs:", drillIds);
     
@@ -89,10 +110,42 @@ Return only the IDs of the best matching drills in order of relevance, with the 
     
     console.log(`Found ${recommendedDrills.length} recommended drills`);
 
+    // Include analysis text to help users understand the recommendations
+    let analysisText = "";
+    if (recommendedDrills.length > 0) {
+      // Get additional explanation for the recommendations
+      const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: ALLOWED_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a professional golf coach. Provide a brief explanation (100 words max) of why these drills will help the user\'s specific problem. Be technical but accessible.'
+            },
+            {
+              role: 'user',
+              content: `User's issue: "${query}"\n\nRecommended drills: ${JSON.stringify(recommendedDrills.map(d => d.title + " - " + d.overview), null, 2)}`
+            }
+          ],
+          temperature: 0.3,
+        }),
+      });
+      
+      if (explanationResponse.ok) {
+        const explanationData = await explanationResponse.json();
+        analysisText = explanationData.choices[0].message.content;
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         drills: recommendedDrills,
-        analysis: recommendationText // Include the full analysis for debugging
+        analysis: analysisText
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

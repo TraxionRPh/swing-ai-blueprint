@@ -33,27 +33,25 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
   return (
     <Card className="w-full">
       <CardContent className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Perfect Drills for Your Issue</h3>
-          <p className="text-sm text-muted-foreground">
-            These drills specifically address your problem - swipe through them or create a complete practice plan
-          </p>
-        </div>
-        <Carousel className="w-full max-w-md mx-auto mb-6">
+        <Carousel className="w-full mx-auto mb-6">
           <CarouselContent>
             {drills.map((drill) => (
-              <CarouselItem key={drill.id} className="pl-4">
+              <CarouselItem key={drill.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                 <DrillCard drill={drill} />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center gap-2">
+              <CarouselPrevious className="relative static transform-none" />
+              <CarouselNext className="relative static transform-none" />
+            </div>
+          </div>
         </Carousel>
         <div className="mt-6">
           <Button 
             onClick={handleCreatePracticePlan} 
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
+            className="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
           >
             Create Practice Plan with These Drills
           </Button>

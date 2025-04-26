@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loading } from "@/components/ui/loading";
+import { AlertCircle } from "lucide-react";
 
 interface AISearchBarProps {
   onSearch: (query: string) => void;
@@ -36,6 +37,17 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
     }
   };
 
+  const examplePrompts = [
+    "I keep hooking my driver to the left",
+    "My iron shots are too thin and low",
+    "I struggle with consistency in my putting",
+    "I hit behind the ball with my wedges"
+  ];
+
+  const handleExampleClick = (example: string) => {
+    setSearchQuery(example);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4">
@@ -59,9 +71,24 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
           {isAnalyzing ? "Analyzing..." : "Find Perfect Drills"}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground px-3">
-        For best results, be specific about your issue: mention club type, ball flight, and when the problem occurs
-      </p>
+      
+      <div className="text-sm">
+        <div className="flex items-center gap-1 text-muted-foreground mb-2">
+          <AlertCircle className="h-4 w-4" />
+          <p>For best results, be specific about your issue</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {examplePrompts.map((prompt, i) => (
+            <button
+              key={i}
+              onClick={() => handleExampleClick(prompt)}
+              className="text-xs bg-muted hover:bg-muted/80 px-3 py-1.5 rounded-full text-muted-foreground"
+            >
+              "{prompt}"
+            </button>
+          ))}
+        </div>
+      </div>
 
       {isAnalyzing && (
         <Loading message="Analyzing your golf issue to find the most effective drills..." />
