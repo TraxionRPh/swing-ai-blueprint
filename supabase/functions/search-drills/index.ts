@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Constant for enforcing model choice
+const ALLOWED_MODEL = 'gpt-4o-mini';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,7 +36,7 @@ serve(async (req) => {
 
     if (dbError) throw dbError;
 
-    // Use OpenAI to analyze the query and find the best matching drills
+    // Use OpenAI with strictly enforced model
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,7 +44,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: ALLOWED_MODEL, // Enforced model usage
         messages: [
           {
             role: 'system',
@@ -55,6 +58,12 @@ serve(async (req) => {
         temperature: 0.3,
       }),
     });
+
+    if (!openAIResponse.ok) {
+      const error = await openAIResponse.json();
+      console.error('OpenAI API error:', error);
+      throw new Error(error.error?.message || 'OpenAI API call failed');
+    }
 
     const aiResponse = await openAIResponse.json();
     const recommendationText = aiResponse.choices[0].message.content;

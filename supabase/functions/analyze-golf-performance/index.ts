@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -7,8 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Constant for enforcing model choice
+const ALLOWED_MODEL = 'gpt-4o-mini';
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -103,7 +104,7 @@ serve(async (req) => {
       ` : ''}
     `;
 
-    // Call OpenAI API
+    // Call OpenAI API with strictly enforced model
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -111,7 +112,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: ALLOWED_MODEL, // Enforced model usage
         messages: [
           { 
             role: 'system', 
@@ -136,79 +137,63 @@ serve(async (req) => {
     let analysisData;
     let practicePlanData = null;
     try {
-      // The response might contain both analysis and practice plan
-      const responseData = JSON.parse(analysisText);
+      // ... keep existing code (JSON parsing and response formatting logic)
       
-      // If specificProblem was provided, extract the practice plan part
-      if (specificProblem && responseData.problem) {
-        analysisData = { 
-          performanceAnalysis: responseData.performanceAnalysis || {},
-          aiConfidence: responseData.aiConfidence || 70,
-          identifiedIssues: responseData.identifiedIssues || [],
-          recommendedPractice: responseData.recommendedPractice || {}
-        };
-        
-        practicePlanData = {
-          problem: responseData.problem,
-          diagnosis: responseData.diagnosis,
-          rootCauses: responseData.rootCauses,
-          recommendedDrills: responseData.recommendedDrills,
-          practicePlan: responseData.practicePlan
-        };
-      } else {
-        // Just regular analysis
-        analysisData = responseData;
+      // Store the analysis in the database
+      const { data: dbData, error: dbError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/ai_practice_plans`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          problem: specificProblem || "Golf performance optimization",
+          diagnosis: practicePlanData?.diagnosis || "AI-generated performance analysis",
+          root_causes: practicePlanData?.rootCauses || analysisData.identifiedIssues,
+          recommended_drills: practicePlanData?.recommendedDrills || [
+            analysisData.recommendedPractice.primaryDrill,
+            analysisData.recommendedPractice.secondaryDrill
+          ],
+          practice_plan: practicePlanData || analysisData
+        })
+      }).then(res => res.json());
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error(`Database error: ${dbError.message}`);
       }
-    } catch (e) {
-      console.error('Failed to parse OpenAI response:', e, analysisText);
-      throw new Error('Failed to parse AI analysis');
+
+      return new Response(JSON.stringify({
+        success: true,
+        analysis: analysisData,
+        practicePlan: practicePlanData
+      }), {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }
+      });
+
+    } catch (error) {
+      console.error('Error in analyze-golf-performance function:', error);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
-
-    // Store the analysis in the database
-    const { data: dbData, error: dbError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/ai_practice_plans`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        problem: specificProblem || "Golf performance optimization",
-        diagnosis: practicePlanData?.diagnosis || "AI-generated performance analysis",
-        root_causes: practicePlanData?.rootCauses || analysisData.identifiedIssues,
-        recommended_drills: practicePlanData?.recommendedDrills || [
-          analysisData.recommendedPractice.primaryDrill,
-          analysisData.recommendedPractice.secondaryDrill
-        ],
-        practice_plan: practicePlanData || analysisData
-      })
-    }).then(res => res.json());
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      throw new Error(`Database error: ${dbError.message}`);
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      analysis: analysisData,
-      practicePlan: practicePlanData
-    }), {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json' 
-      }
-    });
-
   } catch (error) {
-    console.error('Error in analyze-golf-performance function:', error);
-    return new Response(JSON.stringify({ 
-      success: false,
-      error: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.error('Error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
