@@ -2,6 +2,7 @@
 import { Drill } from "./drill";
 
 export interface GeneratedPracticePlan {
+  id?: string; // Adding id property to resolve the missing property error
   problem: string;
   diagnosis: string;
   rootCauses: string[];
@@ -62,7 +63,7 @@ export interface AIAnalysisForPracticePlan {
   identifiedIssues: {
     area: string;
     description: string;
-    priority: string;
+    priority: 'High' | 'Medium' | 'Low'; // Ensuring this matches the Issue interface
   }[];
   recommendedPractice: {
     weeklyFocus: string;
@@ -79,4 +80,3 @@ export interface AIAnalysisForPracticePlan {
     weeklyAssignment: string;
   };
 }
-

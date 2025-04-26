@@ -100,7 +100,7 @@ const AIAnalysis = () => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <IdentifiedIssues issues={analysis.identifiedIssues} />
+            <IdentifiedIssues issues={analysis.identifiedIssues as Issue[]} />
           </div>
           
           <PracticeRecommendations recommendations={analysis.recommendedPractice} />

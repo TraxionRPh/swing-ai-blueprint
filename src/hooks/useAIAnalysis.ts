@@ -26,7 +26,7 @@ export const useAIAnalysis = () => {
       try {
         const { data, error } = await supabase
           .from('ai_practice_plans')
-          .select('practice_plan')
+          .select('*')
           .eq('user_id', user.id)
           .eq('problem', 'Golf performance optimization')
           .order('created_at', { ascending: false })

@@ -40,10 +40,20 @@ const MyPracticePlans = () => {
         throw error;
       }
 
-      setPlans(data || []);
-      
-      if (showLatest && data && data.length > 0) {
-        setSelectedPlan(data[0].practice_plan);
+      if (data) {
+        // Properly cast the data to match our SavedPracticePlan type
+        const typedPlans: SavedPracticePlan[] = data.map(plan => ({
+          ...plan,
+          root_causes: plan.root_causes as unknown as string[],
+          recommended_drills: plan.recommended_drills as unknown as any[],
+          practice_plan: plan.practice_plan as unknown as GeneratedPracticePlan
+        }));
+        
+        setPlans(typedPlans);
+        
+        if (showLatest && typedPlans.length > 0) {
+          setSelectedPlan(typedPlans[0].practice_plan);
+        }
       }
     } catch (error) {
       toast({
