@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -22,10 +23,11 @@ type ChallengeResult = {
   id: string;
   challenge_id: string;
   best_score: string;
-  recent_score?: string;
   created_at: string;
   updated_at: string;
   user_id: string;
+  // Make a local property for the UI that won't be saved to the database
+  _recent_score?: string;
 };
 
 const ChallengeHistory = () => {
@@ -70,9 +72,10 @@ const ChallengeHistory = () => {
       }
       
       if (data) {
+        // Create local property for UI that won't be saved to DB
         const result: ChallengeResult = {
           ...data,
-          recent_score: data.recent_score || data.best_score
+          _recent_score: data.best_score // Use best_score as default for UI
         };
         return result;
       }
@@ -153,7 +156,7 @@ const ChallengeHistory = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Recent Score:</span>
-                    <Badge variant="outline">{progress.recent_score || progress.best_score}</Badge>
+                    <Badge variant="outline">{progress._recent_score || progress.best_score}</Badge>
                   </div>
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span className="flex items-center">

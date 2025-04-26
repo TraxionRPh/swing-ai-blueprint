@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,25 +120,12 @@ const ChallengeTracking = () => {
           progress: 0, // Default value to maintain compatibility
         };
         
-        // Add recent_score if your table supports it
-        // First check if the column exists in your database schema
-        try {
-          await supabase
-            .from('user_challenge_progress')
-            .update({
-              ...updateData,
-              recent_score: scoreValue,
-            })
-            .eq('challenge_id', challengeId);
-        } catch (error) {
-          // If error occurs, try without recent_score (it might not exist in the schema)
-          await supabase
-            .from('user_challenge_progress')
-            .update(updateData)
-            .eq('challenge_id', challengeId);
-          
-          console.log('Updated without recent_score as it may not exist in the schema');
-        }
+        // Update the record
+        await supabase
+          .from('user_challenge_progress')
+          .update(updateData)
+          .eq('challenge_id', challengeId);
+        
       } else {
         // Create new progress entry with required fields
         await supabase
