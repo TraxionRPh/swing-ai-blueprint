@@ -14,6 +14,8 @@ import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
 import AIPracticePlans from "./pages/AIPracticePlans";
+import AIAnalysis from "./pages/AIAnalysis";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
@@ -63,6 +65,14 @@ const router = createBrowserRouter([
       {
         path: "rounds",
         element: <RoundTracking />,
+      },
+      {
+        path: "ai-analysis",
+        element: <AIAnalysis />,
+      },
+      {
+        path: "profile",
+        element: <Profile />,
       },
     ],
     errorElement: <NotFound />,
