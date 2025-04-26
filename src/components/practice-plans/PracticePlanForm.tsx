@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,7 +56,7 @@ export const PracticePlanForm = ({
           <Button 
             onClick={() => handleGenerateClick(true)}
             disabled={isGenerating}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm md:text-base"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs md:text-sm"
           >
             <Brain className="mr-2 h-4 w-4" />
             {isGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
