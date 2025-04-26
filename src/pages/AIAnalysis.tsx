@@ -21,8 +21,10 @@ const AIAnalysis = () => {
     aiConfidenceHistory 
   } = useAIAnalysis();
   
-  // Show loading state when either loading or generating is true
-  if (isLoading || isGenerating) {
+  // Combined loading state to ensure it stays visible
+  const isProcessing = isLoading || isGenerating;
+
+  if (isProcessing) {
     return (
       <Loading 
         message={isGenerating 
@@ -45,7 +47,7 @@ const AIAnalysis = () => {
         </div>
         <Button 
           onClick={() => generateAnalysis()} 
-          disabled={isGenerating}
+          disabled={isProcessing}
           size="sm"
           className="gap-2 bg-primary hover:bg-primary/90"
         >
@@ -74,7 +76,7 @@ const AIAnalysis = () => {
           <CardContent className="flex justify-center py-12">
             <Button 
               onClick={() => generateAnalysis()} 
-              disabled={isGenerating}
+              disabled={isProcessing}
               className="bg-primary hover:bg-primary/90"
             >
               {isGenerating ? 'Analyzing...' : 'Generate Analysis'}
