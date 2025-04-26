@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -18,8 +19,8 @@ const AIPracticePlans = () => {
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
   const [isManualAnalyzing, setIsManualAnalyzing] = useState(false);
   const { toast } = useToast();
-  const { session } = useAuth();
-  const { generatePracticePlan } = useAIAnalysis();
+  const { user } = useAuth();
+  const { generatePlan, isGenerating } = useAIAnalysis();
   const { handicap, firstName } = useProfile();
 
   const commonProblems: CommonProblem[] = [
@@ -72,7 +73,7 @@ const AIPracticePlans = () => {
     }
 
     try {
-      const practicePlan = await generatePracticePlan(isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
+      const practicePlan = await generatePlan(user?.id, isAI ? "" : inputValue, handicap as HandicapLevel, planDuration);
       setLatestPracticePlan(practicePlan);
       toast({
         title: "Practice Plan Generated",
