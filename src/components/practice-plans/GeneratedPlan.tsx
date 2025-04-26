@@ -81,13 +81,16 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         </Button>
       </div>
       
-      <ProgressChallengeCard {...progressChallenge} />
+      <ProgressChallengeCard 
+        {...progressChallenge} 
+        planId={planId}
+      />
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
       <RecommendedDrillsCard drills={plan.recommendedDrills} />
       
-      <Card>
+      <Card className="bg-card">
         <div className="p-6 space-y-4">
-          <div className="p-3 bg-muted/50 rounded-lg text-sm">
+          <div className="p-3 bg-muted rounded-lg text-sm">
             <span className="font-medium">Recommended practice: </span>
             <span className="text-muted-foreground">{plan.practicePlan?.frequency || 'Daily'}, focusing on the drills below.</span>
           </div>
@@ -100,6 +103,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
                 dayNumber={i + 1}
                 completedDrills={completedDrills}
                 onDrillComplete={toggleDrillCompletion}
+                planId={planId}
               />
             ))
           ) : (
