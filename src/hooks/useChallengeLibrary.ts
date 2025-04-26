@@ -2,8 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Challenge, UserProgress } from "@/components/challenge/ChallengeCard";
+import { useToast } from "@/hooks/use-toast";
 
 export const useChallengeLibrary = () => {
+  const { toast } = useToast();
+  
   const { data: challenges, isLoading: challengesLoading } = useQuery({
     queryKey: ['challenges'],
     queryFn: async () => {
@@ -13,6 +16,11 @@ export const useChallengeLibrary = () => {
       
       if (error) {
         console.error('Error fetching challenges:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load challenges',
+          variant: 'destructive',
+        });
         throw error;
       }
       return data as Challenge[];
@@ -35,6 +43,11 @@ export const useChallengeLibrary = () => {
       
       if (error) {
         console.error('Error fetching progress:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load your progress',
+          variant: 'destructive',
+        });
         return [];
       }
       

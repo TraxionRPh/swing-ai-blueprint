@@ -13,6 +13,7 @@ import ChallengeLibrary from "./pages/ChallengeLibrary";
 import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
+import AIPracticePlans from "./pages/AIPracticePlans";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
@@ -39,6 +40,26 @@ const router = createBrowserRouter([
         path: "dashboard",
         element: <Dashboard />,
       },
+      {
+        path: "practice-plans",
+        element: <AIPracticePlans />,
+      },
+      {
+        path: "challenges",
+        element: <ChallengeLibrary />,
+      },
+      {
+        path: "drills",
+        element: <DrillLibrary />,
+      },
+      {
+        path: "challenge-tracking/:challengeId",
+        element: <ChallengeTracking />,
+      },
+      {
+        path: "challenge-history/:challengeId",
+        element: <ChallengeHistory />,
+      },
     ],
     errorElement: <NotFound />,
   },
@@ -53,66 +74,6 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <RoundTracking />,
-      },
-    ],
-    errorElement: <NotFound />,
-  },
-  {
-    path: "/challenges",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <ChallengeLibrary />,
-      },
-    ],
-    errorElement: <NotFound />,
-  },
-  {
-    path: "/drills",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <DrillLibrary />,
-      },
-    ],
-    errorElement: <NotFound />,
-  },
-  {
-    path: "/challenge-tracking/:challengeId",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <ChallengeTracking />,
-      },
-    ],
-    errorElement: <NotFound />,
-  },
-  {
-    path: "/challenge-history/:challengeId",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <ChallengeHistory />,
       },
     ],
     errorElement: <NotFound />,
