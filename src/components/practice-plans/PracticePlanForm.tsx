@@ -55,10 +55,12 @@ export const PracticePlanForm = ({
           <Button 
             onClick={() => handleGenerateClick(true)}
             disabled={isGenerating}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm md:text-base px-2"
           >
             <Brain className="mr-2 h-4 w-4" />
-            {isGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
+            <span className="truncate">
+              {isGenerating ? "Analyzing Your Data..." : "Create AI Personalized Practice Plan"}
+            </span>
           </Button>
         </div>
         
