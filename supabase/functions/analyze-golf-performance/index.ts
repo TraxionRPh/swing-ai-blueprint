@@ -72,6 +72,7 @@ serve(async (req) => {
             Return ONLY a JSON object with diagnosis, root causes, and a daily plan specifying drill IDs and sets/reps.`
           }
         ],
+        response_format: { type: "json_object" }, // Explicitly request JSON format
         temperature: 0.2,
       }),
     });
