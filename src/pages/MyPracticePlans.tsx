@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -40,6 +41,8 @@ const MyPracticePlans = () => {
 
     setIsLoading(true);
     try {
+      console.log("Fetching practice plans for user:", user.id);
+      
       const { data, error } = await supabase
         .from('ai_practice_plans')
         .select('*')
@@ -47,10 +50,12 @@ const MyPracticePlans = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error("Error fetching practice plans:", error);
         throw error;
       }
 
       if (data) {
+        console.log("Practice plans fetched:", data.length);
         const typedPlans: SavedPracticePlan[] = data.map(plan => ({
           ...plan,
           root_causes: plan.root_causes as unknown as string[],
@@ -59,10 +64,13 @@ const MyPracticePlans = () => {
         }));
         
         const filteredPlans = typedPlans.filter(plan => !deletedPlanIds.includes(plan.id));
+        console.log("Filtered plans (after removing deleted):", filteredPlans.length);
         setPlans(filteredPlans);
         
         if (showLatest && filteredPlans.length > 0) {
+          console.log("Auto-selecting latest plan:", filteredPlans[0].id);
           setSelectedPlan(filteredPlans[0].practice_plan);
+          setSelectedPlanId(filteredPlans[0].id);
         }
       }
     } catch (error) {
@@ -79,6 +87,21 @@ const MyPracticePlans = () => {
 
   useEffect(() => {
     loadPracticePlans();
+  }, [loadPracticePlans]);
+
+  // Force reload plans when the component mounts or navigates back to it
+  useEffect(() => {
+    // This ensures we reload plans when the page becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadPracticePlans();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [loadPracticePlans]);
 
   const deletePracticePlan = async (planId: string) => {
@@ -133,12 +156,19 @@ const MyPracticePlans = () => {
     setSelectedPlanId(plan.id);
   };
 
+  const refreshPlans = () => {
+    loadPracticePlans();
+  };
+
   return (
     <div className="container p-4 py-6 space-y-6">
-      <div>
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">My Practice Plans</h1>
-        <p className="text-muted-foreground">Review your saved practice plans</p>
+        <Button size="sm" variant="outline" onClick={refreshPlans}>
+          Refresh
+        </Button>
       </div>
+      <p className="text-muted-foreground">Review your saved practice plans</p>
 
       {selectedPlan ? (
         <GeneratedPlan
