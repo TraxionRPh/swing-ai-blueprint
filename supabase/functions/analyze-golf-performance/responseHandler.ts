@@ -10,7 +10,8 @@ export class ResponseHandler {
   static createSuccessResponse(
     response: AIResponse,
     drills: DrillData[],
-    planDuration: string
+    planDuration: string,
+    userData?: any
   ): Response {
     // Make sure challenge has proper attempts field
     if (response.practicePlan.challenge) {
@@ -74,6 +75,20 @@ export class ResponseHandler {
       };
     });
 
+    // Include user's goals and metrics in the response if available
+    let userGoals = null;
+    if (userData) {
+      userGoals = {
+        scoreGoal: userData.score_goal,
+        handicapGoal: userData.handicap_goal,
+        selectedGoals: userData.selected_goals || [],
+        currentHandicapLevel: userData.handicap_level
+      };
+    }
+
+    // Add performance insights based on rounds and challenges if available
+    const performanceInsights = response.performanceInsights || [];
+
     return new Response(
       JSON.stringify({
         diagnosis: response.diagnosis,
@@ -81,7 +96,9 @@ export class ResponseHandler {
         practicePlan: {
           plan: mappedPlans,
           challenge: response.practicePlan.challenge
-        }
+        },
+        userGoals,
+        performanceInsights
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

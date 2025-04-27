@@ -1,3 +1,4 @@
+
 import { Drill } from "./drill";
 import { Challenge } from "./challenge";
 
@@ -13,6 +14,21 @@ export interface GeneratedPracticePlan {
     plan: DayPlan[];
     challenge?: Challenge; // Add challenge property
   };
+  performanceInsights?: PerformanceInsight[];
+  userGoals?: UserGoals;
+}
+
+export interface UserGoals {
+  scoreGoal?: number;
+  handicapGoal?: number;
+  selectedGoals?: string[];
+  currentHandicapLevel?: string;
+}
+
+export interface PerformanceInsight {
+  area: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
 }
 
 export interface DayPlan {

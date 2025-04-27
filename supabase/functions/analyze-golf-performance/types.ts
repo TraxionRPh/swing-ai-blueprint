@@ -43,8 +43,15 @@ export interface PracticePlan {
   challenge?: any;
 }
 
+export interface PerformanceInsight {
+  area: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
 export interface AIResponse {
   diagnosis: string;
   rootCauses: string[];
   practicePlan: PracticePlan;
+  performanceInsights?: PerformanceInsight[];
 }

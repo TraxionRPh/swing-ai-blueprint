@@ -51,6 +51,62 @@ serve(async (req) => {
       availableDrillsCount: availableDrills?.length || 0
     });
 
+    // Fetch additional user profile data if userId provided
+    let userData = null;
+    if (userId) {
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('handicap_level, selected_goals, score_goal, handicap_goal, has_onboarded')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) {
+        console.warn("Error fetching user profile:", profileError.message);
+      } else {
+        userData = profileData;
+        console.log("Retrieved user profile data:", {
+          handicapLevel: userData.handicap_level,
+          goals: userData.selected_goals?.length || 0,
+          scoreGoal: userData.score_goal,
+        });
+      }
+    }
+
+    // Fetch recent round data if not provided
+    if ((!roundData || roundData.length === 0) && userId) {
+      const { data: fetchedRounds, error: roundsError } = await supabaseAdmin
+        .from('rounds')
+        .select('*, hole_scores(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (roundsError) {
+        console.warn("Error fetching rounds:", roundsError.message);
+      } else if (fetchedRounds && fetchedRounds.length > 0) {
+        roundData = fetchedRounds;
+        console.log(`Retrieved ${roundData.length} recent rounds`);
+      }
+    }
+
+    // Fetch challenge results
+    let challengeResults = [];
+    if (userId) {
+      const { data: userChallenges, error: challengesError } = await supabaseAdmin
+        .from('user_challenge_progress')
+        .select('*, challenge_id(*)')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+      
+      if (challengesError) {
+        console.warn("Error fetching challenge results:", challengesError.message);
+      } else if (userChallenges && userChallenges.length > 0) {
+        challengeResults = userChallenges;
+        console.log(`Retrieved ${challengeResults.length} challenge results`);
+      }
+    }
+
     // Fetch available challenges with better logging
     const { data: challenges, error } = await supabaseAdmin
       .from('challenges')
@@ -61,12 +117,16 @@ serve(async (req) => {
       // Continue with default challenge creation
     }
     
-    // Create plan generator instance
+    // Create plan generator instance with enhanced user data
     const planGenerator = new PlanGenerator(
       roundData,
       specificProblem,
       planDuration,
-      availableDrills
+      availableDrills,
+      {
+        userData: userData || { handicap_level: handicapLevel },
+        challengeResults
+      }
     );
 
     // If no challenges found in database, use default challenges based on problem
@@ -82,7 +142,8 @@ serve(async (req) => {
       return ResponseHandler.createSuccessResponse(
         response,
         availableDrills,
-        planDuration
+        planDuration,
+        userData
       );
     }
     
@@ -97,7 +158,8 @@ serve(async (req) => {
     return ResponseHandler.createSuccessResponse(
       response,
       availableDrills,
-      planDuration
+      planDuration,
+      userData
     );
   } catch (error) {
     console.error('Error:', error);

@@ -197,6 +197,10 @@ export const usePracticePlanGeneration = () => {
       let practicePlan: GeneratedPracticePlan;
       
       if (data && data.diagnosis && data.rootCauses && data.practicePlan?.plan) {
+        // Extract additional data if available
+        const userGoals = data.userGoals || {};
+        const performanceInsights = data.performanceInsights || [];
+        
         practicePlan = {
           problem: issue || "Golf performance optimization",
           diagnosis: data.diagnosis,
@@ -207,7 +211,9 @@ export const usePracticePlanGeneration = () => {
             frequency: "Daily",
             plan: data.practicePlan.plan,
             challenge: data.practicePlan.challenge
-          }
+          },
+          performanceInsights: performanceInsights,
+          userGoals: userGoals
         };
 
         if (userId) {
