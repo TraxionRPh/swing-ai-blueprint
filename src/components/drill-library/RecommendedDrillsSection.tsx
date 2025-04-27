@@ -34,14 +34,13 @@ export const RecommendedDrillsSection = memo(({
             <AlertTitle className="text-[#9b87f5] font-semibold text-lg mb-2">Coach's Analysis</AlertTitle>
             <AlertDescription className="text-foreground/90 leading-relaxed">
               {analysisPoints.length > 1 ? (
-                <ul className="space-y-2 mt-2">
+                <div className="space-y-2 mt-2">
                   {analysisPoints.map((point, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-[#9b87f5] mt-1">•</span>
-                      <span>{point}</span>
-                    </li>
+                    <p key={index} className="pl-6">
+                      {point}
+                    </p>
                   ))}
-                </ul>
+                </div>
               ) : (
                 searchAnalysis
               )}
