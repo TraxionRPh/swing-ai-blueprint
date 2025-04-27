@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -9,7 +8,6 @@ const corsHeaders = {
 
 const ALLOWED_MODEL = 'gpt-4o-mini';
 
-// Default sample drills to use when no drills are in the database
 const sampleDrills = [
   {
     id: "7c5d6a9e-3b2f-4c1a-8d7e-5f9b6c2a3d8e",
@@ -126,10 +124,8 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    // Enhanced drill matching logic
     let drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
     
-    // If we have a specific problem, filter drills more intelligently
     if (specificProblem) {
       const searchTerms = specificProblem.toLowerCase().split(' ')
         .filter(term => term.length > 2)
@@ -138,7 +134,6 @@ serve(async (req) => {
       console.log("Search terms extracted:", searchTerms);
 
       drillsToUse = drillsToUse.filter(drill => {
-        // Check all text fields for matches
         const drillText = [
           drill.title?.toLowerCase() || '',
           drill.overview?.toLowerCase() || '',
@@ -146,7 +141,6 @@ serve(async (req) => {
           drill.category?.toLowerCase() || ''
         ].join(' ');
 
-        // Log matching process for debugging
         const matches = searchTerms.filter(term => drillText.includes(term));
         if (matches.length > 0) {
           console.log(`Drill "${drill.title}" matched terms:`, matches);
@@ -155,11 +149,9 @@ serve(async (req) => {
         return matches.length > 0;
       });
 
-      console.log("Filtered drills count:", drillsToUse.length);
-      console.log("Matched drill titles:", drillsToUse.map(d => d.title));
+      console.log("Initial filtered drills count:", drillsToUse.length);
     }
     
-    // Prepare simplified drills for the prompt
     const simplifiedDrills = drillsToUse.map(drill => ({
       id: drill.id,
       title: drill.title,
@@ -169,12 +161,11 @@ serve(async (req) => {
       overview: drill.overview?.substring(0, 100)
     }));
 
-    // Create a structured prompt that explicitly asks for the required fields
-    const systemPrompt = `You are a professional golf coach creating targeted practice plans. Based on the golfer's specific problem and skill level, select drills that directly address their issues. 
+    const systemPrompt = `You are a professional golf coach creating targeted practice plans. Based on the golfer's specific problem and skill level, identify root causes and select drills that directly address these issues.
 
 You MUST respond with a valid JSON object that has exactly these fields:
 1. "diagnosis": A string with an analysis of the golfer's issue
-2. "rootCauses": An array of strings with root causes of the issue
+2. "rootCauses": An array of strings with root causes of the issue. Each root cause should be specific and actionable, like "closed clubface at impact" or "outside-to-in swing path"
 3. "dailyPlans": An array of objects with these exact fields:
    - "day": The day number (integer)
    - "focus": The focus area for this day (string)
@@ -185,10 +176,12 @@ You MUST respond with a valid JSON object that has exactly these fields:
      - "reps": Number of repetitions (integer)
 
 For each day:
-1. Choose a specific focus area related to their main problem
-2. Select 2-3 drills that work together to improve that focus area
-3. Specify appropriate sets and reps based on drill difficulty and golfer level
-4. Ensure progression across multiple days`;
+1. Choose 2-3 drills that specifically address one or more root causes
+2. Ensure drills work together progressively
+3. Match drill difficulty to golfer level
+4. Include at least one drill focused on the primary root cause and one for a secondary cause
+
+IMPORTANT: Each day MUST have at least 2 drills, ideally 3 if appropriate ones are available.`;
 
     const userPrompt = `Create a ${planDuration}-day practice plan for a ${handicapLevel} golfer working on: "${specificProblem}".
 Recent performance data: ${JSON.stringify(roundData || [])}
@@ -230,17 +223,51 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
     const aiResponse = await openAIResponse.json();
     console.log("Received response from OpenAI");
     
-    // Parse the response content
     let response;
     try {
       response = JSON.parse(aiResponse.choices[0].message.content);
       console.log("Successfully parsed OpenAI response");
+
+      const anyDayHasInsufficientDrills = response.dailyPlans?.some(
+        (day: any) => !day.drills || day.drills.length < 2
+      );
+
+      if (anyDayHasInsufficientDrills) {
+        console.warn("Some days have insufficient drills, adding more drills based on root causes");
+        
+        response.dailyPlans = response.dailyPlans.map((day: any) => {
+          if (day.drills.length < 2) {
+            const additionalDrills = drillsToUse
+              .filter(drill => !day.drills.find((d: any) => d.id === drill.id))
+              .filter(drill => {
+                const drillText = [
+                  drill.title?.toLowerCase() || '',
+                  drill.overview?.toLowerCase() || '',
+                  ...(drill.focus?.map(f => f.toLowerCase()) || [])
+                ].join(' ');
+                
+                return response.rootCauses.some((cause: string) => 
+                  drillText.includes(cause.toLowerCase())
+                );
+              })
+              .slice(0, 3 - day.drills.length)
+              .map(drill => ({
+                id: drill.id,
+                sets: 2,
+                reps: 10
+              }));
+            
+            day.drills = [...day.drills, ...additionalDrills];
+          }
+          return day;
+        });
+      }
+
     } catch (e) {
       console.error("Failed to parse OpenAI response:", e);
       throw new Error('Failed to generate practice plan');
     }
 
-    // More explicit validation of the response structure
     if (!response.diagnosis || typeof response.diagnosis !== 'string') {
       console.error("Invalid response: missing or invalid diagnosis");
       response.diagnosis = "Analysis of your golf technique completed";
@@ -266,9 +293,7 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       );
     }
     
-    // Map drill IDs to actual drill objects with comprehensive safety checks
     const mappedDailyPlans = response.dailyPlans.map((day, index) => {
-      // Ensure all required fields exist with defaults
       const safeDay = {
         day: day.day || index + 1,
         focus: day.focus || `Golf practice day ${index + 1}`,
@@ -279,7 +304,6 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       return {
         ...safeDay,
         drills: safeDay.drills.map(drill => {
-          // Skip if drill has no ID
           if (!drill || !drill.id) {
             console.warn("Skipping drill with missing ID");
             return null;
@@ -296,17 +320,15 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
             sets: typeof drill.sets === 'number' ? drill.sets : 1,
             reps: typeof drill.reps === 'number' ? drill.reps : 10
           };
-        }).filter(Boolean) // Remove null entries
+        }).filter(Boolean)
       };
     });
 
-    // Final safety check - ensure we have at least some drills
     const finalPlans = mappedDailyPlans.filter(day => day.drills.length > 0);
     
     if (finalPlans.length === 0) {
       console.warn("No valid drills found after mapping");
       
-      // If no available drills were provided, explain the issue
       if (!availableDrills || availableDrills.length === 0) {
         return new Response(
           JSON.stringify({
