@@ -37,12 +37,15 @@ export const DailyPlanSection = ({
   }).length;
   const completionPercentage = totalDrills > 0 ? Math.round((completedCount / totalDrills) * 100) : 0;
 
+  // Remove "Day X: " from the focus text if it exists to avoid duplication
+  const focusText = dayPlan?.focus?.replace(`Day ${dayNumber}: `, '') || '';
+
   return (
     <Card>
       <CardHeader className="bg-muted/50 cursor-pointer py-3" onClick={toggleOpen}>
         <div className="space-y-1">
           <CardTitle className="text-lg flex justify-between items-center">
-            <span>Day {dayNumber}: {dayPlan?.focus?.replace(`Day ${dayNumber}: `, '')}</span>
+            <span>Day {dayNumber}: {focusText}</span>
             <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
               {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </Button>

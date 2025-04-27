@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan, DrillWithSets } from "@/types/practice-plan";
@@ -411,6 +412,9 @@ export const usePracticePlanGeneration = () => {
           rootCauses = createToppingRootCauses();
         }
         
+        // Process plan days to ensure unique drill sets
+        const processedDays = processAndDiversifyPlanDays(data.practicePlan.plan, relevantDrills);
+        
         practicePlan = {
           problem: issue || "Golf performance optimization",
           diagnosis: diagnosis,
@@ -419,7 +423,7 @@ export const usePracticePlanGeneration = () => {
           practicePlan: {
             duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
             frequency: "Daily",
-            plan: processAndValidatePlanDays(data.practicePlan.plan, relevantDrills),
+            plan: processedDays,
             challenge: challenge
           },
           performanceInsights: performanceInsights,
@@ -457,21 +461,50 @@ export const usePracticePlanGeneration = () => {
 
   /**
    * Process and validate plan days, ensuring all drill references are valid objects
+   * AND that each day has a unique set of drills
    */
-  const processAndValidatePlanDays = (planDays: any[], availableDrills: Drill[]) => {
+  const processAndDiversifyPlanDays = (planDays: any[], availableDrills: Drill[]) => {
     if (!Array.isArray(planDays)) {
       console.error('Plan days is not an array:', planDays);
       return [];
     }
     
-    return planDays.map(day => {
+    console.log(`Processing ${planDays.length} plan days with ${availableDrills.length} available drills`);
+    
+    // Track used drills for each day to ensure variety
+    const usedDrillSets: Record<number, Set<string>> = {};
+    
+    // Create a shuffled copy of all available drills to use for variety
+    const shuffledDrills = [...availableDrills].sort(() => Math.random() - 0.5);
+    
+    return planDays.map((day, dayIndex) => {
       if (!day.drills || !Array.isArray(day.drills)) {
         console.warn(`Day ${day.day} has no valid drills array`);
         day.drills = [];
-        return day;
       }
       
-      const processedDrills = day.drills
+      // Create a set to track used drill IDs for this day
+      usedDrillSets[dayIndex] = new Set<string>();
+      
+      // Check if this day uses the same drills as a previous day
+      let isDuplicateOfPreviousDay = false;
+      if (dayIndex > 0) {
+        const previousDayDrills = planDays[dayIndex-1]?.drills?.map((d: any) => 
+          typeof d.drill === 'string' ? d.drill : d.drill?.id
+        ).sort().join(',');
+        
+        const currentDayDrills = day.drills?.map((d: any) => 
+          typeof d.drill === 'string' ? d.drill : d.drill?.id
+        ).sort().join(',');
+        
+        if (previousDayDrills && currentDayDrills && previousDayDrills === currentDayDrills) {
+          isDuplicateOfPreviousDay = true;
+          console.log(`Day ${day.day} has identical drill set to previous day, will diversify`);
+        }
+      }
+      
+      // Process existing drills first
+      const processedDrills = (day.drills || [])
         .map((drillWithSets: any) => {
           if (!drillWithSets || !drillWithSets.drill) {
             console.warn('Invalid drill entry in day plan:', drillWithSets);
@@ -489,6 +522,10 @@ export const usePracticePlanGeneration = () => {
             
             if (drillObject) {
               console.log(`Successfully found drill: ${drillObject.title}`);
+              
+              // Add to used drills for this day
+              usedDrillSets[dayIndex].add(drillId);
+              
               return {
                 drill: drillObject,
                 sets,
@@ -496,25 +533,16 @@ export const usePracticePlanGeneration = () => {
                 id: drillObject.id
               };
             } else {
-              console.warn(`Could not find drill with ID ${drillId}, trying to find a fallback drill`);
-              
-              if (availableDrills.length > 0) {
-                const fallbackDrill = availableDrills[0];
-                console.log(`Using fallback drill: ${fallbackDrill.title}`);
-                return {
-                  drill: fallbackDrill,
-                  sets,
-                  reps,
-                  id: fallbackDrill.id
-                };
-              }
-              
-              console.error('No fallback drill available, skipping this drill');
+              console.warn(`Could not find drill with ID ${drillId}, will find alternative`);
               return null;
             }
           } else if (typeof drillWithSets.drill === 'object' && drillWithSets.drill !== null) {
             const drillObject = drillWithSets.drill as Drill;
             console.log(`Using drill object directly: ${drillObject.title}`);
+            
+            // Add to used drills for this day
+            if (drillObject.id) usedDrillSets[dayIndex].add(drillObject.id);
+            
             return {
               drill: drillObject,
               sets,
@@ -528,25 +556,70 @@ export const usePracticePlanGeneration = () => {
         })
         .filter(Boolean);
       
-      console.log(`Day ${day.day} - Processed ${processedDrills.length} drills successfully`);
-      
-      // Ensure we have at least 2 drills per day
-      if (processedDrills.length < 2 && availableDrills.length > 1) {
-        // Get up to 2 fallback drills
-        const neededDrills = 2 - processedDrills.length;
+      // If we have duplicate drills from previous day or not enough drills, diversify
+      if (isDuplicateOfPreviousDay || processedDrills.length < 2) {
+        console.log(`Diversifying drills for day ${day.day}`);
         
-        for (let i = 0; i < neededDrills && i < availableDrills.length; i++) {
-          const fallbackDrill = availableDrills[i];
-          console.log(`Adding fallback drill to day ${day.day}: ${fallbackDrill.title}`);
+        // How many drills we need to add
+        const targetDrillCount = Math.max(3, processedDrills.length + 1);
+        const drillsToAdd = targetDrillCount - processedDrills.length;
+        
+        // Get unique drills not used on this day and preferably not used on previous day
+        const previousDayDrillIds = dayIndex > 0 ? 
+          Array.from(usedDrillSets[dayIndex-1] || []) : [];
+        
+        const currentDayDrillIds = Array.from(usedDrillSets[dayIndex] || []);
+        
+        // Find drills not used in current day
+        const availableForThisDay = shuffledDrills
+          .filter(drill => drill.id && !currentDayDrillIds.includes(drill.id))
+          // Give preference to drills not used in previous day
+          .sort((a, b) => {
+            const aUsedInPrevDay = a.id && previousDayDrillIds.includes(a.id) ? 1 : 0;
+            const bUsedInPrevDay = b.id && previousDayDrillIds.includes(b.id) ? 1 : 0;
+            return aUsedInPrevDay - bUsedInPrevDay;
+          });
+          
+        // Add new diverse drills
+        for (let i = 0; i < drillsToAdd && i < availableForThisDay.length; i++) {
+          const newDrill = availableForThisDay[i];
+          if (!newDrill) continue;
+          
+          console.log(`Adding diverse drill to day ${day.day}: ${newDrill.title}`);
+          
+          // Add to processed drills
           processedDrills.push({
-            drill: fallbackDrill,
+            drill: newDrill,
             sets: 3,
             reps: 10,
-            id: fallbackDrill.id
+            id: newDrill.id
+          });
+          
+          // Mark as used
+          if (newDrill.id) usedDrillSets[dayIndex].add(newDrill.id);
+        }
+      }
+      
+      // Final check to ensure minimum drill count
+      if (processedDrills.length < 2) {
+        // We couldn't get enough unique drills, so use whatever we have available
+        for (let i = 0; i < 2 && i < shuffledDrills.length; i++) {
+          const backupDrill = shuffledDrills[i];
+          
+          console.log(`Adding backup drill to day ${day.day}: ${backupDrill.title}`);
+          
+          processedDrills.push({
+            drill: backupDrill,
+            sets: 3,
+            reps: 10,
+            id: backupDrill.id
           });
         }
       }
       
+      console.log(`Day ${day.day} - Final drill count: ${processedDrills.length}`);
+      
+      // Return the updated day with diverse drills
       return {
         ...day,
         drills: processedDrills
@@ -644,3 +717,4 @@ export const usePracticePlanGeneration = () => {
 
   return { generatePlan, isGenerating };
 };
+
