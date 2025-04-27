@@ -29,6 +29,11 @@ export class ResponseHandler {
     const mappedPlans = response.practicePlan.plan.map((day, index) => ({
       ...day,
       drills: day.drills.map(drill => {
+        // Skip items that are challenges (have 'title' with 'Challenge' in it)
+        if (typeof drill.id === 'string' && drill.id.includes('challenge')) {
+          return null;
+        }
+        
         const fullDrill = drills.find(d => d.id === drill.id);
         if (!fullDrill) return null;
         

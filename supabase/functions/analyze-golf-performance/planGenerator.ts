@@ -1,4 +1,3 @@
-
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore, getChallengeRelevanceScore } from './drillMatching.ts';
 
@@ -27,7 +26,10 @@ export class PlanGenerator {
     const relatedMatches: DrillData[] = [];
     const possibleMatches: DrillData[] = [];
 
-    this.drills.forEach(drill => {
+    const actualDrills = this.drills.filter(drill => 
+      !drill.title.toLowerCase().includes('challenge'));
+
+    actualDrills.forEach(drill => {
       const drillText = [
         drill.title?.toLowerCase() || '',
         drill.overview?.toLowerCase() || '',
@@ -62,7 +64,7 @@ export class PlanGenerator {
       matchedDrills = [...matchedDrills, ...possibleMatches.slice(0, 3 - matchedDrills.length)];
     }
 
-    return matchedDrills.length > 0 ? matchedDrills : this.drills.slice(0, 3);
+    return matchedDrills.length > 0 ? matchedDrills : actualDrills.slice(0, 3);
   }
 
   private validateDailyPlans(days: PlanDay[]): PlanDay[] {

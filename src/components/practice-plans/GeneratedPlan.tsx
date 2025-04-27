@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -41,6 +42,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   const filteredDays = planData.slice(0, durationNum);
 
   const challenge = plan.practicePlan.challenge as Challenge;
+  const hasChallenge = challenge && Object.keys(challenge).length > 0;
 
   return (
     <div className="space-y-6">
@@ -66,11 +68,11 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span>Initial Challenge: {challenge?.title || 'No challenge available'}</span>
+            <span>Initial Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {challenge ? (
+          {hasChallenge ? (
             <>
               <p className="text-muted-foreground mb-4">{challenge.description}</p>
               <div className="space-y-4">
@@ -114,10 +116,10 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       {/* Final Challenge */}
       <Card>
         <CardHeader>
-          <CardTitle>Final Challenge: {challenge?.title || 'No challenge available'}</CardTitle>
+          <CardTitle>Final Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</CardTitle>
         </CardHeader>
         <CardContent>
-          {challenge ? (
+          {hasChallenge ? (
             <>
               <p className="text-muted-foreground mb-4">
                 Complete this challenge again to measure your improvement
