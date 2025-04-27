@@ -1,3 +1,4 @@
+
 import { DrillData, AIResponse } from './types.ts';
 
 const corsHeaders = {
