@@ -96,27 +96,48 @@ serve(async (req) => {
       throw new Error('Failed to generate practice plan');
     }
 
-    // Map drill IDs to actual drill objects
-    const mappedDailyPlans = response.dailyPlans.map(day => ({
-      ...day,
-      drills: day.drills.map(drill => {
-        const fullDrill = availableDrills?.find(d => d.id === drill.id);
-        if (!fullDrill) {
-          console.warn(`Drill with ID ${drill.id} not found`);
-          return null;
-        }
-        return {
-          drill: fullDrill,
-          sets: drill.sets,
-          reps: drill.reps
-        };
-      }).filter(Boolean)
-    }));
+    // Check if dailyPlans exists and is an array before mapping
+    if (!response.dailyPlans || !Array.isArray(response.dailyPlans)) {
+      console.error("Invalid response format: dailyPlans is missing or not an array");
+      return new Response(
+        JSON.stringify({
+          error: "Invalid response format",
+          diagnosis: "Unable to generate practice plan due to AI response format issue",
+          rootCauses: ["Technical issue with AI response format"],
+          practicePlan: {
+            plan: []
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Map drill IDs to actual drill objects with safeguards
+    const mappedDailyPlans = response.dailyPlans.map(day => {
+      // Ensure drills is an array before mapping
+      const drillsArray = Array.isArray(day.drills) ? day.drills : [];
+      
+      return {
+        ...day,
+        drills: drillsArray.map(drill => {
+          const fullDrill = availableDrills?.find(d => d.id === drill.id);
+          if (!fullDrill) {
+            console.warn(`Drill with ID ${drill.id} not found`);
+            return null;
+          }
+          return {
+            drill: fullDrill,
+            sets: drill.sets || 1,
+            reps: drill.reps || 10
+          };
+        }).filter(Boolean)
+      };
+    });
 
     return new Response(
       JSON.stringify({
-        diagnosis: response.diagnosis,
-        rootCauses: response.rootCauses,
+        diagnosis: response.diagnosis || "Golf performance analysis completed",
+        rootCauses: response.rootCauses || ["Technical analysis incomplete"],
         practicePlan: {
           plan: mappedDailyPlans
         }
