@@ -1,7 +1,6 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { getDrillRelevanceScore } from "./drillMatching.ts";
+import { getDrillRelevanceScore, getChallengeRelevanceScore } from "./drillMatching.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -515,12 +514,32 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       console.log(`Added ${additionalDays.length} additional days to reach ${practiceData.length} total days`);
     }
 
+    // Fetch available challenges
+    const { data: challenges } = await supabaseAdmin
+      .from('challenges')
+      .select('*');
+
+    // Find the most relevant challenge for this problem
+    let selectedChallenge = null;
+    let highestScore = 0;
+
+    if (challenges && challenges.length > 0) {
+      for (const challenge of challenges) {
+        const relevanceScore = getChallengeRelevanceScore(challenge, specificProblem);
+        if (relevanceScore > highestScore) {
+          highestScore = relevanceScore;
+          selectedChallenge = challenge;
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         diagnosis: response.diagnosis || "Golf performance analysis completed",
         rootCauses: response.rootCauses || ["Technical analysis completed"],
         practicePlan: {
-          plan: practiceData
+          plan: practiceData,
+          challenge: selectedChallenge // Add the selected challenge to the response
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

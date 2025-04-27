@@ -1,4 +1,3 @@
-
 /**
  * Calculate a relevance score for a drill based on how well it matches the search terms
  * and specific problem. Higher scores indicate better matches.
@@ -79,5 +78,69 @@ export function getDrillRelevanceScore(
   }
   
   // Ensure score doesn't exceed 1
+  return Math.min(score, 1);
+}
+
+/**
+ * Calculate a relevance score for a challenge based on how well it matches
+ * the specific problem being addressed.
+ * 
+ * @param challenge The challenge to evaluate
+ * @param specificProblem The specific problem being addressed
+ * @returns A relevance score between 0 and 1
+ */
+export function getChallengeRelevanceScore(
+  challenge: any,
+  specificProblem: string
+): number {
+  const lowerProblem = specificProblem.toLowerCase();
+  const lowerChallenge = [
+    challenge.title || '',
+    challenge.description || '',
+    challenge.category || '',
+    ...(challenge.metrics || [])
+  ].join(' ').toLowerCase();
+
+  let score = 0;
+
+  // Match specific problems with relevant challenges
+  if (lowerProblem.includes('slice') || lowerProblem.includes('hook')) {
+    if (
+      lowerChallenge.includes('fairway') || 
+      lowerChallenge.includes('accuracy') ||
+      lowerChallenge.includes('driving')
+    ) {
+      score += 0.5;
+    }
+  } else if (lowerProblem.includes('putt') || lowerProblem.includes('putting')) {
+    if (
+      lowerChallenge.includes('putt') || 
+      lowerChallenge.includes('putts') ||
+      lowerChallenge.includes('green')
+    ) {
+      score += 0.5;
+    }
+  } else if (lowerProblem.includes('chip') || lowerProblem.includes('short game')) {
+    if (
+      lowerChallenge.includes('chip') || 
+      lowerChallenge.includes('up and down') ||
+      lowerChallenge.includes('short game')
+    ) {
+      score += 0.5;
+    }
+  }
+
+  // Match categories
+  if (challenge.category?.toLowerCase() === lowerProblem.split(' ')[0]) {
+    score += 0.3;
+  }
+
+  // Match metrics to problem
+  for (const metric of (challenge.metrics || [])) {
+    if (lowerProblem.includes(metric.toLowerCase())) {
+      score += 0.2;
+    }
+  }
+
   return Math.min(score, 1);
 }
