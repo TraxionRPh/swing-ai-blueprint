@@ -1,5 +1,5 @@
 
-import { ProblemCategory } from './golfCategorization.ts';
+import { ProblemCategory, validateContextMatch } from './golfCategorization.ts';
 import { DrillRelevanceCalculator } from './matchers/drillRelevanceCalculator.ts';
 import { ChallengeRelevanceCalculator } from './matchers/challengeRelevanceCalculator.ts';
 
@@ -63,6 +63,7 @@ export function isPuttingRelated(drill: any): boolean {
     }
   }
   
+  // Require at least 2 secondary terms to confirm putting context
   return secondaryMatches >= 2;
 }
 
@@ -110,8 +111,76 @@ export function isDefinitelyNotPuttingRelated(drill: any): boolean {
   return nonPuttingMatches >= 2;
 }
 
+// Similar function for bunker-related drills
+export function isBunkerRelated(drill: any): boolean {
+  if (!drill) return false;
+  
+  // Direct category check
+  if (drill.category?.toLowerCase().includes('bunker') || 
+      drill.category?.toLowerCase().includes('sand')) {
+    return true;
+  }
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+  ].join(' ');
+  
+  // Primary bunker indicators
+  const primaryBunkerTerms = [
+    'bunker', 'sand', 'trap', 'explosion', 'splash'
+  ];
+  
+  // Check for obvious bunker terms
+  for (const term of primaryBunkerTerms) {
+    if (drillText.includes(term)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Function to check if a drill is related to topping/thin hits
+export function isContactRelated(drill: any): boolean {
+  if (!drill) return false;
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+  ].join(' ');
+  
+  // Contact-related terms
+  const contactTerms = [
+    'contact', 'strike', 'thin', 'top', 'compression', 
+    'ball position', 'posture', 'weight transfer'
+  ];
+  
+  // Check title first (most important)
+  for (const term of contactTerms) {
+    if (drill.title?.toLowerCase().includes(term)) {
+      return true;
+    }
+  }
+  
+  // Count contact terms in full text
+  let contactMatches = 0;
+  for (const term of contactTerms) {
+    if (drillText.includes(term)) {
+      contactMatches++;
+    }
+  }
+  
+  // Multiple contact terms is a strong signal
+  return contactMatches >= 2;
+}
+
 // Determine if a drill is relevant to a specific problem with stricter matching
-export function isDrillRelevantToProblem(drill: any, problem: string): boolean {
+export function isDrillRelevantToProblem(drill: any, problem: string, category?: ProblemCategory): boolean {
   if (!drill || !problem) return false;
   
   const problemLower = problem.toLowerCase();
@@ -121,6 +190,11 @@ export function isDrillRelevantToProblem(drill: any, problem: string): boolean {
     drill.category?.toLowerCase() || '',
     ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
   ].join(' ');
+  
+  // Use the new context validator if we have a category
+  if (category) {
+    return validateContextMatch(drillText, problem, category);
+  }
   
   // Special handling for putting problems - strict filtering
   if (problemLower.includes('putt') || 
@@ -135,6 +209,29 @@ export function isDrillRelevantToProblem(drill: any, problem: string): boolean {
     
     // And verify it is putting-related
     return isPuttingRelated(drill);
+  }
+  
+  // Special handling for bunker problems
+  if (problemLower.includes('bunker') || problemLower.includes('sand')) {
+    return isBunkerRelated(drill);
+  }
+  
+  // Special handling for topping/thin hitting problems
+  if (problemLower.includes('top') || 
+      problemLower.includes('thin') || 
+      problemLower.includes('fat') || 
+      problemLower.includes('chunk')) {
+    
+    if (drill.category?.toLowerCase() === 'putting' || drillText.includes('putt')) {
+      return false; // Putting drills aren't relevant for strike problems
+    }
+    
+    return isContactRelated(drill) || 
+           drillText.includes('contact') || 
+           drillText.includes('strike') || 
+           drillText.includes('compress') || 
+           drillText.includes('impact') ||
+           drillText.includes('position');
   }
   
   // Special handling for driving/slicing problems
@@ -153,23 +250,6 @@ export function isDrillRelevantToProblem(drill: any, problem: string): boolean {
            drillText.includes('slice') || 
            drillText.includes('hook') ||
            drillText.includes('path');
-  }
-  
-  // Special handling for topping/thin hitting problems
-  if (problemLower.includes('top') || 
-      problemLower.includes('thin') || 
-      problemLower.includes('fat') || 
-      problemLower.includes('chunk')) {
-    
-    if (drill.category?.toLowerCase() === 'putting' || drillText.includes('putt')) {
-      return false; // Putting drills aren't relevant for strike problems
-    }
-    
-    return drillText.includes('contact') || 
-           drillText.includes('strike') || 
-           drillText.includes('compress') || 
-           drillText.includes('impact') ||
-           drillText.includes('position');
   }
   
   // Special handling for short game problems
@@ -206,4 +286,20 @@ export function isDrillRelevantToProblem(drill: any, problem: string): boolean {
   }
   
   return hasKeyTermMatch;
+}
+
+// Helper function to check if multiple related terms appear together
+export function hasCompoundTerms(text: string, termSets: string[][]): boolean {
+  for (const termSet of termSets) {
+    let matchCount = 0;
+    for (const term of termSet) {
+      if (text.includes(term)) {
+        matchCount++;
+      }
+    }
+    if (matchCount >= 2) {
+      return true;
+    }
+  }
+  return false;
 }

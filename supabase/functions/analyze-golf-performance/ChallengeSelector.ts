@@ -2,7 +2,7 @@
 /**
  * Class responsible for selecting appropriate challenges based on user problems
  */
-import { identifySubcategory } from './golfCategorization.ts';
+import { identifySubcategory, validateContextMatch } from './golfCategorization.ts';
 
 export class ChallengeSelector {
   private problem: string;
@@ -17,7 +17,7 @@ export class ChallengeSelector {
 
   /**
    * Select the most appropriate challenge based on the user's problem
-   * and skill level
+   * and skill level with enhanced relevance matching
    */
   selectChallenge(challenges: any[]): any {
     if (!this.problem || !challenges || challenges.length === 0) {
@@ -38,9 +38,14 @@ export class ChallengeSelector {
     
     console.log(`Identified subcategory: ${subcategory || 'None'}`);
     
-    // Lower threshold for putting/bunker problems to ensure matches
-    let minimumThreshold = normalizedProblem.includes('putt') || 
-                          normalizedProblem.includes('bunker') ? 0.2 : 0.3;
+    // Higher thresholds for better specificity
+    let minimumThreshold = 0.5; // Increased from previous values
+    
+    // Lower threshold slightly only for specific cases where we need more flexibility
+    if (normalizedProblem.includes('putt') || 
+        normalizedProblem.includes('bunker')) {
+      minimumThreshold = 0.4;
+    }
 
     // For each challenge, calculate a relevance score with stricter context matching
     for (const challenge of challenges) {
@@ -54,6 +59,12 @@ export class ChallengeSelector {
         challenge.instruction2?.toLowerCase() || '',
         challenge.instruction3?.toLowerCase() || '',
       ].join(' ');
+
+      // First, validate basic context match
+      if (!validateContextMatch(challengeText, this.problem, this.category)) {
+        // Skip this challenge as it doesn't match the required context
+        continue;
+      }
 
       let score = 0;
 
@@ -73,6 +84,11 @@ export class ChallengeSelector {
         score += this.calculateBunkerChallengeScore(challengeText, normalizedProblem);
       }
       
+      // Special handling for topping/thin hit challenges
+      else if (normalizedProblem.includes('top') || normalizedProblem.includes('thin')) {
+        score += this.calculateContactChallengeScore(challengeText, normalizedProblem);
+      }
+      
       // General challenge scoring
       else {
         score += this.calculateGeneralChallengeScore(challengeText, normalizedProblem);
@@ -83,8 +99,11 @@ export class ChallengeSelector {
       
       // Strong boost for matching subcategory
       if (subcategory && challengeText.includes(subcategory)) {
-        score += 3;
+        score += 4; // Increased from 3
       }
+      
+      // Check instruction relevance - highly important
+      score += this.calculateInstructionRelevanceScore(challenge, normalizedProblem);
 
       console.log(`Challenge: "${challenge.title}" - Score: ${score}`);
 
@@ -96,6 +115,7 @@ export class ChallengeSelector {
 
     console.log(`Best match: ${bestMatch?.title || 'None'} with score ${highestScore}`);
 
+    // Require a higher minimum threshold for better specificity
     return highestScore > minimumThreshold ? bestMatch : null;
   }
 
@@ -109,10 +129,13 @@ export class ChallengeSelector {
     
     // Specific putting type matching
     if (problem.includes('lag') && challengeText.includes('lag')) {
-      score += 3;
+      score += 4; // Increased from 3
     } else if ((problem.includes('short') || problem.includes('3 foot')) && 
                challengeText.includes('short')) {
-      score += 3;
+      score += 4; // Increased from 3
+    } else if ((problem.includes('read') || problem.includes('break')) && 
+               (challengeText.includes('read') || challengeText.includes('break'))) {
+      score += 4; // New specific match
     }
     
     // Instruction validation
@@ -120,6 +143,14 @@ export class ChallengeSelector {
         challengeText.includes('line') || 
         challengeText.includes('speed')) {
       score += 2;
+    }
+    
+    // Penalty for non-putting elements
+    if (challengeText.includes('driver') || 
+        challengeText.includes('iron') || 
+        challengeText.includes('chip') ||
+        challengeText.includes('bunker')) {
+      score -= 5; // Strong penalty for irrelevant content
     }
     
     return score;
@@ -137,14 +168,50 @@ export class ChallengeSelector {
     if (challengeText.includes('explosion') || 
         challengeText.includes('splash') || 
         challengeText.includes('sand shot')) {
-      score += 3;
+      score += 4; // Increased from 3
     }
     
     // Penalize challenges focusing on non-bunker aspects
     if (challengeText.includes('fringe') || 
         challengeText.includes('fairway') || 
-        challengeText.includes('green')) {
-      score -= 2;
+        challengeText.includes('green') ||
+        challengeText.includes('putt') ||
+        challengeText.includes('driver')) {
+      score -= 4; // Increased from 2
+    }
+    
+    return score;
+  }
+  
+  private calculateContactChallengeScore(challengeText: string, problem: string): number {
+    let score = 0;
+    
+    // Core contact problem validation
+    if (challengeText.includes('contact') || 
+        challengeText.includes('strike') ||
+        challengeText.includes('ball position')) {
+      score += 5;
+    }
+    
+    // Validate specific contact skills in instructions
+    if (challengeText.includes('weight') || 
+        challengeText.includes('posture') || 
+        challengeText.includes('divot') ||
+        challengeText.includes('compression')) {
+      score += 4;
+    }
+    
+    // Check specific terminology match
+    if ((problem.includes('top') && challengeText.includes('top')) ||
+        (problem.includes('thin') && challengeText.includes('thin'))) {
+      score += 3;
+    }
+    
+    // Penalize irrelevant aspects
+    if (challengeText.includes('putt') || 
+        challengeText.includes('bunker') || 
+        challengeText.includes('chip')) {
+      score -= 4;
     }
     
     return score;
@@ -170,7 +237,42 @@ export class ChallengeSelector {
       score += 3;
     }
     
+    // Check for compound term matches (multiple related terms appearing together)
+    const compoundMatches = this.checkCompoundTermMatches(challengeText, problem);
+    score += compoundMatches * 3;
+    
     return score;
+  }
+  
+  private checkCompoundTermMatches(challengeText: string, problem: string): number {
+    // Define groups of related terms
+    const termGroups = [
+      ['slice', 'path', 'face', 'alignment'],
+      ['hook', 'path', 'grip', 'clubface'],
+      ['distance', 'carry', 'yardage', 'power'],
+      ['direction', 'aim', 'target', 'alignment'],
+      ['chip', 'pitch', 'around', 'green'],
+      ['contact', 'strike', 'compression', 'ball first']
+    ];
+    
+    let compoundMatches = 0;
+    
+    for (const group of termGroups) {
+      // Check if problem contains any term from group
+      const problemHasTerm = group.some(term => problem.includes(term));
+      
+      if (problemHasTerm) {
+        // Count how many terms from this group appear in the challenge
+        const matchCount = group.filter(term => challengeText.includes(term)).length;
+        
+        // If multiple terms from the same group appear, it's a strong contextual match
+        if (matchCount >= 2) {
+          compoundMatches++;
+        }
+      }
+    }
+    
+    return compoundMatches;
   }
 
   private calculateDifficultyMatchScore(challenge: any): number {
@@ -190,5 +292,50 @@ export class ChallengeSelector {
     }
     
     return 0;
+  }
+  
+  private calculateInstructionRelevanceScore(challenge: any, problem: string): number {
+    let score = 0;
+    const relevantInstructions = 0;
+    
+    // Check if instructions specifically address the problem
+    if (challenge.instruction1) {
+      const instruction = challenge.instruction1.toLowerCase();
+      if (this.isInstructionRelevant(instruction, problem)) {
+        score += 2;
+      }
+    }
+    
+    if (challenge.instruction2) {
+      const instruction = challenge.instruction2.toLowerCase();
+      if (this.isInstructionRelevant(instruction, problem)) {
+        score += 2;
+      }
+    }
+    
+    if (challenge.instruction3) {
+      const instruction = challenge.instruction3.toLowerCase();
+      if (this.isInstructionRelevant(instruction, problem)) {
+        score += 2;
+      }
+    }
+    
+    // If all instructions are relevant, give extra boost
+    if (relevantInstructions >= 3) {
+      score += 3; // Strong bonus for comprehensive relevance
+    }
+    
+    return score;
+  }
+  
+  private isInstructionRelevant(instruction: string, problem: string): boolean {
+    // Extract key problem terms
+    const problemTerms = problem
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 3);
+      
+    // Check if any problem term appears in the instruction
+    return problemTerms.some(term => instruction.includes(term));
   }
 }
