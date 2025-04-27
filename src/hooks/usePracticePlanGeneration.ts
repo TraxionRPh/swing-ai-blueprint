@@ -84,6 +84,11 @@ export const usePracticePlanGeneration = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Log details for debugging
+      console.log('Fetched drills:', drills?.length || 0);
+      console.log('Issue being analyzed:', issue);
+      console.log('Sending request to analyze-golf-performance');
+
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
         body: { 
           userId, 
@@ -91,22 +96,27 @@ export const usePracticePlanGeneration = () => {
           handicapLevel: handicapLevel || 'intermediate',
           specificProblem: issue || 'Improve overall golf performance',
           planDuration,
-          includeProgressChallenge: true,
           availableDrills: drills || []
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
-      const practicePlan = {
+      console.log('Received response from edge function:', data);
+      
+      // Create a default practice plan if data is missing
+      const defaultPlan = {
         problem: issue || "Golf performance optimization",
-        diagnosis: data.diagnosis || "AI analysis of your golf game",
-        rootCauses: data.rootCauses || ["Technique", "Equipment"],
+        diagnosis: "AI analysis of your golf game",
+        rootCauses: ["Technique", "Equipment"],
         recommendedDrills: drills || [],
         practicePlan: {
           duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
           frequency: "Daily",
-          plan: data.practicePlan?.plan || Array.from({ length: parseInt(planDuration) }, (_, i) => ({
+          plan: Array.from({ length: parseInt(planDuration) }, (_, i) => ({
             day: i + 1,
             drills: (drills || []).slice(0, 3).map(drill => ({
               drill,
@@ -118,6 +128,26 @@ export const usePracticePlanGeneration = () => {
           }))
         }
       };
+
+      // Handle the possibility of incomplete data from the edge function
+      let practicePlan: GeneratedPracticePlan;
+      
+      if (data && data.diagnosis && data.rootCauses && data.practicePlan?.plan) {
+        practicePlan = {
+          problem: issue || "Golf performance optimization",
+          diagnosis: data.diagnosis,
+          rootCauses: data.rootCauses,
+          recommendedDrills: drills || [],
+          practicePlan: {
+            duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
+            frequency: "Daily",
+            plan: data.practicePlan.plan
+          }
+        };
+      } else {
+        console.warn('Received incomplete data from edge function, using default plan');
+        practicePlan = defaultPlan;
+      }
 
       return practicePlan;
     } catch (error) {
