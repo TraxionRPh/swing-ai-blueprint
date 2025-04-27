@@ -35,21 +35,21 @@ export const DailyPlanSection = ({
 
   return (
     <Card>
-      <CardHeader className="bg-muted/50 cursor-pointer" onClick={toggleOpen}>
-        <CardTitle className="text-lg flex justify-between items-center">
-          <div className="flex items-center gap-2">
+      <CardHeader className="bg-muted/50 cursor-pointer py-3" onClick={toggleOpen}>
+        <div className="space-y-1">
+          <CardTitle className="text-lg flex justify-between items-center">
             <span>Day {dayNumber}: {dayPlan?.focus || `Practice Day ${dayNumber}`}</span>
-            <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-              {completionPercentage}% Complete
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-normal text-muted-foreground">{dayPlan?.duration || '30 minutes'}</span>
             <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
               {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </Button>
+          </CardTitle>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              {completionPercentage}% Complete
+            </span>
+            <span>{dayPlan?.duration || '30 minutes'}</span>
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
       {isOpen && (
         <CardContent className="p-6">
