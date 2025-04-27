@@ -1,6 +1,6 @@
 
 import { DrillData, PlanDay, AIResponse } from './types.ts';
-import { getDrillRelevanceScore } from './drillMatching.ts';
+import { getDrillRelevanceScore, isPuttingRelated } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
 import { DiagnosisGenerator } from './DiagnosisGenerator.ts';
 import { PracticeDayGenerator } from './PracticeDayGenerator.ts';
@@ -60,6 +60,26 @@ export class PlanGenerator {
     
     if (!this.specificProblem) return this.drills;
 
+    // Special handling for putting problems
+    const isPuttingProblem = this.specificProblem.toLowerCase().includes('putt');
+    
+    // Handle special cases by problem type
+    if (isPuttingProblem) {
+      // Pre-filter to only include putting-related drills for putting problems
+      const puttingDrills = this.drills.filter(drill => isPuttingRelated(drill));
+      console.log(`Found ${puttingDrills.length} putting-specific drills`);
+      
+      // If we have enough putting drills, use only those
+      if (puttingDrills.length >= 5) {
+        console.log("Using putting-specific drills only");
+        return this.rankDrillsByRelevance(puttingDrills);
+      }
+    }
+
+    return this.rankDrillsByRelevance(this.drills);
+  }
+  
+  private rankDrillsByRelevance(drillsToRank: DrillData[]): DrillData[] {
     const searchTerms = this.problemCategory ?
       extractRelevantSearchTerms(this.specificProblem, this.problemCategory) :
       this.specificProblem.toLowerCase()
@@ -70,7 +90,7 @@ export class PlanGenerator {
     console.log(`Using search terms: ${searchTerms.join(', ')}`);
 
     // Score and sort all drills
-    const scoredDrills = this.drills
+    const scoredDrills = drillsToRank
       .filter(drill => drill && drill.title && !drill.title.toLowerCase().includes('challenge'))
       .map(drill => {
         const drillText = [
@@ -87,6 +107,15 @@ export class PlanGenerator {
           this.specificProblem,
           this.problemCategory
         );
+        
+        // Special boost for category-specific drills
+        let categoryBoost = 0;
+        
+        // Special boost for putting drills if this is a putting problem
+        if (this.specificProblem.toLowerCase().includes('putt') && isPuttingRelated(drill)) {
+          categoryBoost += 0.5;
+          console.log(`Boosting putting drill: ${drill.title}`);
+        }
         
         // Adjust score based on user's handicap level if available
         let handicapAdjustment = 0;
@@ -111,9 +140,16 @@ export class PlanGenerator {
           }
         }
         
+        const finalScore = baseRelevanceScore + handicapAdjustment + categoryBoost;
+        
+        // Log high-scoring drills for debugging
+        if (finalScore > 0.7) {
+          console.log(`High-scoring drill: ${drill.title} (${finalScore.toFixed(2)})`);
+        }
+        
         return { 
           ...drill, 
-          relevanceScore: baseRelevanceScore + handicapAdjustment 
+          relevanceScore: finalScore 
         };
       })
       .filter(drill => drill.relevanceScore > 0.2) // Only keep somewhat relevant drills
@@ -121,18 +157,18 @@ export class PlanGenerator {
 
     console.log(`Found ${scoredDrills.length} relevant drills for "${this.specificProblem}"`);
     
-    // Take top 6 most relevant drills
-    const selectedDrills = scoredDrills.slice(0, 6);
+    // Take top 8 most relevant drills to ensure variety
+    const selectedDrills = scoredDrills.slice(0, 8);
     
     // If we don't have enough drills, add some fundamental drills
-    if (selectedDrills.length < 3) {
+    if (selectedDrills.length < 4) {
       const fundamentalDrills = this.drills.filter(drill => {
         // Safe guard against undefined drills
         if (!drill || !drill.title) return false;
         
         const drillText = drill.title.toLowerCase();
         return drillText.includes('basic') || drillText.includes('fundamental');
-      }).slice(0, 3 - selectedDrills.length);
+      }).slice(0, 4 - selectedDrills.length);
       
       return [...selectedDrills, ...fundamentalDrills];
     }
@@ -156,6 +192,8 @@ export class PlanGenerator {
       }));
     }
     
+    // Make sure we have different drills for each day
+    // We'll use a rotating approach to ensure variety between days
     return days.map((day, index) => {
       const validDay = {
         day: day.day || index + 1,
@@ -164,22 +202,35 @@ export class PlanGenerator {
         drills: Array.isArray(day.drills) ? day.drills : []
       };
 
+      // Ensure we have at least 2-3 drills per day, with variety between days
       if (!validDay.drills || validDay.drills.length < 2) {
-        // Use a smarter method to distribute drills across days
-        // Make sure each day gets different drills
-        const drillsPerDay = Math.max(3, Math.min(relevantDrills.length, Math.ceil(relevantDrills.length / this.planDuration)));
+        // Distribute drills across days in a way that ensures variety
+        const drillsPerDay = Math.min(3, Math.ceil(relevantDrills.length / 2));
+        
+        // The starting drill index will rotate for each day to ensure different drills
         const startIdx = (index * drillsPerDay) % Math.max(relevantDrills.length, 1);
         let drillsForDay: DrillData[] = [];
         
+        // Get primary drills using a rotating window into our relevant drills
         for (let i = 0; i < drillsPerDay && i < relevantDrills.length; i++) {
           const drillIndex = (startIdx + i) % relevantDrills.length;
           drillsForDay.push(relevantDrills[drillIndex]);
         }
         
+        // For additional variety, add a different drill from the back of the list
+        const extraDrillIndex = (relevantDrills.length - 1 - index) % relevantDrills.length;
+        if (!drillsForDay.includes(relevantDrills[extraDrillIndex])) {
+          drillsForDay.push(relevantDrills[extraDrillIndex]);
+        }
+        
+        // Make sure we don't have duplicate drills in the day
+        drillsForDay = Array.from(new Set(drillsForDay));
+        
         validDay.drills = drillsForDay.map(drill => ({
           id: drill.id,
           sets: 3,
-          reps: 10
+          reps: 10,
+          drill // Include the full drill object
         }));
       }
 
@@ -372,20 +423,27 @@ export class PlanGenerator {
     
     // Create practice plan days with a more balanced distribution of drills
     const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => {
+      // Generate unique focus for each day
+      const dayFocus = practiceDayGenerator.getFocusByDay(i);
+      
       // If no relevant drills are found, create days with focus areas but no drills
       if (!relevantDrills || relevantDrills.length === 0) {
         return {
           day: i + 1,
-          focus: `Day ${i + 1}: ${practiceDayGenerator.getFocusByDay(i)}`,
+          focus: `Day ${i + 1}: ${dayFocus}`,
           duration: "45 minutes",
           drills: [] // Empty drills array
         };
       }
       
-      // Make sure drills are evenly distributed across days
+      // Calculate how many drills to include per day to ensure variety
+      // We want 2-3 drills per day with minimal repetition
       const drillsPerDay = Math.min(3, Math.ceil(relevantDrills.length / this.planDuration));
+      
+      // Select drills in a rotating pattern to ensure each day has different drills
       const startIndex = (i * drillsPerDay) % relevantDrills.length;
       
+      // Get initial set of drills for this day
       const dayDrills = [];
       for (let j = 0; j < drillsPerDay && j < relevantDrills.length; j++) {
         const index = (startIndex + j) % relevantDrills.length;
@@ -394,12 +452,22 @@ export class PlanGenerator {
         }
       }
       
+      // Add one more drill for variety (from a different part of the list)
+      const extraDrillIndex = (relevantDrills.length - 1 - i) % relevantDrills.length;
+      if (extraDrillIndex >= 0 && relevantDrills[extraDrillIndex] && 
+          !dayDrills.includes(relevantDrills[extraDrillIndex])) {
+        dayDrills.push(relevantDrills[extraDrillIndex]);
+      }
+      
+      // Ensure no duplicates
+      const uniqueDrills = Array.from(new Set(dayDrills));
+      
       return {
         day: i + 1,
-        focus: `Day ${i + 1}: ${practiceDayGenerator.getFocusByDay(i)}`,
+        focus: `Day ${i + 1}: ${dayFocus}`,
         duration: "45 minutes",
-        drills: dayDrills.map(drill => ({
-          id: drill.id,
+        drills: uniqueDrills.map(drill => ({
+          drill,
           sets: 3,
           reps: 10
         }))
@@ -444,7 +512,8 @@ export class PlanGenerator {
         plan: validatedPlans,
         challenge: selectedChallenge
       },
-      performanceInsights: combinedInsights
+      performanceInsights: combinedInsights,
+      isAIGenerated: this.isAIGenerated
     };
   }
 }

@@ -94,6 +94,33 @@ export const usePracticePlanGeneration = () => {
       
       console.log(`Found ${drills.length} drills in database`);
       
+      // Special handling for putting issues
+      if (issue.toLowerCase().includes('putt')) {
+        const puttingDrills = drills.filter((drill: Drill) => {
+          if (!drill) return false;
+          
+          const drillText = [
+            drill.title?.toLowerCase() || '',
+            drill.overview?.toLowerCase() || '',
+            drill.category?.toLowerCase() || '',
+            ...(Array.isArray(drill.focus) ? drill.focus.map(f => f.toLowerCase()) : [])
+          ].join(' ');
+          
+          return drillText.includes('putt') || 
+                 drillText.includes('green') || 
+                 drillText.includes('hole') || 
+                 drillText.includes('cup') ||
+                 (drill.category?.toLowerCase() === 'putting');
+        });
+        
+        console.log(`Found ${puttingDrills.length} putting-specific drills`);
+        
+        // If we found putting drills, prioritize them
+        if (puttingDrills.length >= 4) {
+          return rankDrillsByRelevance(puttingDrills as Drill[], searchTerms, problemCategory, issue);
+        }
+      }
+      
       return rankDrillsByRelevance(drills as Drill[], searchTerms, problemCategory, issue);
     } catch (error) {
       console.error('Error finding relevant drills:', error);
@@ -162,13 +189,14 @@ export const usePracticePlanGeneration = () => {
         console.log(`Drill "${drill.title}" got skill bonus: +${skillBonus.toFixed(2)} points`);
       }
       
-      if (issue.toLowerCase().includes('topping') && 
-         (drillText.includes('top') || 
-          drillText.includes('thin') || 
-          drillText.includes('ball position') || 
-          drillText.includes('strike'))) {
-        score += 0.5;
-        console.log(`Drill "${drill.title}" got topping boost: +0.5 points`);
+      // Special handling for putting drills in putting-related issues
+      if (issue.toLowerCase().includes('putt') && 
+         (drillText.includes('putt') || 
+          drillText.includes('green') || 
+          drillText.includes('stroke') ||
+          drill.category?.toLowerCase() === 'putting')) {
+        score += 0.7;
+        console.log(`Drill "${drill.title}" got putting boost: +0.7 points`);
       }
       
       console.log(`Drill "${drill.title}" final score: ${score.toFixed(2)}`);
@@ -225,7 +253,7 @@ export const usePracticePlanGeneration = () => {
     }
     
     if (lowerIssue.includes('putt') && drillText.includes('putt')) {
-      bonus += 0.2;
+      bonus += 0.4;
     }
     
     if (lowerIssue.includes('sand') && drillText.includes('bunker')) {
@@ -264,15 +292,52 @@ export const usePracticePlanGeneration = () => {
       const relevantDrills = await findRelevantDrills(issue);
       console.log('Found relevant drills:', relevantDrills.length);
       
-      if (relevantDrills.length < 2) {
-        const { data: fundamentalDrills } = await supabase
+      // Make sure we have enough drills for variety (at least 6)
+      if (relevantDrills.length < 6) {
+        // First, try to get more category-specific drills
+        let categoryQuery = '';
+        
+        if (issue.toLowerCase().includes('putt')) {
+          categoryQuery = "category.ilike.%putting%";
+        } else if (issue.toLowerCase().includes('chip') || issue.toLowerCase().includes('short')) {
+          categoryQuery = "category.ilike.%short game%";
+        } else if (issue.toLowerCase().includes('driv') || issue.toLowerCase().includes('tee')) {
+          categoryQuery = "category.ilike.%driving%";
+        } else {
+          categoryQuery = "category.ilike.%fundamental%";
+        }
+        
+        const { data: categoryDrills } = await supabase
           .from('drills')
           .select('*')
-          .or('title.ilike.%fundamental%,title.ilike.%basic%')
-          .limit(3);
+          .or(categoryQuery)
+          .limit(5);
         
-        if (fundamentalDrills) {
-          relevantDrills.push(...fundamentalDrills);
+        if (categoryDrills) {
+          console.log(`Found ${categoryDrills.length} additional category drills`);
+          
+          // Add drills we don't already have
+          const existingIds = new Set(relevantDrills.map(d => d.id));
+          const newCategoryDrills = categoryDrills.filter(d => !existingIds.has(d.id));
+          
+          relevantDrills.push(...newCategoryDrills);
+        }
+        
+        // If we still need more, add fundamental drills
+        if (relevantDrills.length < 6) {
+          const { data: fundamentalDrills } = await supabase
+            .from('drills')
+            .select('*')
+            .or('title.ilike.%fundamental%,title.ilike.%basic%')
+            .limit(6 - relevantDrills.length);
+          
+          if (fundamentalDrills) {
+            // Add drills we don't already have
+            const existingIds = new Set(relevantDrills.map(d => d.id));
+            const newFundamentalDrills = fundamentalDrills.filter(d => !existingIds.has(d.id));
+            
+            relevantDrills.push(...newFundamentalDrills);
+          }
         }
         
         if (relevantDrills.length === 0) {
@@ -465,15 +530,21 @@ export const usePracticePlanGeneration = () => {
       
       console.log(`Day ${day.day} - Processed ${processedDrills.length} drills successfully`);
       
-      if (processedDrills.length === 0 && availableDrills.length > 0) {
-        const fallbackDrill = availableDrills[0];
-        console.log(`Adding fallback drill to empty day ${day.day}: ${fallbackDrill.title}`);
-        processedDrills.push({
-          drill: fallbackDrill,
-          sets: 3,
-          reps: 10,
-          id: fallbackDrill.id
-        });
+      // Ensure we have at least 2 drills per day
+      if (processedDrills.length < 2 && availableDrills.length > 1) {
+        // Get up to 2 fallback drills
+        const neededDrills = 2 - processedDrills.length;
+        
+        for (let i = 0; i < neededDrills && i < availableDrills.length; i++) {
+          const fallbackDrill = availableDrills[i];
+          console.log(`Adding fallback drill to day ${day.day}: ${fallbackDrill.title}`);
+          processedDrills.push({
+            drill: fallbackDrill,
+            sets: 3,
+            reps: 10,
+            id: fallbackDrill.id
+          });
+        }
       }
       
       return {
