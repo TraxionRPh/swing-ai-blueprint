@@ -16,10 +16,10 @@ export interface ProblemCategory {
 export const PROBLEM_CATEGORIES: ProblemCategory[] = [
   {
     name: "Ball Striking",
-    keywords: ["striking", "contact", "chunk", "fat", "thin", "top", "skull", "compression", "ball first", "turf interaction", "impact"],
+    keywords: ["striking", "contact", "chunk", "fat", "thin", "top", "topping", "skull", "compression", "ball first", "turf interaction", "impact"],
     relatedClubs: ["iron", "irons", "wedge", "wedges", "hybrid"],
     outcomeMetrics: ["Greens in Regulation", "Approach Shot Accuracy", "Ball Striking"],
-    searchTerms: ["contact", "strike", "compress", "chunk", "thin", "impact"]
+    searchTerms: ["contact", "strike", "compress", "chunk", "thin", "impact", "top", "topping"]
   },
   {
     name: "Driving Accuracy",
@@ -97,6 +97,8 @@ export function detectClubType(problem: string): string | null {
   if (lowerProblem.includes("chunk") || 
       lowerProblem.includes("fat") ||
       lowerProblem.includes("thin") ||
+      lowerProblem.includes("top") ||
+      lowerProblem.includes("topping") ||
       lowerProblem.includes("contact")) {
     return "irons"; // Most common with irons
   }
@@ -170,6 +172,26 @@ export function extractRelevantSearchTerms(problem: string, category: ProblemCat
   const clubType = detectClubType(problem);
   if (clubType) {
     searchTerms.add(clubType);
+  }
+  
+  // Add specific issue keywords
+  if (lowerProblem.includes('top') || lowerProblem.includes('topping')) {
+    searchTerms.add('topping');
+    searchTerms.add('ball');
+  }
+  if (lowerProblem.includes('chunk') || lowerProblem.includes('fat')) {
+    searchTerms.add('chunking');
+    searchTerms.add('fat');
+  }
+  if (lowerProblem.includes('thin') || lowerProblem.includes('skull')) {
+    searchTerms.add('thin');
+    searchTerms.add('skull');
+  }
+  if (lowerProblem.includes('slice') || lowerProblem.includes('slicing')) {
+    searchTerms.add('slice');
+  }
+  if (lowerProblem.includes('hook') || lowerProblem.includes('hooking')) {
+    searchTerms.add('hook');
   }
   
   // Add specific words from the problem that are more than 3 chars

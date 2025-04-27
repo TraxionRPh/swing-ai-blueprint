@@ -65,13 +65,14 @@ serve(async (req) => {
 
     // If no challenges found in database, use default challenges based on problem
     if (!challenges || challenges.length === 0) {
-      console.warn("No challenges found in database. Creating default challenge.");
+      console.error("No challenges found in database. Creating default challenge.");
       
       // Generate the practice plan with a default challenge
       const response = await planGenerator.generatePlan([]);
       
       console.log("Plan generation complete with default challenge");
       console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
+      console.log("Challenge included in response:", response.practicePlan.challenge?.title || "None");
 
       return ResponseHandler.createSuccessResponse(
         response,
