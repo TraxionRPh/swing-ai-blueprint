@@ -42,6 +42,7 @@ export interface DrillWithSets {
   drill: Drill;
   sets: number;
   reps: number;
+  id?: string; // Added id field to support existing code that references it
 }
 
 export interface SavedPracticePlan {

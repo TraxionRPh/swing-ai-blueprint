@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -237,9 +236,9 @@ export const usePracticePlanGeneration = () => {
         practicePlan.practicePlan.plan.forEach(day => {
           if (Array.isArray(day.drills)) {
             day.drills.forEach((drillWithSets, index) => {
-              // If we only have an ID but not the full object, find the matching drill
-              if ((typeof drillWithSets.drill === 'string' || !drillWithSets.drill) && drillWithSets.id) {
-                const drillId = drillWithSets.id || drillWithSets.drill;
+              // If we only have a string drill ID but not the full object, find the matching drill
+              if (typeof drillWithSets.drill === 'string') {
+                const drillId = drillWithSets.drill;
                 const matchingDrill = relevantDrills.find(d => d.id === drillId);
                 if (matchingDrill) {
                   day.drills[index].drill = matchingDrill;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -51,15 +50,10 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   filteredDays.forEach(day => {
     if (day.drills) {
       day.drills.forEach(drillWithSets => {
-        if (drillWithSets.drill && typeof drillWithSets.drill === 'string') {
+        // Check if drill is a string ID instead of a Drill object
+        if (typeof drillWithSets.drill === 'string') {
           // Find the drill object from recommended drills
           const matchingDrill = plan.recommendedDrills.find(d => d.id === drillWithSets.drill);
-          if (matchingDrill) {
-            drillWithSets.drill = matchingDrill;
-          }
-        } else if (drillWithSets.id && !drillWithSets.drill) {
-          // If we just have an ID, try to find the drill
-          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillWithSets.id);
           if (matchingDrill) {
             drillWithSets.drill = matchingDrill;
           }
