@@ -1,5 +1,5 @@
-
 import { Drill } from "./drill";
+import { Challenge } from "./challenge";
 
 export interface GeneratedPracticePlan {
   id?: string; // Adding id property to resolve the missing property error
@@ -11,6 +11,7 @@ export interface GeneratedPracticePlan {
     duration: string;
     frequency: string;
     plan: DayPlan[];
+    challenge?: Challenge; // Add challenge property
   };
 }
 

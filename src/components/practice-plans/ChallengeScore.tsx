@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,10 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ChallengeScoreProps {
   planId?: string;
-  type: 'initial' | 'final';
+  type: "initial" | "final";
+  attempts?: number;
 }
 
-export const ChallengeScore = ({ planId, type }: ChallengeScoreProps) => {
+export const ChallengeScore = ({ planId, type, attempts }: ChallengeScoreProps) => {
   const { toast } = useToast();
   const [score, setScore] = useState(() => {
     const saved = localStorage.getItem(`challenge-${type}-${planId}`);
