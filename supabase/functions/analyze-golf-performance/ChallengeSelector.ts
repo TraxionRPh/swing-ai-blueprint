@@ -2,6 +2,8 @@
 /**
  * Class responsible for selecting appropriate challenges based on user problems
  */
+import { identifySubcategory } from './golfCategorization.ts';
+
 export class ChallengeSelector {
   private problem: string;
   private category: any;
@@ -190,4 +192,3 @@ export class ChallengeSelector {
     return 0;
   }
 }
-
