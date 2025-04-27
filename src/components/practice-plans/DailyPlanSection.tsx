@@ -5,6 +5,7 @@ import { DayPlan } from "@/types/practice-plan";
 import { DrillCard } from "./DrillCard";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Drill } from "@/types/drill";
 
 interface DailyPlanSectionProps {
   dayPlan: DayPlan;
@@ -25,12 +26,23 @@ export const DailyPlanSection = ({
     setIsOpen(!isOpen);
   };
 
+  // Helper function to safely get drill title
+  const getDrillTitle = (drillData: Drill | string): string => {
+    if (typeof drillData === 'string') {
+      return 'Unknown Drill';
+    }
+    return drillData.title;
+  };
+
   // Make sure we have valid drills
   const drills = Array.isArray(dayPlan?.drills) ? dayPlan.drills : [];
 
   // Calculate completion percentage
   const totalDrills = drills.length;
-  const completedCount = drills.filter(d => d?.drill?.title && completedDrills[d.drill.title]).length;
+  const completedCount = drills.filter(d => {
+    if (!d.drill) return false;
+    return completedDrills[getDrillTitle(d.drill)];
+  }).length;
   const completionPercentage = totalDrills > 0 ? Math.round((completedCount / totalDrills) * 100) : 0;
 
   return (
@@ -55,18 +67,30 @@ export const DailyPlanSection = ({
         <CardContent className="p-6">
           <div className="space-y-4">
             {drills.length > 0 ? (
-              drills.map((drillWithSets, index) => (
-                drillWithSets?.drill ? (
+              drills.map((drillWithSets, index) => {
+                if (!drillWithSets?.drill) return null;
+                
+                // Check if drill is a string or an object
+                const drillObject = typeof drillWithSets.drill === 'string' 
+                  ? null 
+                  : drillWithSets.drill;
+                
+                // Only render drill if we have the object data
+                return drillObject ? (
                   <DrillCard
-                    key={`${dayNumber}-${index}-${drillWithSets.drill.id || index}`}
-                    drill={drillWithSets.drill}
+                    key={`${dayNumber}-${index}-${drillObject.id || index}`}
+                    drill={drillObject}
                     sets={drillWithSets.sets || 3}
                     reps={drillWithSets.reps || 10}
-                    isCompleted={!!completedDrills[drillWithSets.drill.title]}
-                    onComplete={() => onDrillComplete(drillWithSets.drill.title)}
+                    isCompleted={!!completedDrills[drillObject.title]}
+                    onComplete={() => onDrillComplete(drillObject.title)}
                   />
-                ) : null
-              ))
+                ) : (
+                  <Card key={`${dayNumber}-${index}`} className="p-3">
+                    <p className="text-amber-600">Drill data unavailable</p>
+                  </Card>
+                );
+              })
             ) : (
               <p className="text-amber-600">No drills available for this day.</p>
             )}

@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GeneratedPracticePlan, DrillWithSets } from "@/types/practice-plan";
+import { GeneratedPracticePlan, DrillWithSets, DayPlan } from "@/types/practice-plan";
 import { Button } from "@/components/ui/button";
 import { DiagnosisCard } from "./DiagnosisCard";
 import { DailyPlanSection } from "./DailyPlanSection";
@@ -78,12 +78,20 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         drillCount: day.drills?.length || 0,
         drills: day.drills?.map(d => ({
           drillType: typeof d.drill,
-          hasId: d.drill?.id ? true : false,
-          drillTitle: d.drill?.title || 'Missing title'
+          hasId: typeof d.drill === 'string' ? d.drill : (d.drill?.id ? true : false),
+          drillTitle: typeof d.drill === 'string' ? 'ID Only' : (d.drill?.title || 'Missing title')
         }))
       })));
     }
   }, [plan]);
+
+  // Helper function to safely get drill title
+  const getDrillTitle = useCallback((drillData: Drill | string): string => {
+    if (typeof drillData === 'string') {
+      return 'Unknown Drill';
+    }
+    return drillData.title;
+  }, []);
 
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
@@ -194,7 +202,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
 /**
  * Custom hook to validate and process plan day data
  */
-function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1") {
+function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): DayPlan[] {
   // Extract and validate plan days
   const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
     ? plan.practicePlan.plan 
@@ -227,19 +235,12 @@ function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1") {
             };
           } else {
             console.warn(`Could not find drill with ID ${drillId}`);
-            return null;
+            return drillWithSets; // Keep the string reference, handle at render time
           }
         }
         
         // If it's already an object, ensure it has an ID
-        if (drillWithSets.drill && typeof drillWithSets.drill === 'object') {
-          return {
-            ...drillWithSets,
-            id: drillWithSets.drill.id // Make sure ID is set
-          };
-        }
-        
-        return null;
+        return drillWithSets;
       }).filter(Boolean) // Remove null values
     };
   });

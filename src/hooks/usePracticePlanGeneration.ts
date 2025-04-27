@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan, DrillWithSets } from "@/types/practice-plan";
@@ -349,38 +348,59 @@ export const usePracticePlanGeneration = () => {
       }
       
       // Process each drill in the day
-      day.drills = day.drills.map((drillWithSets: any): DrillWithSets => {
+      const processedDrills = day.drills.map((drillWithSets: any): DrillWithSets | null => {
+        // Skip if no drill data
+        if (!drillWithSets || !drillWithSets.drill) {
+          console.warn('Invalid drill entry:', drillWithSets);
+          return null;
+        }
+
         // Set defaults if missing
         const sets = drillWithSets.sets || 3;
         const reps = drillWithSets.reps || 10;
-        let drillObject: Drill | undefined;
         
         // Check if we need to look up the drill
         if (typeof drillWithSets.drill === 'string') {
           const drillId = drillWithSets.drill;
-          drillObject = availableDrills.find(d => d.id === drillId);
+          const drillObject = availableDrills.find(d => d.id === drillId);
           
-          if (!drillObject) {
-            console.warn(`Could not find drill with ID ${drillId}`);
-            return null; // This entry will be filtered out
+          if (drillObject) {
+            // Found the drill object, use it
+            return {
+              drill: drillObject,
+              sets,
+              reps,
+              id: drillObject.id // Ensure ID is set
+            };
+          } else {
+            console.warn(`Could not find drill with ID ${drillId}, keeping as string reference`);
+            // Keep as string reference, component will handle rendering
+            return {
+              drill: drillId,
+              sets,
+              reps,
+              id: drillId
+            };
           }
         } else if (typeof drillWithSets.drill === 'object' && drillWithSets.drill !== null) {
-          drillObject = drillWithSets.drill as Drill;
+          // It's already a drill object
+          const drillObject = drillWithSets.drill as Drill;
+          return {
+            drill: drillObject,
+            sets,
+            reps,
+            id: drillObject.id || drillWithSets.id // Ensure ID is set
+          };
         } else {
           console.warn('Invalid drill reference:', drillWithSets.drill);
-          return null; // This entry will be filtered out
+          return null;
         }
-        
-        // Create the processed drill with sets object
-        return {
-          drill: drillObject,
-          sets,
-          reps,
-          id: drillObject.id // Ensure ID is set for lookup stability
-        };
       }).filter(Boolean); // Remove null entries
       
-      return day;
+      return {
+        ...day,
+        drills: processedDrills
+      };
     });
   };
 

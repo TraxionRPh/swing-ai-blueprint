@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { DayPlan } from "@/types/practice-plan";
+import { DayPlan, DrillWithSets } from "@/types/practice-plan";
 import { useToast } from "@/hooks/use-toast";
 import { DrillDetailsDialog } from "./DrillDetailsDialog";
+import { Drill } from "@/types/drill";
 
 interface DailyPlanCardProps {
   dayPlan: DayPlan;
@@ -24,7 +25,7 @@ export const DailyPlanCard = ({
   onDrillComplete,
   planId
 }: DailyPlanCardProps) => {
-  const [selectedDrill, setSelectedDrill] = useState(null);
+  const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
   const { toast } = useToast();
 
   const savedCompletedDrills = useMemo(() => {
@@ -33,10 +34,18 @@ export const DailyPlanCard = ({
     return saved ? JSON.parse(saved) : completedDrills;
   }, [planId, completedDrills]);
 
-  const handleDrillComplete = (drillName: string) => {
-    onDrillComplete(drillName);
+  // Helper function to safely get drill title
+  const getDrillTitle = (drillData: Drill | string): string => {
+    if (typeof drillData === 'string') {
+      return 'Unknown Drill';
+    }
+    return drillData.title;
+  };
+
+  const handleDrillComplete = (drillTitle: string) => {
+    onDrillComplete(drillTitle);
     if (planId) {
-      const newState = { ...savedCompletedDrills, [drillName]: !savedCompletedDrills[drillName] };
+      const newState = { ...savedCompletedDrills, [drillTitle]: !savedCompletedDrills[drillTitle] };
       localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(newState));
     }
   };
@@ -49,41 +58,51 @@ export const DailyPlanCard = ({
       </div>
       <div className="p-3">
         <ul className="space-y-3">
-          {dayPlan.drills.map((drillWithSets, j) => (
-            <li key={j} className="border rounded-md overflow-hidden bg-background">
-              <div className="flex items-center p-3">
-                <Checkbox
-                  id={`drill-${dayNumber}-${j}`}
-                  checked={savedCompletedDrills[drillWithSets.drill.title]}
-                  onCheckedChange={() => handleDrillComplete(drillWithSets.drill.title)}
-                  className="mr-3"
-                />
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <label 
-                        htmlFor={`drill-${dayNumber}-${j}`}
-                        className={`text-sm font-medium ${savedCompletedDrills[drillWithSets.drill.title] ? 'text-muted-foreground line-through' : ''}`}
-                      >
-                        {drillWithSets.drill.title}
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        {drillWithSets.sets} sets of {drillWithSets.reps} reps
-                      </p>
+          {dayPlan.drills.map((drillWithSets, j) => {
+            // Skip if drill data is missing
+            if (!drillWithSets.drill) return null;
+            
+            const drillTitle = getDrillTitle(drillWithSets.drill);
+            const isCompleted = !!savedCompletedDrills[drillTitle];
+            
+            return (
+              <li key={j} className="border rounded-md overflow-hidden bg-background">
+                <div className="flex items-center p-3">
+                  <Checkbox
+                    id={`drill-${dayNumber}-${j}`}
+                    checked={isCompleted}
+                    onCheckedChange={() => handleDrillComplete(drillTitle)}
+                    className="mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <label 
+                          htmlFor={`drill-${dayNumber}-${j}`}
+                          className={`text-sm font-medium ${isCompleted ? 'text-muted-foreground line-through' : ''}`}
+                        >
+                          {drillTitle}
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                          {drillWithSets.sets} sets of {drillWithSets.reps} reps
+                        </p>
+                      </div>
+                      {typeof drillWithSets.drill !== 'string' && (
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedDrill(drillWithSets.drill as Drill)}
+                          className="ml-2"
+                        >
+                          View Details
+                        </Button>
+                      )}
                     </div>
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedDrill(drillWithSets.drill)}
-                      className="ml-2"
-                    >
-                      View Details
-                    </Button>
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
