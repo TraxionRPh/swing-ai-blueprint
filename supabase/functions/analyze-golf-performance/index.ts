@@ -107,7 +107,7 @@ serve(async (req) => {
     const { 
       userId, 
       roundData, 
-      handicapLevel, 
+      handicapLevel,
       specificProblem,
       planDuration,
       availableDrills 
@@ -126,10 +126,40 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    // Use sample drills if no drills are available in the database
-    const drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
+    // Enhanced drill matching logic
+    let drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
     
-    // Prepare drill data for the prompt - simplify to reduce token usage
+    // If we have a specific problem, filter drills more intelligently
+    if (specificProblem) {
+      const searchTerms = specificProblem.toLowerCase().split(' ')
+        .filter(term => term.length > 2)
+        .map(term => term.replace(/[^a-z]/g, ''));
+      
+      console.log("Search terms extracted:", searchTerms);
+
+      drillsToUse = drillsToUse.filter(drill => {
+        // Check all text fields for matches
+        const drillText = [
+          drill.title?.toLowerCase() || '',
+          drill.overview?.toLowerCase() || '',
+          ...(drill.focus?.map(f => f.toLowerCase()) || []),
+          drill.category?.toLowerCase() || ''
+        ].join(' ');
+
+        // Log matching process for debugging
+        const matches = searchTerms.filter(term => drillText.includes(term));
+        if (matches.length > 0) {
+          console.log(`Drill "${drill.title}" matched terms:`, matches);
+        }
+
+        return matches.length > 0;
+      });
+
+      console.log("Filtered drills count:", drillsToUse.length);
+      console.log("Matched drill titles:", drillsToUse.map(d => d.title));
+    }
+    
+    // Prepare simplified drills for the prompt
     const simplifiedDrills = drillsToUse.map(drill => ({
       id: drill.id,
       title: drill.title,
@@ -166,6 +196,8 @@ Available drills: ${JSON.stringify(simplifiedDrills)}
 
 YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyPlans as described in your instructions.`;
 
+    console.log("Sending request to OpenAI with filtered drills count:", simplifiedDrills.length);
+
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -184,7 +216,7 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
             content: userPrompt
           }
         ],
-        response_format: { type: "json_object" }, // Explicitly request JSON format
+        response_format: { type: "json_object" },
         temperature: 0.2,
       }),
     });
