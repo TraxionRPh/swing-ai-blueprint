@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -6,7 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { usePracticePlanGeneration } from './usePracticePlanGeneration';
 
 export const useAIAnalysis = () => {
-  const { generatePlan, isGenerating } = usePracticePlanGeneration();
+  // Rename the imported function to avoid name collision
+  const { generatePlan: generatePracticePlan, isGenerating } = usePracticePlanGeneration();
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -20,7 +22,8 @@ export const useAIAnalysis = () => {
       console.log("Generating practice plan:", { userId, issue, handicapLevel, planDuration });
       setIsAnalyzing(true);
 
-      const plan = await generatePlan(userId, issue, handicapLevel, planDuration);
+      // Use the renamed function
+      const plan = await generatePracticePlan(userId, issue, handicapLevel, planDuration);
       console.log("Plan generated successfully:", plan);
 
       if (userId) {
