@@ -1,7 +1,8 @@
+
 import { serve } from 'std/server';
 import { cors } from './_shared/cors.ts';
 import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from 'openai';
+import { OpenAI } from './openai.ts';
 import { PlanGenerator } from './planGenerator.ts';
 import { responseHandler } from './_shared/utils.ts';
 
