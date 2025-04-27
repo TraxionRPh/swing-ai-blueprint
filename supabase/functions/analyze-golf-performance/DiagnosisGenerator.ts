@@ -1,4 +1,3 @@
-
 /**
  * Class for generating personalized diagnosis messages for the user
  */
@@ -6,15 +5,18 @@ export class DiagnosisGenerator {
   private problem: string;
   private category: any;
   private handicapLevel: string | undefined;
+  private isAIGenerated: boolean;
 
   constructor(
     problem: string, 
     category: any, 
-    handicapLevel?: string
+    handicapLevel?: string,
+    isAIGenerated: boolean = false
   ) {
     this.problem = problem || '';
     this.category = category;
     this.handicapLevel = handicapLevel;
+    this.isAIGenerated = isAIGenerated;
   }
 
   /**
@@ -25,73 +27,98 @@ export class DiagnosisGenerator {
     scoreGoal?: number, 
     performanceInsights?: any[]
   ): string {
-    // If no specific problem, generate a generic diagnosis
-    if (!this.problem) {
-      return "Based on your profile and performance data, we've created a balanced practice plan that will help you improve your overall golf performance.";
+    if (this.isAIGenerated) {
+      return this.generateAIBasedDiagnosis(scoreGoal, performanceInsights);
+    } else {
+      return this.generateProblemBasedDiagnosis(scoreGoal, performanceInsights);
     }
+  }
 
-    const normalizedProblem = this.problem.toLowerCase();
+  private generateAIBasedDiagnosis(scoreGoal?: number, performanceInsights?: any[]): string {
     let diagnosis = '';
 
-    // Handle skill level-specific advice
-    const skillLevelIntro = this.getSkillLevelIntro();
+    // Add skill level context
+    diagnosis += this.getSkillLevelIntro();
+
+    // Add performance data analysis
+    if (performanceInsights && performanceInsights.length > 0) {
+      const highPriorityIssues = performanceInsights.filter(i => i.priority === "High");
+      const mediumPriorityIssues = performanceInsights.filter(i => i.priority === "Medium");
+      const strengths = performanceInsights.filter(i => i.priority === "Low");
+
+      if (highPriorityIssues.length > 0) {
+        diagnosis += "\n\nBased on your recent performance data, we've identified these key areas that need immediate attention:\n";
+        highPriorityIssues.forEach(issue => {
+          diagnosis += `- ${issue.description}\n`;
+        });
+      }
+
+      if (mediumPriorityIssues.length > 0) {
+        diagnosis += "\nAreas where you're making progress but can improve further:\n";
+        mediumPriorityIssues.forEach(issue => {
+          diagnosis += `- ${issue.description}\n`;
+        });
+      }
+
+      if (strengths.length > 0) {
+        diagnosis += "\nYour current strengths:\n";
+        strengths.forEach(strength => {
+          diagnosis += `- ${strength.description}\n`;
+        });
+      }
+    }
+
+    // Add score goal context if available
+    if (scoreGoal) {
+      diagnosis += `\nWith your target score of ${scoreGoal}, this practice plan focuses on the key areas that will help you achieve this goal consistently. `;
+      diagnosis += `The drills and exercises are specifically selected to address your current performance patterns and bridge the gap to your target score.`;
+    }
+
+    return diagnosis;
+  }
+
+  private generateProblemBasedDiagnosis(scoreGoal?: number, performanceInsights?: any[]): string {
+    let diagnosis = this.getSkillLevelIntro();
     
-    // Add introduction based on the skill level
-    diagnosis += skillLevelIntro;
-    
-    // Add problem-specific analysis
+    // Add problem-specific analysis based on category
     if (this.category) {
       switch (this.category.name) {
         case 'Driving':
-          diagnosis += this.getDrivingDiagnosis(normalizedProblem);
+          diagnosis += this.getDrivingDiagnosis(this.problem.toLowerCase());
           break;
         case 'Iron Play':
-          diagnosis += this.getIronPlayDiagnosis(normalizedProblem);
+          diagnosis += this.getIronPlayDiagnosis(this.problem.toLowerCase());
           break;
         case 'Short Game':
-          diagnosis += this.getShortGameDiagnosis(normalizedProblem);
+          diagnosis += this.getShortGameDiagnosis(this.problem.toLowerCase());
           break;
         case 'Putting':
-          diagnosis += this.getPuttingDiagnosis(normalizedProblem);
+          diagnosis += this.getPuttingDiagnosis(this.problem.toLowerCase());
           break;
         default:
           diagnosis += this.getGeneralDiagnosis();
       }
-    } else {
-      diagnosis += this.getGeneralDiagnosis();
     }
-    
-    // Add information about performance insights if available
+
+    // Add context from recent performance if available
     if (performanceInsights && performanceInsights.length > 0) {
-      diagnosis += "\n\nYour recent performance data shows: ";
-      
-      // Add high priority insights
-      const highPriorityInsights = performanceInsights.filter(i => i.priority === "High");
-      if (highPriorityInsights.length > 0) {
-        diagnosis += "\n- Areas that need immediate attention: " + 
-          highPriorityInsights.map(i => i.area).join(", ") + ".";
-      }
-      
-      // Add medium priority insights
-      const mediumPriorityInsights = performanceInsights.filter(i => i.priority === "Medium");
-      if (mediumPriorityInsights.length > 0) {
-        diagnosis += "\n- Areas where you're making progress but can improve further: " + 
-          mediumPriorityInsights.map(i => i.area).join(", ") + ".";
-      }
-      
-      // Add strengths
-      const lowPriorityInsights = performanceInsights.filter(i => i.priority === "Low");
-      if (lowPriorityInsights.length > 0) {
-        diagnosis += "\n- Your strengths: " + 
-          lowPriorityInsights.map(i => i.area).join(", ") + ".";
+      const relevantInsights = performanceInsights.filter(insight => 
+        insight.area.toLowerCase().includes(this.category?.name.toLowerCase() || '')
+      );
+
+      if (relevantInsights.length > 0) {
+        diagnosis += "\n\nYour recent performance data shows: ";
+        relevantInsights.forEach(insight => {
+          diagnosis += `\n- ${insight.description}`;
+        });
       }
     }
 
-    // Add score goal-oriented advice if available
+    // Add score goal context if available
     if (scoreGoal) {
-      diagnosis += `\n\nWith your goal score of ${scoreGoal} in mind, this practice plan focuses on the key skills and techniques that will help you consistently reach that target. Regular practice with these drills will build the muscle memory and confidence needed to see improvements in your actual rounds.`;
+      diagnosis += `\n\nWith your goal score of ${scoreGoal}, this focused practice plan will help you improve this specific aspect of your game while keeping your overall scoring targets in mind.`;
     }
-    
+
     return diagnosis;
   }
 

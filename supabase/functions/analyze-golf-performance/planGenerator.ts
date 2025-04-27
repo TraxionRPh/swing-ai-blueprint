@@ -1,4 +1,3 @@
-
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
@@ -341,7 +340,8 @@ export class PlanGenerator {
     const diagnosisGenerator = new DiagnosisGenerator(
       this.specificProblem, 
       this.problemCategory,
-      this.userData?.userData?.handicap_level
+      this.userData?.userData?.handicap_level,
+      !this.specificProblem || this.specificProblem === "Improve overall golf performance"
     );
     
     const practiceDayGenerator = new PracticeDayGenerator(
