@@ -27,16 +27,18 @@ export const useAIAnalysis = () => {
       console.log("Plan generated successfully:", plan);
 
       if (userId) {
-        // Fix: Wrap the object in an array to match Supabase's expected format
+        // Convert types to match the expected Supabase schema
+        // Explicitly convert array and object types to JSON compatible format
         const { error: saveError } = await supabase
           .from('ai_practice_plans')
           .insert([{
             user_id: userId,
             problem: issue || 'General golf improvement',
             diagnosis: plan.diagnosis,
-            root_causes: plan.rootCauses,
-            recommended_drills: plan.recommendedDrills,
-            practice_plan: plan
+            // Ensure these are properly converted to JSON format
+            root_causes: plan.rootCauses as unknown as JSON,
+            recommended_drills: plan.recommendedDrills as unknown as JSON,
+            practice_plan: plan as unknown as JSON
           }]);
 
         if (saveError) {
