@@ -2,19 +2,26 @@
 import { Drill } from "@/types/drill";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, MoveDown } from "lucide-react";
+import { AlertCircle, InfoIcon, MoveDown } from "lucide-react";
 import { DrillCarousel } from "./DrillCarousel";
+import { memo } from "react";
 
 interface RecommendedDrillsSectionProps {
   drills: Drill[];
   searchAnalysis: string;
 }
 
-export const RecommendedDrillsSection = ({ 
+export const RecommendedDrillsSection = memo(({ 
   drills, 
   searchAnalysis 
 }: RecommendedDrillsSectionProps) => {
   if (!drills.length) return null;
+
+  // Extract key points from the analysis for better presentation
+  const analysisPoints = searchAnalysis
+    .split(/\n+/)
+    .filter(point => point.trim().length > 0)
+    .map(point => point.trim());
 
   return (
     <div id="recommended-drills" className="my-8 scroll-mt-16">
@@ -23,10 +30,21 @@ export const RecommendedDrillsSection = ({
         
         {searchAnalysis && (
           <Alert className="bg-gradient-to-r from-[#9b87f5]/10 to-[#D946EF]/10 border-[#9b87f5]/20 mb-6">
-            <AlertCircle className="h-4 w-4 text-[#9b87f5]" />
+            <AlertCircle className="h-5 w-5 text-[#9b87f5]" />
             <AlertTitle className="text-[#9b87f5] font-semibold text-lg mb-2">Coach's Analysis</AlertTitle>
             <AlertDescription className="text-foreground/90 leading-relaxed">
-              {searchAnalysis}
+              {analysisPoints.length > 1 ? (
+                <ul className="space-y-2 mt-2">
+                  {analysisPoints.map((point, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-[#9b87f5] mt-1">•</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                searchAnalysis
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -40,4 +58,6 @@ export const RecommendedDrillsSection = ({
       <DrillCarousel drills={drills} />
     </div>
   );
-};
+});
+
+RecommendedDrillsSection.displayName = "RecommendedDrillsSection";

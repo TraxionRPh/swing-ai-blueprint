@@ -50,7 +50,7 @@ serve(async (req) => {
       throw new Error("No drills available in the database");
     }
 
-    // Use OpenAI with strictly enforced model
+    // Use OpenAI with strictly enforced model and improved prompting
     console.log("Calling OpenAI API...");
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -59,7 +59,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: ALLOWED_MODEL, // Enforced model usage
+        model: ALLOWED_MODEL,
         messages: [
           {
             role: 'system',
@@ -100,7 +100,7 @@ Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-
     const recommendationText = aiResponse.choices[0].message.content;
     console.log("AI recommendation text:", recommendationText);
     
-    // Extract drill IDs from AI response - look for UUID pattern
+    // Extract drill IDs from AI response with improved pattern matching
     const drillIds = recommendationText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g) || [];
     console.log("Extracted drill IDs:", drillIds);
     
@@ -112,10 +112,9 @@ Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-
     
     console.log(`Found ${recommendedDrills.length} recommended drills`);
 
-    // Include analysis text to help users understand the recommendations
+    // Generate a more detailed analysis with clearer, actionable advice
     let analysisText = "";
     if (recommendedDrills.length > 0) {
-      // Get additional explanation for the recommendations
       const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -127,11 +126,20 @@ Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-
           messages: [
             {
               role: 'system',
-              content: 'You are a professional golf coach. Provide a brief explanation (100 words max) of why these drills will help the user\'s specific problem. Be technical but accessible.'
+              content: `You are a professional golf coach. Provide a concise explanation (120-150 words) of:
+1. The likely root cause of the golfer's issue
+2. Why the recommended drills will effectively address this issue
+3. How to get the most out of these drills (key focus areas)
+
+Be specific but accessible. Use technical terms but explain them clearly.`
             },
             {
               role: 'user',
-              content: `User's issue: "${query}"\n\nRecommended drills: ${JSON.stringify(recommendedDrills.map(d => d.title + " - " + d.overview), null, 2)}`
+              content: `User's issue: "${query}"\n\nRecommended drills: ${JSON.stringify(recommendedDrills.map(d => ({
+                title: d.title,
+                overview: d.overview,
+                focus: d.focus
+              })), null, 2)}`
             }
           ],
           temperature: 0.3,

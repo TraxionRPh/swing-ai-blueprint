@@ -1,11 +1,12 @@
 
+import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useAPIUsageCheck = () => {
   const { toast } = useToast();
 
-  const checkAPIUsage = async (userId: string | undefined, type: 'ai_analysis' | 'practice_plan' = 'ai_analysis') => {
+  const checkAPIUsage = useCallback(async (userId: string | undefined, type: 'ai_analysis' | 'practice_plan' = 'ai_analysis') => {
     if (!userId) {
       toast({
         title: "Not Authorized",
@@ -42,7 +43,7 @@ export const useAPIUsageCheck = () => {
       });
       return false;
     }
-  };
+  }, [toast]);
 
   return { checkAPIUsage };
 };

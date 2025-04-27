@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { Brain } from "@/components/icons/CustomIcons";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,11 @@ interface AISearchBarProps {
   isAnalyzing: boolean;
 }
 
-export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
+export const AISearchBar = memo(({ onSearch, isAnalyzing }: AISearchBarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const handleAISearch = async () => {
+  const handleAISearch = useCallback(() => {
     if (!searchQuery.trim()) {
       toast({
         title: "Please describe your issue",
@@ -27,15 +27,15 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
     }
 
     onSearch(searchQuery);
-  };
+  }, [searchQuery, onSearch, toast]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Submit on Ctrl+Enter or Cmd+Enter
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       handleAISearch();
       e.preventDefault();
     }
-  };
+  }, [handleAISearch]);
 
   const examplePrompts = [
     "I keep hooking my driver to the left",
@@ -44,13 +44,13 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
     "I hit behind the ball with my wedges"
   ];
 
-  const handleExampleClick = (example: string) => {
+  const handleExampleClick = useCallback((example: string) => {
     setSearchQuery(example);
     // Auto-search when clicking an example
     setTimeout(() => {
       onSearch(example);
     }, 100);
-  };
+  }, [onSearch]);
 
   return (
     <div className="space-y-6">
@@ -99,4 +99,6 @@ export const AISearchBar = ({ onSearch, isAnalyzing }: AISearchBarProps) => {
       )}
     </div>
   );
-};
+});
+
+AISearchBar.displayName = "AISearchBar";

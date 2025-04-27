@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AISearchBar } from "@/components/drill-library/AISearchBar";
@@ -10,18 +11,22 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Drill } from "@/types/drill";
 import { RecommendedDrillsSection } from "@/components/drill-library/RecommendedDrillsSection";
 import { AllDrillsSection } from "@/components/drill-library/AllDrillsSection";
+import { useAPIUsageCheck } from "@/hooks/useAPIUsageCheck";
+import { useAuth } from "@/context/AuthContext";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendedDrills, setRecommendedDrills] = useState<Drill[]>([]);
   const [searchAnalysis, setSearchAnalysis] = useState<string>("");
-  const [filteredDrills, setFilteredDrills] = useState<Drill[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { checkAPIUsage } = useAPIUsageCheck();
+  const { user } = useAuth();
 
+  // Fetch all drills with React Query for automatic caching and state management
   const { data: drills, isLoading } = useQuery({
     queryKey: ['drills'],
     queryFn: async () => {
@@ -37,21 +42,48 @@ const DrillLibrary = () => {
         console.error('Error fetching drills:', error);
         throw error;
       }
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes caching
   });
 
-  useEffect(() => {
-    if (drills) {
-      setFilteredDrills(filterDrills(drills));
-    }
-  }, [drills, searchQuery, selectedCategory, selectedDifficulty]);
+  // Memoized filter function to prevent unnecessary recalculations
+  const filterDrills = useCallback((drillsToFilter: Drill[] = []) => {
+    if (!drillsToFilter) return [];
+    
+    return drillsToFilter.filter(drill => {
+      const matchesSearch = !searchQuery || 
+        drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        drill.overview?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        // Safely check if focus exists and is an array before calling .some()
+        (Array.isArray(drill.focus) && drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+      
+      const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
+      
+      const matchesDifficulty = !selectedDifficulty || drill.difficulty === selectedDifficulty;
+      
+      return matchesSearch && matchesCategory && matchesDifficulty;
+    });
+  }, [searchQuery, selectedCategory, selectedDifficulty]);
 
-  const handleAISearch = async (query: string) => {
+  // Memoize filtered drills to avoid unnecessary re-renders
+  const filteredDrills = useMemo(() => {
+    return filterDrills(drills);
+  }, [drills, filterDrills]);
+
+  // Optimized AI search function with API usage check
+  const handleAISearch = useCallback(async (query: string) => {
     setIsAnalyzing(true);
     setSearchQuery(query);
     setSearchError(null);
     
     try {
+      // Check API usage limits
+      const canProceed = await checkAPIUsage(user?.id, 'ai_analysis');
+      if (!canProceed) {
+        setIsAnalyzing(false);
+        return;
+      }
+      
       console.log("Sending search query to edge function:", query);
       const { data, error } = await supabase.functions.invoke('search-drills', {
         body: { query }
@@ -88,7 +120,7 @@ const DrillLibrary = () => {
       }
     } catch (error) {
       console.error('Search error:', error);
-      setSearchError(error.message || "Failed to search drills");
+      setSearchError(error instanceof Error ? error.message : "Failed to search drills");
       toast({
         title: "Search Failed",
         description: "Failed to find matching drills. Please try again.",
@@ -97,26 +129,8 @@ const DrillLibrary = () => {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [checkAPIUsage, user?.id, toast]);
   
-  const filterDrills = (drillsToFilter: Drill[] = []) => {
-    if (!drillsToFilter) return [];
-    
-    return drillsToFilter.filter(drill => {
-      const matchesSearch = !searchQuery || 
-        drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        drill.overview.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        // Safely check if focus exists and is an array before calling .some()
-        (Array.isArray(drill.focus) && drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
-      
-      const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
-      
-      const matchesDifficulty = !selectedDifficulty || drill.difficulty === selectedDifficulty;
-      
-      return matchesSearch && matchesCategory && matchesDifficulty;
-    });
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
