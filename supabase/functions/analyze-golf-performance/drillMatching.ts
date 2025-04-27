@@ -3,12 +3,6 @@ import { ProblemCategory, identifyProblemCategory } from './golfCategorization.t
 /**
  * Calculate a relevance score for a drill based on how well it matches the search terms
  * and specific problem. Higher scores indicate better matches.
- * 
- * @param drillText Combined text representation of the drill
- * @param searchTerms Array of search terms from the specific problem
- * @param specificProblem The full specific problem text
- * @param problemCategory Optional problem category for enhanced matching
- * @returns A relevance score between 0 and 1
  */
 export function getDrillRelevanceScore(
   drillText: string, 
@@ -34,25 +28,32 @@ export function getDrillRelevanceScore(
       // - Weight transfer
       // - Downward strike
       // - Impact position
+      // - Ball compression
       if (
         lowerDrillText.includes('weight transfer') ||
         lowerDrillText.includes('impact position') ||
         lowerDrillText.includes('ball position') ||
         lowerDrillText.includes('strike down') ||
         lowerDrillText.includes('compression') ||
-        lowerDrillText.includes('downward angle')
+        lowerDrillText.includes('downward angle') ||
+        lowerDrillText.includes('knockdown') ||
+        lowerDrillText.includes('spin') ||
+        lowerDrillText.includes('divot')
       ) {
-        score += 0.4;
+        score += 0.5; // Increased from 0.4 for more relevant drills
       }
       
-      // Penalize drills that aren't directly helpful
+      // Strongly penalize drills that aren't directly helpful or could be counterproductive
       if (
         lowerDrillText.includes('downhill') ||
         lowerDrillText.includes('uphill') ||
         lowerDrillText.includes('uneven') ||
-        lowerDrillText.includes('bunker')
+        lowerDrillText.includes('bunker') ||
+        lowerDrillText.includes('rough') ||
+        lowerDrillText.includes('flop') ||
+        lowerDrillText.includes('pitch')
       ) {
-        score -= 0.3;
+        score -= 0.5; // Increased penalty from 0.3
       }
     }
     
@@ -61,13 +62,25 @@ export function getDrillRelevanceScore(
       // - Low point control
       // - Weight forward
       // - Ball first contact
+      // - Divot pattern
       if (
         lowerDrillText.includes('low point') ||
         lowerDrillText.includes('weight forward') ||
         lowerDrillText.includes('ball first') ||
-        lowerDrillText.includes('divot after')
+        lowerDrillText.includes('divot after') ||
+        lowerDrillText.includes('compression') ||
+        lowerDrillText.includes('strike down')
       ) {
-        score += 0.4;
+        score += 0.5;
+      }
+      
+      // Penalize inappropriate drills
+      if (
+        lowerDrillText.includes('flop') ||
+        lowerDrillText.includes('pitch') ||
+        lowerDrillText.includes('uneven')
+      ) {
+        score -= 0.4;
       }
     }
     
@@ -76,51 +89,61 @@ export function getDrillRelevanceScore(
       // - Path correction
       // - Face control
       // - Release pattern
+      // - Body rotation
       if (
         lowerDrillText.includes('path') ||
         lowerDrillText.includes('face control') ||
         lowerDrillText.includes('release') ||
-        lowerDrillText.includes('rotation')
+        lowerDrillText.includes('rotation') ||
+        lowerDrillText.includes('inside') ||
+        lowerDrillText.includes('draw') ||
+        lowerDrillText.includes('turn through')
       ) {
-        score += 0.4;
+        score += 0.5;
+      }
+      
+      // Penalize drills not focused on path/face control
+      if (
+        lowerDrillText.includes('chip') ||
+        lowerDrillText.includes('pitch') ||
+        lowerDrillText.includes('putting')
+      ) {
+        score -= 0.4;
       }
     }
     
-    // Category-based scoring
+    // Category-based scoring with increased weight for fundamentals
     for (const keyword of problemCategory.keywords) {
       if (lowerDrillText.includes(keyword)) {
-        score += 0.15;
+        score += 0.2; // Increased from 0.15
       }
     }
     
     // Club-based relevance
     for (const club of problemCategory.relatedClubs) {
       if (lowerDrillText.includes(club)) {
-        score += 0.2;
+        score += 0.25; // Increased from 0.2
       }
+    }
+    
+    // Boost fundamental practice drills
+    if (
+      lowerDrillText.includes('fundamental') ||
+      lowerDrillText.includes('basic') ||
+      lowerDrillText.includes('foundation')
+    ) {
+      score += 0.15;
     }
   }
   
   // Base term matching with reduced weight
   for (const term of searchTerms) {
     if (term.length > 2 && lowerDrillText.includes(term)) {
-      score += 0.1; // Reduced from 0.2 to give more weight to specific issue matching
-    }
-  }
-  
-  // Ensure the drill complexity matches the problem
-  if (lowerDrillText.includes('basic') || lowerDrillText.includes('fundamental')) {
-    score += 0.1; // Slight boost for fundamental drills
-  }
-  
-  // Penalize overly complex drills for basic issues
-  if (lowerProblem.includes('basic') || lowerProblem.includes('beginner')) {
-    if (lowerDrillText.includes('advanced') || lowerDrillText.includes('complex')) {
-      score -= 0.2;
+      score += 0.1;
     }
   }
 
-  return Math.min(Math.max(score, 0), 1); // Ensure score stays between 0 and 1
+  return Math.min(Math.max(score, 0), 1);
 }
 
 /**
