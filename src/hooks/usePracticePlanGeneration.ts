@@ -91,8 +91,10 @@ export const usePracticePlanGeneration = () => {
         return [];
       }
       
+      console.log(`Found ${drills.length} drills in database`);
+      
       // Enhanced matching logic
-      return drills.filter(drill => {
+      const matchedDrills = drills.filter(drill => {
         // Skip drills with no focus or missing data
         if (!drill.focus || !Array.isArray(drill.focus) || !drill.title) return false;
         
@@ -149,6 +151,9 @@ export const usePracticePlanGeneration = () => {
         // Match if any search term is found in the drill text
         return searchTerms.some(term => drillText.includes(term));
       });
+      
+      console.log(`Matched ${matchedDrills.length} drills for "${issue}"`);
+      return matchedDrills;
     } catch (error) {
       console.error('Error finding relevant drills:', error);
       return [];
@@ -172,6 +177,10 @@ export const usePracticePlanGeneration = () => {
       // Find relevant drills for the specific issue
       const relevantDrills = await findRelevantDrills(issue);
       console.log('Found relevant drills:', relevantDrills.length);
+      
+      if (relevantDrills.length === 0) {
+        console.warn('No relevant drills found for the issue:', issue);
+      }
       
       // Fetch recent round data for better context
       const { data: roundData } = await supabase
@@ -207,6 +216,7 @@ export const usePracticePlanGeneration = () => {
         const userGoals = data.userGoals || {};
         const performanceInsights = data.performanceInsights || [];
         
+        // Ensure the plan includes the recommended drills
         practicePlan = {
           problem: issue || "Golf performance optimization",
           diagnosis: data.diagnosis,
@@ -222,6 +232,22 @@ export const usePracticePlanGeneration = () => {
           userGoals: userGoals,
           isAIGenerated: data.isAIGenerated || isAIGenerated
         };
+
+        // Post-process the plan to ensure drill objects are included properly
+        practicePlan.practicePlan.plan.forEach(day => {
+          if (Array.isArray(day.drills)) {
+            day.drills.forEach((drillWithSets, index) => {
+              // If we only have an ID but not the full object, find the matching drill
+              if ((typeof drillWithSets.drill === 'string' || !drillWithSets.drill) && drillWithSets.id) {
+                const drillId = drillWithSets.id || drillWithSets.drill;
+                const matchingDrill = relevantDrills.find(d => d.id === drillId);
+                if (matchingDrill) {
+                  day.drills[index].drill = matchingDrill;
+                }
+              }
+            });
+          }
+        });
 
         if (userId) {
           const { error: saveError } = await supabase

@@ -34,6 +34,14 @@ export class ChallengeRelevanceCalculator {
     score += this.calculateTitleAndMetricMatchScore();
     score += this.calculateDefaultChallengeScore(challengeText);
 
+    // Boost putting-related challenges for putting problems
+    if (this.specificProblem.includes('putt') && 
+        (challengeText.includes('putt') || 
+         challengeText.includes('green') || 
+         (this.challenge.category && this.challenge.category.toLowerCase() === 'putting'))) {
+      score += 0.6;
+    }
+
     return Math.min(score, 1);
   }
 
@@ -114,7 +122,7 @@ export class ChallengeRelevanceCalculator {
         if (challengeText.includes('putt') || 
             challengeText.includes('putts') ||
             challengeText.includes('green')) {
-          score += 0.5;
+          score += 0.8; // Increase this score for putting problems
         }
         break;
       case "short game":

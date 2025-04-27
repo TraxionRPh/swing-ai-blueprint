@@ -42,6 +42,31 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     : [];
   const durationNum = parseInt(planDuration) || 1;
   const filteredDays = planData.slice(0, durationNum);
+  
+  console.log("Plan data:", planData);
+  console.log("Filtered days:", filteredDays);
+  console.log("Recommended drills:", plan.recommendedDrills);
+  
+  // Map drill IDs to actual drill objects for daily plans
+  filteredDays.forEach(day => {
+    if (day.drills) {
+      day.drills.forEach(drillWithSets => {
+        if (drillWithSets.drill && typeof drillWithSets.drill === 'string') {
+          // Find the drill object from recommended drills
+          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillWithSets.drill);
+          if (matchingDrill) {
+            drillWithSets.drill = matchingDrill;
+          }
+        } else if (drillWithSets.id && !drillWithSets.drill) {
+          // If we just have an ID, try to find the drill
+          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillWithSets.id);
+          if (matchingDrill) {
+            drillWithSets.drill = matchingDrill;
+          }
+        }
+      });
+    }
+  });
 
   // Extract challenge data with fallbacks for missing fields
   const challenge = plan.practicePlan.challenge as Challenge;
@@ -49,17 +74,49 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   // Create a default challenge if none exists
   const defaultChallenge: Challenge = {
     id: "default-challenge",
-    title: "Fairway Accuracy Challenge",
-    description: "Test your ability to hit fairways consistently with your driver",
+    title: "Golf Skill Challenge",
+    description: "Test your improvement with this personalized challenge",
     difficulty: "Medium",
-    category: "Driving", 
-    metrics: ["Fairways Hit"],
-    metric: "Fairways Hit",
-    instruction1: "Hit 10 drives aiming for the fairway",
-    instruction2: "Count how many land in the fairway",
-    instruction3: "Calculate your percentage of fairways hit",
+    category: "General", 
+    metrics: ["Accuracy"],
+    metric: "Accuracy",
+    instruction1: "Complete the recommended practice drills",
+    instruction2: "Apply the techniques in a controlled environment",
+    instruction3: "Measure your improvement",
     attempts: 10
   };
+
+  // Category-specific default challenges
+  if (!challenge || Object.keys(challenge).length === 0) {
+    if (plan.problem.toLowerCase().includes('putt')) {
+      defaultChallenge.title = "Putting Accuracy Challenge";
+      defaultChallenge.description = "Test your putting accuracy and consistency";
+      defaultChallenge.category = "Putting";
+      defaultChallenge.metrics = ["Putts Made"];
+      defaultChallenge.metric = "Putts Made";
+      defaultChallenge.instruction1 = "Set up 10 putts at 3 feet distance";
+      defaultChallenge.instruction2 = "Count how many you make successfully";
+      defaultChallenge.instruction3 = "Calculate your make percentage";
+    } else if (plan.problem.toLowerCase().includes('driv') || plan.problem.toLowerCase().includes('slice') || plan.problem.toLowerCase().includes('hook')) {
+      defaultChallenge.title = "Fairway Accuracy Challenge";
+      defaultChallenge.description = "Test your ability to hit fairways consistently with your driver";
+      defaultChallenge.category = "Driving";
+      defaultChallenge.metrics = ["Fairways Hit"];
+      defaultChallenge.metric = "Fairways Hit";
+      defaultChallenge.instruction1 = "Hit 10 drives aiming for the fairway";
+      defaultChallenge.instruction2 = "Count how many land in the fairway";
+      defaultChallenge.instruction3 = "Calculate your percentage of fairways hit";
+    } else if (plan.problem.toLowerCase().includes('chip') || plan.problem.toLowerCase().includes('short game')) {
+      defaultChallenge.title = "Short Game Proximity Challenge";
+      defaultChallenge.description = "Test your ability to chip close to the pin";
+      defaultChallenge.category = "Short Game";
+      defaultChallenge.metrics = ["Proximity"];
+      defaultChallenge.metric = "Proximity";
+      defaultChallenge.instruction1 = "Chip 10 balls from 20 yards to a target";
+      defaultChallenge.instruction2 = "Measure the distance of each shot from the target";
+      defaultChallenge.instruction3 = "Calculate your average proximity to the target";
+    }
+  }
 
   // Use the challenge from the plan or the default challenge
   const displayChallenge = challenge && Object.keys(challenge).length > 0 ? challenge : defaultChallenge;

@@ -51,7 +51,8 @@ serve(async (req) => {
       specificProblem,
       problemCategory: categoryName,
       planDuration,
-      availableDrillsCount: availableDrills?.length || 0
+      availableDrillsCount: availableDrills?.length || 0,
+      isPuttingProblem: specificProblem.toLowerCase().includes('putt')
     });
 
     // Fetch additional user profile data if userId provided
@@ -120,6 +121,25 @@ serve(async (req) => {
       // Continue with default challenge creation
     }
     
+    // If challenges are found, log them for debugging
+    if (challenges && challenges.length > 0) {
+      console.log(`Retrieved ${challenges.length} challenges from database`);
+      
+      // Log some challenge categories and metrics for debugging
+      const challengeCategories = [...new Set(challenges.map(c => c.category))];
+      console.log("Available challenge categories:", challengeCategories);
+      
+      if (specificProblem.toLowerCase().includes('putt')) {
+        const puttingChallenges = challenges.filter(c => 
+          c.category?.toLowerCase() === 'putting' || 
+          c.title?.toLowerCase().includes('putt')
+        );
+        console.log(`Found ${puttingChallenges.length} putting-related challenges`);
+      }
+    } else {
+      console.log("No challenges found in the database");
+    }
+    
     // Create plan generator instance with enhanced user data
     const planGenerator = new PlanGenerator(
       roundData,
@@ -142,6 +162,10 @@ serve(async (req) => {
       console.log("Plan generation complete with default challenge");
       console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
 
+      if (!response.practicePlan.challenge) {
+        console.error("No challenge in response");
+      }
+
       return ResponseHandler.createSuccessResponse(
         response,
         availableDrills,
@@ -151,13 +175,15 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Retrieved ${challenges.length} challenges from database`);
-    
     // Generate the practice plan
     const response = await planGenerator.generatePlan(challenges);
 
     console.log("Plan generation complete with diagnosis length:", response.diagnosis.length);
     console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
+
+    if (!response.practicePlan.challenge) {
+      console.error("No challenge in response");
+    }
 
     return ResponseHandler.createSuccessResponse(
       response,
