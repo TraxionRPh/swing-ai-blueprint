@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -11,12 +10,12 @@ export const useAIAnalysis = () => {
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const generatePracticePlan = async (
+  const generatePlan = async (
     userId: string | undefined,
     issue: string, 
     handicapLevel: HandicapLevel, 
-    planDuration: string
-  ) => {
+    planDuration: string = "1"
+  ): Promise<GeneratedPracticePlan> => {
     try {
       console.log("Generating practice plan:", { userId, issue, handicapLevel, planDuration });
       setIsAnalyzing(true);
@@ -27,14 +26,14 @@ export const useAIAnalysis = () => {
       if (userId) {
         const { error: saveError } = await supabase
           .from('ai_practice_plans')
-          .insert([{
+          .insert({
             user_id: userId,
             problem: issue || 'General golf improvement',
             diagnosis: plan.diagnosis,
             root_causes: plan.rootCauses,
             recommended_drills: plan.recommendedDrills,
             practice_plan: plan
-          }]);
+          });
 
         if (saveError) {
           console.error("Error saving practice plan:", saveError);
@@ -63,7 +62,7 @@ export const useAIAnalysis = () => {
   };
 
   return {
-    generatePlan: generatePracticePlan, 
+    generatePlan, 
     isGenerating: isGenerating || isAnalyzing
   };
 };
