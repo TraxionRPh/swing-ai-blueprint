@@ -27,8 +27,20 @@ export const DrillCard = ({
 
   if (!drill) return null;
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'beginner':
+        return "bg-emerald-500 hover:bg-emerald-600 text-white border-0";
+      case 'intermediate':
+        return "bg-amber-500 hover:bg-amber-600 text-white border-0";
+      case 'advanced':
+        return "bg-rose-500 hover:bg-rose-600 text-white border-0";
+      default:
+        return "bg-slate-500 hover:bg-slate-600 text-white border-0";
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
-    // Only open details if we didn't click the checkbox
     if (!(e.target instanceof HTMLElement) || !e.target.closest('[data-checkbox]')) {
       setShowDetails(true);
     }
@@ -63,10 +75,9 @@ export const DrillCard = ({
                   {drill.title}
                 </h3>
                 <Badge 
-                  variant="secondary" 
-                  className="text-xs font-normal"
+                  className={cn("text-xs font-normal", getDifficultyColor(drill.difficulty || 'beginner'))}
                 >
-                  {drill.difficulty}
+                  {drill.difficulty || 'Beginner'}
                 </Badge>
               </div>
             </div>

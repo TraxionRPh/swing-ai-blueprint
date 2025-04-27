@@ -264,15 +264,26 @@ export const usePracticePlanGeneration = () => {
       const relevantDrills = await findRelevantDrills(issue);
       console.log('Found relevant drills:', relevantDrills.length);
       
-      if (relevantDrills.length === 0) {
-        console.warn('No relevant drills found for the issue:', issue);
-        toast({
-          title: "Limited Drill Selection",
-          description: "Few specific drills were found for this problem. Using general golf improvement drills instead.",
-          variant: "default"
-        });
+      if (relevantDrills.length < 2) {
+        const { data: fundamentalDrills } = await supabase
+          .from('drills')
+          .select('*')
+          .or('title.ilike.%fundamental%,title.ilike.%basic%')
+          .limit(3);
+        
+        if (fundamentalDrills) {
+          relevantDrills.push(...fundamentalDrills);
+        }
+        
+        if (relevantDrills.length === 0) {
+          toast({
+            title: "Limited Drill Selection",
+            description: "Few specific drills were found for this problem. Using general golf improvement drills instead.",
+            variant: "default"
+          });
+        }
       }
-      
+
       const { data: roundData } = await supabase
         .from('rounds')
         .select('*')

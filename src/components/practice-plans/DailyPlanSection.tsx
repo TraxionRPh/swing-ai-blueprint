@@ -42,7 +42,7 @@ export const DailyPlanSection = ({
       <CardHeader className="bg-muted/50 cursor-pointer py-3" onClick={toggleOpen}>
         <div className="space-y-1">
           <CardTitle className="text-lg flex justify-between items-center">
-            <span>Day {dayNumber}: {dayPlan?.focus || `Practice Day ${dayNumber}`}</span>
+            <span>Day {dayNumber}: {dayPlan?.focus?.replace(`Day ${dayNumber}: `, '')}</span>
             <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
               {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </Button>
@@ -64,7 +64,6 @@ export const DailyPlanSection = ({
                 
                 const drillObject = drillWithSets.drill;
                 
-                // Only render drill if we have the object data
                 return (
                   <DrillCard
                     key={`${dayNumber}-${index}-${drillObject.id || index}`}
