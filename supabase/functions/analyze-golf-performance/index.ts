@@ -46,6 +46,33 @@ serve(async (req) => {
       difficulty: drill.difficulty
     }));
 
+    // Create a structured prompt that explicitly asks for the required fields
+    const systemPrompt = `You are a professional golf coach creating targeted practice plans. Based on the golfer's specific problem and skill level, select drills that directly address their issues. 
+
+You MUST respond with a valid JSON object that has exactly these fields:
+1. "diagnosis": A string with an analysis of the golfer's issue
+2. "rootCauses": An array of strings with root causes of the issue
+3. "dailyPlans": An array of objects with these exact fields:
+   - "day": The day number (integer)
+   - "focus": The focus area for this day (string)
+   - "duration": Estimated time required (string)
+   - "drills": Array of objects with:
+     - "id": The drill ID (string)
+     - "sets": Number of sets (integer)
+     - "reps": Number of repetitions (integer)
+
+For each day:
+1. Choose a specific focus area related to their main problem
+2. Select 2-3 drills that work together to improve that focus area
+3. Specify appropriate sets and reps based on drill difficulty and golfer level
+4. Ensure progression across multiple days`;
+
+    const userPrompt = `Create a ${planDuration}-day practice plan for a ${handicapLevel} golfer working on: "${specificProblem}".
+Recent performance data: ${JSON.stringify(roundData || [])}
+Available drills: ${JSON.stringify(simplifiedDrills)}
+
+YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyPlans as described in your instructions.`;
+
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -57,19 +84,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional golf coach creating targeted practice plans. Based on the golfer's specific problem and skill level, select drills that directly address their issues. For each day:
-            1. Choose a specific focus area related to their main problem
-            2. Select 2-3 drills that work together to improve that focus area
-            3. Specify appropriate sets and reps based on drill difficulty and golfer level
-            4. Ensure progression across multiple days
-            5. Return only drill IDs with specific sets/reps configurations`
+            content: systemPrompt
           },
           {
             role: 'user',
-            content: `Create a ${planDuration}-day practice plan for a ${handicapLevel} golfer working on: "${specificProblem}".
-            Recent performance data: ${JSON.stringify(roundData || [])}
-            Available drills: ${JSON.stringify(simplifiedDrills)}
-            Return ONLY a JSON object with diagnosis, root causes, and a daily plan specifying drill IDs and sets/reps.`
+            content: userPrompt
           }
         ],
         response_format: { type: "json_object" }, // Explicitly request JSON format
@@ -96,14 +115,24 @@ serve(async (req) => {
       throw new Error('Failed to generate practice plan');
     }
 
-    // Check if dailyPlans exists and is an array before mapping
-    if (!response.dailyPlans || !Array.isArray(response.dailyPlans)) {
-      console.error("Invalid response format: dailyPlans is missing or not an array");
+    // More explicit validation of the response structure
+    if (!response.diagnosis || typeof response.diagnosis !== 'string') {
+      console.error("Invalid response: missing or invalid diagnosis");
+      response.diagnosis = "Analysis of your golf technique completed";
+    }
+
+    if (!response.rootCauses || !Array.isArray(response.rootCauses) || response.rootCauses.length === 0) {
+      console.error("Invalid response: missing or invalid rootCauses");
+      response.rootCauses = ["Technical analysis completed"];
+    }
+
+    if (!response.dailyPlans || !Array.isArray(response.dailyPlans) || response.dailyPlans.length === 0) {
+      console.error("Invalid response format: dailyPlans is missing, not an array, or empty");
       return new Response(
         JSON.stringify({
           error: "Invalid response format",
-          diagnosis: "Unable to generate practice plan due to AI response format issue",
-          rootCauses: ["Technical issue with AI response format"],
+          diagnosis: response.diagnosis || "Unable to generate detailed practice plan",
+          rootCauses: response.rootCauses || ["Technical issue with AI response format"],
           practicePlan: {
             plan: []
           }
@@ -112,34 +141,67 @@ serve(async (req) => {
       );
     }
     
-    // Map drill IDs to actual drill objects with safeguards
-    const mappedDailyPlans = response.dailyPlans.map(day => {
-      // Ensure drills is an array before mapping
-      const drillsArray = Array.isArray(day.drills) ? day.drills : [];
+    // Map drill IDs to actual drill objects with comprehensive safety checks
+    const mappedDailyPlans = response.dailyPlans.map((day, index) => {
+      // Ensure all required fields exist with defaults
+      const safeDay = {
+        day: day.day || index + 1,
+        focus: day.focus || `Golf practice day ${index + 1}`,
+        duration: day.duration || "30 minutes",
+        drills: Array.isArray(day.drills) ? day.drills : []
+      };
       
       return {
-        ...day,
-        drills: drillsArray.map(drill => {
+        ...safeDay,
+        drills: safeDay.drills.map(drill => {
+          // Skip if drill has no ID
+          if (!drill || !drill.id) {
+            console.warn("Skipping drill with missing ID");
+            return null;
+          }
+
           const fullDrill = availableDrills?.find(d => d.id === drill.id);
           if (!fullDrill) {
             console.warn(`Drill with ID ${drill.id} not found`);
             return null;
           }
+          
           return {
             drill: fullDrill,
-            sets: drill.sets || 1,
-            reps: drill.reps || 10
+            sets: typeof drill.sets === 'number' ? drill.sets : 1,
+            reps: typeof drill.reps === 'number' ? drill.reps : 10
           };
-        }).filter(Boolean)
+        }).filter(Boolean) // Remove null entries
       };
     });
+
+    // Final safety check - ensure we have at least some drills
+    const finalPlans = mappedDailyPlans.filter(day => day.drills.length > 0);
+    
+    if (finalPlans.length === 0) {
+      console.warn("No valid drills found after mapping");
+      
+      // If no available drills were provided, explain the issue
+      if (!availableDrills || availableDrills.length === 0) {
+        return new Response(
+          JSON.stringify({
+            diagnosis: "Unable to create practice plan - no drills available",
+            rootCauses: ["No suitable drills found in the database", "Try adding more drill data or using different search terms"],
+            practicePlan: {
+              plan: []
+            }
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     return new Response(
       JSON.stringify({
         diagnosis: response.diagnosis || "Golf performance analysis completed",
-        rootCauses: response.rootCauses || ["Technical analysis incomplete"],
+        rootCauses: response.rootCauses || ["Technical analysis completed"],
         practicePlan: {
-          plan: mappedDailyPlans
+          plan: finalPlans.length > 0 ? finalPlans : mappedDailyPlans
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
