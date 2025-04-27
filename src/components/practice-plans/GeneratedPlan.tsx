@@ -75,15 +75,26 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
 
       {/* Daily Plans */}
-      {filteredDays.map((dayPlan, i) => (
-        <DailyPlanSection
-          key={i}
-          dayPlan={dayPlan}
-          dayNumber={i + 1}
-          completedDrills={completedDrills}
-          onDrillComplete={toggleDrillCompletion}
-        />
-      ))}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daily Drills Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {filteredDays.length > 0 ? (
+            filteredDays.map((dayPlan, i) => (
+              <DailyPlanSection
+                key={i}
+                dayPlan={dayPlan}
+                dayNumber={i + 1}
+                completedDrills={completedDrills}
+                onDrillComplete={toggleDrillCompletion}
+              />
+            ))
+          ) : (
+            <p className="text-muted-foreground">No drills available for this practice plan.</p>
+          )}
+        </CardContent>
+      </Card>
       
       {/* Final Challenge */}
       <Card>
