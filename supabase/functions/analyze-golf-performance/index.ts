@@ -48,12 +48,21 @@ serve(async (req) => {
     );
 
     // Fetch available challenges
-    const { data: challenges } = await supabaseAdmin
+    const { data: challenges, error } = await supabaseAdmin
       .from('challenges')
       .select('*');
 
+    if (error) {
+      console.error("Error fetching challenges:", error);
+    }
+    
+    console.log(`Retrieved ${challenges?.length || 0} challenges from database`);
+
     // Generate the practice plan
     const response = await planGenerator.generatePlan(challenges || []);
+
+    console.log("Plan generation complete with diagnosis length:", response.diagnosis.length);
+    console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
 
     return ResponseHandler.createSuccessResponse(
       response,

@@ -12,6 +12,20 @@ export class ResponseHandler {
     drills: DrillData[],
     planDuration: string
   ): Response {
+    // Make sure challenge has proper attempts field
+    if (response.practicePlan.challenge) {
+      const challenge = response.practicePlan.challenge;
+      if (!challenge.attempts) {
+        const instructionCount = [
+          challenge.instruction1, 
+          challenge.instruction2, 
+          challenge.instruction3
+        ].filter(Boolean).length;
+        
+        challenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
+      }
+    }
+
     const mappedPlans = response.practicePlan.plan.map((day, index) => ({
       ...day,
       drills: day.drills.map(drill => {

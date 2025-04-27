@@ -97,13 +97,21 @@ export function getChallengeRelevanceScore(
   challenge: any,
   specificProblem: string
 ): number {
+  if (!challenge || !specificProblem) {
+    return 0;
+  }
+
   const lowerProblem = specificProblem.toLowerCase();
-  const lowerChallenge = [
+  
+  // Combine all relevant challenge fields into a single string for matching
+  const challengeFields = [
     challenge.title || '',
     challenge.description || '',
     challenge.category || '',
-    ...(challenge.metrics || [])
-  ].join(' ').toLowerCase();
+    ...(Array.isArray(challenge.metrics) ? challenge.metrics : [])
+  ].filter(Boolean);
+  
+  const lowerChallenge = challengeFields.join(' ').toLowerCase();
 
   let score = 0;
 
@@ -112,7 +120,8 @@ export function getChallengeRelevanceScore(
     if (
       lowerChallenge.includes('fairway') || 
       lowerChallenge.includes('accuracy') ||
-      lowerChallenge.includes('driving')
+      lowerChallenge.includes('driving') ||
+      lowerChallenge.includes('direction')
     ) {
       score += 0.5;
     }
@@ -132,18 +141,49 @@ export function getChallengeRelevanceScore(
     ) {
       score += 0.5;
     }
+  } else if (lowerProblem.includes('bunker') || lowerProblem.includes('sand')) {
+    if (
+      lowerChallenge.includes('bunker') || 
+      lowerChallenge.includes('sand')
+    ) {
+      score += 0.5;
+    }
+  } else if (lowerProblem.includes('driver')) {
+    if (
+      lowerChallenge.includes('drive') || 
+      lowerChallenge.includes('tee shot') ||
+      lowerChallenge.includes('fairway')
+    ) {
+      score += 0.5;
+    }
   }
 
   // Match categories
-  if (challenge.category?.toLowerCase() === lowerProblem.split(' ')[0]) {
+  if (challenge.category?.toLowerCase().includes(lowerProblem.split(' ')[0])) {
     score += 0.3;
   }
 
   // Match metrics to problem
-  for (const metric of (challenge.metrics || [])) {
-    if (lowerProblem.includes(metric.toLowerCase())) {
-      score += 0.2;
+  if (Array.isArray(challenge.metrics)) {
+    for (const metric of challenge.metrics) {
+      if (typeof metric === 'string' && lowerProblem.includes(metric.toLowerCase())) {
+        score += 0.2;
+        break;
+      }
     }
+  }
+
+  // Additional scoring for title matches
+  if (challenge.title?.toLowerCase().includes(lowerProblem)) {
+    score += 0.4;
+  }
+
+  // If no specific match but has a default/general challenge
+  if (score === 0 && 
+    (lowerChallenge.includes('general') || 
+     lowerChallenge.includes('basic') || 
+     lowerChallenge.includes('standard'))) {
+    score += 0.2;
   }
 
   return Math.min(score, 1);
