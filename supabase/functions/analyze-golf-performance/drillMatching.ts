@@ -35,7 +35,7 @@ export function isPuttingRelated(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // Primary putting indicators (strong signals)
@@ -75,7 +75,7 @@ export function isDefinitelyNotPuttingRelated(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // These categories and terms strongly indicate non-putting drills
@@ -125,7 +125,7 @@ export function isBunkerRelated(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // Primary bunker indicators - strong signals
@@ -178,7 +178,7 @@ export function isContactRelated(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // Contact-related terms
@@ -210,15 +210,21 @@ export function isContactRelated(drill: any): boolean {
 export function isDrillRelevantToProblem(drill: any, problem: string, category?: ProblemCategory): boolean {
   if (!drill || !problem) return false;
   
+  // Ensure drill has basic fields to avoid errors
+  if (!drill.id || !drill.title) {
+    console.log("Warning: Drill is missing required fields", drill);
+    return false;
+  }
+  
   const problemLower = problem.toLowerCase();
   const drillText = [
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
-  // Use the new context validator if we have a category
+  // Use the context validator if we have a category
   if (category) {
     return validateContextMatch(drillText, problem, category);
   }
@@ -348,7 +354,7 @@ export function isFairwayBunkerDrill(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // Check for direct fairway bunker mentions
@@ -365,7 +371,7 @@ export function isGreensideBunkerDrill(drill: any): boolean {
     drill.title?.toLowerCase() || '',
     drill.overview?.toLowerCase() || '',
     drill.category?.toLowerCase() || '',
-    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
   ].join(' ');
   
   // Check for greenside bunker indicators
@@ -381,6 +387,11 @@ export function isGreensideBunkerDrill(drill: any): boolean {
 
 // New function to check if a drill matches specific bunker problem types
 export function matchesBunkerProblemType(drill: any, problem: string): boolean {
+  if (!drill || !drill.id || !drill.title) {
+    console.log("Warning: Invalid drill in matchesBunkerProblemType", drill);
+    return false;
+  }
+  
   const problemLower = problem.toLowerCase();
   
   // For fairway bunker specific problems
