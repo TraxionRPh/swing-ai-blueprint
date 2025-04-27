@@ -1,9 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy } from "lucide-react";
 
 interface ChallengeScoreProps {
   planId?: string;
@@ -11,7 +9,7 @@ interface ChallengeScoreProps {
   attempts?: number;
 }
 
-export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScoreProps) => {
+export const ChallengeScore = ({ planId, type, attempts }: ChallengeScoreProps) => {
   const { toast } = useToast();
   const [score, setScore] = useState(() => {
     const saved = localStorage.getItem(`challenge-${type}-${planId}`);
@@ -29,23 +27,15 @@ export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScorePr
   };
 
   return (
-    <div className="space-y-4 mt-6">
-      <h3 className="text-base font-medium">Your Score (out of {attempts})</h3>
+    <div className="flex gap-2">
       <Input
         type="number"
         value={score}
         onChange={(e) => setScore(e.target.value)}
-        placeholder={`Enter score (0-${attempts})`}
-        min="0"
-        max={attempts}
-        className="max-w-full"
+        placeholder="Enter your score"
+        className="max-w-[200px]"
       />
-      <p className="text-sm text-muted-foreground">
-        Enter how many successful attempts you had
-      </p>
-      <Button onClick={handleSave} className="w-full">
-        <Trophy className="mr-2 h-5 w-5" /> Complete Challenge
-      </Button>
+      <Button onClick={handleSave}>Save Score</Button>
     </div>
   );
 };

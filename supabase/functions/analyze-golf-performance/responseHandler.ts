@@ -16,45 +16,33 @@ export class ResponseHandler {
     if (response.practicePlan.challenge) {
       const challenge = response.practicePlan.challenge;
       if (!challenge.attempts) {
-        // Calculate attempts based on instructions
-        let attemptCount = 10; // Default to 10
+        const instructionCount = [
+          challenge.instruction1, 
+          challenge.instruction2, 
+          challenge.instruction3
+        ].filter(Boolean).length;
         
-        if (challenge.instruction1 && challenge.instruction1.match(/\b(\d+)\s*(?:balls?|attempts?)\b/i)) {
-          const match = challenge.instruction1.match(/\b(\d+)\s*(?:balls?|attempts?)\b/i);
-          if (match) attemptCount = parseInt(match[1], 10);
-        } else {
-          const instructionCount = [
-            challenge.instruction1, 
-            challenge.instruction2, 
-            challenge.instruction3
-          ].filter(Boolean).length;
-          
-          // If we have instructions but no explicit number, default to 3 attempts per instruction
-          attemptCount = instructionCount > 0 ? instructionCount * 3 : 10;
-        }
-        
-        challenge.attempts = attemptCount;
+        challenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
       }
     }
 
     const mappedPlans = response.practicePlan.plan.map((day, index) => ({
       ...day,
-      drills: day.drills
-        .filter(drill => {
-          // Filter out any items that are challenges
-          return !(typeof drill.id === 'string' && drill.id.includes('challenge'));
-        })
-        .map(drill => {
-          const fullDrill = drills.find(d => d.id === drill.id);
-          if (!fullDrill) return null;
-          
-          return {
-            drill: fullDrill,
-            sets: typeof drill.sets === 'number' ? drill.sets : 3,
-            reps: typeof drill.reps === 'number' ? drill.reps : 10
-          };
-        })
-        .filter(Boolean)
+      drills: day.drills.map(drill => {
+        // Skip items that are challenges (have 'title' with 'Challenge' in it)
+        if (typeof drill.id === 'string' && drill.id.includes('challenge')) {
+          return null;
+        }
+        
+        const fullDrill = drills.find(d => d.id === drill.id);
+        if (!fullDrill) return null;
+        
+        return {
+          drill: fullDrill,
+          sets: typeof drill.sets === 'number' ? drill.sets : 3,
+          reps: typeof drill.reps === 'number' ? drill.reps : 10
+        };
+      }).filter(Boolean)
     }));
 
     return new Response(

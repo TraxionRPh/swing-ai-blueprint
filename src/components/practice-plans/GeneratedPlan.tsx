@@ -8,7 +8,6 @@ import { DailyPlanSection } from "./DailyPlanSection";
 import { ArrowLeft } from "lucide-react";
 import { ChallengeScore } from "./ChallengeScore";
 import { Challenge } from "@/types/challenge";
-import { Badge } from "@/components/ui/badge";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -66,34 +65,28 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
       
       {/* Initial Challenge */}
-      {hasChallenge && (
-        <Card className="bg-slate-900 text-white">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-2xl">{challenge.title}</CardTitle>
-              <Badge variant="outline" className="bg-slate-800 text-white border-slate-700">
-                {challenge.difficulty || "Beginner"}
-              </Badge>
-            </div>
-            <p className="text-slate-300 text-lg">{challenge.description}</p>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div>
-              <h2 className="text-xl font-bold mb-4">Instructions</h2>
-              <ol className="space-y-4 list-decimal list-inside">
-                {challenge.instruction1 && <li className="text-lg">{challenge.instruction1}</li>}
-                {challenge.instruction2 && <li className="text-lg">{challenge.instruction2}</li>}
-                {challenge.instruction3 && <li className="text-lg">{challenge.instruction3}</li>}
-              </ol>
-            </div>
-            
-            <div>
-              <h2 className="text-xl font-bold mb-4">Metrics</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>Initial Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasChallenge ? (
+            <>
+              <p className="text-muted-foreground mb-4">{challenge.description}</p>
+              <div className="space-y-4">
+                {challenge.instruction1 && <p>1. {challenge.instruction1}</p>}
+                {challenge.instruction2 && <p>2. {challenge.instruction2}</p>}
+                {challenge.instruction3 && <p>3. {challenge.instruction3}</p>}
+              </div>
               <ChallengeScore planId={planId} type="initial" attempts={challenge.attempts} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </>
+          ) : (
+            <p className="text-muted-foreground">No relevant challenge found for this practice plan.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* AI Diagnosis */}
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
@@ -121,19 +114,23 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
       
       {/* Final Challenge */}
-      {hasChallenge && (
-        <Card className="bg-slate-900 text-white">
-          <CardHeader>
-            <CardTitle className="text-2xl">Final Assessment: {challenge.title}</CardTitle>
-            <p className="text-slate-300">
-              Complete this challenge again to measure your improvement
-            </p>
-          </CardHeader>
-          <CardContent>
-            <ChallengeScore planId={planId} type="final" attempts={challenge.attempts} />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Final Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasChallenge ? (
+            <>
+              <p className="text-muted-foreground mb-4">
+                Complete this challenge again to measure your improvement
+              </p>
+              <ChallengeScore planId={planId} type="final" attempts={challenge.attempts} />
+            </>
+          ) : (
+            <p className="text-muted-foreground">No relevant challenge found for this practice plan.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
