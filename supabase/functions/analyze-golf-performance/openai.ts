@@ -2,6 +2,18 @@
 // OpenAI service module
 export const ALLOWED_MODEL = 'gpt-4o-mini';
 
+export class OpenAI {
+  private apiKey: string;
+
+  constructor({ apiKey }: { apiKey: string }) {
+    this.apiKey = apiKey;
+  }
+
+  async generateAnalysis(prompt: string) {
+    return await generateAnalysis(prompt, this.apiKey);
+  }
+}
+
 export async function generateAnalysis(prompt: string, OPENAI_API_KEY: string) {
   const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
