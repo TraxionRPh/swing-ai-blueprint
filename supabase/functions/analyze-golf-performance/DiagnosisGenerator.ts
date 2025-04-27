@@ -30,7 +30,7 @@ export class DiagnosisGenerator {
     if (this.isAIGenerated) {
       return this.generateAIBasedDiagnosis(scoreGoal, performanceInsights);
     } else {
-      return this.generateProblemBasedDiagnosis(scoreGoal, performanceInsights);
+      return this.generateProblemBasedDiagnosis();
     }
   }
 
@@ -77,7 +77,7 @@ export class DiagnosisGenerator {
     return diagnosis;
   }
 
-  private generateProblemBasedDiagnosis(scoreGoal?: number, performanceInsights?: any[]): string {
+  private generateProblemBasedDiagnosis(): string {
     let diagnosis = this.getSkillLevelIntro();
     
     // Add problem-specific analysis based on category
@@ -98,25 +98,6 @@ export class DiagnosisGenerator {
         default:
           diagnosis += this.getGeneralDiagnosis();
       }
-    }
-
-    // Add context from recent performance if available
-    if (performanceInsights && performanceInsights.length > 0) {
-      const relevantInsights = performanceInsights.filter(insight => 
-        insight.area.toLowerCase().includes(this.category?.name.toLowerCase() || '')
-      );
-
-      if (relevantInsights.length > 0) {
-        diagnosis += "\n\nYour recent performance data shows: ";
-        relevantInsights.forEach(insight => {
-          diagnosis += `\n- ${insight.description}`;
-        });
-      }
-    }
-
-    // Add score goal context if available
-    if (scoreGoal) {
-      diagnosis += `\n\nWith your goal score of ${scoreGoal}, this focused practice plan will help you improve this specific aspect of your game while keeping your overall scoring targets in mind.`;
     }
 
     return diagnosis;
@@ -201,8 +182,8 @@ export class DiagnosisGenerator {
    * insights from their performance data
    */
   generateRootCauses(performanceInsights?: any[]): string[] {
-    // If there are high priority performance insights, use them as root causes
-    if (performanceInsights && performanceInsights.length > 0) {
+    // If this is AI-generated and there are high priority performance insights, use them as root causes
+    if (this.isAIGenerated && performanceInsights && performanceInsights.length > 0) {
       const highPriorityInsights = performanceInsights.filter(i => i.priority === "High");
       if (highPriorityInsights.length > 0) {
         return highPriorityInsights.map(i => i.description);

@@ -1,4 +1,3 @@
-
 import { Drill } from "./drill";
 import { Challenge } from "./challenge";
 
@@ -16,6 +15,7 @@ export interface GeneratedPracticePlan {
   };
   performanceInsights?: PerformanceInsight[];
   userGoals?: UserGoals;
+  isAIGenerated?: boolean; // Add isAIGenerated property
 }
 
 export interface UserGoals {
@@ -80,7 +80,7 @@ export interface AIAnalysisForPracticePlan {
   identifiedIssues: {
     area: string;
     description: string;
-    priority: 'High' | 'Medium' | 'Low'; // Ensuring this matches the Issue interface
+    priority: 'High' | 'Medium' | 'Low';
   }[];
   recommendedPractice: {
     weeklyFocus: string;

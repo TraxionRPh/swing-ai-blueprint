@@ -12,7 +12,7 @@ export const DiagnosisCard = ({ diagnosis, rootCauses, isAIGenerated }: Diagnosi
     <Card>
       <CardHeader>
         <CardTitle>
-          {isAIGenerated ? "AI Personal Diagnosis" : "AI Diagnosis"}
+          {isAIGenerated ? "AI Performance Analysis" : "Problem Analysis"}
         </CardTitle>
       </CardHeader>
       <CardContent>

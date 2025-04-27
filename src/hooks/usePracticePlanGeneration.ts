@@ -86,7 +86,10 @@ export const usePracticePlanGeneration = () => {
         return [];
       }
 
-      if (!drills || drills.length === 0) return [];
+      if (!drills || drills.length === 0) {
+        console.error('No drills found in database');
+        return [];
+      }
       
       // Enhanced matching logic
       return drills.filter(drill => {
@@ -178,6 +181,9 @@ export const usePracticePlanGeneration = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Determine if this is an AI-generated plan (no specific issue) or user-specified problem
+      const isAIGenerated = !issue || issue === "Improve overall golf performance";
+
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
         body: { 
           userId, 
@@ -214,7 +220,7 @@ export const usePracticePlanGeneration = () => {
           },
           performanceInsights: performanceInsights,
           userGoals: userGoals,
-          isAIGenerated: data.isAIGenerated || false
+          isAIGenerated: data.isAIGenerated || isAIGenerated
         };
 
         if (userId) {
