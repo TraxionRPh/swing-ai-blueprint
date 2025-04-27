@@ -5,6 +5,7 @@ import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { HandicapLevel } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { usePracticePlanGeneration } from './usePracticePlanGeneration';
+import { Json } from "@/integrations/supabase/types";
 
 export const useAIAnalysis = () => {
   // Rename the imported function to avoid name collision
@@ -28,18 +29,16 @@ export const useAIAnalysis = () => {
 
       if (userId) {
         // Convert types to match the expected Supabase schema
-        // Explicitly convert array and object types to JSON compatible format
         const { error: saveError } = await supabase
           .from('ai_practice_plans')
-          .insert([{
+          .insert({
             user_id: userId,
             problem: issue || 'General golf improvement',
             diagnosis: plan.diagnosis,
-            // Ensure these are properly converted to JSON format
-            root_causes: plan.rootCauses as unknown as JSON,
-            recommended_drills: plan.recommendedDrills as unknown as JSON,
-            practice_plan: plan as unknown as JSON
-          }]);
+            root_causes: plan.rootCauses as unknown as Json,
+            recommended_drills: plan.recommendedDrills as unknown as Json,
+            practice_plan: plan as unknown as Json
+          });
 
         if (saveError) {
           console.error("Error saving practice plan:", saveError);
