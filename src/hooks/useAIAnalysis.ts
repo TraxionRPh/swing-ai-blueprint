@@ -27,16 +27,17 @@ export const useAIAnalysis = () => {
       console.log("Plan generated successfully:", plan);
 
       if (userId) {
+        // Fix: Wrap the object in an array to match Supabase's expected format
         const { error: saveError } = await supabase
           .from('ai_practice_plans')
-          .insert({
+          .insert([{
             user_id: userId,
             problem: issue || 'General golf improvement',
             diagnosis: plan.diagnosis,
             root_causes: plan.rootCauses,
             recommended_drills: plan.recommendedDrills,
             practice_plan: plan
-          });
+          }]);
 
         if (saveError) {
           console.error("Error saving practice plan:", saveError);
