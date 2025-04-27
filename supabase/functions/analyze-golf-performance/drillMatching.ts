@@ -111,11 +111,11 @@ export function isDefinitelyNotPuttingRelated(drill: any): boolean {
   return nonPuttingMatches >= 2;
 }
 
-// Similar function for bunker-related drills
+// Enhanced function for bunker-related drills with improved detection
 export function isBunkerRelated(drill: any): boolean {
   if (!drill) return false;
   
-  // Direct category check
+  // Direct category check - highest priority indicator
   if (drill.category?.toLowerCase().includes('bunker') || 
       drill.category?.toLowerCase().includes('sand')) {
     return true;
@@ -128,19 +128,46 @@ export function isBunkerRelated(drill: any): boolean {
     ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
   ].join(' ');
   
-  // Primary bunker indicators
+  // Primary bunker indicators - strong signals
   const primaryBunkerTerms = [
     'bunker', 'sand', 'trap', 'explosion', 'splash'
   ];
   
-  // Check for obvious bunker terms
+  // Check for obvious bunker terms in title first (most reliable location)
   for (const term of primaryBunkerTerms) {
-    if (drillText.includes(term)) {
+    if (drill.title?.toLowerCase().includes(term)) {
       return true;
     }
   }
   
-  return false;
+  // Secondary bunker terms that need additional context
+  const secondaryBunkerTerms = [
+    'wedge', 'lob', 'open face', 'sand wedge'
+  ];
+  
+  // Count primary bunker terms in full text
+  let primaryMatches = 0;
+  for (const term of primaryBunkerTerms) {
+    if (drillText.includes(term)) {
+      primaryMatches++;
+    }
+  }
+  
+  // Even one primary term anywhere is a good signal
+  if (primaryMatches > 0) {
+    return true;
+  }
+  
+  // For secondary terms, require multiple matches or specific combinations
+  let secondaryMatches = 0;
+  for (const term of secondaryBunkerTerms) {
+    if (drillText.includes(term)) {
+      secondaryMatches++;
+    }
+  }
+  
+  // Require at least 2 secondary terms to confirm bunker context
+  return secondaryMatches >= 2;
 }
 
 // Function to check if a drill is related to topping/thin hits
@@ -196,6 +223,20 @@ export function isDrillRelevantToProblem(drill: any, problem: string, category?:
     return validateContextMatch(drillText, problem, category);
   }
   
+  // Special handling for bunker problems - enhanced
+  if (problemLower.includes('bunker') || 
+      problemLower.includes('sand') || 
+      problemLower.includes('trap')) {
+    
+    // First, check exclusions - a bunker drill should not be a putting drill
+    if (isPuttingRelated(drill)) {
+      return false;
+    }
+    
+    // Then verify it is specifically bunker-related
+    return isBunkerRelated(drill);
+  }
+  
   // Special handling for putting problems - strict filtering
   if (problemLower.includes('putt') || 
       problemLower.includes('green') || 
@@ -209,11 +250,6 @@ export function isDrillRelevantToProblem(drill: any, problem: string, category?:
     
     // And verify it is putting-related
     return isPuttingRelated(drill);
-  }
-  
-  // Special handling for bunker problems
-  if (problemLower.includes('bunker') || problemLower.includes('sand')) {
-    return isBunkerRelated(drill);
   }
   
   // Special handling for topping/thin hitting problems
@@ -302,4 +338,65 @@ export function hasCompoundTerms(text: string, termSets: string[][]): boolean {
     }
   }
   return false;
+}
+
+// New function to detect if a drill is specifically a fairway bunker drill
+export function isFairwayBunkerDrill(drill: any): boolean {
+  if (!drill) return false;
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+  ].join(' ');
+  
+  // Check for direct fairway bunker mentions
+  return drillText.includes('fairway bunker') || 
+         (drillText.includes('fairway') && 
+          (drillText.includes('bunker') || drillText.includes('sand')));
+}
+
+// New function to detect if a drill is specifically a greenside bunker drill
+export function isGreensideBunkerDrill(drill: any): boolean {
+  if (!drill) return false;
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(drill.focus?.map((f: string) => f.toLowerCase()) || [])
+  ].join(' ');
+  
+  // Check for greenside bunker indicators
+  return drillText.includes('greenside bunker') || 
+         drillText.includes('green side bunker') ||
+         drillText.includes('sand save') ||
+         drillText.includes('explosion shot') ||
+         ((drillText.includes('bunker') || drillText.includes('sand')) && 
+          (drillText.includes('greenside') || 
+           drillText.includes('green side') || 
+           drillText.includes('around the green')));
+}
+
+// New function to check if a drill matches specific bunker problem types
+export function matchesBunkerProblemType(drill: any, problem: string): boolean {
+  const problemLower = problem.toLowerCase();
+  
+  // For fairway bunker specific problems
+  if (problemLower.includes('fairway bunker')) {
+    return isFairwayBunkerDrill(drill);
+  }
+  
+  // For greenside bunker specific problems
+  if (problemLower.includes('greenside bunker') || 
+      problemLower.includes('green side bunker') ||
+      (problemLower.includes('bunker') && 
+       (problemLower.includes('chip') || 
+        problemLower.includes('short game')))) {
+    return isGreensideBunkerDrill(drill);
+  }
+  
+  // Generic bunker problem - any bunker drill is acceptable
+  return isBunkerRelated(drill);
 }
