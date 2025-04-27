@@ -1,8 +1,9 @@
+
 import { Drill } from "./drill";
 import { Challenge } from "./challenge";
 
 export interface GeneratedPracticePlan {
-  id?: string; // Adding id property to resolve the missing property error
+  id?: string; 
   problem: string;
   diagnosis: string;
   rootCauses: string[];
@@ -11,11 +12,11 @@ export interface GeneratedPracticePlan {
     duration: string;
     frequency: string;
     plan: DayPlan[];
-    challenge?: Challenge; // Add challenge property
+    challenge?: Challenge;
   };
   performanceInsights?: PerformanceInsight[];
   userGoals?: UserGoals;
-  isAIGenerated?: boolean; // Add isAIGenerated property
+  isAIGenerated?: boolean;
 }
 
 export interface UserGoals {
@@ -39,10 +40,10 @@ export interface DayPlan {
 }
 
 export interface DrillWithSets {
-  drill: Drill;
+  drill: Drill | string;
   sets: number;
   reps: number;
-  id?: string; // Added id field to support existing code that references it
+  id?: string; // Required for proper drill identification
 }
 
 export interface SavedPracticePlan {

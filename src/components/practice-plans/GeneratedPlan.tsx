@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GeneratedPracticePlan } from "@/types/practice-plan";
+import { GeneratedPracticePlan, DrillWithSets } from "@/types/practice-plan";
 import { Button } from "@/components/ui/button";
 import { DiagnosisCard } from "./DiagnosisCard";
 import { DailyPlanSection } from "./DailyPlanSection";
@@ -18,7 +18,7 @@ interface GeneratedPlanProps {
   planId?: string;
 }
 
-// Extracted challenge component for better organization
+// Challenge component extracted for better organization and reusability
 const ChallengeCard = ({ 
   title, 
   description, 
@@ -61,71 +61,56 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     return saved ? JSON.parse(saved) : {};
   });
 
+  // For debugging purposes - log plan data on mount and updates
+  useEffect(() => {
+    console.log("Plan loaded:", {
+      problem: plan.problem,
+      recommendedDrillsCount: plan.recommendedDrills?.length || 0,
+      planDays: plan.practicePlan?.plan?.length || 0,
+      challenge: plan.practicePlan?.challenge ? "Present" : "Missing"
+    });
+    
+    // Detailed debug about plan days
+    if (plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan)) {
+      console.log("Plan days details:", plan.practicePlan.plan.map(day => ({
+        day: day.day,
+        focus: day.focus,
+        drillCount: day.drills?.length || 0,
+        drills: day.drills?.map(d => ({
+          drillType: typeof d.drill,
+          hasId: d.drill?.id ? true : false,
+          drillTitle: d.drill?.title || 'Missing title'
+        }))
+      })));
+    }
+  }, [plan]);
+
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
-    setCompletedDrills(prev => ({
-      ...prev,
-      [drillName]: newCompletedState
-    }));
-    localStorage.setItem(`completed-drills-${planId}`, JSON.stringify({
+    const updatedCompletionState = {
       ...completedDrills,
       [drillName]: newCompletedState
-    }));
-  };
-
-  // Process the plan data
-  const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
-    ? plan.practicePlan.plan 
-    : [];
-  const durationNum = parseInt(planDuration) || 1;
-  const filteredDays = planData.slice(0, durationNum);
-  
-  console.log("Plan data:", planData);
-  console.log("Filtered days:", filteredDays);
-  console.log("Recommended drills:", plan.recommendedDrills);
-  
-  // Map drill IDs to actual drill objects for daily plans
-  filteredDays.forEach(day => {
-    if (day.drills) {
-      day.drills.forEach(drillWithSets => {
-        // Fix the type check by ensuring proper comparison
-        if (typeof drillWithSets.drill === 'string') {
-          // Find the drill object from recommended drills by comparing string IDs
-          const drillId = drillWithSets.drill;
-          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillId);
-          if (matchingDrill) {
-            // Explicitly cast to avoid type errors
-            drillWithSets.drill = matchingDrill as Drill;
-          }
-        }
+    };
+    
+    setCompletedDrills(updatedCompletionState);
+    
+    if (planId) {
+      localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(updatedCompletionState));
+      
+      // Give user feedback
+      toast({
+        title: newCompletedState ? "Drill completed!" : "Drill marked as incomplete",
+        description: `${drillName} ${newCompletedState ? 'marked as completed' : 'marked as not completed'}`,
+        variant: "default"
       });
     }
-  });
+  };
 
-  // Prepare challenge data with fallbacks
-  const challenge = plan.practicePlan.challenge as Challenge;
+  // Process and validate the plan data
+  const processedPlanDays = usePlanData(plan, planDuration);
   
-  // Create category-specific default challenges based on the problem
-  const defaultChallenge = getDefaultChallenge(plan.problem);
-  
-  // Use the challenge from the plan or the default challenge
-  const displayChallenge = challenge && Object.keys(challenge).length > 0 ? challenge : defaultChallenge;
-  
-  // Calculate attempts if not provided
-  if (!displayChallenge.attempts) {
-    const instructionCount = [
-      displayChallenge.instruction1, 
-      displayChallenge.instruction2, 
-      displayChallenge.instruction3
-    ].filter(Boolean).length;
-    
-    displayChallenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
-  }
-
-  // For development, display a notification if using default challenge
-  if (!challenge || Object.keys(challenge).length === 0) {
-    console.warn("Using default challenge because no challenge was provided in the plan");
-  }
+  // Prepare challenge data
+  const displayChallenge = useChallenge(plan.problem, plan.practicePlan.challenge);
 
   // Extract challenge instructions for the component
   const challengeInstructions = [
@@ -177,10 +162,10 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
           <CardTitle>Daily Drills Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {filteredDays.length > 0 ? (
-            filteredDays.map((dayPlan, i) => (
+          {processedPlanDays.length > 0 ? (
+            processedPlanDays.map((dayPlan, i) => (
               <DailyPlanSection
-                key={i}
+                key={`day-${i+1}-${dayPlan.day}`}
                 dayPlan={dayPlan}
                 dayNumber={i + 1}
                 completedDrills={completedDrills}
@@ -205,6 +190,91 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     </div>
   );
 };
+
+/**
+ * Custom hook to validate and process plan day data
+ */
+function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1") {
+  // Extract and validate plan days
+  const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
+    ? plan.practicePlan.plan 
+    : [];
+  
+  const durationNum = parseInt(planDuration) || 1;
+  let filteredDays = planData.slice(0, durationNum);
+  
+  // Further validation and processing of drill data
+  return filteredDays.map(day => {
+    // Ensure drills array exists and is valid
+    const drills = Array.isArray(day.drills) 
+      ? day.drills.filter(drill => drill && drill.drill)
+      : [];
+    
+    // Create a new day object with validated drills
+    return {
+      ...day,
+      drills: drills.map(drillWithSets => {
+        // If drill is still a string ID, try to find the corresponding drill object
+        if (typeof drillWithSets.drill === 'string') {
+          const drillId = drillWithSets.drill;
+          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillId);
+          
+          if (matchingDrill) {
+            return {
+              ...drillWithSets,
+              drill: matchingDrill,
+              id: matchingDrill.id // Ensure ID is set
+            };
+          } else {
+            console.warn(`Could not find drill with ID ${drillId}`);
+            return null;
+          }
+        }
+        
+        // If it's already an object, ensure it has an ID
+        if (drillWithSets.drill && typeof drillWithSets.drill === 'object') {
+          return {
+            ...drillWithSets,
+            id: drillWithSets.drill.id // Make sure ID is set
+          };
+        }
+        
+        return null;
+      }).filter(Boolean) // Remove null values
+    };
+  });
+}
+
+/**
+ * Custom hook to handle challenge data
+ */
+function useChallenge(problem: string, providedChallenge?: Challenge) {
+  // Create category-specific default challenges based on the problem
+  const defaultChallenge = getDefaultChallenge(problem);
+  
+  // Use the challenge from the plan or the default challenge
+  const displayChallenge = providedChallenge && Object.keys(providedChallenge).length > 0 
+    ? providedChallenge 
+    : defaultChallenge;
+  
+  // If attempts not provided, calculate based on instructions
+  if (!displayChallenge.attempts) {
+    const instructionCount = [
+      displayChallenge.instruction1, 
+      displayChallenge.instruction2, 
+      displayChallenge.instruction3
+    ].filter(Boolean).length;
+    
+    displayChallenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
+  }
+
+  // For development, log a warning if using default challenge
+  if (!providedChallenge || Object.keys(providedChallenge).length === 0) {
+    console.warn("Using default challenge because no challenge was provided in the plan");
+  }
+  
+  return displayChallenge;
+}
 
 // Helper function to create appropriate default challenges
 function getDefaultChallenge(problem: string): Challenge {
@@ -264,6 +334,16 @@ function getDefaultChallenge(problem: string): Challenge {
     defaultChallenge.instruction1 = "Hit 10 iron shots to a specific target";
     defaultChallenge.instruction2 = "Count how many land within 20 feet of the target";
     defaultChallenge.instruction3 = "Calculate your accuracy percentage";
+  }
+  else if (lowerProblem.includes('sand') || lowerProblem.includes('bunker')) {
+    defaultChallenge.title = "Bunker Escape Challenge";
+    defaultChallenge.description = "Test your ability to escape bunkers consistently";
+    defaultChallenge.category = "Bunker Play";
+    defaultChallenge.metrics = ["Successful Escapes"];
+    defaultChallenge.metric = "Successful Escapes";
+    defaultChallenge.instruction1 = "Hit 10 bunker shots aiming to get out in one attempt";
+    defaultChallenge.instruction2 = "Count how many successfully exit the bunker";
+    defaultChallenge.instruction3 = "Calculate your bunker escape percentage";
   }
   
   return defaultChallenge;
