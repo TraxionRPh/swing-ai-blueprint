@@ -36,6 +36,11 @@ export class DrillRelevanceCalculator {
 
     // Base term matching with reduced weight
     score += this.calculateTermMatchingScore();
+    
+    // Custom boost for topping the ball
+    if (this.specificProblem.includes('topping') || this.specificProblem.includes('top')) {
+      score += this.calculateToppingSpecificScore();
+    }
 
     return Math.min(Math.max(score, 0), 1);
   }
@@ -82,7 +87,8 @@ export class DrillRelevanceCalculator {
       this.drillText.includes('downward angle') ||
       this.drillText.includes('knockdown') ||
       this.drillText.includes('spin') ||
-      this.drillText.includes('divot')
+      this.drillText.includes('divot') ||
+      this.drillText.includes('posture')
     ) {
       score += 0.5;
     }
@@ -100,6 +106,35 @@ export class DrillRelevanceCalculator {
       score -= 0.5;
     }
 
+    return score;
+  }
+  
+  private calculateToppingSpecificScore(): number {
+    let score = 0;
+    
+    // Even more specific scoring for topping problems
+    if (
+      this.drillText.includes('top') ||
+      this.drillText.includes('thin')
+    ) {
+      score += 0.5;  // Direct match to problem
+    }
+    
+    if (
+      this.drillText.includes('ball-first contact') ||
+      this.drillText.includes('ball first contact') ||
+      this.drillText.includes('clean contact')
+    ) {
+      score += 0.7;  // Highly relevant to solution
+    }
+    
+    if (
+      this.drillText.includes('posture') &&
+      (this.drillText.includes('maintain') || this.drillText.includes('keeping'))
+    ) {
+      score += 0.6;  // Very relevant technique focus
+    }
+    
     return score;
   }
 

@@ -26,14 +26,6 @@ export const DailyPlanSection = ({
     setIsOpen(!isOpen);
   };
 
-  // Helper function to safely get drill title
-  const getDrillTitle = (drillData: Drill | string): string => {
-    if (typeof drillData === 'string') {
-      return 'Unknown Drill';
-    }
-    return drillData.title;
-  };
-
   // Make sure we have valid drills
   const drills = Array.isArray(dayPlan?.drills) ? dayPlan.drills : [];
 
@@ -41,7 +33,7 @@ export const DailyPlanSection = ({
   const totalDrills = drills.length;
   const completedCount = drills.filter(d => {
     if (!d.drill) return false;
-    return completedDrills[getDrillTitle(d.drill)];
+    return completedDrills[d.drill.title];
   }).length;
   const completionPercentage = totalDrills > 0 ? Math.round((completedCount / totalDrills) * 100) : 0;
 
@@ -70,13 +62,10 @@ export const DailyPlanSection = ({
               drills.map((drillWithSets, index) => {
                 if (!drillWithSets?.drill) return null;
                 
-                // Check if drill is a string or an object
-                const drillObject = typeof drillWithSets.drill === 'string' 
-                  ? null 
-                  : drillWithSets.drill;
+                const drillObject = drillWithSets.drill;
                 
                 // Only render drill if we have the object data
-                return drillObject ? (
+                return (
                   <DrillCard
                     key={`${dayNumber}-${index}-${drillObject.id || index}`}
                     drill={drillObject}
@@ -85,10 +74,6 @@ export const DailyPlanSection = ({
                     isCompleted={!!completedDrills[drillObject.title]}
                     onComplete={() => onDrillComplete(drillObject.title)}
                   />
-                ) : (
-                  <Card key={`${dayNumber}-${index}`} className="p-3">
-                    <p className="text-amber-600">Drill data unavailable</p>
-                  </Card>
                 );
               })
             ) : (

@@ -77,21 +77,23 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         focus: day.focus,
         drillCount: day.drills?.length || 0,
         drills: day.drills?.map(d => ({
-          drillType: typeof d.drill,
-          hasId: typeof d.drill === 'string' ? d.drill : (d.drill?.id ? true : false),
-          drillTitle: typeof d.drill === 'string' ? 'ID Only' : (d.drill?.title || 'Missing title')
+          drillTitle: d.drill?.title || 'Missing title',
+          drillId: d.drill?.id || 'Missing ID'
         }))
       })));
     }
-  }, [plan]);
-
-  // Helper function to safely get drill title
-  const getDrillTitle = useCallback((drillData: Drill | string): string => {
-    if (typeof drillData === 'string') {
-      return 'Unknown Drill';
+    
+    // Check for any issue with the plan
+    if (!plan.practicePlan?.plan || !Array.isArray(plan.practicePlan.plan) || plan.practicePlan.plan.length === 0) {
+      console.error("Plan has no days!");
+    } else {
+      // Check if any day has no drills
+      const emptyDays = plan.practicePlan.plan.filter(day => !day.drills || day.drills.length === 0);
+      if (emptyDays.length > 0) {
+        console.error(`Found ${emptyDays.length} days with no drills`);
+      }
     }
-    return drillData.title;
-  }, []);
+  }, [plan]);
 
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
@@ -162,6 +164,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         diagnosis={plan.diagnosis} 
         rootCauses={plan.rootCauses} 
         isAIGenerated={plan.isAIGenerated}
+        problem={plan.problem}
       />
 
       {/* Daily Plans */}
@@ -203,47 +206,45 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
  * Custom hook to validate and process plan day data
  */
 function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): DayPlan[] {
-  // Extract and validate plan days
-  const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
-    ? plan.practicePlan.plan 
-    : [];
-  
-  const durationNum = parseInt(planDuration) || 1;
-  let filteredDays = planData.slice(0, durationNum);
-  
-  // Further validation and processing of drill data
-  return filteredDays.map(day => {
-    // Ensure drills array exists and is valid
-    const drills = Array.isArray(day.drills) 
-      ? day.drills.filter(drill => drill && drill.drill)
+  return useMemo(() => {
+    console.log("Processing plan data with duration:", planDuration);
+    
+    // Extract and validate plan days
+    const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
+      ? plan.practicePlan.plan 
       : [];
     
-    // Create a new day object with validated drills
-    return {
-      ...day,
-      drills: drills.map(drillWithSets => {
-        // If drill is still a string ID, try to find the corresponding drill object
-        if (typeof drillWithSets.drill === 'string') {
-          const drillId = drillWithSets.drill;
-          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillId);
-          
-          if (matchingDrill) {
-            return {
-              ...drillWithSets,
-              drill: matchingDrill,
-              id: matchingDrill.id // Ensure ID is set
-            };
-          } else {
-            console.warn(`Could not find drill with ID ${drillId}`);
-            return drillWithSets; // Keep the string reference, handle at render time
-          }
-        }
-        
-        // If it's already an object, ensure it has an ID
-        return drillWithSets;
-      }).filter(Boolean) // Remove null values
-    };
-  });
+    if (planData.length === 0) {
+      console.warn("No plan days found in practice plan");
+    }
+    
+    const durationNum = parseInt(planDuration) || 1;
+    let filteredDays = planData.slice(0, durationNum);
+    
+    // Further validation and processing of drill data
+    return filteredDays.map(day => {
+      // Ensure drills array exists and is valid
+      const drills = Array.isArray(day.drills) 
+        ? day.drills.filter(drill => drill && drill.drill)
+        : [];
+      
+      if (drills.length === 0) {
+        console.warn(`Day ${day.day} has no valid drills after filtering`);
+      }
+      
+      // For debugging, list the actual drills by title
+      console.log(`Day ${day.day} valid drills:`, drills.map(d => ({
+        title: d.drill?.title || 'Unknown',
+        id: d.drill?.id || 'No ID'
+      })));
+      
+      // Return the processed day with validated drills
+      return {
+        ...day,
+        drills
+      };
+    });
+  }, [plan, planDuration]);
 }
 
 /**
@@ -251,12 +252,20 @@ function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): D
  */
 function useChallenge(problem: string, providedChallenge?: Challenge) {
   // Create category-specific default challenges based on the problem
-  const defaultChallenge = getDefaultChallenge(problem);
+  const defaultChallenge = useMemo(() => getDefaultChallenge(problem), [problem]);
   
   // Use the challenge from the plan or the default challenge
-  const displayChallenge = providedChallenge && Object.keys(providedChallenge).length > 0 
-    ? providedChallenge 
-    : defaultChallenge;
+  const displayChallenge = useMemo(() => {
+    const hasValidProvidedChallenge = providedChallenge && Object.keys(providedChallenge).length > 0;
+    
+    if (hasValidProvidedChallenge) {
+      console.log("Using provided challenge:", providedChallenge.title);
+      return providedChallenge;
+    } else {
+      console.log("Using default challenge for problem:", problem);
+      return defaultChallenge;
+    }
+  }, [providedChallenge, defaultChallenge, problem]);
   
   // If attempts not provided, calculate based on instructions
   if (!displayChallenge.attempts) {
@@ -267,11 +276,6 @@ function useChallenge(problem: string, providedChallenge?: Challenge) {
     ].filter(Boolean).length;
     
     displayChallenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
-  }
-
-  // For development, log a warning if using default challenge
-  if (!providedChallenge || Object.keys(providedChallenge).length === 0) {
-    console.warn("Using default challenge because no challenge was provided in the plan");
   }
   
   return displayChallenge;
@@ -296,7 +300,17 @@ function getDefaultChallenge(problem: string): Challenge {
 
   const lowerProblem = problem.toLowerCase();
   
-  if (lowerProblem.includes('putt')) {
+  if (lowerProblem.includes('topping') || lowerProblem.includes('top') || lowerProblem.includes('thin')) {
+    defaultChallenge.title = "Clean Contact Challenge";
+    defaultChallenge.description = "Test your ability to make clean, ball-first contact";
+    defaultChallenge.category = "Ball Striking";
+    defaultChallenge.metrics = ["Clean Contacts"];
+    defaultChallenge.metric = "Clean Contacts";
+    defaultChallenge.instruction1 = "Set up to hit 10 mid-iron shots with a focus on maintaining posture";
+    defaultChallenge.instruction2 = "Count how many shots have clean ball-first contact with a proper divot";
+    defaultChallenge.instruction3 = "Record your clean contact percentage";
+  }
+  else if (lowerProblem.includes('putt')) {
     defaultChallenge.title = "Putting Accuracy Challenge";
     defaultChallenge.description = "Test your putting accuracy and consistency";
     defaultChallenge.category = "Putting";

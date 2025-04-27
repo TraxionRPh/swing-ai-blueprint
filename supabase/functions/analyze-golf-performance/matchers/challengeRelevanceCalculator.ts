@@ -34,13 +34,8 @@ export class ChallengeRelevanceCalculator {
     score += this.calculateTitleAndMetricMatchScore();
     score += this.calculateDefaultChallengeScore(challengeText);
 
-    // Boost putting-related challenges for putting problems
-    if (this.specificProblem.includes('putt') && 
-        (challengeText.includes('putt') || 
-         challengeText.includes('green') || 
-         (this.challenge.category && this.challenge.category.toLowerCase() === 'putting'))) {
-      score += 0.6;
-    }
+    // Specific problem match scoring
+    score += this.calculateProblemSpecificScore();
 
     return Math.min(score, 1);
   }
@@ -106,7 +101,8 @@ export class ChallengeRelevanceCalculator {
             challengeText.includes('approach') ||
             challengeText.includes('iron') ||
             challengeText.includes('gir') ||
-            challengeText.includes('regulation')) {
+            challengeText.includes('regulation') ||
+            challengeText.includes('contact')) {
           score += 0.6;
         }
         break;
@@ -167,5 +163,22 @@ export class ChallengeRelevanceCalculator {
       return 0.2;
     }
     return 0;
+  }
+  
+  private calculateProblemSpecificScore(): number {
+    let score = 0;
+    
+    // Specific match for topping the ball problems
+    if (this.specificProblem.includes('topping') || this.specificProblem.includes('top')) {
+      const challengeText = this.getChallengeText();
+      if (challengeText.includes('contact') || 
+          challengeText.includes('strike') || 
+          challengeText.includes('ball first') || 
+          challengeText.includes('divot')) {
+        score += 0.7;  // Strong boost for topping challenges
+      }
+    }
+    
+    return score;
   }
 }

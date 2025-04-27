@@ -40,7 +40,7 @@ export interface DayPlan {
 }
 
 export interface DrillWithSets {
-  drill: Drill | string;  // Can be either a Drill object or a string ID
+  drill: Drill;  // Change from Drill | string to just Drill to ensure we always have a full object
   sets: number;
   reps: number;
   id?: string; // Required for proper drill identification

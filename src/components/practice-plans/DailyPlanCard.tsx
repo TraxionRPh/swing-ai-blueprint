@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { DayPlan, DrillWithSets } from "@/types/practice-plan";
+import { DayPlan } from "@/types/practice-plan";
 import { useToast } from "@/hooks/use-toast";
 import { DrillDetailsDialog } from "./DrillDetailsDialog";
 import { Drill } from "@/types/drill";
@@ -34,14 +34,6 @@ export const DailyPlanCard = ({
     return saved ? JSON.parse(saved) : completedDrills;
   }, [planId, completedDrills]);
 
-  // Helper function to safely get drill title
-  const getDrillTitle = (drillData: Drill | string): string => {
-    if (typeof drillData === 'string') {
-      return 'Unknown Drill';
-    }
-    return drillData.title;
-  };
-
   const handleDrillComplete = (drillTitle: string) => {
     onDrillComplete(drillTitle);
     if (planId) {
@@ -62,8 +54,8 @@ export const DailyPlanCard = ({
             // Skip if drill data is missing
             if (!drillWithSets.drill) return null;
             
-            const drillTitle = getDrillTitle(drillWithSets.drill);
-            const isCompleted = !!savedCompletedDrills[drillTitle];
+            const drillObject = drillWithSets.drill;
+            const isCompleted = !!savedCompletedDrills[drillObject.title];
             
             return (
               <li key={j} className="border rounded-md overflow-hidden bg-background">
@@ -71,7 +63,7 @@ export const DailyPlanCard = ({
                   <Checkbox
                     id={`drill-${dayNumber}-${j}`}
                     checked={isCompleted}
-                    onCheckedChange={() => handleDrillComplete(drillTitle)}
+                    onCheckedChange={() => handleDrillComplete(drillObject.title)}
                     className="mr-3"
                   />
                   <div className="flex-1">
@@ -81,22 +73,20 @@ export const DailyPlanCard = ({
                           htmlFor={`drill-${dayNumber}-${j}`}
                           className={`text-sm font-medium ${isCompleted ? 'text-muted-foreground line-through' : ''}`}
                         >
-                          {drillTitle}
+                          {drillObject.title}
                         </label>
                         <p className="text-xs text-muted-foreground">
                           {drillWithSets.sets} sets of {drillWithSets.reps} reps
                         </p>
                       </div>
-                      {typeof drillWithSets.drill !== 'string' && (
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedDrill(drillWithSets.drill as Drill)}
-                          className="ml-2"
-                        >
-                          View Details
-                        </Button>
-                      )}
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedDrill(drillObject)}
+                        className="ml-2"
+                      >
+                        View Details
+                      </Button>
                     </div>
                   </div>
                 </div>
