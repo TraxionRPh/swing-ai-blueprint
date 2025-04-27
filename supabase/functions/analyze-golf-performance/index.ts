@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -126,14 +127,17 @@ serve(async (req) => {
 
     let drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
     
+    // Filter drills based on the specific problem
     if (specificProblem) {
+      console.log("Filtering drills based on specific problem:", specificProblem);
       const searchTerms = specificProblem.toLowerCase().split(' ')
         .filter(term => term.length > 2)
         .map(term => term.replace(/[^a-z]/g, ''));
       
       console.log("Search terms extracted:", searchTerms);
-
-      drillsToUse = drillsToUse.filter(drill => {
+      
+      // Filter drills by any matching search term in focus, title, overview, or category
+      const matchedDrills = drillsToUse.filter(drill => {
         const drillText = [
           drill.title?.toLowerCase() || '',
           drill.overview?.toLowerCase() || '',
@@ -145,12 +149,20 @@ serve(async (req) => {
         if (matches.length > 0) {
           console.log(`Drill "${drill.title}" matched terms:`, matches);
         }
-
         return matches.length > 0;
       });
-
-      console.log("Initial filtered drills count:", drillsToUse.length);
+      
+      console.log("Initial matched drills count:", matchedDrills.length);
+      
+      // If we have enough matched drills, use them; otherwise, use all drills
+      if (matchedDrills.length >= 6) {
+        drillsToUse = matchedDrills;
+      } else {
+        console.log("Not enough matched drills, using all available drills");
+      }
     }
+
+    console.log("Total drills available for plan:", drillsToUse.length);
     
     const simplifiedDrills = drillsToUse.map(drill => ({
       id: drill.id,
@@ -167,7 +179,7 @@ You MUST respond with a valid JSON object that has exactly these fields:
 1. "diagnosis": A string with an analysis of the golfer's issue
 2. "rootCauses": An array of strings with root causes of the issue. Each root cause should be specific and actionable, like "closed clubface at impact" or "outside-to-in swing path"
 3. "dailyPlans": An array of objects with these exact fields:
-   - "day": The day number (integer)
+   - "day": The day number (integer, starting from 1)
    - "focus": The focus area for this day (string)
    - "duration": Estimated time required (string)
    - "drills": Array of objects with:
@@ -175,13 +187,12 @@ You MUST respond with a valid JSON object that has exactly these fields:
      - "sets": Number of sets (integer)
      - "reps": Number of repetitions (integer)
 
-For each day:
-1. Choose 2-3 drills that specifically address one or more root causes
-2. Ensure drills work together progressively
-3. Match drill difficulty to golfer level
-4. Include at least one drill focused on the primary root cause and one for a secondary cause
-
-IMPORTANT: Each day MUST have at least 2 drills, ideally 3 if appropriate ones are available.`;
+IMPORTANT: 
+1. You MUST create EXACTLY ${planDuration} daily plans (not more, not less).
+2. Each day MUST have at least 3 drills (if enough are available), or at minimum 2 drills.
+3. Each day should have a different focus area addressing a different aspect of the problem.
+4. Select drills that specifically address the root causes you identify.
+5. Do not reuse the same drill across multiple days unless absolutely necessary.`;
 
     const userPrompt = `Create a ${planDuration}-day practice plan for a ${handicapLevel} golfer working on: "${specificProblem}".
 Recent performance data: ${JSON.stringify(roundData || [])}
@@ -189,7 +200,7 @@ Available drills: ${JSON.stringify(simplifiedDrills)}
 
 YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyPlans as described in your instructions.`;
 
-    console.log("Sending request to OpenAI with filtered drills count:", simplifiedDrills.length);
+    console.log(`Sending request to OpenAI to generate a ${planDuration}-day practice plan`);
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -228,40 +239,102 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       response = JSON.parse(aiResponse.choices[0].message.content);
       console.log("Successfully parsed OpenAI response");
 
-      const anyDayHasInsufficientDrills = response.dailyPlans?.some(
-        (day: any) => !day.drills || day.drills.length < 2
-      );
-
-      if (anyDayHasInsufficientDrills) {
-        console.warn("Some days have insufficient drills, adding more drills based on root causes");
+      // Verify that the response includes the correct number of days
+      const requestedDays = parseInt(planDuration);
+      const generatedDays = response.dailyPlans ? response.dailyPlans.length : 0;
+      
+      console.log(`Requested ${requestedDays} days, generated ${generatedDays} days`);
+      
+      // If we don't have the correct number of days, fix it
+      if (generatedDays < requestedDays) {
+        console.log("Fixing insufficient day count in practice plan");
         
-        response.dailyPlans = response.dailyPlans.map((day: any) => {
-          if (day.drills.length < 2) {
-            const additionalDrills = drillsToUse
-              .filter(drill => !day.drills.find((d: any) => d.id === drill.id))
-              .filter(drill => {
-                const drillText = [
-                  drill.title?.toLowerCase() || '',
-                  drill.overview?.toLowerCase() || '',
-                  ...(drill.focus?.map(f => f.toLowerCase()) || [])
-                ].join(' ');
-                
-                return response.rootCauses.some((cause: string) => 
-                  drillText.includes(cause.toLowerCase())
-                );
-              })
-              .slice(0, 3 - day.drills.length)
-              .map(drill => ({
-                id: drill.id,
-                sets: 2,
-                reps: 10
-              }));
-            
-            day.drills = [...day.drills, ...additionalDrills];
-          }
-          return day;
-        });
+        // Add missing days
+        for (let i = generatedDays + 1; i <= requestedDays; i++) {
+          // Create a new focus area based on one of the root causes
+          const focusArea = response.rootCauses[i % response.rootCauses.length] || 
+                         `Day ${i} Practice`;
+          
+          response.dailyPlans.push({
+            day: i,
+            focus: `Improving ${focusArea}`,
+            duration: "45 minutes",
+            drills: [] // We'll fill this with drills below
+          });
+        }
+      } else if (generatedDays > requestedDays) {
+        // Trim extra days if too many were generated
+        console.log("Trimming extra days from practice plan");
+        response.dailyPlans = response.dailyPlans.slice(0, requestedDays);
       }
+      
+      // Check each day to ensure it has enough drills
+      response.dailyPlans = response.dailyPlans.map((day, index) => {
+        console.log(`Checking day ${day.day || index+1}, has ${day.drills?.length || 0} drills`);
+        
+        // Make sure day has a valid number
+        if (!day.day) day.day = index + 1;
+        
+        // If day has insufficient drills, add more based on the root causes
+        if (!day.drills || day.drills.length < 2) {
+          console.log(`Adding more drills to day ${day.day}`);
+          
+          // Get root causes for this day (rotate through them)
+          const dayCause = response.rootCauses[index % response.rootCauses.length];
+          console.log(`Finding drills for root cause: ${dayCause}`);
+          
+          // Find drills that match this root cause
+          const matchingDrills = drillsToUse.filter(drill => {
+            // Check if drill content matches the root cause
+            const drillContent = [
+              drill.title?.toLowerCase() || '',
+              drill.overview?.toLowerCase() || '',
+              ...(drill.focus?.map(f => f.toLowerCase()) || []),
+              drill.category?.toLowerCase() || ''
+            ].join(' ');
+            
+            // Find drills that match this day's focus or the root cause
+            return drillContent.includes(dayCause.toLowerCase()) || 
+                  drillContent.includes(day.focus?.toLowerCase() || '');
+          });
+          
+          console.log(`Found ${matchingDrills.length} drills matching the root cause`);
+          
+          // If no matching drills, just use random drills
+          const drillsToAdd = matchingDrills.length > 0 ? 
+                            matchingDrills : 
+                            drillsToUse.sort(() => Math.random() - 0.5);
+          
+          // Create or add to existing drills array
+          if (!day.drills) day.drills = [];
+          
+          // Add unique drills until we have at least 3 (or all available if less than 3)
+          const existingIds = day.drills.map(d => d.id);
+          let addedCount = 0;
+          let drillIndex = 0;
+          
+          while (day.drills.length < 3 && addedCount < drillsToAdd.length && drillIndex < drillsToAdd.length) {
+            const drill = drillsToAdd[drillIndex];
+            drillIndex++;
+            
+            // Skip if this drill is already in the day's plan
+            if (existingIds.includes(drill.id)) continue;
+            
+            day.drills.push({
+              id: drill.id,
+              sets: 3,
+              reps: 10
+            });
+            
+            existingIds.push(drill.id);
+            addedCount++;
+          }
+          
+          console.log(`Day ${day.day} now has ${day.drills.length} drills`);
+        }
+        
+        return day;
+      });
 
     } catch (e) {
       console.error("Failed to parse OpenAI response:", e);
@@ -317,13 +390,14 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
           
           return {
             drill: fullDrill,
-            sets: typeof drill.sets === 'number' ? drill.sets : 1,
+            sets: typeof drill.sets === 'number' ? drill.sets : 3,
             reps: typeof drill.reps === 'number' ? drill.reps : 10
           };
         }).filter(Boolean)
       };
     });
 
+    // Make sure we don't return empty days
     const finalPlans = mappedDailyPlans.filter(day => day.drills.length > 0);
     
     if (finalPlans.length === 0) {
@@ -343,12 +417,43 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       }
     }
 
+    // Final verification - if we still don't have enough days after all that
+    // populate with sample drills as a last resort
+    let practiceData = finalPlans;
+    if (finalPlans.length < parseInt(planDuration)) {
+      console.log(`Still missing days after processing! Have ${finalPlans.length}, need ${planDuration}`);
+      
+      // Calculate how many days we need to add
+      const missingDays = parseInt(planDuration) - finalPlans.length;
+      const additionalDays = [];
+      
+      for (let i = 0; i < missingDays; i++) {
+        const dayNumber = finalPlans.length + i + 1;
+        const dayFocus = `Additional Practice Day ${dayNumber}`;
+        
+        // Add a day with the sample drills (3 per day)
+        additionalDays.push({
+          day: dayNumber,
+          focus: dayFocus,
+          duration: "45 minutes",
+          drills: sampleDrills.slice(0, 3).map(drill => ({
+            drill: drill,
+            sets: 3,
+            reps: 10
+          }))
+        });
+      }
+      
+      practiceData = [...finalPlans, ...additionalDays];
+      console.log(`Added ${additionalDays.length} additional days to reach ${practiceData.length} total days`);
+    }
+
     return new Response(
       JSON.stringify({
         diagnosis: response.diagnosis || "Golf performance analysis completed",
         rootCauses: response.rootCauses || ["Technical analysis completed"],
         practicePlan: {
-          plan: finalPlans.length > 0 ? finalPlans : mappedDailyPlans
+          plan: practiceData
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
