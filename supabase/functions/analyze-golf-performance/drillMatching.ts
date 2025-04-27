@@ -1,4 +1,6 @@
 
+import { ProblemCategory, identifyProblemCategory } from './golfCategorization.ts';
+
 /**
  * Calculate a relevance score for a drill based on how well it matches the search terms
  * and specific problem. Higher scores indicate better matches.
@@ -6,12 +8,14 @@
  * @param drillText Combined text representation of the drill
  * @param searchTerms Array of search terms from the specific problem
  * @param specificProblem The full specific problem text
+ * @param problemCategory Optional problem category for enhanced matching
  * @returns A relevance score between 0 and 1
  */
 export function getDrillRelevanceScore(
   drillText: string, 
   searchTerms: string[], 
-  specificProblem: string
+  specificProblem: string,
+  problemCategory?: ProblemCategory | null
 ): number {
   // Convert to lowercase for case-insensitive matching
   const lowerDrillText = typeof drillText === 'string' ? drillText.toLowerCase() : '';
@@ -23,9 +27,27 @@ export function getDrillRelevanceScore(
   
   let score = 0;
   
-  // Match specific problems with enhanced iron contact matching
-  if (lowerProblem.includes('chunk') || lowerProblem.includes('iron contact') || 
-      lowerProblem.includes('ball striking')) {
+  // If we have a problem category, use it for enhanced matching
+  if (problemCategory) {
+    // Check if drill matches any keywords from the category
+    for (const keyword of problemCategory.keywords) {
+      if (lowerDrillText.includes(keyword)) {
+        score += 0.15;
+      }
+    }
+    
+    // Check if drill matches any related clubs from the category
+    for (const club of problemCategory.relatedClubs) {
+      if (lowerDrillText.includes(club)) {
+        score += 0.2;
+      }
+    }
+  }
+  
+  // Match specific problems with enhanced categorization
+  const category = problemCategory?.name.toLowerCase() || identifyProblemCategory(specificProblem)?.name.toLowerCase() || '';
+  
+  if (category === "ball striking") {
     if (
       lowerDrillText.includes('iron') || 
       lowerDrillText.includes('contact') || 
@@ -38,39 +60,36 @@ export function getDrillRelevanceScore(
       score += 0.5;
     }
   }
-  else if (lowerProblem.includes('slice') || lowerProblem.includes('slicing')) {
+  else if (category === "driving accuracy") {
     if (
       lowerDrillText.includes('slice') || 
       lowerDrillText.includes('path') || 
       lowerDrillText.includes('alignment') ||
       lowerDrillText.includes('outside-in') ||
-      lowerDrillText.includes('over the top')
+      lowerDrillText.includes('over the top') ||
+      lowerDrillText.includes('driver') ||
+      lowerDrillText.includes('tee')
     ) {
       score += 0.4;
     }
-    
-    // Specific club relevance
-    if (lowerProblem.includes('driver') && lowerDrillText.includes('driver')) {
-      score += 0.3;
-    }
-  } else if (lowerProblem.includes('hook')) {
+  } else if (category === "short game") {
     if (
-      lowerDrillText.includes('hook') || 
-      lowerDrillText.includes('path') || 
-      lowerDrillText.includes('inside-out')
+      lowerDrillText.includes('chip') || 
+      lowerDrillText.includes('pitch') || 
+      lowerDrillText.includes('short game') ||
+      lowerDrillText.includes('around green') ||
+      lowerDrillText.includes('wedge')
     ) {
-      score += 0.4;
-    }
-  } else if (lowerProblem.includes('putt') || lowerProblem.includes('putting')) {
-    if (lowerDrillText.includes('putt') || lowerDrillText.includes('green')) {
       score += 0.5;
     }
-  } else if (lowerProblem.includes('chip') || lowerProblem.includes('short game')) {
-    if (lowerDrillText.includes('chip') || lowerDrillText.includes('short game')) {
-      score += 0.5;
-    }
-  } else if (lowerProblem.includes('bunker') || lowerProblem.includes('sand')) {
-    if (lowerDrillText.includes('bunker') || lowerDrillText.includes('sand')) {
+  } else if (category === "putting") {
+    if (
+      lowerDrillText.includes('putt') || 
+      lowerDrillText.includes('green') ||
+      lowerDrillText.includes('putter') ||
+      lowerDrillText.includes('stroke') ||
+      lowerDrillText.includes('read')
+    ) {
       score += 0.5;
     }
   }
@@ -102,11 +121,13 @@ export function getDrillRelevanceScore(
  * 
  * @param challenge The challenge to evaluate
  * @param specificProblem The specific problem being addressed
+ * @param problemCategory Optional problem category for enhanced matching
  * @returns A relevance score between 0 and 1
  */
 export function getChallengeRelevanceScore(
   challenge: any,
-  specificProblem: string
+  specificProblem: string,
+  problemCategory?: ProblemCategory | null
 ): number {
   if (!challenge || !specificProblem) {
     return 0;
@@ -127,9 +148,37 @@ export function getChallengeRelevanceScore(
 
   let score = 0;
 
-  // Enhanced matching for iron contact/ball striking issues
-  if (lowerProblem.includes('chunk') || lowerProblem.includes('iron contact') || 
-      lowerProblem.includes('ball striking')) {
+  // Enhanced matching based on problem category
+  if (problemCategory) {
+    // Check if the challenge matches the primary outcome metric for this category
+    for (const metric of problemCategory.outcomeMetrics) {
+      if (challenge.metric?.toLowerCase() === metric.toLowerCase() ||
+          (Array.isArray(challenge.metrics) && 
+           challenge.metrics.some(m => m?.toLowerCase() === metric.toLowerCase()))) {
+        score += 0.5;
+        break;
+      }
+    }
+    
+    // Check if challenge matches any keywords from the category
+    for (const keyword of problemCategory.keywords) {
+      if (lowerChallenge.includes(keyword)) {
+        score += 0.1;
+      }
+    }
+    
+    // Check if challenge matches any related clubs from the category
+    for (const club of problemCategory.relatedClubs) {
+      if (lowerChallenge.includes(club)) {
+        score += 0.15;
+      }
+    }
+  }
+
+  // Original category-specific matching logic
+  const category = problemCategory?.name.toLowerCase() || '';
+  
+  if (category === "ball striking") {
     if (
       lowerChallenge.includes('green') || 
       lowerChallenge.includes('approach') ||
@@ -140,8 +189,7 @@ export function getChallengeRelevanceScore(
       score += 0.6;
     }
   }
-  // Match specific problems with relevant challenges
-  else if (lowerProblem.includes('slice') || lowerProblem.includes('hook')) {
+  else if (category === "driving accuracy") {
     if (
       lowerChallenge.includes('fairway') || 
       lowerChallenge.includes('accuracy') ||
@@ -150,7 +198,7 @@ export function getChallengeRelevanceScore(
     ) {
       score += 0.5;
     }
-  } else if (lowerProblem.includes('putt') || lowerProblem.includes('putting')) {
+  } else if (category === "putting") {
     if (
       lowerChallenge.includes('putt') || 
       lowerChallenge.includes('putts') ||
@@ -158,26 +206,11 @@ export function getChallengeRelevanceScore(
     ) {
       score += 0.5;
     }
-  } else if (lowerProblem.includes('chip') || lowerProblem.includes('short game')) {
+  } else if (category === "short game") {
     if (
       lowerChallenge.includes('chip') || 
       lowerChallenge.includes('up and down') ||
       lowerChallenge.includes('short game')
-    ) {
-      score += 0.5;
-    }
-  } else if (lowerProblem.includes('bunker') || lowerProblem.includes('sand')) {
-    if (
-      lowerChallenge.includes('bunker') || 
-      lowerChallenge.includes('sand')
-    ) {
-      score += 0.5;
-    }
-  } else if (lowerProblem.includes('driver')) {
-    if (
-      lowerChallenge.includes('drive') || 
-      lowerChallenge.includes('tee shot') ||
-      lowerChallenge.includes('fairway')
     ) {
       score += 0.5;
     }

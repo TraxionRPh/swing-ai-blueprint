@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { AnalyzeRequest } from "./types.ts";
 import { PlanGenerator } from "./planGenerator.ts";
 import { ResponseHandler } from "./responseHandler.ts";
+import { identifyProblemCategory } from "./golfCategorization.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,10 +32,15 @@ serve(async (req) => {
       availableDrills = []
     }: AnalyzeRequest = await req.json();
 
+    // Identify the problem category for better logging and matching
+    const problemCategory = identifyProblemCategory(specificProblem);
+    const categoryName = problemCategory?.name || 'General';
+
     console.log("Processing request with params:", {
       userId,
       handicapLevel,
       specificProblem,
+      problemCategory: categoryName,
       planDuration,
       availableDrillsCount: availableDrills?.length || 0
     });

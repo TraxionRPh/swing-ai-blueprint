@@ -51,12 +51,63 @@ export const usePracticePlanGeneration = () => {
   };
 
   /**
+   * Categories a golf problem into a general skill area
+   */
+  const categorizeGolfProblem = (issue: string): string => {
+    const lowerIssue = issue.toLowerCase();
+    
+    // Ball striking issues
+    if (lowerIssue.includes('chunk') || 
+        lowerIssue.includes('fat') ||
+        lowerIssue.includes('thin') || 
+        lowerIssue.includes('top') ||
+        lowerIssue.includes('contact') || 
+        lowerIssue.includes('ball striking') ||
+        lowerIssue.includes('compress')) {
+      return 'ball_striking';
+    }
+    
+    // Driving and accuracy issues
+    if (lowerIssue.includes('slice') || 
+        lowerIssue.includes('hook') || 
+        lowerIssue.includes('driver') || 
+        lowerIssue.includes('off the tee') ||
+        lowerIssue.includes('tee shot') ||
+        lowerIssue.includes('direction')) {
+      return 'driving_accuracy';
+    }
+    
+    // Short game issues
+    if (lowerIssue.includes('chip') || 
+        lowerIssue.includes('pitch') || 
+        lowerIssue.includes('bunker') || 
+        lowerIssue.includes('sand') ||
+        lowerIssue.includes('short game')) {
+      return 'short_game';
+    }
+    
+    // Putting issues
+    if (lowerIssue.includes('putt') || 
+        lowerIssue.includes('green') || 
+        lowerIssue.includes('read') ||
+        lowerIssue.includes('lag')) {
+      return 'putting';
+    }
+    
+    return 'general';
+  };
+
+  /**
    * Finds the most relevant drills for a specific problem
    */
   const findRelevantDrills = async (issue: string): Promise<Drill[]> => {
     if (!issue) return [];
     
     try {
+      // Categorize the issue for better search
+      const problemCategory = categorizeGolfProblem(issue);
+      console.log(`Issue "${issue}" categorized as: ${problemCategory}`);
+      
       const searchTerms = issue
         .toLowerCase()
         .split(/[\s-]+/)
@@ -86,6 +137,48 @@ export const usePracticePlanGeneration = () => {
           drill.category?.toLowerCase() || '',
           ...drill.focus.map(f => f.toLowerCase())
         ].join(' ');
+        
+        // Category-based matching for better results
+        switch(problemCategory) {
+          case 'ball_striking':
+            if (drillText.includes('iron') || 
+                drillText.includes('contact') || 
+                drillText.includes('strike') ||
+                drillText.includes('compress') ||
+                drillText.includes('impact')) {
+              return true;
+            }
+            break;
+          
+          case 'driving_accuracy':
+            if (drillText.includes('driver') || 
+                drillText.includes('slice') || 
+                drillText.includes('hook') ||
+                drillText.includes('path') ||
+                drillText.includes('alignment')) {
+              return true;
+            }
+            break;
+            
+          case 'short_game':
+            if (drillText.includes('chip') || 
+                drillText.includes('pitch') ||
+                drillText.includes('short game') ||
+                drillText.includes('bunker') ||
+                drillText.includes('sand')) {
+              return true;
+            }
+            break;
+            
+          case 'putting':
+            if (drillText.includes('putt') || 
+                drillText.includes('green') ||
+                drillText.includes('read') ||
+                drillText.includes('stroke')) {
+              return true;
+            }
+            break;
+        }
         
         // Match if any search term is found in the drill text
         return searchTerms.some(term => drillText.includes(term));
@@ -151,7 +244,8 @@ export const usePracticePlanGeneration = () => {
           practicePlan: {
             duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
             frequency: "Daily",
-            plan: data.practicePlan.plan
+            plan: data.practicePlan.plan,
+            challenge: data.practicePlan.challenge
           }
         };
       } else {
