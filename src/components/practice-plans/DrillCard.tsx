@@ -28,7 +28,9 @@ export const DrillCard = ({
   if (!drill) return null;
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty?.toLowerCase()) {
+    const lowerDifficulty = difficulty?.toLowerCase() || 'beginner';
+    
+    switch (lowerDifficulty) {
       case 'beginner':
         return "bg-emerald-500 hover:bg-emerald-600 text-white border-0";
       case 'intermediate':
@@ -74,11 +76,23 @@ export const DrillCard = ({
                 )}>
                   {drill.title}
                 </h3>
-                <Badge 
-                  className={cn("text-xs font-normal", getDifficultyColor(drill.difficulty || 'beginner'))}
-                >
-                  {drill.difficulty || 'Beginner'}
-                </Badge>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <Badge 
+                    className={cn("text-xs font-normal", getDifficultyColor(drill.difficulty || 'beginner'))}
+                  >
+                    {drill.difficulty || 'Beginner'}
+                  </Badge>
+                  
+                  {/* Show the drill category as a badge */}
+                  {drill.category && (
+                    <Badge 
+                      variant="outline"
+                      className="text-xs font-normal"
+                    >
+                      {drill.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </div>

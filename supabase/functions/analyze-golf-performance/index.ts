@@ -44,7 +44,7 @@ serve(async (req) => {
     }
     
     // Parse the body of the request
-    const { userId, roundData, handicapLevel, specificProblem, planDuration, availableDrills, availableChallenges } = req.body;
+    const { userId, roundData, handicapLevel, specificProblem, planDuration, availableDrills, availableChallenges } = await req.json();
 
     // Ensure we have drills to work with
     let drillsToUse = availableDrills || [];

@@ -44,5 +44,35 @@ export const fallbackPuttingDrills = [
     common_mistake1: 'Using the same stroke length for all distances',
     common_mistake2: 'Focusing too much on mechanics instead of feel',
     pro_tip: 'For longer putts, focus on getting the ball within a 3-foot circle of the hole.'
+  },
+  {
+    id: 'gate-drill-putting',
+    title: 'Gate Putting Drill',
+    overview: 'Improve your putting accuracy and face control with this precision drill.',
+    category: 'Putting',
+    focus: ['Accuracy', 'Face Control', 'Starting Line'],
+    difficulty: 'Intermediate',
+    duration: '15 minutes',
+    instruction1: 'Place two tees or coins on the green creating a gate slightly wider than your putter head.',
+    instruction2: 'Position the gate about 6 inches in front of your ball on your intended line.',
+    instruction3: 'Practice putting through the gate without hitting either tee.',
+    common_mistake1: 'Opening or closing the putter face at impact',
+    common_mistake2: 'Accelerating too quickly through impact',
+    pro_tip: 'Start with a wider gate and gradually make it narrower as you improve.'
+  },
+  {
+    id: 'lag-putting-drill',
+    title: 'Lag Putting Distance Control Drill',
+    overview: 'Master distance control for long putts to reduce three-putts.',
+    category: 'Putting',
+    focus: ['Distance Control', 'Speed', 'Feel'],
+    difficulty: 'Advanced',
+    duration: '20 minutes',
+    instruction1: 'Place rings of tees at 3-foot intervals from 20-30 feet away from the hole.',
+    instruction2: 'Practice hitting putts that stop within each ring.',
+    instruction3: 'Focus on your pre-putt routine and distance control, not making the putt.',
+    common_mistake1: 'Hitting the ball too hard on long putts',
+    common_mistake2: 'Changing your stroke mechanic for different distances',
+    pro_tip: 'Visualize the speed before each putt and commit to your stroke.'
   }
 ];

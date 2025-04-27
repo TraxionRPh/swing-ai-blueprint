@@ -37,8 +37,10 @@ export const DailyPlanSection = ({
   }).length;
   const completionPercentage = totalDrills > 0 ? Math.round((completedCount / totalDrills) * 100) : 0;
 
-  // Remove "Day X: " from the focus text if it exists to avoid duplication
-  const focusText = dayPlan?.focus?.replace(`Day ${dayNumber}: `, '') || '';
+  // Format the focus text - Remove "Day X: " prefix if it exists
+  const focusText = dayPlan?.focus && dayPlan.focus.startsWith(`Day ${dayNumber}: `) 
+    ? dayPlan.focus.substring(`Day ${dayNumber}: `.length)
+    : (dayPlan?.focus || '');
 
   return (
     <Card>
