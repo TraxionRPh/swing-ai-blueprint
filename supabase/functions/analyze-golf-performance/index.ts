@@ -39,6 +39,57 @@ serve(async (req) => {
       availableDrillsCount: availableDrills?.length || 0
     });
 
+    // Fetch available challenges with better logging
+    const { data: challenges, error } = await supabaseAdmin
+      .from('challenges')
+      .select('*');
+
+    if (error) {
+      console.error("Error fetching challenges:", error);
+      return ResponseHandler.createErrorResponse(new Error(`Failed to fetch challenges: ${error.message}`));
+    }
+    
+    if (!challenges || challenges.length === 0) {
+      console.warn("No challenges found in database. Creating default challenge.");
+      
+      // Create a default challenge when none exist
+      const defaultChallenge = {
+        id: "default-challenge-1",
+        title: "Fairway Accuracy Challenge",
+        description: "Test your ability to hit fairways consistently with your driver",
+        difficulty: "Medium",
+        category: "Driving",
+        metrics: ["Fairways Hit"],
+        metric: "Fairways Hit",
+        instruction1: "Hit 10 drives aiming for the fairway",
+        instruction2: "Count how many land in the fairway",
+        instruction3: "Calculate your fairway hit percentage",
+        attempts: 10
+      };
+      
+      // Create plan generator with default challenge
+      const planGenerator = new PlanGenerator(
+        roundData,
+        specificProblem,
+        planDuration,
+        availableDrills
+      );
+      
+      // Generate the practice plan with default challenge
+      const response = await planGenerator.generatePlan([defaultChallenge]);
+      
+      console.log("Plan generation complete with default challenge");
+      console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
+
+      return ResponseHandler.createSuccessResponse(
+        response,
+        availableDrills,
+        planDuration
+      );
+    }
+    
+    console.log(`Retrieved ${challenges.length} challenges from database`);
+
     // Create plan generator instance
     const planGenerator = new PlanGenerator(
       roundData,
@@ -46,20 +97,9 @@ serve(async (req) => {
       planDuration,
       availableDrills
     );
-
-    // Fetch available challenges
-    const { data: challenges, error } = await supabaseAdmin
-      .from('challenges')
-      .select('*');
-
-    if (error) {
-      console.error("Error fetching challenges:", error);
-    }
     
-    console.log(`Retrieved ${challenges?.length || 0} challenges from database`);
-
     // Generate the practice plan
-    const response = await planGenerator.generatePlan(challenges || []);
+    const response = await planGenerator.generatePlan(challenges);
 
     console.log("Plan generation complete with diagnosis length:", response.diagnosis.length);
     console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");

@@ -8,6 +8,7 @@ import { DailyPlanSection } from "./DailyPlanSection";
 import { ArrowLeft } from "lucide-react";
 import { ChallengeScore } from "./ChallengeScore";
 import { Challenge } from "@/types/challenge";
+import { useToast } from "@/hooks/use-toast";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -17,6 +18,7 @@ interface GeneratedPlanProps {
 }
 
 export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
+  const { toast } = useToast();
   const [completedDrills, setCompletedDrills] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem(`completed-drills-${planId}`);
     return saved ? JSON.parse(saved) : {};
@@ -41,8 +43,42 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   const durationNum = parseInt(planDuration) || 1;
   const filteredDays = planData.slice(0, durationNum);
 
+  // Extract challenge data with fallbacks for missing fields
   const challenge = plan.practicePlan.challenge as Challenge;
-  const hasChallenge = challenge && Object.keys(challenge).length > 0;
+  
+  // Create a default challenge if none exists
+  const defaultChallenge: Challenge = {
+    id: "default-challenge",
+    title: "Fairway Accuracy Challenge",
+    description: "Test your ability to hit fairways consistently with your driver",
+    difficulty: "Medium",
+    category: "Driving", 
+    metrics: ["Fairways Hit"],
+    metric: "Fairways Hit",
+    instruction1: "Hit 10 drives aiming for the fairway",
+    instruction2: "Count how many land in the fairway",
+    instruction3: "Calculate your percentage of fairways hit",
+    attempts: 10
+  };
+
+  // Use the challenge from the plan or the default challenge
+  const displayChallenge = challenge && Object.keys(challenge).length > 0 ? challenge : defaultChallenge;
+  
+  // If the challenge doesn't have attempts, calculate it based on instructions
+  if (!displayChallenge.attempts) {
+    const instructionCount = [
+      displayChallenge.instruction1, 
+      displayChallenge.instruction2, 
+      displayChallenge.instruction3
+    ].filter(Boolean).length;
+    
+    displayChallenge.attempts = instructionCount > 0 ? instructionCount * 3 : 9;
+  }
+
+  // For development, display a notification if using default challenge
+  if (!challenge || Object.keys(challenge).length === 0) {
+    console.warn("Using default challenge because no challenge was provided in the plan");
+  }
 
   return (
     <div className="space-y-6">
@@ -68,23 +104,19 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span>Initial Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</span>
+            <span>Initial Challenge: {displayChallenge.title}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {hasChallenge ? (
-            <>
-              <p className="text-muted-foreground mb-4">{challenge.description}</p>
-              <div className="space-y-4">
-                {challenge.instruction1 && <p>1. {challenge.instruction1}</p>}
-                {challenge.instruction2 && <p>2. {challenge.instruction2}</p>}
-                {challenge.instruction3 && <p>3. {challenge.instruction3}</p>}
-              </div>
-              <ChallengeScore planId={planId} type="initial" attempts={challenge.attempts} />
-            </>
-          ) : (
-            <p className="text-muted-foreground">No relevant challenge found for this practice plan.</p>
-          )}
+          <p className="text-muted-foreground mb-4">{displayChallenge.description}</p>
+          <div className="space-y-4">
+            {displayChallenge.instruction1 && <p>1. {displayChallenge.instruction1}</p>}
+            {displayChallenge.instruction2 && <p>2. {displayChallenge.instruction2}</p>}
+            {displayChallenge.instruction3 && <p>3. {displayChallenge.instruction3}</p>}
+          </div>
+          <div className="mt-4">
+            <ChallengeScore planId={planId} type="initial" attempts={displayChallenge.attempts} />
+          </div>
         </CardContent>
       </Card>
 
@@ -116,19 +148,20 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       {/* Final Challenge */}
       <Card>
         <CardHeader>
-          <CardTitle>Final Challenge: {hasChallenge ? challenge.title : 'No challenge available'}</CardTitle>
+          <CardTitle>Final Challenge: {displayChallenge.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          {hasChallenge ? (
-            <>
-              <p className="text-muted-foreground mb-4">
-                Complete this challenge again to measure your improvement
-              </p>
-              <ChallengeScore planId={planId} type="final" attempts={challenge.attempts} />
-            </>
-          ) : (
-            <p className="text-muted-foreground">No relevant challenge found for this practice plan.</p>
-          )}
+          <p className="text-muted-foreground mb-4">
+            Complete this challenge again to measure your improvement
+          </p>
+          <div className="space-y-4">
+            {displayChallenge.instruction1 && <p>1. {displayChallenge.instruction1}</p>}
+            {displayChallenge.instruction2 && <p>2. {displayChallenge.instruction2}</p>}
+            {displayChallenge.instruction3 && <p>3. {displayChallenge.instruction3}</p>}
+          </div>
+          <div className="mt-4">
+            <ChallengeScore planId={planId} type="final" attempts={displayChallenge.attempts} />
+          </div>
         </CardContent>
       </Card>
     </div>
