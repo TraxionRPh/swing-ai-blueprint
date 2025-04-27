@@ -103,35 +103,6 @@ export const usePracticePlanGeneration = () => {
       }
 
       console.log('Received response from edge function:', data);
-      
-      const defaultPlan = {
-        problem: issue || "Golf performance optimization",
-        diagnosis: "AI analysis of your golf game",
-        rootCauses: ["Technique", "Equipment"],
-        recommendedDrills: drills || [],
-        practicePlan: {
-          duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
-          frequency: "Daily",
-          plan: Array.from({ length: parseInt(planDuration) }, (_, i) => {
-            const numDrills = Math.floor(Math.random() * 3) + 2;
-            const selectedDrills = (drills || [])
-              .sort(() => Math.random() - 0.5)
-              .slice(0, numDrills)
-              .map(drill => ({
-                drill,
-                sets: Math.floor(Math.random() * 3) + 2,
-                reps: Math.floor(Math.random() * 5) + 8
-              }));
-
-            return {
-              day: i + 1,
-              drills: selectedDrills,
-              focus: "Building Fundamentals",
-              duration: "45 minutes"
-            };
-          })
-        }
-      };
 
       let practicePlan: GeneratedPracticePlan;
       
@@ -148,8 +119,8 @@ export const usePracticePlanGeneration = () => {
           }
         };
       } else {
-        console.warn('Received incomplete data from edge function, using default plan');
-        practicePlan = defaultPlan;
+        console.warn('Received incomplete data from edge function');
+        throw new Error('Failed to generate practice plan');
       }
 
       if (userId) {
