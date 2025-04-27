@@ -32,6 +32,12 @@ serve(async (req) => {
       availableDrills = []
     }: AnalyzeRequest = await req.json();
 
+    // Validate the input data
+    if (!Array.isArray(availableDrills)) {
+      console.warn("availableDrills is not an array, defaulting to empty array");
+      availableDrills = [];
+    }
+
     // Identify the problem category for better logging and matching
     const problemCategory = identifyProblemCategory(specificProblem);
     const categoryName = problemCategory?.name || 'General';
@@ -72,7 +78,6 @@ serve(async (req) => {
       
       console.log("Plan generation complete with default challenge");
       console.log("Challenge assigned:", response.practicePlan.challenge?.title || "None");
-      console.log("Challenge included in response:", response.practicePlan.challenge?.title || "None");
 
       return ResponseHandler.createSuccessResponse(
         response,

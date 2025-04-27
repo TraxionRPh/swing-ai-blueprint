@@ -1,3 +1,4 @@
+
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
@@ -16,7 +17,7 @@ export class PlanGenerator {
     this.roundData = roundData;
     this.specificProblem = specificProblem;
     this.planDuration = parseInt(planDuration) || 1;
-    this.drills = drills;
+    this.drills = drills || []; // Ensure drills is never undefined
     
     // Identify the problem category when the plan generator is created
     this.problemCategory = identifyProblemCategory(specificProblem);
@@ -29,6 +30,12 @@ export class PlanGenerator {
   }
 
   private getRelevantDrills(): DrillData[] {
+    // Handle case when no drills are provided
+    if (!this.drills || this.drills.length === 0) {
+      console.log("No drills available to filter");
+      return [];
+    }
+    
     if (!this.specificProblem) return this.drills;
 
     const searchTerms = this.problemCategory ?
@@ -42,7 +49,7 @@ export class PlanGenerator {
 
     // Score and sort all drills
     const scoredDrills = this.drills
-      .filter(drill => !drill.title.toLowerCase().includes('challenge'))
+      .filter(drill => drill && drill.title && !drill.title.toLowerCase().includes('challenge'))
       .map(drill => {
         const drillText = [
           drill.title?.toLowerCase() || '',
@@ -71,7 +78,10 @@ export class PlanGenerator {
     // If we don't have enough drills, add some fundamental drills
     if (selectedDrills.length < 3) {
       const fundamentalDrills = this.drills.filter(drill => {
-        const drillText = drill.title?.toLowerCase() || '';
+        // Safe guard against undefined drills
+        if (!drill || !drill.title) return false;
+        
+        const drillText = drill.title.toLowerCase();
         return drillText.includes('basic') || drillText.includes('fundamental');
       }).slice(0, 3 - selectedDrills.length);
       
@@ -83,6 +93,19 @@ export class PlanGenerator {
 
   private validateDailyPlans(days: PlanDay[]): PlanDay[] {
     const relevantDrills = this.getRelevantDrills();
+    
+    // If no relevant drills are found, create some dummy drills for the plan
+    if (!relevantDrills || relevantDrills.length === 0) {
+      console.log("No relevant drills found, creating generic practice plan");
+      
+      // Create a generic plan with focus areas but no specific drills
+      return Array.from({ length: this.planDuration }, (_, index) => ({
+        day: index + 1,
+        focus: `Day ${index + 1}: General Practice`,
+        duration: "30 minutes",
+        drills: [] // Empty drills array since we don't have any relevant drills
+      }));
+    }
     
     return days.map((day, index) => {
       const validDay = {
@@ -99,7 +122,7 @@ export class PlanGenerator {
         const startIdx = (index * drillsPerDay) % Math.max(relevantDrills.length, 1);
         let drillsForDay: DrillData[] = [];
         
-        for (let i = 0; i < drillsPerDay; i++) {
+        for (let i = 0; i < drillsPerDay && i < relevantDrills.length; i++) {
           const drillIndex = (startIdx + i) % relevantDrills.length;
           drillsForDay.push(relevantDrills[drillIndex]);
         }
@@ -130,6 +153,16 @@ export class PlanGenerator {
 
     // Create practice plan days with a more balanced distribution of drills
     const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => {
+      // If no relevant drills are found, create days with focus areas but no drills
+      if (!relevantDrills || relevantDrills.length === 0) {
+        return {
+          day: i + 1,
+          focus: `Day ${i + 1}: ${practiceDayGenerator.getFocusByDay(i)}`,
+          duration: "45 minutes",
+          drills: [] // Empty drills array
+        };
+      }
+      
       // Make sure drills are evenly distributed across days
       const drillsPerDay = Math.min(3, Math.ceil(relevantDrills.length / this.planDuration));
       const startIndex = (i * drillsPerDay) % relevantDrills.length;

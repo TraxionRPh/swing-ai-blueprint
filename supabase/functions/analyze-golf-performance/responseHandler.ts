@@ -30,38 +30,49 @@ export class ResponseHandler {
       console.warn("No challenge in response");
     }
 
-    const mappedPlans = response.practicePlan.plan.map((day, index) => ({
-      ...day,
-      drills: day.drills
-        .filter(drill => {
-          // Filter out any drills that might be challenges
-          if (typeof drill.id === 'string' && drill.id.includes('challenge')) {
-            return false;
-          }
-          
-          // Filter out null or undefined drill IDs
-          if (!drill.id) {
-            console.warn(`Found drill with missing ID in day ${index + 1}`);
-            return false;
-          }
-          
-          return true;
-        })
-        .map(drill => {
-          const fullDrill = drills.find(d => d.id === drill.id);
-          if (!fullDrill) {
-            console.warn(`Could not find full drill for ID: ${drill.id}`);
-            return null;
-          }
-          
-          return {
-            drill: fullDrill,
-            sets: typeof drill.sets === 'number' ? drill.sets : 3,
-            reps: typeof drill.reps === 'number' ? drill.reps : 10
-          };
-        })
-        .filter(Boolean)
-    }));
+    // Handle the case when there are no drills
+    const mappedPlans = response.practicePlan.plan.map((day, index) => {
+      // If day has no drills, return the day with an empty drills array
+      if (!day.drills || day.drills.length === 0) {
+        return {
+          ...day,
+          drills: []
+        };
+      }
+      
+      return {
+        ...day,
+        drills: day.drills
+          .filter(drill => {
+            // Filter out any drills that might be challenges
+            if (typeof drill.id === 'string' && drill.id.includes('challenge')) {
+              return false;
+            }
+            
+            // Filter out null or undefined drill IDs
+            if (!drill.id) {
+              console.warn(`Found drill with missing ID in day ${index + 1}`);
+              return false;
+            }
+            
+            return true;
+          })
+          .map(drill => {
+            const fullDrill = drills.find(d => d.id === drill.id);
+            if (!fullDrill) {
+              console.warn(`Could not find full drill for ID: ${drill.id}`);
+              return null;
+            }
+            
+            return {
+              drill: fullDrill,
+              sets: typeof drill.sets === 'number' ? drill.sets : 3,
+              reps: typeof drill.reps === 'number' ? drill.reps : 10
+            };
+          })
+          .filter(Boolean)
+      };
+    });
 
     return new Response(
       JSON.stringify({
