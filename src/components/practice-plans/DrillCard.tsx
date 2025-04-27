@@ -2,17 +2,15 @@
 import { useState } from "react";
 import { Drill } from "@/types/drill";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { DrillDetailsDialog } from "./DrillDetailsDialog";
-import { Info } from "lucide-react";
+import { DrillCardTitle } from "./DrillCardTitle";
+import { DrillCardDetails } from "./DrillCardDetails";
 
-interface DrillCardProps { 
-  drill: Drill; 
-  sets: number; 
-  reps: number; 
-  isCompleted: boolean; 
+interface DrillCardProps {
+  drill: Drill;
+  sets: number;
+  reps: number;
+  isCompleted: boolean;
   onComplete: () => void;
 }
 
@@ -25,10 +23,7 @@ export const DrillCard = ({
 }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  // Ensure drill exists to prevent errors
-  if (!drill) {
-    return null;
-  }
+  if (!drill) return null;
 
   return (
     <>
@@ -40,48 +35,18 @@ export const DrillCard = ({
         relative
       `}>
         <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Checkbox 
-                checked={isCompleted}
-                onCheckedChange={() => onComplete()}
-                id={`drill-${drill.id}`}
-              />
-              <label 
-                htmlFor={`drill-${drill.id}`}
-                className={`
-                  font-medium text-base 
-                  ${isCompleted ? 'text-muted-foreground line-through' : ''}
-                `}
-              >
-                {drill.title}
-              </label>
-            </div>
-            
-            <Badge variant="outline" className="text-xs">
-              {drill.difficulty || 'Beginner'}
-            </Badge>
-          </div>
+          <DrillCardTitle 
+            drill={drill}
+            isCompleted={isCompleted}
+            onComplete={onComplete}
+          />
           
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <div>
-              <span>{sets} sets of {reps} reps</span>
-              <span className="mx-2">•</span>
-              <span>{drill.duration || '10-15 minutes'}</span>
-            </div>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-8 w-8"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDetails(true);
-              }}
-            >
-              <Info className="h-4 w-4" />
-            </Button>
-          </div>
+          <DrillCardDetails 
+            sets={sets}
+            reps={reps}
+            duration={drill.duration}
+            onViewDetails={() => setShowDetails(true)}
+          />
         </CardContent>
       </Card>
 
