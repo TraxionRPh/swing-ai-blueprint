@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan, DrillWithSets } from "@/types/practice-plan";
@@ -8,7 +7,6 @@ import { Json } from "@/integrations/supabase/types";
 import { Drill } from "@/types/drill";
 import { useAPIUsageCheck } from "@/hooks/useAPIUsageCheck";
 
-// Types for internal use
 interface DrillCategory {
   category: string;
   keywords: string[];
@@ -26,7 +24,6 @@ export const usePracticePlanGeneration = () => {
   const categorizeGolfProblem = useCallback((issue: string): string => {
     const lowerIssue = issue.toLowerCase();
     
-    // Ball striking issues
     if (lowerIssue.includes('chunk') || 
         lowerIssue.includes('fat') ||
         lowerIssue.includes('thin') || 
@@ -37,7 +34,6 @@ export const usePracticePlanGeneration = () => {
       return 'ball_striking';
     }
     
-    // Driving and accuracy issues
     if (lowerIssue.includes('slice') || 
         lowerIssue.includes('hook') || 
         lowerIssue.includes('driver') || 
@@ -47,7 +43,6 @@ export const usePracticePlanGeneration = () => {
       return 'driving_accuracy';
     }
     
-    // Short game issues
     if (lowerIssue.includes('chip') || 
         lowerIssue.includes('pitch') || 
         lowerIssue.includes('bunker') || 
@@ -56,7 +51,6 @@ export const usePracticePlanGeneration = () => {
       return 'short_game';
     }
     
-    // Putting issues
     if (lowerIssue.includes('putt') || 
         lowerIssue.includes('green') || 
         lowerIssue.includes('read') ||
@@ -68,19 +62,17 @@ export const usePracticePlanGeneration = () => {
   }, []);
 
   /**
-   * Fetches drills from database and filters by relevance
+   * Find relevant drills for a specific issue
    */
   const findRelevantDrills = useCallback(async (issue: string): Promise<Drill[]> => {
     if (!issue) return [];
     
     try {
-      // Categorize the issue for better search
       const problemCategory = categorizeGolfProblem(issue);
       console.log(`Issue "${issue}" categorized as: ${problemCategory}`);
       
       const searchTerms = extractSearchTerms(issue);
       
-      // Fetch all drills
       const { data: drills, error: drillsError } = await supabase
         .from('drills')
         .select('*');
@@ -92,18 +84,22 @@ export const usePracticePlanGeneration = () => {
 
       if (!drills || drills.length === 0) {
         console.error('No drills found in database');
+        toast({
+          title: "Limited Drill Selection",
+          description: "Few specific drills were found for this problem. Using general golf improvement drills instead.",
+          variant: "default"
+        });
         return [];
       }
       
       console.log(`Found ${drills.length} drills in database`);
       
-      // Enhanced matching logic with scoring
       return rankDrillsByRelevance(drills as Drill[], searchTerms, problemCategory, issue);
     } catch (error) {
       console.error('Error finding relevant drills:', error);
       return [];
     }
-  }, [categorizeGolfProblem]);
+  }, [categorizeGolfProblem, toast]);
 
   /**
    * Extract meaningful search terms from an issue description
@@ -127,7 +123,6 @@ export const usePracticePlanGeneration = () => {
     console.log(`Ranking ${drills.length} drills for relevance to "${issue}"`);
     console.log(`Search terms: ${searchTerms.join(', ')}`);
     
-    // Skip drills with missing essential data
     const validDrills = drills.filter(drill => (
       drill && drill.title && (drill.focus || drill.category)
     ));
@@ -139,9 +134,7 @@ export const usePracticePlanGeneration = () => {
     
     console.log(`Found ${validDrills.length} valid drills for ranking`);
 
-    // Score each drill based on relevance
     const scoredDrills = validDrills.map(drill => {
-      // Create a combined text representation of the drill
       const drillText = [
         drill.title.toLowerCase(),
         drill.overview?.toLowerCase() || '',
@@ -151,13 +144,11 @@ export const usePracticePlanGeneration = () => {
       
       let score = 0;
       
-      // Category-based matching
       if (matchesCategoryKeywords(drillText, problemCategory)) {
         score += 0.5;
         console.log(`Drill "${drill.title}" matched category keywords: +0.5 points`);
       }
       
-      // Direct term matching
       const termMatches = searchTerms.filter(term => drillText.includes(term));
       const termMatchScore = (termMatches.length / searchTerms.length) * 0.3;
       score += termMatchScore;
@@ -165,14 +156,12 @@ export const usePracticePlanGeneration = () => {
         console.log(`Drill "${drill.title}" matched terms [${termMatches.join(', ')}]: +${termMatchScore.toFixed(2)} points`);
       }
       
-      // Skill-specific bonus
       const skillBonus = calculateSkillSpecificBonus(drillText, issue);
       score += skillBonus;
       if (skillBonus > 0) {
         console.log(`Drill "${drill.title}" got skill bonus: +${skillBonus.toFixed(2)} points`);
       }
       
-      // Add extra boost for certain problems
       if (issue.toLowerCase().includes('topping') && 
          (drillText.includes('top') || 
           drillText.includes('thin') || 
@@ -187,7 +176,6 @@ export const usePracticePlanGeneration = () => {
       return { ...drill, relevanceScore: score };
     });
     
-    // Sort by relevance score (descending) and return top matches
     const result = scoredDrills
       .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
       .slice(0, 10);
@@ -273,7 +261,6 @@ export const usePracticePlanGeneration = () => {
     setIsGenerating(true);
 
     try {
-      // Find relevant drills for the specific issue
       const relevantDrills = await findRelevantDrills(issue);
       console.log('Found relevant drills:', relevantDrills.length);
       
@@ -282,11 +269,10 @@ export const usePracticePlanGeneration = () => {
         toast({
           title: "Limited Drill Selection",
           description: "Few specific drills were found for this problem. Using general golf improvement drills instead.",
-          variant: "warning"
+          variant: "default"
         });
       }
       
-      // Fetch recent round data for better context
       const { data: roundData } = await supabase
         .from('rounds')
         .select('*')
@@ -294,7 +280,6 @@ export const usePracticePlanGeneration = () => {
         .order('created_at', { ascending: false })
         .limit(5);
         
-      // Fetch available challenges for matching
       const { data: challengesData, error: challengesError } = await supabase
         .from('challenges')
         .select('*');
@@ -305,7 +290,6 @@ export const usePracticePlanGeneration = () => {
         console.log(`Found ${challengesData?.length || 0} challenges in database`);
       }
 
-      // Determine if this is an AI-generated plan (no specific issue) or user-specified problem
       const isAIGenerated = !issue || issue === "Improve overall golf performance";
 
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
@@ -328,11 +312,9 @@ export const usePracticePlanGeneration = () => {
       let practicePlan: GeneratedPracticePlan;
       
       if (data && data.diagnosis && data.rootCauses && data.practicePlan?.plan) {
-        // Extract additional data if available
         const userGoals = data.userGoals || {};
         const performanceInsights = data.performanceInsights || [];
         
-        // Log incoming plan data for debugging
         console.log('Raw plan data from edge function:', {
           planDays: data.practicePlan.plan.length,
           drillReferences: data.practicePlan.plan.map((day: any) => ({
@@ -342,10 +324,8 @@ export const usePracticePlanGeneration = () => {
           }))
         });
         
-        // Create specific challenge based on the issue if none was provided
         const challenge = data.practicePlan.challenge || createChallengeForProblem(issue);
         
-        // Create specific diagnosis for common issues if a generic one was returned
         let diagnosis = data.diagnosis;
         let rootCauses = data.rootCauses;
         
@@ -355,7 +335,6 @@ export const usePracticePlanGeneration = () => {
           rootCauses = createToppingRootCauses();
         }
         
-        // Create the practice plan
         practicePlan = {
           problem: issue || "Golf performance optimization",
           diagnosis: diagnosis,
@@ -372,7 +351,6 @@ export const usePracticePlanGeneration = () => {
           isAIGenerated: data.isAIGenerated || isAIGenerated
         };
 
-        // Save to database if user is logged in
         if (userId) {
           const { error: saveError } = await supabase
             .from('ai_practice_plans')
@@ -411,27 +389,22 @@ export const usePracticePlanGeneration = () => {
     }
     
     return planDays.map(day => {
-      // Ensure day has a valid drills array
       if (!day.drills || !Array.isArray(day.drills)) {
         console.warn(`Day ${day.day} has no valid drills array`);
         day.drills = [];
         return day;
       }
       
-      // Process each drill in the day
       const processedDrills = day.drills
         .map((drillWithSets: any) => {
-          // Skip if no drill data
           if (!drillWithSets || !drillWithSets.drill) {
             console.warn('Invalid drill entry in day plan:', drillWithSets);
             return null;
           }
 
-          // Set defaults if missing
           const sets = drillWithSets.sets || 3;
           const reps = drillWithSets.reps || 10;
           
-          // Check if we need to look up the drill
           if (typeof drillWithSets.drill === 'string') {
             const drillId = drillWithSets.drill;
             console.log(`Looking for drill with ID: ${drillId}`);
@@ -439,7 +412,6 @@ export const usePracticePlanGeneration = () => {
             const drillObject = availableDrills.find(d => d.id === drillId);
             
             if (drillObject) {
-              // Found the drill object, use it
               console.log(`Successfully found drill: ${drillObject.title}`);
               return {
                 drill: drillObject,
@@ -450,7 +422,6 @@ export const usePracticePlanGeneration = () => {
             } else {
               console.warn(`Could not find drill with ID ${drillId}, trying to find a fallback drill`);
               
-              // Use the first available drill as a fallback
               if (availableDrills.length > 0) {
                 const fallbackDrill = availableDrills[0];
                 console.log(`Using fallback drill: ${fallbackDrill.title}`);
@@ -462,12 +433,10 @@ export const usePracticePlanGeneration = () => {
                 };
               }
               
-              // If no fallback available, return null
               console.error('No fallback drill available, skipping this drill');
               return null;
             }
           } else if (typeof drillWithSets.drill === 'object' && drillWithSets.drill !== null) {
-            // It's already a drill object
             const drillObject = drillWithSets.drill as Drill;
             console.log(`Using drill object directly: ${drillObject.title}`);
             return {
@@ -481,14 +450,11 @@ export const usePracticePlanGeneration = () => {
             return null;
           }
         })
-        .filter(Boolean); // Remove null entries
+        .filter(Boolean);
       
-      // Debug the processed drills
       console.log(`Day ${day.day} - Processed ${processedDrills.length} drills successfully`);
       
-      // Ensure we have at least one drill per day
       if (processedDrills.length === 0 && availableDrills.length > 0) {
-        // Add a fallback drill
         const fallbackDrill = availableDrills[0];
         console.log(`Adding fallback drill to empty day ${day.day}: ${fallbackDrill.title}`);
         processedDrills.push({
@@ -505,7 +471,7 @@ export const usePracticePlanGeneration = () => {
       };
     });
   };
-  
+
   /**
    * Create a specific diagnosis for topping the ball
    */
@@ -532,7 +498,7 @@ export const usePracticePlanGeneration = () => {
     
     return intro + "Topping occurs when the clubhead strikes the upper half of the ball, causing it to travel along the ground with little loft. This is typically caused by rising up during the downswing, improper weight transfer, or poor ball positioning in your stance. Your practice plan focuses on maintaining your spine angle, proper weight shift, and consistent ball position to promote clean ball-first contact.";
   };
-  
+
   /**
    * Create specific root causes for topping the ball issue
    */
@@ -545,14 +511,13 @@ export const usePracticePlanGeneration = () => {
       "Inconsistent posture throughout the swing"
     ];
   };
-  
+
   /**
    * Create a specific challenge for a particular golf problem
    */
   const createChallengeForProblem = (problem: string) => {
     const lowerProblem = problem.toLowerCase();
     
-    // Base challenge template
     const challenge = {
       id: "custom-challenge",
       title: "Golf Skill Challenge",
@@ -567,7 +532,6 @@ export const usePracticePlanGeneration = () => {
       attempts: 10
     };
     
-    // Customize for topping the ball
     if (lowerProblem.includes('topping') || lowerProblem.includes('thin') || lowerProblem.includes('top')) {
       challenge.title = "Clean Contact Challenge";
       challenge.description = "Test your ability to make clean contact with the ball";
@@ -575,18 +539,14 @@ export const usePracticePlanGeneration = () => {
       challenge.instruction1 = "Hit 10 balls focusing on maintaining your posture and weight transfer";
       challenge.instruction2 = "Count how many shots have clean ball-first contact";
       challenge.instruction3 = "Calculate your clean contact percentage";
-    }
-    // Customize for slice
-    else if (lowerProblem.includes('slice')) {
+    } else if (lowerProblem.includes('slice')) {
       challenge.title = "Slice Correction Challenge";
       challenge.description = "Test your ability to reduce slice and hit straighter shots";
       challenge.category = "Driving";
       challenge.instruction1 = "Hit 10 drives focusing on your corrected swing path";
       challenge.instruction2 = "Count how many shots fly straight without a slice";
       challenge.instruction3 = "Calculate your straight shot percentage";
-    }
-    // Customize for putting
-    else if (lowerProblem.includes('putt')) {
+    } else if (lowerProblem.includes('putt')) {
       challenge.title = "Putting Accuracy Challenge";
       challenge.description = "Test your putting accuracy and consistency";
       challenge.category = "Putting";
