@@ -179,40 +179,94 @@ export class PlanGenerator {
     }
   }
 
+  private selectRelevantChallenge(challenges: any[], problem: string): any {
+    if (!challenges || !Array.isArray(challenges) || challenges.length === 0) {
+      console.log("No challenges available to select from");
+      return null;
+    }
+
+    const problemLower = problem.toLowerCase();
+    let targetMetric = '';
+    let challengeKeywords: string[] = [];
+
+    // Map problem areas to relevant metrics and keywords
+    if (problemLower.includes('slice') || problemLower.includes('hook') || 
+        problemLower.includes('driver') || problemLower.includes('tee shot')) {
+      targetMetric = 'Fairways Hit';
+      challengeKeywords = ['fairway', 'accuracy', 'tee shot', 'driving'];
+    } 
+    else if (problemLower.includes('iron') || problemLower.includes('approach') || 
+             problemLower.includes('contact')) {
+      targetMetric = 'Greens in Regulation';
+      challengeKeywords = ['green', 'approach', 'iron shot', 'gir'];
+    }
+    else if (problemLower.includes('chip') || problemLower.includes('pitch') || 
+             problemLower.includes('short game')) {
+      targetMetric = 'Up and Down';
+      challengeKeywords = ['chip', 'pitch', 'short game', 'around green'];
+    }
+    else if (problemLower.includes('putt') || problemLower.includes('putting')) {
+      targetMetric = 'Putts';
+      challengeKeywords = ['putt', 'putting', 'green', 'hole'];
+    }
+
+    console.log(`Looking for challenges with metric: ${targetMetric} and keywords:`, challengeKeywords);
+
+    let bestMatch = null;
+    let highestScore = 0;
+
+    for (const challenge of challenges) {
+      let score = 0;
+
+      // Check if challenge metrics match our target
+      if (challenge.metrics && Array.isArray(challenge.metrics)) {
+        if (challenge.metrics.some(m => m.toLowerCase() === targetMetric.toLowerCase())) {
+          score += 2;
+        }
+      }
+
+      // Score based on keyword matches in title and description
+      const challengeText = `${challenge.title} ${challenge.description}`.toLowerCase();
+      challengeKeywords.forEach(keyword => {
+        if (challengeText.includes(keyword.toLowerCase())) {
+          score += 1;
+        }
+      });
+
+      // Update best match if this challenge scores higher
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = challenge;
+      }
+    }
+
+    console.log(`Selected challenge: ${bestMatch?.title || 'None found'} with score: ${highestScore}`);
+
+    if (bestMatch) {
+      // Calculate attempts based on instructions
+      const attemptCount = [
+        bestMatch.instruction1,
+        bestMatch.instruction2,
+        bestMatch.instruction3
+      ].filter(Boolean).length * 3;
+
+      return {
+        ...bestMatch,
+        attempts: attemptCount > 0 ? attemptCount : 9
+      };
+    }
+
+    return null;
+  }
+
   async generatePlan(challenges: any[]): Promise<AIResponse> {
     const relevantDrills = this.getRelevantDrills();
     
-    // Select most relevant challenge
-    let selectedChallenge = null;
-    let highestScore = 0;
-
-    console.log(`Selecting from ${challenges?.length || 0} available challenges`);
-
-    if (challenges && Array.isArray(challenges) && challenges.length > 0) {
-      console.log("Processing challenges for relevance");
-      for (const challenge of challenges) {
-        const relevanceScore = getChallengeRelevanceScore(challenge, this.specificProblem);
-        console.log(`Challenge "${challenge.title}" has relevance score: ${relevanceScore}`);
-        
-        if (relevanceScore > highestScore) {
-          highestScore = relevanceScore;
-          selectedChallenge = challenge;
-          
-          // Calculate attempts based on instructions
-          const attemptCount = [
-            challenge.instruction1, 
-            challenge.instruction2, 
-            challenge.instruction3
-          ].filter(Boolean).length * 3;
-          
-          selectedChallenge.attempts = attemptCount > 0 ? attemptCount : 9;
-        }
-      }
-      
-      console.log(`Selected challenge: ${selectedChallenge?.title || 'None found'}`);
-    } else {
-      console.log("No challenges available to select from");
-    }
+    // Select challenge based on the problem
+    const selectedChallenge = this.selectRelevantChallenge(challenges, this.specificProblem);
+    
+    console.log(`Selected challenge for problem "${this.specificProblem}":`, 
+                selectedChallenge ? selectedChallenge.title : 'None found');
 
     const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => ({
       day: i + 1,
@@ -238,7 +292,7 @@ export class PlanGenerator {
       }
     };
   }
-  
+
   private getFocusByDay(dayIndex: number, problem: string): string {
     const problemLower = problem.toLowerCase();
     
