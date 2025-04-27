@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -8,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { ChallengeScore } from "./ChallengeScore";
 import { Challenge } from "@/types/challenge";
 import { useToast } from "@/hooks/use-toast";
+import { Drill } from "@/types/drill";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -15,6 +17,42 @@ interface GeneratedPlanProps {
   planDuration?: string;
   planId?: string;
 }
+
+// Extracted challenge component for better organization
+const ChallengeCard = ({ 
+  title, 
+  description, 
+  instructions, 
+  attempts, 
+  planId, 
+  type 
+}: { 
+  title: string; 
+  description: string;
+  instructions: string[];
+  attempts: number;
+  planId?: string;
+  type: "initial" | "final";
+}) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex justify-between items-center">
+        <span>{type === "initial" ? "Initial Challenge: " : "Final Challenge: "}{title}</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-muted-foreground mb-4">{description}</p>
+      <div className="space-y-4">
+        {instructions.map((instruction, i) => 
+          instruction && <p key={i}>{i + 1}. {instruction}</p>
+        )}
+      </div>
+      <div className="mt-4">
+        <ChallengeScore planId={planId} type={type} attempts={attempts} />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: GeneratedPlanProps) => {
   const { toast } = useToast();
@@ -50,72 +88,30 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   filteredDays.forEach(day => {
     if (day.drills) {
       day.drills.forEach(drillWithSets => {
-        // Check if drill is a string ID instead of a Drill object
+        // Fix the type check by ensuring proper comparison
         if (typeof drillWithSets.drill === 'string') {
-          // Find the drill object from recommended drills
-          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillWithSets.drill);
+          // Find the drill object from recommended drills by comparing string IDs
+          const drillId = drillWithSets.drill;
+          const matchingDrill = plan.recommendedDrills.find(d => d.id === drillId);
           if (matchingDrill) {
-            drillWithSets.drill = matchingDrill;
+            // Explicitly cast to avoid type errors
+            drillWithSets.drill = matchingDrill as Drill;
           }
         }
       });
     }
   });
 
-  // Extract challenge data with fallbacks for missing fields
+  // Prepare challenge data with fallbacks
   const challenge = plan.practicePlan.challenge as Challenge;
   
-  // Create a default challenge if none exists
-  const defaultChallenge: Challenge = {
-    id: "default-challenge",
-    title: "Golf Skill Challenge",
-    description: "Test your improvement with this personalized challenge",
-    difficulty: "Medium",
-    category: "General", 
-    metrics: ["Accuracy"],
-    metric: "Accuracy",
-    instruction1: "Complete the recommended practice drills",
-    instruction2: "Apply the techniques in a controlled environment",
-    instruction3: "Measure your improvement",
-    attempts: 10
-  };
-
-  // Category-specific default challenges
-  if (!challenge || Object.keys(challenge).length === 0) {
-    if (plan.problem.toLowerCase().includes('putt')) {
-      defaultChallenge.title = "Putting Accuracy Challenge";
-      defaultChallenge.description = "Test your putting accuracy and consistency";
-      defaultChallenge.category = "Putting";
-      defaultChallenge.metrics = ["Putts Made"];
-      defaultChallenge.metric = "Putts Made";
-      defaultChallenge.instruction1 = "Set up 10 putts at 3 feet distance";
-      defaultChallenge.instruction2 = "Count how many you make successfully";
-      defaultChallenge.instruction3 = "Calculate your make percentage";
-    } else if (plan.problem.toLowerCase().includes('driv') || plan.problem.toLowerCase().includes('slice') || plan.problem.toLowerCase().includes('hook')) {
-      defaultChallenge.title = "Fairway Accuracy Challenge";
-      defaultChallenge.description = "Test your ability to hit fairways consistently with your driver";
-      defaultChallenge.category = "Driving";
-      defaultChallenge.metrics = ["Fairways Hit"];
-      defaultChallenge.metric = "Fairways Hit";
-      defaultChallenge.instruction1 = "Hit 10 drives aiming for the fairway";
-      defaultChallenge.instruction2 = "Count how many land in the fairway";
-      defaultChallenge.instruction3 = "Calculate your percentage of fairways hit";
-    } else if (plan.problem.toLowerCase().includes('chip') || plan.problem.toLowerCase().includes('short game')) {
-      defaultChallenge.title = "Short Game Proximity Challenge";
-      defaultChallenge.description = "Test your ability to chip close to the pin";
-      defaultChallenge.category = "Short Game";
-      defaultChallenge.metrics = ["Proximity"];
-      defaultChallenge.metric = "Proximity";
-      defaultChallenge.instruction1 = "Chip 10 balls from 20 yards to a target";
-      defaultChallenge.instruction2 = "Measure the distance of each shot from the target";
-      defaultChallenge.instruction3 = "Calculate your average proximity to the target";
-    }
-  }
-
+  // Create category-specific default challenges based on the problem
+  const defaultChallenge = getDefaultChallenge(plan.problem);
+  
   // Use the challenge from the plan or the default challenge
   const displayChallenge = challenge && Object.keys(challenge).length > 0 ? challenge : defaultChallenge;
   
-  // If the challenge doesn't have attempts, calculate it based on instructions
+  // Calculate attempts if not provided
   if (!displayChallenge.attempts) {
     const instructionCount = [
       displayChallenge.instruction1, 
@@ -130,6 +126,13 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   if (!challenge || Object.keys(challenge).length === 0) {
     console.warn("Using default challenge because no challenge was provided in the plan");
   }
+
+  // Extract challenge instructions for the component
+  const challengeInstructions = [
+    displayChallenge.instruction1,
+    displayChallenge.instruction2,
+    displayChallenge.instruction3
+  ].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -152,24 +155,14 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
       
       {/* Initial Challenge */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            <span>Initial Challenge: {displayChallenge.title}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">{displayChallenge.description}</p>
-          <div className="space-y-4">
-            {displayChallenge.instruction1 && <p>1. {displayChallenge.instruction1}</p>}
-            {displayChallenge.instruction2 && <p>2. {displayChallenge.instruction2}</p>}
-            {displayChallenge.instruction3 && <p>3. {displayChallenge.instruction3}</p>}
-          </div>
-          <div className="mt-4">
-            <ChallengeScore planId={planId} type="initial" attempts={displayChallenge.attempts} />
-          </div>
-        </CardContent>
-      </Card>
+      <ChallengeCard
+        title={displayChallenge.title}
+        description={displayChallenge.description}
+        instructions={challengeInstructions}
+        attempts={displayChallenge.attempts || 9}
+        planId={planId}
+        type="initial"
+      />
 
       {/* AI Diagnosis */}
       <DiagnosisCard 
@@ -201,24 +194,77 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
       
       {/* Final Challenge */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Final Challenge: {displayChallenge.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            Complete this challenge again to measure your improvement
-          </p>
-          <div className="space-y-4">
-            {displayChallenge.instruction1 && <p>1. {displayChallenge.instruction1}</p>}
-            {displayChallenge.instruction2 && <p>2. {displayChallenge.instruction2}</p>}
-            {displayChallenge.instruction3 && <p>3. {displayChallenge.instruction3}</p>}
-          </div>
-          <div className="mt-4">
-            <ChallengeScore planId={planId} type="final" attempts={displayChallenge.attempts} />
-          </div>
-        </CardContent>
-      </Card>
+      <ChallengeCard
+        title={displayChallenge.title}
+        description="Complete this challenge again to measure your improvement"
+        instructions={challengeInstructions}
+        attempts={displayChallenge.attempts || 9}
+        planId={planId}
+        type="final"
+      />
     </div>
   );
 };
+
+// Helper function to create appropriate default challenges
+function getDefaultChallenge(problem: string): Challenge {
+  // Base default challenge
+  const defaultChallenge: Challenge = {
+    id: "default-challenge",
+    title: "Golf Skill Challenge",
+    description: "Test your improvement with this personalized challenge",
+    difficulty: "Medium",
+    category: "General", 
+    metrics: ["Accuracy"],
+    metric: "Accuracy",
+    instruction1: "Complete the recommended practice drills",
+    instruction2: "Apply the techniques in a controlled environment",
+    instruction3: "Measure your improvement",
+    attempts: 10
+  };
+
+  const lowerProblem = problem.toLowerCase();
+  
+  if (lowerProblem.includes('putt')) {
+    defaultChallenge.title = "Putting Accuracy Challenge";
+    defaultChallenge.description = "Test your putting accuracy and consistency";
+    defaultChallenge.category = "Putting";
+    defaultChallenge.metrics = ["Putts Made"];
+    defaultChallenge.metric = "Putts Made";
+    defaultChallenge.instruction1 = "Set up 10 putts at 3 feet distance";
+    defaultChallenge.instruction2 = "Count how many you make successfully";
+    defaultChallenge.instruction3 = "Calculate your make percentage";
+  } 
+  else if (lowerProblem.includes('driv') || lowerProblem.includes('slice') || lowerProblem.includes('hook')) {
+    defaultChallenge.title = "Fairway Accuracy Challenge";
+    defaultChallenge.description = "Test your ability to hit fairways consistently with your driver";
+    defaultChallenge.category = "Driving";
+    defaultChallenge.metrics = ["Fairways Hit"];
+    defaultChallenge.metric = "Fairways Hit";
+    defaultChallenge.instruction1 = "Hit 10 drives aiming for the fairway";
+    defaultChallenge.instruction2 = "Count how many land in the fairway";
+    defaultChallenge.instruction3 = "Calculate your percentage of fairways hit";
+  } 
+  else if (lowerProblem.includes('chip') || lowerProblem.includes('short game')) {
+    defaultChallenge.title = "Short Game Proximity Challenge";
+    defaultChallenge.description = "Test your ability to chip close to the pin";
+    defaultChallenge.category = "Short Game";
+    defaultChallenge.metrics = ["Proximity"];
+    defaultChallenge.metric = "Proximity";
+    defaultChallenge.instruction1 = "Chip 10 balls from 20 yards to a target";
+    defaultChallenge.instruction2 = "Measure the distance of each shot from the target";
+    defaultChallenge.instruction3 = "Calculate your average proximity to the target";
+  }
+  else if (lowerProblem.includes('iron') || lowerProblem.includes('approach')) {
+    defaultChallenge.title = "Iron Shot Accuracy Challenge";
+    defaultChallenge.description = "Test your iron shot accuracy and distance control";
+    defaultChallenge.category = "Iron Play";
+    defaultChallenge.metrics = ["Greens Hit"];
+    defaultChallenge.metric = "Greens Hit";
+    defaultChallenge.instruction1 = "Hit 10 iron shots to a specific target";
+    defaultChallenge.instruction2 = "Count how many land within 20 feet of the target";
+    defaultChallenge.instruction3 = "Calculate your accuracy percentage";
+  }
+  
+  return defaultChallenge;
+}
