@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -62,6 +61,13 @@ export const usePracticePlanGeneration = () => {
     setIsGenerating(true);
 
     try {
+      const { data: drills, error: drillsError } = await supabase
+        .from('drills')
+        .select('*')
+        .textSearch('focus', issue.split(' ').join(' | '));
+
+      if (drillsError) throw drillsError;
+
       const { data: roundData } = await supabase
         .from('rounds')
         .select('*')
@@ -76,50 +82,31 @@ export const usePracticePlanGeneration = () => {
           handicapLevel: handicapLevel || 'intermediate',
           specificProblem: issue || 'Improve overall golf performance',
           planDuration,
-          includeProgressChallenge: true // Signal to include a challenge that measures progress
+          includeProgressChallenge: true,
+          availableDrills: drills || []
         }
       });
 
       if (error) throw error;
 
-      // Ensure we have a complete practice plan structure with detailed drill information
-      const practicePlan = data.practicePlan || {
+      const practicePlan = {
         problem: issue || "Golf performance optimization",
-        diagnosis: "AI analysis of your golf game",
-        rootCauses: ["Technique", "Equipment"],
-        recommendedDrills: [
-          {
-            name: "Alignment Drill",
-            description: "Practice proper alignment with targets",
-            difficulty: "Beginner",
-            duration: "15 minutes",
-            focus: ["Fundamentals", "Setup"],
-            instructions: [
-              "Set alignment sticks on the ground pointing at your target",
-              "Place a club across your toes to ensure proper alignment",
-              "Practice making swings while maintaining proper alignment"
-            ]
-          }
-        ],
+        diagnosis: data.diagnosis || "AI analysis of your golf game",
+        rootCauses: data.rootCauses || ["Technique", "Equipment"],
+        recommendedDrills: drills || [],
         practicePlan: {
           duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
           frequency: "Daily",
-          sessions: [
-            {
-              focus: "Building Fundamentals",
-              drills: ["Alignment Drill"],
-              duration: "45 minutes"
-            }
-          ]
-        },
-        progressChallenge: {
-          name: `${issue || "Golf Performance"} Assessment`,
-          description: "Measure your improvement before and after completing this practice plan",
-          steps: [
-            "Record your current performance",
-            "Complete all drills in the practice plan",
-            "Re-test your performance to measure improvement"
-          ]
+          plan: data.practicePlan?.plan || Array.from({ length: parseInt(planDuration) }, (_, i) => ({
+            day: i + 1,
+            drills: (drills || []).slice(0, 3).map(drill => ({
+              drill,
+              sets: 3,
+              reps: 10
+            })),
+            focus: "Building Fundamentals",
+            duration: "45 minutes"
+          }))
         }
       };
 
