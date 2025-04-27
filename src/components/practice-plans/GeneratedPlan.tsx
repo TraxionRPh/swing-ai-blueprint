@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { DiagnosisCard } from "./DiagnosisCard";
 import { DailyPlanSection } from "./DailyPlanSection";
 import { ArrowLeft } from "lucide-react";
-import { useChallenge } from "@/hooks/useChallenge";
 import { ChallengeScore } from "./ChallengeScore";
 
 interface GeneratedPlanProps {
@@ -21,8 +20,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     const saved = localStorage.getItem(`completed-drills-${planId}`);
     return saved ? JSON.parse(saved) : {};
   });
-  
-  const { data: challengeData } = useChallenge("1");
 
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
@@ -76,7 +73,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       
       {/* AI Diagnosis */}
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
-      
+
       {/* Daily Plans */}
       {filteredDays.map((dayPlan, i) => (
         <DailyPlanSection
