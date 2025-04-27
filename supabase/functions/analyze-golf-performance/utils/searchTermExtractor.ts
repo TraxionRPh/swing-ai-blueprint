@@ -1,64 +1,67 @@
 
 import { ProblemCategory } from '../types/categories.ts';
-import { detectClubType } from './clubDetector.ts';
+
+// Memoization cache for search term extraction
+const termCache = new Map<string, string[]>();
 
 /**
- * Extracts search terms based on the identified problem category
- * and the specific problem description
+ * Extracts relevant search terms from a problem description based on category
  */
 export function extractRelevantSearchTerms(problem: string, category: ProblemCategory): string[] {
-  const lowerProblem = problem.toLowerCase();
-  const searchTerms = new Set<string>();
+  // Create a cache key using problem and category name
+  const cacheKey = `${problem}-${category.name}`;
   
-  // Add all terms from the category
-  for (const term of category.searchTerms) {
-    searchTerms.add(term);
-  }
-  
-  // Add the club type if detected
-  const clubType = detectClubType(problem);
-  if (clubType) {
-    searchTerms.add(clubType);
+  // Check if we have cached results
+  if (termCache.has(cacheKey)) {
+    return termCache.get(cacheKey)!;
   }
   
-  // Add specific issue keywords
-  if (lowerProblem.includes('top') || lowerProblem.includes('topping')) {
-    searchTerms.add('topping');
-    searchTerms.add('ball');
-  }
-  if (lowerProblem.includes('chunk') || lowerProblem.includes('fat')) {
-    searchTerms.add('chunking');
-    searchTerms.add('fat');
-  }
-  if (lowerProblem.includes('thin') || lowerProblem.includes('skull')) {
-    searchTerms.add('thin');
-    searchTerms.add('skull');
-  }
-  if (lowerProblem.includes('slice') || lowerProblem.includes('slicing')) {
-    searchTerms.add('slice');
-  }
-  if (lowerProblem.includes('hook') || lowerProblem.includes('hooking')) {
-    searchTerms.add('hook');
+  const baseTerms = problem.toLowerCase().split(/[\s,.!?;:()\-]+/).filter(word => word.length > 2);
+  const relevantTerms = new Set<string>(baseTerms);
+  
+  // Add category-specific terms
+  switch (category.name.toLowerCase()) {
+    case 'ball striking':
+      addTermsToSet(relevantTerms, ['ball', 'strike', 'contact', 'iron', 'compression']);
+      break;
+    case 'driving accuracy':
+      addTermsToSet(relevantTerms, ['driver', 'slice', 'hook', 'accuracy', 'tee', 'fairway']);
+      break;
+    case 'short game':
+      addTermsToSet(relevantTerms, ['chip', 'pitch', 'wedge', 'bunker', 'sand']);
+      break;
+    case 'putting':
+      addTermsToSet(relevantTerms, ['putt', 'green', 'read', 'speed', 'line']);
+      break;
+    case 'course management':
+      addTermsToSet(relevantTerms, ['strategy', 'management', 'decision', 'planning']);
+      break;
   }
   
-  // Add specific words from the problem that are more than 3 chars
-  const problemWords = lowerProblem
-    .split(/[\s-]+/)
-    .filter(word => word.length > 3 && !word.match(/^(with|have|from|that|this|when|where|what|there|these|those|them)$/));
-  
-  for (const word of problemWords) {
-    searchTerms.add(word.replace(/[^\w]/g, ''));
-  }
-  
-  return Array.from(searchTerms);
+  // Convert to array, cache, and return
+  const result = Array.from(relevantTerms);
+  termCache.set(cacheKey, result);
+  return result;
 }
+
+function addTermsToSet(set: Set<string>, terms: string[]): void {
+  for (const term of terms) {
+    set.add(term);
+  }
+}
+
+// Map categories to metrics - this is a static mapping that doesn't need to be recalculated
+const categoryMetricMap = new Map([
+  ['ball striking', 'Greens in Regulation'],
+  ['driving accuracy', 'Fairways Hit'],
+  ['short game', 'Up and Down Percentage'],
+  ['putting', 'Putts per Round'],
+  ['course management', 'Score Relative to Handicap']
+]);
 
 /**
  * Gets the primary outcome metric for a given problem category
  */
 export function getPrimaryOutcomeMetric(category: ProblemCategory): string {
-  if (!category || !category.outcomeMetrics || category.outcomeMetrics.length === 0) {
-    return "Score";
-  }
-  return category.outcomeMetrics[0];
+  return categoryMetricMap.get(category.name.toLowerCase()) || "Overall Score";
 }

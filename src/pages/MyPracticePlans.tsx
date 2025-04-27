@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,10 +87,7 @@ const MyPracticePlans = () => {
 
   useEffect(() => {
     loadPracticePlans();
-  }, [loadPracticePlans]);
-
-  // Force reload plans when the component mounts or navigates back to it
-  useEffect(() => {
+    
     // This ensures we reload plans when the page becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -104,13 +101,14 @@ const MyPracticePlans = () => {
     };
   }, [loadPracticePlans]);
 
-  const deletePracticePlan = async (planId: string) => {
+  const deletePracticePlan = useCallback(async (planId: string) => {
     try {
       // Optimistically update UI
       setPlans(plans.filter(plan => plan.id !== planId));
       
-      if (selectedPlan && plans.find(p => p.id === planId)?.practice_plan.id === selectedPlan.id) {
+      if (selectedPlanId === planId) {
         setSelectedPlan(null);
+        setSelectedPlanId(null);
       }
 
       // Add to deleted IDs list (which will update localStorage via effect)
@@ -134,7 +132,6 @@ const MyPracticePlans = () => {
       
       // Roll back optimistic updates
       setDeletedPlanIds(prev => prev.filter(id => id !== planId));
-      
       loadPracticePlans();
       
       toast({
@@ -143,28 +140,38 @@ const MyPracticePlans = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [plans, selectedPlanId, toast, loadPracticePlans]);
 
-  const clearSelectedPlan = () => {
+  const clearSelectedPlan = useCallback(() => {
     setSelectedPlan(null);
     setSelectedPlanId(null);
     navigate(location.pathname, { replace: true });
-  };
+  }, [navigate, location.pathname]);
   
-  const viewPlan = (plan: SavedPracticePlan) => {
+  const viewPlan = useCallback((plan: SavedPracticePlan) => {
     setSelectedPlan(plan.practice_plan);
     setSelectedPlanId(plan.id);
-  };
+  }, []);
 
-  const refreshPlans = () => {
-    loadPracticePlans();
-  };
+  // Memoize the plan cards to prevent unnecessary re-renders
+  const planCards = useMemo(() => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {plans.map((plan) => (
+        <PlanCard
+          key={plan.id}
+          plan={plan}
+          onView={viewPlan}
+          onDelete={deletePracticePlan}
+        />
+      ))}
+    </div>
+  ), [plans, viewPlan, deletePracticePlan]);
 
   return (
     <div className="container p-4 py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">My Practice Plans</h1>
-        <Button size="sm" variant="outline" onClick={refreshPlans}>
+        <Button size="sm" variant="outline" onClick={loadPracticePlans}>
           Refresh
         </Button>
       </div>
@@ -183,18 +190,7 @@ const MyPracticePlans = () => {
             <PlansLoadingState />
           ) : plans.length === 0 ? (
             <EmptyPlansState />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plans.map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  onView={viewPlan}
-                  onDelete={deletePracticePlan}
-                />
-              ))}
-            </div>
-          )}
+          ) : planCards}
         </div>
       )}
     </div>

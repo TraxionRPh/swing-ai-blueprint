@@ -1,15 +1,15 @@
 
 import { useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { HandicapLevel } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { usePracticePlanGeneration } from './usePracticePlanGeneration';
-import { Json } from "@/integrations/supabase/types";
+import { useAPIUsageCheck } from './useAPIUsageCheck';
 
 export const useAIAnalysis = () => {
   // Rename the imported function to avoid name collision
   const { generatePlan: generatePracticePlan, isGenerating } = usePracticePlanGeneration();
+  const { checkAPIUsage } = useAPIUsageCheck();
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -26,32 +26,6 @@ export const useAIAnalysis = () => {
       // Use the renamed function
       const plan = await generatePracticePlan(userId, issue, handicapLevel, planDuration);
       console.log("Plan generated successfully:", plan);
-
-      if (userId) {
-        // Convert types to match the expected Supabase schema
-        const { error: saveError } = await supabase
-          .from('ai_practice_plans')
-          .insert({
-            user_id: userId,
-            problem: issue || 'General golf improvement',
-            diagnosis: plan.diagnosis,
-            root_causes: plan.rootCauses as unknown as Json,
-            recommended_drills: plan.recommendedDrills as unknown as Json,
-            practice_plan: plan as unknown as Json
-          });
-
-        if (saveError) {
-          console.error("Error saving practice plan:", saveError);
-          toast({
-            title: "Error Saving Plan",
-            description: "Your plan was generated but couldn't be saved.",
-            variant: "destructive"
-          });
-        } else {
-          console.log("Practice plan saved successfully");
-        }
-      }
-
       return plan;
     } catch (error) {
       console.error("Error in AI analysis:", error);
