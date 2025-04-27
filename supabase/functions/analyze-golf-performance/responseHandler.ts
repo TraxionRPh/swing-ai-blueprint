@@ -1,5 +1,4 @@
-
-import { DrillData, AIResponse } from './types';
+import { DrillData, AIResponse } from './types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

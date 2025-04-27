@@ -1,3 +1,7 @@
+
+// Fix the typescript types by making sure all the functions are properly typed
+// No imports are needed as we're not importing from other files
+
 /**
  * Calculate a relevance score for a drill based on how well it matches the search terms
  * and specific problem. Higher scores indicate better matches.

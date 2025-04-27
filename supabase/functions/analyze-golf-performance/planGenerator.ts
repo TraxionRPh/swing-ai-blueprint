@@ -1,6 +1,6 @@
 
-import { DrillData, PlanDay, AIResponse } from './types';
-import { getDrillRelevanceScore, getChallengeRelevanceScore } from './drillMatching';
+import { DrillData, PlanDay, AIResponse } from './types.ts';
+import { getDrillRelevanceScore, getChallengeRelevanceScore } from './drillMatching.ts';
 
 export class PlanGenerator {
   private roundData: any[];
