@@ -7,7 +7,7 @@ import { DiagnosisCard } from "./DiagnosisCard";
 import { DailyPlanSection } from "./DailyPlanSection";
 import { ArrowLeft } from "lucide-react";
 import { useChallenge } from "@/hooks/useChallenge";
-import { ProgressChallengeCard } from "./ProgressChallengeCard";
+import { ChallengeScore } from "./ChallengeScore";
 
 interface GeneratedPlanProps {
   plan: GeneratedPracticePlan;
@@ -22,9 +22,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     return saved ? JSON.parse(saved) : {};
   });
   
-  // Use first recommended drill for finding a matching challenge
-  const focusArea = plan.recommendedDrills && plan.recommendedDrills.length > 0 && plan.recommendedDrills[0]?.focus?.[0] || "driving"; 
-  const { data: challengeData, isLoading: challengeLoading } = useChallenge("1");
+  const { data: challengeData } = useChallenge("1");
 
   const toggleDrillCompletion = (drillName: string) => {
     const newCompletedState = !completedDrills[drillName];
@@ -38,18 +36,12 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     }));
   };
 
-  // Process the plan data to ensure we have valid plan days
-  let planData = [];
-  if (plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan)) {
-    planData = plan.practicePlan.plan;
-  }
-
+  // Process the plan data
+  const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
+    ? plan.practicePlan.plan 
+    : [];
   const durationNum = parseInt(planDuration) || 1;
   const filteredDays = planData.slice(0, durationNum);
-  const challengeName = challengeData?.title || `${plan.problem} Challenge`;
-  const challengeInstructions = challengeData ? 
-    [challengeData.instruction1, challengeData.instruction2, challengeData.instruction3].filter(Boolean) : 
-    ["Complete the challenge to track your progress"];
 
   return (
     <div className="space-y-6">
@@ -58,6 +50,7 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         Back to Plans
       </Button>
       
+      {/* Plan Overview */}
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Practice Plan: {plan.problem}</CardTitle>
@@ -71,42 +64,40 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
       
       {/* Initial Challenge */}
-      <ProgressChallengeCard
-        name={challengeName}
-        description="Complete this challenge to measure your current skill level"
-        instructions={challengeInstructions}
-        planId={planId}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Initial Challenge</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">Complete this challenge to measure your current skill level</p>
+          <ChallengeScore planId={planId} type="initial" />
+        </CardContent>
+      </Card>
       
       {/* AI Diagnosis */}
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
       
       {/* Daily Plans */}
-      {filteredDays && filteredDays.length > 0 ? (
-        filteredDays.map((dayPlan, i) => (
-          <DailyPlanSection
-            key={i}
-            dayPlan={dayPlan}
-            dayNumber={i + 1}
-            completedDrills={completedDrills}
-            onDrillComplete={toggleDrillCompletion}
-          />
-        ))
-      ) : (
-        <Card className="border-amber-200">
-          <CardContent className="p-6">
-            <p className="text-amber-600">No daily practice plans available. Please try regenerating this plan.</p>
-          </CardContent>
-        </Card>
-      )}
+      {filteredDays.map((dayPlan, i) => (
+        <DailyPlanSection
+          key={i}
+          dayPlan={dayPlan}
+          dayNumber={i + 1}
+          completedDrills={completedDrills}
+          onDrillComplete={toggleDrillCompletion}
+        />
+      ))}
       
       {/* Final Challenge */}
-      <ProgressChallengeCard
-        name={challengeName}
-        description="Now that you've completed the practice plan, take the challenge again to measure your improvement"
-        instructions={challengeInstructions}
-        planId={planId}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Final Challenge</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">Complete this challenge again to measure your improvement</p>
+          <ChallengeScore planId={planId} type="final" />
+        </CardContent>
+      </Card>
     </div>
   );
 };
