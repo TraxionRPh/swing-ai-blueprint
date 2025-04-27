@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -64,21 +65,31 @@ export const usePracticePlanGeneration = () => {
     try {
       const searchTerms = issue.split(' ').filter(term => term.length > 2);
       
-      let drillsQuery = supabase.from('drills').select('*');
-      
-      if (searchTerms.length > 0) {
-        const searchConditions = [];
-        
-        for (const term of searchTerms) {
-          searchConditions.push(`focus.ilike.%${term}%`);
-        }
-        
-        drillsQuery = drillsQuery.or(searchConditions.join(','));
-      }
-      
-      const { data: drills, error: drillsError } = await drillsQuery;
+      // Fetch all drills, then filter in JS instead of using problematic array search
+      const { data: drills, error: drillsError } = await supabase
+        .from('drills')
+        .select('*');
 
       if (drillsError) throw drillsError;
+
+      // Filter drills in JavaScript based on search terms if needed
+      let filteredDrills = drills || [];
+      if (searchTerms.length > 0) {
+        filteredDrills = drills?.filter(drill => {
+          // Match if any focus item contains any search term
+          if (!drill.focus || !Array.isArray(drill.focus)) return false;
+          
+          return searchTerms.some(term => 
+            drill.focus.some(focus => 
+              focus.toLowerCase().includes(term.toLowerCase())
+            )
+          );
+        }) || [];
+      }
+
+      console.log('Fetched drills:', filteredDrills?.length || 0);
+      console.log('Issue being analyzed:', issue);
+      console.log('Sending request to analyze-golf-performance');
 
       const { data: roundData } = await supabase
         .from('rounds')
@@ -87,10 +98,6 @@ export const usePracticePlanGeneration = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      console.log('Fetched drills:', drills?.length || 0);
-      console.log('Issue being analyzed:', issue);
-      console.log('Sending request to analyze-golf-performance');
-
       const { data, error } = await supabase.functions.invoke('analyze-golf-performance', {
         body: { 
           userId, 
@@ -98,7 +105,7 @@ export const usePracticePlanGeneration = () => {
           handicapLevel: handicapLevel || 'intermediate',
           specificProblem: issue || 'Improve overall golf performance',
           planDuration,
-          availableDrills: drills || []
+          availableDrills: filteredDrills || []
         }
       });
 
@@ -116,7 +123,7 @@ export const usePracticePlanGeneration = () => {
           problem: issue || "Golf performance optimization",
           diagnosis: data.diagnosis,
           rootCauses: data.rootCauses,
-          recommendedDrills: drills || [],
+          recommendedDrills: filteredDrills || [],
           practicePlan: {
             duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
             frequency: "Daily",
