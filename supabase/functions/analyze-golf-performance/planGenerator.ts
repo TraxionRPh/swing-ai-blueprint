@@ -25,9 +25,15 @@ export class PlanGenerator {
     const exactMatches: DrillData[] = [];
     const relatedMatches: DrillData[] = [];
     const possibleMatches: DrillData[] = [];
+    const fallbackMatches: DrillData[] = [];
 
     const actualDrills = this.drills.filter(drill => 
       !drill.title.toLowerCase().includes('challenge'));
+
+    const isIronContactIssue = this.specificProblem.toLowerCase().includes('chunk') || 
+                              this.specificProblem.toLowerCase().includes('iron contact') || 
+                              this.specificProblem.toLowerCase().includes('iron strike') ||
+                              this.specificProblem.toLowerCase().includes('ball striking');
 
     actualDrills.forEach(drill => {
       const drillText = [
@@ -37,7 +43,20 @@ export class PlanGenerator {
         ...(drill.focus?.map(f => f.toLowerCase()) || [])
       ].join(' ');
 
-      const relevanceScore = getDrillRelevanceScore(drillText, searchTerms, this.specificProblem.toLowerCase());
+      let relevanceScore = getDrillRelevanceScore(drillText, searchTerms, this.specificProblem.toLowerCase());
+      
+      if (isIronContactIssue) {
+        if (drillText.includes('contact') || 
+            drillText.includes('strike') || 
+            drillText.includes('compression') ||
+            drillText.includes('ball first') ||
+            drillText.includes('chunk') ||
+            drillText.includes('turf interaction') ||
+            (drillText.includes('iron') && (drillText.includes('solid') || drillText.includes('pure')))) {
+          relevanceScore += 0.3;
+        }
+      }
+      
       const drillWithScore = { ...drill, relevanceScore };
 
       if (relevanceScore > 0.7) {
@@ -46,6 +65,8 @@ export class PlanGenerator {
         relatedMatches.push(drillWithScore);
       } else if (relevanceScore > 0.2) {
         possibleMatches.push(drillWithScore);
+      } else {
+        fallbackMatches.push(drillWithScore);
       }
     });
 
@@ -55,19 +76,28 @@ export class PlanGenerator {
     exactMatches.sort(sortByRelevance);
     relatedMatches.sort(sortByRelevance);
     possibleMatches.sort(sortByRelevance);
+    fallbackMatches.sort(sortByRelevance);
 
     let matchedDrills = [...exactMatches];
     if (matchedDrills.length < 6) {
       matchedDrills = [...matchedDrills, ...relatedMatches.slice(0, 6 - matchedDrills.length)];
     }
+    if (matchedDrills.length < 6) {
+      matchedDrills = [...matchedDrills, ...possibleMatches.slice(0, 6 - matchedDrills.length)];
+    }
+    
     if (matchedDrills.length < 3) {
-      matchedDrills = [...matchedDrills, ...possibleMatches.slice(0, 3 - matchedDrills.length)];
+      matchedDrills = [...matchedDrills, ...fallbackMatches.slice(0, 3 - matchedDrills.length)];
     }
 
+    console.log(`Found ${matchedDrills.length} relevant drills for "${this.specificProblem}"`);
+    
     return matchedDrills.length > 0 ? matchedDrills : actualDrills.slice(0, 3);
   }
 
   private validateDailyPlans(days: PlanDay[]): PlanDay[] {
+    const relevantDrills = this.getRelevantDrills();
+    
     return days.map((day, index) => {
       const validDay = {
         day: day.day || index + 1,
@@ -76,21 +106,19 @@ export class PlanGenerator {
         drills: Array.isArray(day.drills) ? day.drills : []
       };
 
-      const validDrills = this.getRelevantDrills();
       const dayFocus = validDay.focus.toLowerCase();
-      const filteredDrills = validDrills.filter(drill => {
-        const drillText = [
-          drill.title?.toLowerCase() || '',
-          drill.overview?.toLowerCase() || '',
-          ...(drill.focus?.map(f => f.toLowerCase()) || []),
-          drill.category?.toLowerCase() || ''
-        ].join(' ');
-
-        return getDrillRelevanceScore(drillText, [dayFocus], this.specificProblem.toLowerCase()) > 0.2;
-      });
-
+      
       if (!validDay.drills || validDay.drills.length < 2) {
-        validDay.drills = filteredDrills.slice(0, 3).map(drill => ({
+        const startIdx = (index * 2) % Math.max(relevantDrills.length, 1);
+        const drillsNeeded = Math.min(3, relevantDrills.length);
+        let drillsForDay: DrillData[] = [];
+        
+        for (let i = 0; i < drillsNeeded; i++) {
+          const drillIndex = (startIdx + i) % relevantDrills.length;
+          drillsForDay.push(relevantDrills[drillIndex]);
+        }
+        
+        validDay.drills = drillsForDay.map(drill => ({
           id: drill.id,
           sets: 3,
           reps: 10
@@ -104,7 +132,6 @@ export class PlanGenerator {
   private generateDetailedDiagnosis(): string {
     const problem = this.specificProblem.toLowerCase();
     
-    // Generate a detailed diagnosis based on the specific problem
     if (problem.includes('slice') || problem.includes('slicing')) {
       if (problem.includes('driver')) {
         return `Your driver slice is likely caused by an outside-to-in swing path combined with an open clubface at impact. This creates side spin that sends the ball curving to the right (for right-handed golfers). Analysis of your swing suggests you may be starting your downswing with your upper body, creating an over-the-top move that cuts across the ball. Additionally, your grip might be contributing to the open clubface position at impact.`;
@@ -119,6 +146,8 @@ export class PlanGenerator {
       return `Your chipping technique shows inconsistencies in contact quality and distance control. Data analysis indicates you may be using too much wrist action during your chipping stroke, creating inconsistent low point control. Your weight distribution appears to favor your back foot more than ideal for clean contact, and your clubface control through impact shows room for improvement.`;
     } else if (problem.includes('bunker')) {
       return `Analysis of your bunker play indicates challenges with depth perception and sand interaction. You appear to be struggling with consistently getting the club to enter the sand at the optimal point behind the ball. Your swing tends to be either too steep or too shallow, resulting in inconsistent sand displacement. Weight distribution during the swing also shows some instability.`;
+    } else if (problem.includes('chunk') || problem.includes('iron contact')) {
+      return `Analysis of your iron contact issues reveals inconsistent low point control in your swing. The data suggests you're likely hitting behind the ball frequently, causing "chunked" shots where the club contacts the ground before the ball. This is often a result of your weight distribution staying too far on the back foot through impact, as well as a swing path that may be too steep. Your tendency to "scoop" or flip at impact could also be contributing to these contact issues. Improving your iron strikes will significantly lower your scores by increasing both accuracy and distance control.`;
     } else {
       return `Analysis of your ${this.specificProblem} technique reveals several technical patterns that are affecting your consistency and performance. Your mechanics show room for improvement in areas of tempo, path, and position at key points in the swing. The data indicates specific focus areas that can help you achieve more consistent results.`;
     }
@@ -127,7 +156,6 @@ export class PlanGenerator {
   private generateRootCauses(): string[] {
     const problem = this.specificProblem.toLowerCase();
     
-    // Generate root causes based on the specific problem
     if (problem.includes('slice') || problem.includes('slicing')) {
       return [
         "Outside-to-in swing path cutting across the ball",
@@ -168,6 +196,14 @@ export class PlanGenerator {
         "Improper weight distribution during swing",
         "Failure to keep clubface open through impact"
       ];
+    } else if (problem.includes('chunk') || problem.includes('iron contact')) {
+      return [
+        "Improper weight transfer keeping weight on back foot at impact",
+        "Early extension causing inconsistent low point control",
+        "Steep angle of attack causing the club to dig too deep",
+        "Scooping or flipping motion with the hands through impact",
+        "Poor setup position with ball too far forward in stance"
+      ];
     } else {
       return [
         "Technical inconsistencies in your fundamental mechanics",
@@ -182,23 +218,23 @@ export class PlanGenerator {
   private selectRelevantChallenge(challenges: any[], problem: string): any {
     if (!challenges || !Array.isArray(challenges) || challenges.length === 0) {
       console.log("No challenges available to select from");
-      return null;
+      return this.createDefaultChallenge(problem);
     }
 
     const problemLower = problem.toLowerCase();
     let targetMetric = '';
     let challengeKeywords: string[] = [];
 
-    // Map problem areas to relevant metrics and keywords
     if (problemLower.includes('slice') || problemLower.includes('hook') || 
         problemLower.includes('driver') || problemLower.includes('tee shot')) {
       targetMetric = 'Fairways Hit';
       challengeKeywords = ['fairway', 'accuracy', 'tee shot', 'driving'];
     } 
     else if (problemLower.includes('iron') || problemLower.includes('approach') || 
-             problemLower.includes('contact')) {
+             problemLower.includes('contact') || problemLower.includes('chunk') || 
+             problemLower.includes('ball striking')) {
       targetMetric = 'Greens in Regulation';
-      challengeKeywords = ['green', 'approach', 'iron shot', 'gir'];
+      challengeKeywords = ['green', 'approach', 'iron shot', 'gir', 'iron accuracy'];
     }
     else if (problemLower.includes('chip') || problemLower.includes('pitch') || 
              problemLower.includes('short game')) {
@@ -216,16 +252,22 @@ export class PlanGenerator {
     let highestScore = 0;
 
     for (const challenge of challenges) {
+      if (!challenge.title || !challenge.description) {
+        continue;
+      }
+      
       let score = 0;
 
-      // Check if challenge metrics match our target
       if (challenge.metrics && Array.isArray(challenge.metrics)) {
-        if (challenge.metrics.some(m => m.toLowerCase() === targetMetric.toLowerCase())) {
+        if (challenge.metrics.some(m => m?.toLowerCase() === targetMetric.toLowerCase())) {
           score += 2;
         }
       }
+      
+      if (challenge.metric && challenge.metric.toLowerCase() === targetMetric.toLowerCase()) {
+        score += 2;
+      }
 
-      // Score based on keyword matches in title and description
       const challengeText = `${challenge.title} ${challenge.description}`.toLowerCase();
       challengeKeywords.forEach(keyword => {
         if (challengeText.includes(keyword.toLowerCase())) {
@@ -233,7 +275,6 @@ export class PlanGenerator {
         }
       });
 
-      // Update best match if this challenge scores higher
       if (score > highestScore) {
         highestScore = score;
         bestMatch = challenge;
@@ -243,7 +284,6 @@ export class PlanGenerator {
     console.log(`Selected challenge: ${bestMatch?.title || 'None found'} with score: ${highestScore}`);
 
     if (bestMatch) {
-      // Calculate attempts based on instructions
       const attemptCount = [
         bestMatch.instruction1,
         bestMatch.instruction2,
@@ -256,28 +296,118 @@ export class PlanGenerator {
       };
     }
 
-    return null;
+    return this.createDefaultChallenge(problem);
+  }
+
+  private createDefaultChallenge(problem: string): any {
+    const problemLower = problem.toLowerCase();
+    
+    if (problemLower.includes('iron') || problemLower.includes('contact') || 
+        problemLower.includes('chunk') || problemLower.includes('ball striking')) {
+      return {
+        id: "default-challenge-iron",
+        title: "Green in Regulation Challenge",
+        description: "Test your iron accuracy by seeing how many greens you can hit in regulation",
+        difficulty: "Medium",
+        category: "Iron Play", 
+        metrics: ["Greens in Regulation"],
+        metric: "Greens in Regulation",
+        instruction1: "Hit 9 approach shots with your irons",
+        instruction2: "Count how many land and stay on the green",
+        instruction3: "Calculate your green hit percentage",
+        attempts: 9
+      };
+    }
+    else if (problemLower.includes('slice') || problemLower.includes('hook') || 
+             problemLower.includes('driver') || problemLower.includes('tee shot')) {
+      return {
+        id: "default-challenge-driver",
+        title: "Fairway Accuracy Challenge",
+        description: "Test your ability to hit fairways consistently with your driver",
+        difficulty: "Medium",
+        category: "Driving", 
+        metrics: ["Fairways Hit"],
+        metric: "Fairways Hit",
+        instruction1: "Hit 10 drives aiming for the fairway",
+        instruction2: "Count how many land in the fairway",
+        instruction3: "Calculate your fairway hit percentage",
+        attempts: 10
+      };
+    }
+    else if (problemLower.includes('putt') || problemLower.includes('putting')) {
+      return {
+        id: "default-challenge-putting",
+        title: "Putting Accuracy Challenge",
+        description: "Test your putting accuracy with a series of medium-length putts",
+        difficulty: "Medium",
+        category: "Putting", 
+        metrics: ["Putts"],
+        metric: "Putts Made",
+        instruction1: "Place 10 balls at 6-foot distances around a hole",
+        instruction2: "Count how many putts you make",
+        instruction3: "Calculate your putting percentage",
+        attempts: 10
+      };
+    }
+    else if (problemLower.includes('chip') || problemLower.includes('short game')) {
+      return {
+        id: "default-challenge-shortgame",
+        title: "Up and Down Challenge",
+        description: "Test your ability to get up and down from around the green",
+        difficulty: "Medium",
+        category: "Short Game", 
+        metrics: ["Up and Down"],
+        metric: "Up and Down",
+        instruction1: "Place 9 balls at different positions around the green",
+        instruction2: "Try to get each ball up and down in 2 shots or less",
+        instruction3: "Count how many successful up and downs you complete",
+        attempts: 9
+      };
+    }
+    
+    return {
+      id: "default-challenge-generic",
+      title: "Golf Accuracy Challenge",
+      description: "Test your overall shot accuracy with a mixed set of shots",
+      difficulty: "Medium",
+      category: "General", 
+      metrics: ["Accuracy"],
+      metric: "Accuracy",
+      instruction1: "Hit 9 shots targeting specific landing areas",
+      instruction2: "Count how many hit the intended target",
+      instruction3: "Calculate your accuracy percentage",
+      attempts: 9
+    };
   }
 
   async generatePlan(challenges: any[]): Promise<AIResponse> {
     const relevantDrills = this.getRelevantDrills();
     
-    // Select challenge based on the problem
     const selectedChallenge = this.selectRelevantChallenge(challenges, this.specificProblem);
     
     console.log(`Selected challenge for problem "${this.specificProblem}":`, 
                 selectedChallenge ? selectedChallenge.title : 'None found');
 
-    const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => ({
-      day: i + 1,
-      focus: `Day ${i + 1}: ${this.getFocusByDay(i, this.specificProblem)}`,
-      duration: "45 minutes",
-      drills: relevantDrills.slice(i * 2, (i * 2) + 3).map(drill => ({
-        id: drill.id,
-        sets: 3,
-        reps: 10
-      }))
-    }));
+    const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => {
+      const startIndex = (i * Math.ceil(relevantDrills.length / this.planDuration)) % relevantDrills.length;
+      
+      const dayDrills = [];
+      for (let j = 0; j < 3; j++) {
+        const index = (startIndex + j) % relevantDrills.length;
+        dayDrills.push(relevantDrills[index]);
+      }
+      
+      return {
+        day: i + 1,
+        focus: `Day ${i + 1}: ${this.getFocusByDay(i, this.specificProblem)}`,
+        duration: "45 minutes",
+        drills: dayDrills.map(drill => ({
+          id: drill.id,
+          sets: 3,
+          reps: 10
+        }))
+      };
+    });
 
     const validatedPlans = this.validateDailyPlans(dailyPlans);
     const detailedDiagnosis = this.generateDetailedDiagnosis();
@@ -296,7 +426,16 @@ export class PlanGenerator {
   private getFocusByDay(dayIndex: number, problem: string): string {
     const problemLower = problem.toLowerCase();
     
-    // Create focused practice descriptions based on problem type
+    if (problemLower.includes('chunk') || problemLower.includes('iron contact')) {
+      const focuses = [
+        "Ball Position and Setup",
+        "Weight Transfer and Low Point Control",
+        "Impact Position and Follow Through",
+        "Full Swing Integration"
+      ];
+      return focuses[dayIndex % focuses.length];
+    }
+    
     if (problemLower.includes('slice') || problemLower.includes('hook')) {
       const focuses = [
         "Grip and Setup Correction",
@@ -327,7 +466,6 @@ export class PlanGenerator {
       return focuses[dayIndex % focuses.length];
     }
     
-    // Default focuses if nothing specific matches
     const defaultFocuses = [
       "Fundamental Mechanics",
       "Technical Refinement",

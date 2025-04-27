@@ -1,7 +1,4 @@
 
-// Fix the typescript types by making sure all the functions are properly typed
-// No imports are needed as we're not importing from other files
-
 /**
  * Calculate a relevance score for a drill based on how well it matches the search terms
  * and specific problem. Higher scores indicate better matches.
@@ -26,8 +23,22 @@ export function getDrillRelevanceScore(
   
   let score = 0;
   
-  // Match specific problems
-  if (lowerProblem.includes('slice') || lowerProblem.includes('slicing')) {
+  // Match specific problems with enhanced iron contact matching
+  if (lowerProblem.includes('chunk') || lowerProblem.includes('iron contact') || 
+      lowerProblem.includes('ball striking')) {
+    if (
+      lowerDrillText.includes('iron') || 
+      lowerDrillText.includes('contact') || 
+      lowerDrillText.includes('strike') ||
+      lowerDrillText.includes('ball first') ||
+      lowerDrillText.includes('compression') ||
+      lowerDrillText.includes('impact') ||
+      lowerDrillText.includes('ball position')
+    ) {
+      score += 0.5;
+    }
+  }
+  else if (lowerProblem.includes('slice') || lowerProblem.includes('slicing')) {
     if (
       lowerDrillText.includes('slice') || 
       lowerDrillText.includes('path') || 
@@ -108,15 +119,29 @@ export function getChallengeRelevanceScore(
     challenge.title || '',
     challenge.description || '',
     challenge.category || '',
-    ...(Array.isArray(challenge.metrics) ? challenge.metrics : [])
+    challenge.metric || '',
+    ...(Array.isArray(challenge.metrics) ? challenge.metrics.filter(Boolean) : [])
   ].filter(Boolean);
   
   const lowerChallenge = challengeFields.join(' ').toLowerCase();
 
   let score = 0;
 
+  // Enhanced matching for iron contact/ball striking issues
+  if (lowerProblem.includes('chunk') || lowerProblem.includes('iron contact') || 
+      lowerProblem.includes('ball striking')) {
+    if (
+      lowerChallenge.includes('green') || 
+      lowerChallenge.includes('approach') ||
+      lowerChallenge.includes('iron') ||
+      lowerChallenge.includes('gir') ||
+      lowerChallenge.includes('regulation')
+    ) {
+      score += 0.6;
+    }
+  }
   // Match specific problems with relevant challenges
-  if (lowerProblem.includes('slice') || lowerProblem.includes('hook')) {
+  else if (lowerProblem.includes('slice') || lowerProblem.includes('hook')) {
     if (
       lowerChallenge.includes('fairway') || 
       lowerChallenge.includes('accuracy') ||
