@@ -9,6 +9,95 @@ const corsHeaders = {
 
 const ALLOWED_MODEL = 'gpt-4o-mini';
 
+// Default sample drills to use when no drills are in the database
+const sampleDrills = [
+  {
+    id: "7c5d6a9e-3b2f-4c1a-8d7e-5f9b6c2a3d8e",
+    title: "Alignment Rod Path Drill",
+    description: "Improve swing path and alignment",
+    overview: "Use alignment rods to visualize and correct your swing path",
+    category: "driving",
+    focus: ["swing path", "alignment", "driver"],
+    difficulty: "Intermediate",
+    duration: "15 minutes",
+    instruction1: "Place one alignment rod on the ground pointing at your target",
+    instruction2: "Place another rod parallel to the first, creating a channel",
+    instruction3: "Practice swinging along the channel to improve your path",
+    common_mistake1: "Swinging too much from outside-in",
+    common_mistake2: "Not maintaining proper alignment throughout swing",
+    pro_tip: "Focus on shoulder rotation staying parallel to the alignment rods"
+  },
+  {
+    id: "9a8b7c6d-5e4f-3g2h-1i0j-6k5l4m3n2o1p",
+    title: "Towel Under Arms Drill",
+    description: "Improve connection and swing plane",
+    overview: "Placing a towel under both armpits helps maintain connection during your swing",
+    category: "irons",
+    focus: ["connection", "swing plane", "consistency"],
+    difficulty: "Beginner",
+    duration: "20 minutes",
+    instruction1: "Place a small towel under both armpits",
+    instruction2: "Take slow, smooth swings while keeping the towel in place",
+    instruction3: "Focus on turning your body without losing the towels",
+    common_mistake1: "Lifting arms independently of the body turn",
+    common_mistake2: "Swinging too fast, causing loss of connection",
+    pro_tip: "Start with half swings before progressing to full swings"
+  },
+  {
+    id: "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+    title: "Gate Putting Drill",
+    description: "Improve putting accuracy and consistency",
+    overview: "Using two tees to create a gate for your putter to pass through",
+    category: "putting",
+    focus: ["accuracy", "putting path", "face control"],
+    difficulty: "Beginner",
+    duration: "15 minutes",
+    instruction1: "Place two tees in the ground slightly wider than your putter head",
+    instruction2: "Position your ball 2-3 feet from the hole with the tees in between",
+    instruction3: "Practice putting through the gate without hitting the tees",
+    instruction4: "Gradually increase distance as you improve",
+    common_mistake1: "Opening or closing the putter face",
+    common_mistake2: "Decelerating through impact",
+    pro_tip: "Focus on a consistent tempo throughout the stroke"
+  },
+  {
+    id: "2c3d4e5f-6g7h-8i9j-0k1l-2m3n4o5p6q",
+    title: "Clock Chipping Drill",
+    description: "Master distance control in your short game",
+    overview: "Practice chipping to different positions around the hole like a clock face",
+    category: "chipping",
+    focus: ["distance control", "touch", "short game"],
+    difficulty: "Intermediate",
+    duration: "25 minutes",
+    instruction1: "Place targets at 1, 3, 5, 7, 9 and 11 o'clock positions around a hole",
+    instruction2: "From the same position, chip to each target in sequence",
+    instruction3: "Focus on varying power while maintaining the same technique",
+    instruction4: "Track your success rate and try to improve each round",
+    common_mistake1: "Using too much wrist action",
+    common_mistake2: "Inconsistent low point control",
+    common_mistake3: "Deceleration through impact",
+    pro_tip: "Change clubs rather than drastically changing your technique for different distances"
+  },
+  {
+    id: "3d4e5f6g-7h8i-9j0k-1l2m-3n4o5p6q7r",
+    title: "Bunker Splash Drill",
+    description: "Improve sand shots with better technique",
+    overview: "Practice creating the right amount of splash in bunker shots",
+    category: "bunker",
+    focus: ["sand play", "bunker technique", "consistency"],
+    difficulty: "Advanced",
+    duration: "20 minutes",
+    instruction1: "Draw a line in the sand about 2 inches behind where you'd place the ball",
+    instruction2: "Practice hitting 2 inches behind the line, focusing on splash",
+    instruction3: "Let the club bounce through the sand rather than digging",
+    instruction4: "Once comfortable, add a ball and continue the same motion",
+    common_mistake1: "Hitting too close to the ball",
+    common_mistake2: "Decelerating through the sand",
+    common_mistake3: "Not opening the club face enough",
+    pro_tip: "Open your stance and clubface more for softer landing shots"
+  }
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -37,13 +126,17 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
+    // Use sample drills if no drills are available in the database
+    const drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
+    
     // Prepare drill data for the prompt - simplify to reduce token usage
-    const simplifiedDrills = (availableDrills || []).map(drill => ({
+    const simplifiedDrills = drillsToUse.map(drill => ({
       id: drill.id,
       title: drill.title,
       focus: drill.focus,
       category: drill.category,
-      difficulty: drill.difficulty
+      difficulty: drill.difficulty,
+      overview: drill.overview?.substring(0, 100)
     }));
 
     // Create a structured prompt that explicitly asks for the required fields
@@ -160,7 +253,7 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
             return null;
           }
 
-          const fullDrill = availableDrills?.find(d => d.id === drill.id);
+          const fullDrill = drillsToUse.find(d => d.id === drill.id);
           if (!fullDrill) {
             console.warn(`Drill with ID ${drill.id} not found`);
             return null;
