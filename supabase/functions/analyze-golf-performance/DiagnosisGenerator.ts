@@ -1,135 +1,129 @@
 
-import { ProblemCategory } from './golfCategorization.ts';
-
+/**
+ * Class responsible for generating golf swing diagnosis text based on user problems
+ */
 export class DiagnosisGenerator {
   private problem: string;
-  private problemCategory: ProblemCategory | null;
+  private category: any;
 
-  constructor(problem: string, problemCategory: ProblemCategory | null) {
-    this.problem = problem.toLowerCase();
-    this.problemCategory = problemCategory;
+  constructor(problem: string, category: any) {
+    this.problem = problem || '';
+    this.category = category;
   }
 
+  /**
+   * Generate a detailed diagnosis based on the user's specific problem
+   */
   generateDiagnosis(): string {
-    if (this.problem.includes('top') || this.problem.includes('topping')) {
-      return `Analysis of your topping issues reveals that you're likely hitting the top half of the golf ball, causing low-trajectory shots that don't get airborne. This often happens when your weight shifts backward during the swing or when you lift your upper body (early extension) right before impact. The data suggests your swing arc is too shallow, with the lowest point of your swing occurring before you reach the ball. The inconsistent ball contact is significantly reducing your shot distance and accuracy, particularly with your irons.`;
-    }
-    
-    if (this.problem.includes('chunk') || this.problem.includes('fat') || this.problem.includes('heavy')) {
-      return `Analysis of your iron contact issues reveals inconsistent low point control in your swing. The data suggests you're likely hitting behind the ball frequently, causing "chunked" shots where the club contacts the ground before the ball. This is often a result of your weight distribution staying too far on the back foot through impact, as well as a swing path that may be too steep. Your tendency to "scoop" or flip at impact could also be contributing to these contact issues. Improving your iron strikes will significantly lower your scores by increasing both accuracy and distance control.`;
-    }
+    if (!this.problem) return "Not enough information to generate a diagnosis.";
 
-    if (this.problem.includes('slice') || this.problem.includes('slicing')) {
-      if (this.problem.includes('driver')) {
-        return `Your driver slice is characterized by a ball flight that starts left (for right-handed golfers) and curves dramatically to the right, often landing in trouble. Analysis indicates this is caused by an outside-to-in swing path combined with an open clubface at impact. The data suggests you're likely starting your downswing with your upper body, creating an over-the-top move that cuts across the ball. Your grip positioning and alignment may also be contributing factors, potentially setting up conditions for the open face at impact.`;
+    let diagnosis = "";
+    const normalizedProblem = this.problem.toLowerCase();
+    
+    // Generate diagnosis based on problem category
+    if (this.category) {
+      switch(this.category.name) {
+        case 'Driving':
+          diagnosis = this.generateDrivingDiagnosis(normalizedProblem);
+          break;
+        case 'Iron Play':
+          diagnosis = this.generateIronPlayDiagnosis(normalizedProblem);
+          break;
+        case 'Short Game':
+          diagnosis = this.generateShortGameDiagnosis(normalizedProblem);
+          break;
+        case 'Putting':
+          diagnosis = this.generatePuttingDiagnosis(normalizedProblem);
+          break;
+        default:
+          diagnosis = this.generateGeneralDiagnosis(normalizedProblem);
       }
-      return `Your slice is characterized by a ball flight that starts straight but curves significantly to the right (for right-handed golfers). This happens due to an outside-to-in swing path combined with an open clubface at impact. The data indicates your swing likely has a steeper angle of attack, cutting across the ball and creating excessive side spin. Your grip and alignment also appear to be contributing factors to this ball flight pattern.`;
+    } else {
+      diagnosis = this.generateGeneralDiagnosis(normalizedProblem);
     }
 
-    if (this.problem.includes('hook') || this.problem.includes('hooking')) {
-      return `Your hook shots are characterized by a ball flight that starts right (for right-handed golfers) and curves dramatically to the left, often resulting in lost distance and directional control. Analysis indicates this is likely caused by an inside-to-out swing path combined with a closed clubface at impact. Your grip may be too strong, and the data suggests you might be releasing the club too early in your downswing. This combination creates excessive right-to-left spin on the ball, leading to unpredictable shot patterns.`;
-    }
-
-    if (this.problem.includes('putt') || this.problem.includes('putting')) {
-      return `Analysis of your putting stroke reveals inconsistencies in your tempo and path. The data suggests you may be struggling with distance control and direction. Your stroke appears to have subtle variations in pace and path that affect consistency. Additionally, your setup position shows some inconsistency in eye position relative to the ball and minor variations in your stance width, leading to inconsistent stroke patterns and missed putts.`;
-    }
-
-    if (this.problem.includes('chip') || this.problem.includes('pitch') || this.problem.includes('short game')) {
-      return `Your chipping technique shows inconsistencies in contact quality and distance control. Data analysis indicates you may be using too much wrist action during your chipping stroke, creating inconsistent low point control. Your weight distribution appears to favor your back foot more than ideal for clean contact, and your clubface control through impact shows room for improvement, leading to inconsistent results around the green.`;
-    }
-
-    if (this.problem.includes('distance') || this.problem.includes('short') || this.problem.includes('long')) {
-      return `Analysis of your distance control issues reveals inconsistencies in your swing tempo and contact quality. The data suggests you may be struggling with consistent strike location on the clubface, which is critical for distance control. Your swing speed shows variations between similar shots, and your low point control appears inconsistent. These factors combine to create unpredictable distances with your shots, making it difficult to plan your approach shots effectively.`;
-    }
-    
-    return `Analysis of your ${this.problem} technique reveals several technical patterns that are affecting your consistency and performance. Your mechanics show room for improvement in areas of tempo, path, and position at key points in the swing. The data indicates specific focus areas that can help you achieve more consistent results.`;
+    return diagnosis;
   }
 
   generateRootCauses(): string[] {
-    const category = this.problemCategory?.name.toLowerCase() || '';
-    
-    if (this.problem.includes('top') || this.problem.includes('topping')) {
-      return [
-        "Rising up during the downswing (early extension)",
-        "Ball positioned too far back in stance",
-        "Poor weight transfer with weight remaining on back foot",
-        "Standing too close to the ball at address",
-        "Upper body lifting through impact"
-      ];
+    if (!this.problem) return ["Insufficient information provided"];
+
+    const normalizedProblem = this.problem.toLowerCase();
+    const causes: string[] = [];
+
+    // Generate specific root causes based on problem
+    if (normalizedProblem.includes('slice')) {
+      causes.push("Open clubface at impact");
+      causes.push("Outside-to-in swing path");
+    } else if (normalizedProblem.includes('hook')) {
+      causes.push("Closed clubface at impact");
+      causes.push("Inside-to-out swing path");
+    } else if (normalizedProblem.includes('chunk') || normalizedProblem.includes('fat')) {
+      causes.push("Swing bottoming out before the ball");
+      causes.push("Improper weight transfer");
+    } else if (normalizedProblem.includes('thin') || normalizedProblem.includes('top')) {
+      causes.push("Lifting up during downswing");
+      causes.push("Poor posture maintenance");
+    } else if (normalizedProblem.includes('putt') || normalizedProblem.includes('green')) {
+      causes.push("Inconsistent stroke path");
+      causes.push("Improper pace control");
     }
-    
-    if (this.problem.includes('chunk') || this.problem.includes('fat') || this.problem.includes('heavy')) {
-      return [
-        "Improper weight transfer keeping weight on back foot at impact",
-        "Early extension causing inconsistent low point control",
-        "Steep angle of attack causing the club to dig too deep",
-        "Scooping or flipping motion with the hands through impact",
-        "Poor setup position with ball too far forward in stance"
-      ];
+
+    // Add generic causes if needed
+    if (causes.length < 2) {
+      causes.push("Inconsistent fundamentals");
+      causes.push("Swing mechanics need refinement");
     }
-    
-    if (this.problem.includes('slice') || this.problem.includes('slicing')) {
-      return [
-        "Outside-to-in swing path cutting across the ball",
-        "Open clubface at impact relative to swing path",
-        "Improper grip position allowing the face to open",
-        "Over-rotation of the upper body in the backswing",
-        "Starting the downswing with the shoulders instead of the lower body"
-      ];
-    }
-    
-    if (this.problem.includes('hook') || this.problem.includes('hooking')) {
-      return [
-        "Inside-to-out swing path",
-        "Closed clubface at impact relative to swing path",
-        "Overly strong grip position",
-        "Early release of the club in the downswing",
-        "Excessive forearm rotation through impact"
-      ];
-    }
-    
-    switch(category) {
-      case "ball striking":
-        return [
-          "Improper weight transfer keeping weight on back foot at impact",
-          "Early extension causing inconsistent low point control",
-          "Steep angle of attack causing the club to dig too deep",
-          "Scooping or flipping motion with the hands through impact",
-          "Poor setup position with ball too far forward in stance"
-        ];
-      case "driving accuracy":
-        return [
-          "Outside-to-in swing path cutting across the ball",
-          "Open clubface at impact relative to swing path",
-          "Improper grip position allowing the face to open",
-          "Over-rotation of the upper body in the backswing",
-          "Starting the downswing with the shoulders instead of the lower body"
-        ];
-      case "putting":
-        return [
-          "Inconsistent stroke path leading to directional issues",
-          "Variable tempo affecting distance control",
-          "Inconsistent setup position and eye alignment",
-          "Grip pressure changes during stroke",
-          "Head movement during putting stroke"
-        ];
-      case "short game":
-        return [
-          "Excessive wrist action during chipping motion",
-          "Inconsistent low point control",
-          "Weight favoring back foot during stroke",
-          "Variable ball position in stance",
-          "Inconsistent clubface control through impact"
-        ];
-      default:
-        return [
-          "Technical inconsistencies in your fundamental mechanics",
-          "Alignment and setup issues affecting your swing plane",
-          "Tempo and timing variations leading to inconsistent contact",
-          "Grip and pressure points that may be limiting your control",
-          "Body rotation and sequencing issues affecting power and accuracy"
-        ];
+
+    return causes;
+  }
+
+  // Helper methods for specific diagnosis sections
+  private generateDrivingDiagnosis(problem: string): string {
+    if (problem.includes('slice')) {
+      return "Your slicing issue with the driver is typically caused by an open clubface at impact and an outside-to-in swing path. Focus on a more neutral grip and practice releasing the club properly through impact. The recommended drills will help you correct your swing path and improve clubface control.";
+    } else if (problem.includes('hook')) {
+      return "Your hooking tendency indicates a closed clubface at impact and possibly an inside-to-out swing path. Work on grip pressure and swing path. The selected drills will help you gain better control of your clubface and develop a more neutral swing path.";
+    } else if (problem.includes('distance')) {
+      return "To improve driving distance, you need to focus on increasing swing speed while maintaining proper sequencing. The selected drills will help you generate more power from the ground up and improve your swing efficiency for maximum distance.";
+    } else {
+      return "To improve your driving performance, it's important to focus on consistency in your setup and swing path. The recommended practice drills will help you develop a more repeatable swing and better control off the tee.";
     }
   }
-}
 
+  private generateIronPlayDiagnosis(problem: string): string {
+    if (problem.includes('thin') || problem.includes('top')) {
+      return "Hitting thin iron shots typically comes from lifting your upper body during the downswing or having the ball too far forward in your stance. Focus on maintaining your spine angle and proper ball position. The recommended drills will help you improve contact consistency.";
+    } else if (problem.includes('fat') || problem.includes('chunk')) {
+      return "Fat shots with your irons often result from poor weight transfer or casting the club too early. Work on shifting your weight properly and maintaining your wrist angles through impact. These drills will help you strike down and through the ball.";
+    } else if (problem.includes('direction') || problem.includes('accuracy')) {
+      return "Directional issues with iron shots typically stem from an inconsistent swing path or clubface angle at impact. The selected practice drills will focus on alignment, path control, and developing a more consistent ball flight pattern.";
+    } else {
+      return "To improve your iron play, focus on solid contact and consistent ball flight. The recommended practice regimen will help you develop better control of your irons through improved fundamentals and swing mechanics.";
+    }
+  }
+
+  private generateShortGameDiagnosis(problem: string): string {
+    if (problem.includes('chip') || problem.includes('pitch')) {
+      return "Consistent short game success comes from solid fundamentals and touch. The selected drills will help you develop better distance control, proper weight distribution, and a consistent setup for your chipping and pitching.";
+    } else if (problem.includes('bunker') || problem.includes('sand')) {
+      return "Bunker play requires specific technique to effectively use the sand to lift the ball. Focus on opening the clubface, hitting the sand before the ball, and following through. These drills will build your confidence and consistency from sand.";
+    } else {
+      return "Your short game is critical for scoring. The recommended practice plan focuses on versatility around the greens with different clubs and situations. Regular practice of these drills will significantly lower your scores through improved up-and-down percentages.";
+    }
+  }
+
+  private generatePuttingDiagnosis(problem: string): string {
+    if (problem.includes('speed') || problem.includes('distance')) {
+      return "Putting distance control is crucial for avoiding three-putts. The selected drills will help you develop better feel and consistency with your putting stroke to improve speed control on various length putts.";
+    } else if (problem.includes('line') || problem.includes('direction')) {
+      return "Directional control in putting comes from a square putter face at impact and a consistent stroke path. These practice drills focus on alignment, stroke path, and face control to help you start the ball on your intended line.";
+    } else {
+      return "A well-rounded putting practice regimen should address both line and speed. The recommended drills will help you develop a more consistent stroke, better green reading skills, and improved confidence on the greens.";
+    }
+  }
+
+  private generateGeneralDiagnosis(problem: string): string {
+    return "Based on your goals, a comprehensive approach to improvement is recommended. The selected practice plan focuses on the fundamental areas that will have the biggest impact on your overall game. Consistent practice using these drills will lead to more confidence and lower scores.";
+  }
+}

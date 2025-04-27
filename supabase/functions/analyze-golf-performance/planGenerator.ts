@@ -1,7 +1,6 @@
-
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore } from './drillMatching.ts';
-import { identifyProblemCategory } from './golfCategorization.ts';
+import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
 import { DiagnosisGenerator } from './DiagnosisGenerator.ts';
 import { PracticeDayGenerator } from './PracticeDayGenerator.ts';
 import { ChallengeSelector } from './ChallengeSelector.ts';
@@ -169,4 +168,3 @@ export class PlanGenerator {
     };
   }
 }
-
