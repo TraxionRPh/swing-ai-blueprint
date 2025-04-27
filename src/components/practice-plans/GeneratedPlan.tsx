@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { DiagnosisCard } from "./DiagnosisCard";
 import { DailyPlanSection } from "./DailyPlanSection";
-import { ProgressChallengeCard } from "./ProgressChallengeCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, Info, ArrowLeft } from "lucide-react";
 import { useChallenge } from "@/hooks/useChallenge";
@@ -34,8 +33,8 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   });
   
   // Use first recommended drill for finding a matching challenge
-  const focusArea = plan.recommendedDrills[0]?.focus?.[0] || ""; 
-  const { data: challengeData } = useChallenge("1"); // Placeholder ID, will need proper integration
+  const focusArea = plan.recommendedDrills && plan.recommendedDrills.length > 0 && plan.recommendedDrills[0]?.focus?.[0] || "driving"; 
+  const { data: challengeData, isLoading: challengeLoading } = useChallenge("1"); // We'll use a default challenge ID
 
   useEffect(() => {
     if (planId) {
@@ -94,6 +93,8 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
 
   const progressStatus = getProgressStatus();
   const challengeName = challengeData?.title || `${plan.problem} Challenge`;
+  const challengeInstructions = challengeData ? 
+    [challengeData.instruction1, challengeData.instruction2, challengeData.instruction3].filter(Boolean) : [];
 
   return (
     <div className="space-y-6">
@@ -128,17 +129,19 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
           <p className="mb-4">Complete this challenge to measure your current skill level with {plan.problem}.</p>
           
           <div className="space-y-4">
-            {challengeData && (
+            {challengeLoading ? (
+              <p>Loading challenge details...</p>
+            ) : challengeData ? (
               <div className="space-y-2">
                 <h3 className="font-medium">Instructions:</h3>
                 <ul className="list-disc pl-5 space-y-1">
-                  {[challengeData.instruction1, challengeData.instruction2, challengeData.instruction3]
-                    .filter(Boolean)
-                    .map((instruction, i) => (
-                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                  {challengeInstructions.map((instruction, i) => (
+                    <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
                   ))}
                 </ul>
               </div>
+            ) : (
+              <p className="text-amber-500">Challenge details not available</p>
             )}
             
             <div className="space-y-2">
@@ -162,15 +165,23 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
       
       {/* Daily Plans */}
-      {filteredDays.map((dayPlan, i) => (
-        <DailyPlanSection
-          key={i}
-          dayPlan={dayPlan}
-          dayNumber={i + 1}
-          completedDrills={completedDrills}
-          onDrillComplete={toggleDrillCompletion}
-        />
-      ))}
+      {filteredDays && filteredDays.length > 0 ? (
+        filteredDays.map((dayPlan, i) => (
+          <DailyPlanSection
+            key={i}
+            dayPlan={dayPlan}
+            dayNumber={i + 1}
+            completedDrills={completedDrills}
+            onDrillComplete={toggleDrillCompletion}
+          />
+        ))
+      ) : (
+        <Card className="border-amber-200">
+          <CardContent className="p-6">
+            <p className="text-amber-600">No daily practice plans available. Please try regenerating this plan.</p>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Final Challenge */}
       <Card className="border-primary/20">
@@ -184,17 +195,19 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
           <p className="mb-4">Now that you've completed the practice plan, take the challenge again to measure your improvement.</p>
           
           <div className="space-y-4">
-            {challengeData && (
+            {challengeLoading ? (
+              <p>Loading challenge details...</p>
+            ) : challengeData ? (
               <div className="space-y-2">
                 <h3 className="font-medium">Instructions:</h3>
                 <ul className="list-disc pl-5 space-y-1">
-                  {[challengeData.instruction1, challengeData.instruction2, challengeData.instruction3]
-                    .filter(Boolean)
-                    .map((instruction, i) => (
-                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                  {challengeInstructions.map((instruction, i) => (
+                    <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
                   ))}
                 </ul>
               </div>
+            ) : (
+              <p className="text-amber-500">Challenge details not available</p>
             )}
             
             <div className="space-y-2">

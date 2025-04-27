@@ -26,7 +26,7 @@ export const DrillCard = ({
 
   return (
     <>
-      <Card className="border border-border/50 bg-background hover:bg-accent/5 transition-colors">
+      <Card className={`border border-border/50 ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : 'bg-background'} hover:bg-accent/5 transition-colors`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Checkbox 
@@ -57,7 +57,10 @@ export const DrillCard = ({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setShowDetails(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDetails(true);
+                    }}
                   >
                     View Details
                   </Button>

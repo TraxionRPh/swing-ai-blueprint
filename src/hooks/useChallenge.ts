@@ -12,23 +12,45 @@ export const useChallenge = (challengeId: string | undefined) => {
     queryFn: async () => {
       if (!challengeId) return null;
       
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('id', challengeId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching challenge:', error);
+      try {
+        // First try to get a specific challenge by ID
+        const { data: specificChallenge, error: specificError } = await supabase
+          .from('challenges')
+          .select('*')
+          .eq('id', challengeId)
+          .single();
+        
+        if (specificChallenge) {
+          return specificChallenge as Challenge;
+        }
+        
+        // If specific challenge not found or error, get a random challenge
+        const { data: randomChallenge, error: randomError } = await supabase
+          .from('challenges')
+          .select('*')
+          .limit(1);
+        
+        if (randomError || !randomChallenge?.length) {
+          console.error('Error fetching challenge:', randomError || 'No challenges found');
+          toast({
+            title: 'Error',
+            description: 'Failed to load challenge details',
+            variant: 'destructive',
+          });
+          return null;
+        }
+        
+        return randomChallenge[0] as Challenge;
+      } catch (error) {
+        console.error('Error in challenge query:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load challenge details',
+          description: 'An unexpected error occurred loading challenge details',
           variant: 'destructive',
         });
         return null;
       }
-      
-      return data as Challenge;
     },
+    staleTime: 60000, // 1 minute
   });
 };
