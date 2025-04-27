@@ -38,6 +38,9 @@ serve(async (req) => {
       availableDrills = [];
     }
 
+    // Determine if this is an AI-generated plan (no specific problem) or user-specified problem
+    const isAIGenerated = !specificProblem || specificProblem === "Improve overall golf performance";
+
     // Identify the problem category for better logging and matching
     const problemCategory = identifyProblemCategory(specificProblem);
     const categoryName = problemCategory?.name || 'General';
@@ -143,7 +146,8 @@ serve(async (req) => {
         response,
         availableDrills,
         planDuration,
-        userData
+        userData,
+        isAIGenerated
       );
     }
     
@@ -159,7 +163,8 @@ serve(async (req) => {
       response,
       availableDrills,
       planDuration,
-      userData
+      userData,
+      isAIGenerated
     );
   } catch (error) {
     console.error('Error:', error);

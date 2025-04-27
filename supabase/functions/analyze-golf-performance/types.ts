@@ -54,4 +54,5 @@ export interface AIResponse {
   rootCauses: string[];
   practicePlan: PracticePlan;
   performanceInsights?: PerformanceInsight[];
+  isAIGenerated?: boolean;
 }

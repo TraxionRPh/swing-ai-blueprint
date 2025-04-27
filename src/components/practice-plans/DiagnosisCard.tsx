@@ -4,13 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface DiagnosisCardProps {
   diagnosis: string;
   rootCauses: string[];
+  isAIGenerated?: boolean;
 }
 
-export const DiagnosisCard = ({ diagnosis, rootCauses }: DiagnosisCardProps) => {
+export const DiagnosisCard = ({ diagnosis, rootCauses, isAIGenerated }: DiagnosisCardProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>AI Diagnosis</CardTitle>
+        <CardTitle>
+          {isAIGenerated ? "AI Personal Diagnosis" : "AI Diagnosis"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">{diagnosis}</p>

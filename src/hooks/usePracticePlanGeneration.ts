@@ -213,7 +213,8 @@ export const usePracticePlanGeneration = () => {
             challenge: data.practicePlan.challenge
           },
           performanceInsights: performanceInsights,
-          userGoals: userGoals
+          userGoals: userGoals,
+          isAIGenerated: data.isAIGenerated || false
         };
 
         if (userId) {

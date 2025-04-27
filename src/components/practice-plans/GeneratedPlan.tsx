@@ -121,7 +121,11 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       </Card>
 
       {/* AI Diagnosis */}
-      <DiagnosisCard diagnosis={plan.diagnosis} rootCauses={plan.rootCauses} />
+      <DiagnosisCard 
+        diagnosis={plan.diagnosis} 
+        rootCauses={plan.rootCauses} 
+        isAIGenerated={plan.isAIGenerated}
+      />
 
       {/* Daily Plans */}
       <Card>

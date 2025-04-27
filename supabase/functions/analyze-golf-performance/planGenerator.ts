@@ -1,3 +1,4 @@
+
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
@@ -22,6 +23,7 @@ export class PlanGenerator {
   private drills: DrillData[];
   private problemCategory: any;
   private userData: UserData | null;
+  private isAIGenerated: boolean;
   
   constructor(
     roundData: any[], 
@@ -35,6 +37,9 @@ export class PlanGenerator {
     this.planDuration = parseInt(planDuration) || 1;
     this.drills = drills || []; // Ensure drills is never undefined
     this.userData = userData || null;
+    
+    // Determine if this is an AI-generated plan or user-specified problem
+    this.isAIGenerated = !specificProblem || specificProblem === "Improve overall golf performance";
     
     // Identify the problem category when the plan generator is created
     this.problemCategory = identifyProblemCategory(specificProblem);
@@ -341,7 +346,7 @@ export class PlanGenerator {
       this.specificProblem, 
       this.problemCategory,
       this.userData?.userData?.handicap_level,
-      !this.specificProblem || this.specificProblem === "Improve overall golf performance"
+      this.isAIGenerated // Pass the isAIGenerated flag to the DiagnosisGenerator
     );
     
     const practiceDayGenerator = new PracticeDayGenerator(
