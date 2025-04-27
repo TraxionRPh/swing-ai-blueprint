@@ -5,6 +5,7 @@ import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { HandicapLevel } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
+import { Drill } from "@/types/drill";
 
 export const usePracticePlanGeneration = () => {
   const { toast } = useToast();
@@ -49,6 +50,52 @@ export const usePracticePlanGeneration = () => {
     }
   };
 
+  /**
+   * Finds the most relevant drills for a specific problem
+   */
+  const findRelevantDrills = async (issue: string): Promise<Drill[]> => {
+    if (!issue) return [];
+    
+    try {
+      const searchTerms = issue
+        .toLowerCase()
+        .split(/[\s-]+/)
+        .filter(term => term.length > 2);
+      
+      // Fetch all drills
+      const { data: drills, error: drillsError } = await supabase
+        .from('drills')
+        .select('*');
+
+      if (drillsError) {
+        console.error('Error fetching drills:', drillsError);
+        return [];
+      }
+
+      if (!drills || drills.length === 0) return [];
+      
+      // Enhanced matching logic
+      return drills.filter(drill => {
+        // Skip drills with no focus or missing data
+        if (!drill.focus || !Array.isArray(drill.focus) || !drill.title) return false;
+        
+        // Create a combined text representation of the drill
+        const drillText = [
+          drill.title.toLowerCase(),
+          drill.overview?.toLowerCase() || '',
+          drill.category?.toLowerCase() || '',
+          ...drill.focus.map(f => f.toLowerCase())
+        ].join(' ');
+        
+        // Match if any search term is found in the drill text
+        return searchTerms.some(term => drillText.includes(term));
+      });
+    } catch (error) {
+      console.error('Error finding relevant drills:', error);
+      return [];
+    }
+  };
+
   const generatePlan = async (
     userId: string | undefined,
     issue: string, 
@@ -63,34 +110,11 @@ export const usePracticePlanGeneration = () => {
     setIsGenerating(true);
 
     try {
-      const searchTerms = issue.split(' ').filter(term => term.length > 2);
+      // Find relevant drills for the specific issue
+      const relevantDrills = await findRelevantDrills(issue);
+      console.log('Found relevant drills:', relevantDrills.length);
       
-      // Fetch all drills, then filter in JS instead of using problematic array search
-      const { data: drills, error: drillsError } = await supabase
-        .from('drills')
-        .select('*');
-
-      if (drillsError) throw drillsError;
-
-      // Filter drills in JavaScript based on search terms if needed
-      let filteredDrills = drills || [];
-      if (searchTerms.length > 0) {
-        filteredDrills = drills?.filter(drill => {
-          // Match if any focus item contains any search term
-          if (!drill.focus || !Array.isArray(drill.focus)) return false;
-          
-          return searchTerms.some(term => 
-            drill.focus.some(focus => 
-              focus.toLowerCase().includes(term.toLowerCase())
-            )
-          );
-        }) || [];
-      }
-
-      console.log('Fetched drills:', filteredDrills?.length || 0);
-      console.log('Issue being analyzed:', issue);
-      console.log('Sending request to analyze-golf-performance');
-
+      // Fetch recent round data for better context
       const { data: roundData } = await supabase
         .from('rounds')
         .select('*')
@@ -105,7 +129,7 @@ export const usePracticePlanGeneration = () => {
           handicapLevel: handicapLevel || 'intermediate',
           specificProblem: issue || 'Improve overall golf performance',
           planDuration,
-          availableDrills: filteredDrills || []
+          availableDrills: relevantDrills
         }
       });
 
@@ -123,7 +147,7 @@ export const usePracticePlanGeneration = () => {
           problem: issue || "Golf performance optimization",
           diagnosis: data.diagnosis,
           rootCauses: data.rootCauses,
-          recommendedDrills: filteredDrills || [],
+          recommendedDrills: relevantDrills,
           practicePlan: {
             duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
             frequency: "Daily",

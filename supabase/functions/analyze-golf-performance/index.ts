@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { getDrillRelevanceScore } from "./drillMatching.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -127,50 +128,88 @@ serve(async (req) => {
 
     let drillsToUse = (availableDrills && availableDrills.length > 0) ? availableDrills : sampleDrills;
     
-    // Filter drills based on the specific problem
+    // Enhanced drill filtering based on specific problem
+    let matchedDrills = drillsToUse;
     if (specificProblem) {
-      console.log("Filtering drills based on specific problem:", specificProblem);
-      const searchTerms = specificProblem.toLowerCase().split(' ')
+      console.log("Filtering drills for problem:", specificProblem);
+      
+      // Process search terms with improved tokenization
+      const searchTerms = specificProblem.toLowerCase()
+        .split(/[\s-]+/) // Split on spaces and hyphens
         .filter(term => term.length > 2)
         .map(term => term.replace(/[^a-z]/g, ''));
       
-      console.log("Search terms extracted:", searchTerms);
+      console.log("Search terms:", searchTerms);
       
-      // Filter drills by any matching search term in focus, title, overview, or category
-      const matchedDrills = drillsToUse.filter(drill => {
+      // Create tiered drill selection
+      const exactMatches = [];
+      const relatedMatches = [];
+      const possibleMatches = [];
+      
+      // First pass: categorize drills by relevance
+      drillsToUse.forEach(drill => {
         const drillText = [
           drill.title?.toLowerCase() || '',
           drill.overview?.toLowerCase() || '',
-          ...(drill.focus?.map(f => f.toLowerCase()) || []),
-          drill.category?.toLowerCase() || ''
+          drill.category?.toLowerCase() || '',
+          ...(drill.focus?.map(f => f.toLowerCase()) || [])
         ].join(' ');
-
-        const matches = searchTerms.filter(term => drillText.includes(term));
-        if (matches.length > 0) {
-          console.log(`Drill "${drill.title}" matched terms:`, matches);
+        
+        // Calculate relevance score for each drill
+        const relevanceScore = getDrillRelevanceScore(drillText, searchTerms, specificProblem.toLowerCase());
+        
+        // Categorize based on relevance score
+        if (relevanceScore > 0.7) {
+          exactMatches.push({...drill, relevanceScore});
+        } else if (relevanceScore > 0.4) {
+          relatedMatches.push({...drill, relevanceScore});
+        } else if (relevanceScore > 0.2) {
+          possibleMatches.push({...drill, relevanceScore});
         }
-        return matches.length > 0;
       });
       
-      console.log("Initial matched drills count:", matchedDrills.length);
+      console.log(`Found: ${exactMatches.length} exact matches, ${relatedMatches.length} related matches, ${possibleMatches.length} possible matches`);
       
-      // If we have enough matched drills, use them; otherwise, use all drills
-      if (matchedDrills.length >= 6) {
+      // Sort all categories by relevance score
+      const sortByRelevance = (a, b) => b.relevanceScore - a.relevanceScore;
+      exactMatches.sort(sortByRelevance);
+      relatedMatches.sort(sortByRelevance);
+      possibleMatches.sort(sortByRelevance);
+      
+      // Build final matched drills list with tiered approach
+      matchedDrills = [...exactMatches];
+      
+      // If we don't have enough exact matches, add related matches
+      if (matchedDrills.length < 6) {
+        matchedDrills = [...matchedDrills, ...relatedMatches.slice(0, 6 - matchedDrills.length)];
+      }
+      
+      // If we still don't have enough, add possible matches
+      if (matchedDrills.length < 3) {
+        matchedDrills = [...matchedDrills, ...possibleMatches.slice(0, 3 - matchedDrills.length)];
+      }
+      
+      console.log(`Final matched drills: ${matchedDrills.length}`);
+      
+      // Ensure we have at least 3 drills or use only the matched ones if less
+      if (matchedDrills.length > 0) {
         drillsToUse = matchedDrills;
       } else {
-        console.log("Not enough matched drills, using all available drills");
+        // Only use sample drills as a last resort for backup
+        console.log("No matches found, using a small subset of sample drills as fallback");
+        drillsToUse = sampleDrills.slice(0, 3);
       }
     }
-
-    console.log("Total drills available for plan:", drillsToUse.length);
     
+    // Simplify drill data for the prompt
     const simplifiedDrills = drillsToUse.map(drill => ({
       id: drill.id,
       title: drill.title,
       focus: drill.focus,
       category: drill.category,
       difficulty: drill.difficulty,
-      overview: drill.overview?.substring(0, 100)
+      overview: drill.overview?.substring(0, 100),
+      relevanceScore: drill.relevanceScore || 0
     }));
 
     const systemPrompt = `You are a professional golf coach creating targeted practice plans. Based on the golfer's specific problem and skill level, identify root causes and select drills that directly address these issues.
@@ -189,10 +228,10 @@ You MUST respond with a valid JSON object that has exactly these fields:
 
 IMPORTANT: 
 1. You MUST create EXACTLY ${planDuration} daily plans (not more, not less).
-2. Each day MUST have at least 3 drills (if enough are available), or at minimum 2 drills.
-3. Each day should have a different focus area addressing a different aspect of the problem.
-4. Select drills that specifically address the root causes you identify.
-5. Do not reuse the same drill across multiple days unless absolutely necessary.`;
+2. Each day MUST have at least 2 drills, preferably 3 if enough relevant drills are available.
+3. Each day should focus on a different aspect of the problem.
+4. Only select drills that specifically address the root causes you identify.
+5. NEVER include drills that are unrelated to the golfer's problem. For example, don't include putting drills for a driving problem.`;
 
     const userPrompt = `Create a ${planDuration}-day practice plan for a ${handicapLevel} golfer working on: "${specificProblem}".
 Recent performance data: ${JSON.stringify(roundData || [])}
@@ -268,53 +307,68 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
         response.dailyPlans = response.dailyPlans.slice(0, requestedDays);
       }
       
-      // Check each day to ensure it has enough drills
+      // Validate each day's drills for relevance to the problem
       response.dailyPlans = response.dailyPlans.map((day, index) => {
-        console.log(`Checking day ${day.day || index+1}, has ${day.drills?.length || 0} drills`);
+        console.log(`Validating day ${day.day || index+1}, has ${day.drills?.length || 0} drills`);
         
         // Make sure day has a valid number
         if (!day.day) day.day = index + 1;
         
-        // If day has insufficient drills, add more based on the root causes
-        if (!day.drills || day.drills.length < 2) {
-          console.log(`Adding more drills to day ${day.day}`);
+        // Create a list of valid drills for this day based on root causes & focus
+        let validDrills = drillsToUse;
+        if (specificProblem) {
+          // Filter drills more strictly based on day's focus and root causes
+          const dayCause = response.rootCauses[index % response.rootCauses.length]?.toLowerCase() || '';
+          const dayFocus = day.focus?.toLowerCase() || '';
           
-          // Get root causes for this day (rotate through them)
-          const dayCause = response.rootCauses[index % response.rootCauses.length];
-          console.log(`Finding drills for root cause: ${dayCause}`);
-          
-          // Find drills that match this root cause
-          const matchingDrills = drillsToUse.filter(drill => {
-            // Check if drill content matches the root cause
-            const drillContent = [
+          validDrills = drillsToUse.filter(drill => {
+            // Create a combined text representation of the drill
+            const drillText = [
               drill.title?.toLowerCase() || '',
               drill.overview?.toLowerCase() || '',
               ...(drill.focus?.map(f => f.toLowerCase()) || []),
               drill.category?.toLowerCase() || ''
             ].join(' ');
             
-            // Find drills that match this day's focus or the root cause
-            return drillContent.includes(dayCause.toLowerCase()) || 
-                  drillContent.includes(day.focus?.toLowerCase() || '');
+            // Check for relevance to this day's focus or the root cause
+            const relevanceScore = getDrillRelevanceScore(drillText, 
+                                                         [dayCause, dayFocus], 
+                                                         specificProblem.toLowerCase());
+            return relevanceScore > 0.2; // Only include somewhat relevant drills
           });
           
-          console.log(`Found ${matchingDrills.length} drills matching the root cause`);
+          // Sort by relevance
+          validDrills.sort((a, b) => {
+            const scoreA = getDrillRelevanceScore(
+              [a.title, a.overview, ...(a.focus || []), a.category].join(' ').toLowerCase(),
+              [dayCause, dayFocus],
+              specificProblem.toLowerCase()
+            );
+            const scoreB = getDrillRelevanceScore(
+              [b.title, b.overview, ...(b.focus || []), b.category].join(' ').toLowerCase(),
+              [dayCause, dayFocus],
+              specificProblem.toLowerCase()
+            );
+            return scoreB - scoreA;
+          });
+        }
+        
+        // If day has insufficient drills or invalid drills, replace them
+        if (!day.drills || day.drills.length < 2) {
+          console.log(`Adding more relevant drills to day ${day.day}`);
           
-          // If no matching drills, just use random drills
-          const drillsToAdd = matchingDrills.length > 0 ? 
-                            matchingDrills : 
-                            drillsToUse.sort(() => Math.random() - 0.5);
-          
-          // Create or add to existing drills array
+          // Create or initialize drills array
           if (!day.drills) day.drills = [];
           
-          // Add unique drills until we have at least 3 (or all available if less than 3)
+          // Get IDs of drills already in the day's plan
           const existingIds = day.drills.map(d => d.id);
+          
+          // Add unique drills until we have at least 2 (or all available if less than 2)
           let addedCount = 0;
           let drillIndex = 0;
           
-          while (day.drills.length < 3 && addedCount < drillsToAdd.length && drillIndex < drillsToAdd.length) {
-            const drill = drillsToAdd[drillIndex];
+          while (day.drills.length < 3 && addedCount < validDrills.length && drillIndex < validDrills.length) {
+            const drill = validDrills[drillIndex];
             drillIndex++;
             
             // Skip if this drill is already in the day's plan
@@ -427,16 +481,29 @@ YOUR RESPONSE MUST BE A VALID JSON OBJECT with diagnosis, rootCauses, and dailyP
       const missingDays = parseInt(planDuration) - finalPlans.length;
       const additionalDays = [];
       
+      // Get the most relevant sample drills
+      const relevantSampleDrills = sampleDrills
+        .map(drill => {
+          const score = getDrillRelevanceScore(
+            [drill.title, drill.overview, ...(drill.focus || []), drill.category].join(' ').toLowerCase(),
+            specificProblem.toLowerCase().split(' '),
+            specificProblem.toLowerCase()
+          );
+          return {...drill, relevanceScore: score};
+        })
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .slice(0, 3);
+      
       for (let i = 0; i < missingDays; i++) {
         const dayNumber = finalPlans.length + i + 1;
         const dayFocus = `Additional Practice Day ${dayNumber}`;
         
-        // Add a day with the sample drills (3 per day)
+        // Add a day with relevant sample drills (3 per day)
         additionalDays.push({
           day: dayNumber,
           focus: dayFocus,
           duration: "45 minutes",
-          drills: sampleDrills.slice(0, 3).map(drill => ({
+          drills: relevantSampleDrills.map(drill => ({
             drill: drill,
             sets: 3,
             reps: 10
