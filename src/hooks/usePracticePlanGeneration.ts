@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
@@ -61,10 +62,18 @@ export const usePracticePlanGeneration = () => {
     setIsGenerating(true);
 
     try {
-      const { data: drills, error: drillsError } = await supabase
-        .from('drills')
-        .select('*')
-        .textSearch('focus', issue.split(' ').join(' | '));
+      // Fixed query: Using ILIKE with OR conditions instead of text search
+      const searchTerms = issue.split(' ').filter(term => term.length > 2);
+      
+      let drillsQuery = supabase.from('drills').select('*');
+      
+      // Add ILIKE conditions for each search term
+      if (searchTerms.length > 0) {
+        const searchConditions = searchTerms.map(term => `focus::text ILIKE '%${term}%'`);
+        drillsQuery = drillsQuery.or(searchConditions.join(','));
+      }
+      
+      const { data: drills, error: drillsError } = await drillsQuery;
 
       if (drillsError) throw drillsError;
 
