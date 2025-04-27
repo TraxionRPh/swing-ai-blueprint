@@ -58,7 +58,39 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     });
   };
 
-  const planData = plan.practicePlan?.plan || [];
+  // Process the plan data to ensure we have valid plan days
+  let planData = [];
+  if (plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan)) {
+    planData = plan.practicePlan.plan;
+  } else {
+    console.log("Plan structure:", plan);
+    // Fallback for plans that might have a different structure
+    const fallbackDays = [];
+    for (let i = 0; i < parseInt(planDuration); i++) {
+      const dayDrills = [];
+      
+      // If we have recommended drills, use them for the fallback
+      if (plan.recommendedDrills && Array.isArray(plan.recommendedDrills)) {
+        plan.recommendedDrills.forEach(drill => {
+          dayDrills.push({
+            drill: drill,
+            sets: 3,
+            reps: 10
+          });
+        });
+      }
+      
+      fallbackDays.push({
+        day: i + 1,
+        drills: dayDrills,
+        focus: `Practice Day ${i + 1}`,
+        duration: '30 minutes'
+      });
+    }
+    planData = fallbackDays;
+    console.log("Created fallback plan days:", fallbackDays);
+  }
+
   const durationNum = parseInt(planDuration) || 1;
   const filteredDays = planData.slice(0, durationNum);
 
@@ -135,9 +167,13 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
               <div className="space-y-2">
                 <h3 className="font-medium">Instructions:</h3>
                 <ul className="list-disc pl-5 space-y-1">
-                  {challengeInstructions.map((instruction, i) => (
-                    <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
-                  ))}
+                  {challengeInstructions.length > 0 ? (
+                    challengeInstructions.map((instruction, i) => (
+                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                    ))
+                  ) : (
+                    <li className="text-sm text-muted-foreground">Complete the challenge and track your score.</li>
+                  )}
                 </ul>
               </div>
             ) : (
@@ -201,9 +237,13 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
               <div className="space-y-2">
                 <h3 className="font-medium">Instructions:</h3>
                 <ul className="list-disc pl-5 space-y-1">
-                  {challengeInstructions.map((instruction, i) => (
-                    <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
-                  ))}
+                  {challengeInstructions.length > 0 ? (
+                    challengeInstructions.map((instruction, i) => (
+                      <li key={i} className="text-sm text-muted-foreground">{instruction}</li>
+                    ))
+                  ) : (
+                    <li className="text-sm text-muted-foreground">Complete the challenge again and compare your score.</li>
+                  )}
                 </ul>
               </div>
             ) : (

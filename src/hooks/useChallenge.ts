@@ -10,21 +10,23 @@ export const useChallenge = (challengeId: string | undefined) => {
   return useQuery({
     queryKey: ['challenge', challengeId],
     queryFn: async () => {
-      if (!challengeId) return null;
-      
       try {
         // First try to get a specific challenge by ID
-        const { data: specificChallenge, error: specificError } = await supabase
-          .from('challenges')
-          .select('*')
-          .eq('id', challengeId)
-          .single();
-        
-        if (specificChallenge) {
-          return specificChallenge as Challenge;
+        if (challengeId) {
+          const { data: specificChallenge, error: specificError } = await supabase
+            .from('challenges')
+            .select('*')
+            .eq('id', challengeId)
+            .maybeSingle();
+          
+          if (specificChallenge) {
+            console.log("Found specific challenge:", specificChallenge);
+            return specificChallenge as Challenge;
+          }
         }
         
         // If specific challenge not found or error, get a random challenge
+        console.log("Fetching a random challenge");
         const { data: randomChallenge, error: randomError } = await supabase
           .from('challenges')
           .select('*')
@@ -40,6 +42,7 @@ export const useChallenge = (challengeId: string | undefined) => {
           return null;
         }
         
+        console.log("Found random challenge:", randomChallenge[0]);
         return randomChallenge[0] as Challenge;
       } catch (error) {
         console.error('Error in challenge query:', error);

@@ -24,6 +24,11 @@ export const DrillCard = ({
 }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
+  // Make sure drill exists to prevent errors
+  if (!drill) {
+    return null;
+  }
+
   return (
     <>
       <Card className={`border border-border/50 ${isCompleted ? 'bg-green-50 dark:bg-green-900/10' : 'bg-background'} hover:bg-accent/5 transition-colors`}>
@@ -46,13 +51,13 @@ export const DrillCard = ({
                     {drill.title}
                   </label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {sets} sets of {reps} reps • {drill.duration}
+                    {sets} sets of {reps} reps • {drill.duration || '15 mins'}
                   </p>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="ml-auto">
-                    {drill.difficulty}
+                    {drill.difficulty || 'Beginner'}
                   </Badge>
                   <Button 
                     variant="outline" 
