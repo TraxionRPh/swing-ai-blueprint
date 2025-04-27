@@ -67,7 +67,12 @@ export const usePracticePlanGeneration = () => {
       let drillsQuery = supabase.from('drills').select('*');
       
       if (searchTerms.length > 0) {
-        const searchConditions = searchTerms.map(term => `focus::text ILIKE '%${term}%'`);
+        const searchConditions = [];
+        
+        for (const term of searchTerms) {
+          searchConditions.push(`focus.ilike.%${term}%`);
+        }
+        
         drillsQuery = drillsQuery.or(searchConditions.join(','));
       }
       
