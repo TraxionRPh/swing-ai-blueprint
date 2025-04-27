@@ -1,4 +1,3 @@
-
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore, getChallengeRelevanceScore } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms, detectClubType } from './golfCategorization.ts';
@@ -29,7 +28,6 @@ export class PlanGenerator {
   private getRelevantDrills(): DrillData[] {
     if (!this.specificProblem) return this.drills;
 
-    // Use the categorization system to extract more relevant search terms
     const searchTerms = this.problemCategory ?
       extractRelevantSearchTerms(this.specificProblem, this.problemCategory) :
       this.specificProblem.toLowerCase()
@@ -39,77 +37,50 @@ export class PlanGenerator {
 
     console.log(`Using search terms: ${searchTerms.join(', ')}`);
 
-    const exactMatches: DrillData[] = [];
-    const relatedMatches: DrillData[] = [];
-    const possibleMatches: DrillData[] = [];
-    const fallbackMatches: DrillData[] = [];
-
-    const actualDrills = this.drills.filter(drill => 
-      !drill.title.toLowerCase().includes('challenge'));
-
-    // Detect the specific club type the golfer is having issues with
     const clubType = detectClubType(this.specificProblem);
     if (clubType) {
       console.log(`Detected club type: ${clubType}`);
     }
 
-    actualDrills.forEach(drill => {
-      const drillText = [
-        drill.title?.toLowerCase() || '',
-        drill.overview?.toLowerCase() || '',
-        drill.category?.toLowerCase() || '',
-        ...(drill.focus?.map(f => f.toLowerCase()) || [])
-      ].join(' ');
+    // Score and sort all drills
+    const scoredDrills = this.drills
+      .filter(drill => !drill.title.toLowerCase().includes('challenge'))
+      .map(drill => {
+        const drillText = [
+          drill.title?.toLowerCase() || '',
+          drill.overview?.toLowerCase() || '',
+          drill.category?.toLowerCase() || '',
+          ...(drill.focus?.map(f => f.toLowerCase()) || [])
+        ].join(' ');
 
-      // Calculate drill relevance using our enhanced scoring system
-      let relevanceScore = getDrillRelevanceScore(
-        drillText, 
-        searchTerms, 
-        this.specificProblem.toLowerCase(),
-        this.problemCategory
-      );
-      
-      // Boost score for drills that match the detected club type
-      if (clubType && drillText.includes(clubType.toLowerCase())) {
-        relevanceScore += 0.2;
-      }
-      
-      const drillWithScore = { ...drill, relevanceScore };
+        const relevanceScore = getDrillRelevanceScore(
+          drillText, 
+          searchTerms, 
+          this.specificProblem,
+          this.problemCategory
+        );
+        
+        return { ...drill, relevanceScore };
+      })
+      .filter(drill => drill.relevanceScore > 0.2) // Only keep somewhat relevant drills
+      .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
 
-      if (relevanceScore > 0.7) {
-        exactMatches.push(drillWithScore);
-      } else if (relevanceScore > 0.4) {
-        relatedMatches.push(drillWithScore);
-      } else if (relevanceScore > 0.2) {
-        possibleMatches.push(drillWithScore);
-      } else {
-        fallbackMatches.push(drillWithScore);
-      }
-    });
-
-    const sortByRelevance = (a: DrillData, b: DrillData) => 
-      (b.relevanceScore || 0) - (a.relevanceScore || 0);
-
-    exactMatches.sort(sortByRelevance);
-    relatedMatches.sort(sortByRelevance);
-    possibleMatches.sort(sortByRelevance);
-    fallbackMatches.sort(sortByRelevance);
-
-    let matchedDrills = [...exactMatches];
-    if (matchedDrills.length < 6) {
-      matchedDrills = [...matchedDrills, ...relatedMatches.slice(0, 6 - matchedDrills.length)];
-    }
-    if (matchedDrills.length < 6) {
-      matchedDrills = [...matchedDrills, ...possibleMatches.slice(0, 6 - matchedDrills.length)];
-    }
+    console.log(`Found ${scoredDrills.length} relevant drills for "${this.specificProblem}"`);
     
-    if (matchedDrills.length < 3) {
-      matchedDrills = [...matchedDrills, ...fallbackMatches.slice(0, 3 - matchedDrills.length)];
+    // Take top 6 most relevant drills
+    const selectedDrills = scoredDrills.slice(0, 6);
+    
+    // If we don't have enough drills, add some fundamental drills
+    if (selectedDrills.length < 3) {
+      const fundamentalDrills = this.drills.filter(drill => {
+        const drillText = drill.title?.toLowerCase() || '';
+        return drillText.includes('basic') || drillText.includes('fundamental');
+      }).slice(0, 3 - selectedDrills.length);
+      
+      return [...selectedDrills, ...fundamentalDrills];
     }
 
-    console.log(`Found ${matchedDrills.length} relevant drills for "${this.specificProblem}"`);
-    
-    return matchedDrills.length > 0 ? matchedDrills : actualDrills.slice(0, 3);
+    return selectedDrills;
   }
 
   private validateDailyPlans(days: PlanDay[]): PlanDay[] {

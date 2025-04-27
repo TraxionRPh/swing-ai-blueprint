@@ -1,4 +1,3 @@
-
 import { ProblemCategory, identifyProblemCategory } from './golfCategorization.ts';
 
 /**
@@ -17,7 +16,6 @@ export function getDrillRelevanceScore(
   specificProblem: string,
   problemCategory?: ProblemCategory | null
 ): number {
-  // Convert to lowercase for case-insensitive matching
   const lowerDrillText = typeof drillText === 'string' ? drillText.toLowerCase() : '';
   const lowerProblem = specificProblem.toLowerCase();
   
@@ -27,16 +25,75 @@ export function getDrillRelevanceScore(
   
   let score = 0;
   
-  // If we have a problem category, use it for enhanced matching
+  // Core fundamentals matching
   if (problemCategory) {
-    // Check if drill matches any keywords from the category
+    // Specific issue-based scoring
+    if (lowerProblem.includes('top') || lowerProblem.includes('topping')) {
+      // For topping issues, prioritize drills focused on:
+      // - Ball position
+      // - Weight transfer
+      // - Downward strike
+      // - Impact position
+      if (
+        lowerDrillText.includes('weight transfer') ||
+        lowerDrillText.includes('impact position') ||
+        lowerDrillText.includes('ball position') ||
+        lowerDrillText.includes('strike down') ||
+        lowerDrillText.includes('compression') ||
+        lowerDrillText.includes('downward angle')
+      ) {
+        score += 0.4;
+      }
+      
+      // Penalize drills that aren't directly helpful
+      if (
+        lowerDrillText.includes('downhill') ||
+        lowerDrillText.includes('uphill') ||
+        lowerDrillText.includes('uneven') ||
+        lowerDrillText.includes('bunker')
+      ) {
+        score -= 0.3;
+      }
+    }
+    
+    if (lowerProblem.includes('chunk') || lowerProblem.includes('fat')) {
+      // For chunking issues, prioritize drills focused on:
+      // - Low point control
+      // - Weight forward
+      // - Ball first contact
+      if (
+        lowerDrillText.includes('low point') ||
+        lowerDrillText.includes('weight forward') ||
+        lowerDrillText.includes('ball first') ||
+        lowerDrillText.includes('divot after')
+      ) {
+        score += 0.4;
+      }
+    }
+    
+    if (lowerProblem.includes('slice') || lowerProblem.includes('push')) {
+      // For slice issues, prioritize drills focused on:
+      // - Path correction
+      // - Face control
+      // - Release pattern
+      if (
+        lowerDrillText.includes('path') ||
+        lowerDrillText.includes('face control') ||
+        lowerDrillText.includes('release') ||
+        lowerDrillText.includes('rotation')
+      ) {
+        score += 0.4;
+      }
+    }
+    
+    // Category-based scoring
     for (const keyword of problemCategory.keywords) {
       if (lowerDrillText.includes(keyword)) {
         score += 0.15;
       }
     }
     
-    // Check if drill matches any related clubs from the category
+    // Club-based relevance
     for (const club of problemCategory.relatedClubs) {
       if (lowerDrillText.includes(club)) {
         score += 0.2;
@@ -44,75 +101,26 @@ export function getDrillRelevanceScore(
     }
   }
   
-  // Match specific problems with enhanced categorization
-  const category = problemCategory?.name.toLowerCase() || identifyProblemCategory(specificProblem)?.name.toLowerCase() || '';
-  
-  if (category === "ball striking") {
-    if (
-      lowerDrillText.includes('iron') || 
-      lowerDrillText.includes('contact') || 
-      lowerDrillText.includes('strike') ||
-      lowerDrillText.includes('ball first') ||
-      lowerDrillText.includes('compression') ||
-      lowerDrillText.includes('impact') ||
-      lowerDrillText.includes('ball position')
-    ) {
-      score += 0.5;
-    }
-  }
-  else if (category === "driving accuracy") {
-    if (
-      lowerDrillText.includes('slice') || 
-      lowerDrillText.includes('path') || 
-      lowerDrillText.includes('alignment') ||
-      lowerDrillText.includes('outside-in') ||
-      lowerDrillText.includes('over the top') ||
-      lowerDrillText.includes('driver') ||
-      lowerDrillText.includes('tee')
-    ) {
-      score += 0.4;
-    }
-  } else if (category === "short game") {
-    if (
-      lowerDrillText.includes('chip') || 
-      lowerDrillText.includes('pitch') || 
-      lowerDrillText.includes('short game') ||
-      lowerDrillText.includes('around green') ||
-      lowerDrillText.includes('wedge')
-    ) {
-      score += 0.5;
-    }
-  } else if (category === "putting") {
-    if (
-      lowerDrillText.includes('putt') || 
-      lowerDrillText.includes('green') ||
-      lowerDrillText.includes('putter') ||
-      lowerDrillText.includes('stroke') ||
-      lowerDrillText.includes('read')
-    ) {
-      score += 0.5;
-    }
-  }
-  
-  // Direct term matching
+  // Base term matching with reduced weight
   for (const term of searchTerms) {
     if (term.length > 2 && lowerDrillText.includes(term)) {
-      score += 0.2;
+      score += 0.1; // Reduced from 0.2 to give more weight to specific issue matching
     }
   }
   
-  // Category matching (ensures drills match the general category)
-  const categories = ['driving', 'irons', 'putting', 'chipping', 'bunker', 'wedge', 'short game'];
-  
-  for (const category of categories) {
-    if (lowerProblem.includes(category) && lowerDrillText.includes(category)) {
-      score += 0.3;
-      break; // Only count category match once
-    }
+  // Ensure the drill complexity matches the problem
+  if (lowerDrillText.includes('basic') || lowerDrillText.includes('fundamental')) {
+    score += 0.1; // Slight boost for fundamental drills
   }
   
-  // Ensure score doesn't exceed 1
-  return Math.min(score, 1);
+  // Penalize overly complex drills for basic issues
+  if (lowerProblem.includes('basic') || lowerProblem.includes('beginner')) {
+    if (lowerDrillText.includes('advanced') || lowerDrillText.includes('complex')) {
+      score -= 0.2;
+    }
+  }
+
+  return Math.min(Math.max(score, 0), 1); // Ensure score stays between 0 and 1
 }
 
 /**
