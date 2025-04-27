@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 import { HandicapLevel } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 export const usePracticePlanGeneration = () => {
   const { toast } = useToast();
@@ -62,12 +62,10 @@ export const usePracticePlanGeneration = () => {
     setIsGenerating(true);
 
     try {
-      // Fixed query: Using ILIKE with OR conditions instead of text search
       const searchTerms = issue.split(' ').filter(term => term.length > 2);
       
       let drillsQuery = supabase.from('drills').select('*');
       
-      // Add ILIKE conditions for each search term
       if (searchTerms.length > 0) {
         const searchConditions = searchTerms.map(term => `focus::text ILIKE '%${term}%'`);
         drillsQuery = drillsQuery.or(searchConditions.join(','));
@@ -84,7 +82,6 @@ export const usePracticePlanGeneration = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Log details for debugging
       console.log('Fetched drills:', drills?.length || 0);
       console.log('Issue being analyzed:', issue);
       console.log('Sending request to analyze-golf-performance');
@@ -107,7 +104,6 @@ export const usePracticePlanGeneration = () => {
 
       console.log('Received response from edge function:', data);
       
-      // Create a default practice plan if data is missing
       const defaultPlan = {
         problem: issue || "Golf performance optimization",
         diagnosis: "AI analysis of your golf game",
@@ -116,20 +112,27 @@ export const usePracticePlanGeneration = () => {
         practicePlan: {
           duration: `${planDuration} ${parseInt(planDuration) > 1 ? 'days' : 'day'}`,
           frequency: "Daily",
-          plan: Array.from({ length: parseInt(planDuration) }, (_, i) => ({
-            day: i + 1,
-            drills: (drills || []).slice(0, 3).map(drill => ({
-              drill,
-              sets: 3,
-              reps: 10
-            })),
-            focus: "Building Fundamentals",
-            duration: "45 minutes"
-          }))
+          plan: Array.from({ length: parseInt(planDuration) }, (_, i) => {
+            const numDrills = Math.floor(Math.random() * 3) + 2;
+            const selectedDrills = (drills || [])
+              .sort(() => Math.random() - 0.5)
+              .slice(0, numDrills)
+              .map(drill => ({
+                drill,
+                sets: Math.floor(Math.random() * 3) + 2,
+                reps: Math.floor(Math.random() * 5) + 8
+              }));
+
+            return {
+              day: i + 1,
+              drills: selectedDrills,
+              focus: "Building Fundamentals",
+              duration: "45 minutes"
+            };
+          })
         }
       };
 
-      // Handle the possibility of incomplete data from the edge function
       let practicePlan: GeneratedPracticePlan;
       
       if (data && data.diagnosis && data.rootCauses && data.practicePlan?.plan) {
@@ -147,6 +150,21 @@ export const usePracticePlanGeneration = () => {
       } else {
         console.warn('Received incomplete data from edge function, using default plan');
         practicePlan = defaultPlan;
+      }
+
+      if (userId) {
+        const { error: saveError } = await supabase
+          .from('ai_practice_plans')
+          .insert({
+            user_id: userId,
+            problem: issue || 'General golf improvement',
+            diagnosis: practicePlan.diagnosis,
+            root_causes: practicePlan.rootCauses as unknown as Json,
+            recommended_drills: practicePlan.recommendedDrills as unknown as Json,
+            practice_plan: practicePlan as unknown as Json
+          });
+
+        if (saveError) throw saveError;
       }
 
       return practicePlan;
