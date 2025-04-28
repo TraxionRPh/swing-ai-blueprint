@@ -49,6 +49,27 @@ serve(async (req) => {
       console.error("No drills found in database");
       throw new Error("No drills available in the database");
     }
+    
+    // Also fetch challenges to include them in our recommendations
+    console.log("Fetching challenges from database...");
+    
+    const challengeResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/rest/v1/challenges?select=*`,
+      {
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+        },
+      }
+    );
+    
+    let challenges = [];
+    if (challengeResponse.ok) {
+      challenges = await challengeResponse.json();
+      console.log(`Fetched ${challenges?.length || 0} challenges from database`);
+    } else {
+      console.error("Failed to fetch challenges");
+    }
 
     // Use OpenAI with strictly enforced model and improved prompting
     console.log("Calling OpenAI API...");
@@ -76,6 +97,7 @@ Common golf swing issues and what to look for:
 - Topped/Fat shots: Look for drills on posture, ball position, weight transfer
 - Distance problems: Look for drills on tempo, sequencing, core rotation
 - Consistency issues: Look for fundamentals drills on setup, alignment
+- Bunker issues: Look for drills specifically mentioning "bunker", "sand", or "explosion shot"
 
 Look at drill titles, descriptions, focus areas, categories, and difficulty levels to make optimal matches.
 Return ONLY the IDs of the best matching drills in order of relevance, with the most effective drill first.
@@ -111,6 +133,86 @@ Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-
       .slice(0, 5); // Limit to top 5 drills
     
     console.log(`Found ${recommendedDrills.length} recommended drills`);
+    
+    // Select a relevant challenge based on the query
+    let selectedChallenge = null;
+    const lowerQuery = query.toLowerCase();
+    
+    if (challenges && challenges.length > 0) {
+      console.log("Selecting a relevant challenge for:", lowerQuery);
+      
+      // Special handling for bunker-related queries which have been problematic
+      if (lowerQuery.includes('bunker') || lowerQuery.includes('sand')) {
+        // First try to find an exact bunker challenge
+        selectedChallenge = challenges.find(c => 
+          c.title && c.title.toLowerCase().includes('bunker') &&
+          c.description && c.description.toLowerCase().includes('bunker')
+        );
+        
+        console.log("Bunker-specific challenge found:", selectedChallenge ? selectedChallenge.title : "None");
+        
+        // If no exact match, try more general sand-related challenges 
+        if (!selectedChallenge) {
+          selectedChallenge = challenges.find(c => 
+            c.category && c.category.toLowerCase().includes('bunker') ||
+            (c.instruction1 && c.instruction1.toLowerCase().includes('sand')) ||
+            (c.instruction2 && c.instruction2.toLowerCase().includes('sand')) ||
+            (c.instruction3 && c.instruction3.toLowerCase().includes('sand'))
+          );
+          console.log("Sand-related challenge found:", selectedChallenge ? selectedChallenge.title : "None");
+        }
+      } 
+      
+      // If no specific challenge found yet, use AI to select the most relevant challenge
+      if (!selectedChallenge) {
+        try {
+          console.log("Using AI to select a challenge");
+          const challengeResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: ALLOWED_MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are a golf coach selecting the most appropriate challenge for a golfer's specific problem.
+                  
+                  Analyze the golfer's issue and available challenges. Select the challenge that most directly addresses 
+                  the specific skill problem they're facing. Consider the challenge's focus, difficulty, and instructions.
+                  
+                  For bunker issues, prioritize challenges with sand or bunker mentions.
+                  For putting issues, prioritize putting-specific challenges.
+                  
+                  Return ONLY the ID of the single most relevant challenge.
+                  Your response should consist of ONLY a UUID in the format: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+                },
+                {
+                  role: 'user',
+                  content: `Golfer's issue: "${query}"\n\nAvailable challenges:\n${JSON.stringify(challenges, null, 2)}`
+                }
+              ],
+              temperature: 0.2,
+            }),
+          });
+          
+          if (challengeResponse.ok) {
+            const challengeAI = await challengeResponse.json();
+            const challengeIdText = challengeAI.choices[0].message.content;
+            const challengeId = challengeIdText.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+            
+            if (challengeId) {
+              selectedChallenge = challenges.find(c => c.id === challengeId[0]);
+              console.log("AI selected challenge:", selectedChallenge ? selectedChallenge.title : "None");
+            }
+          }
+        } catch (error) {
+          console.error("Error selecting challenge with AI:", error);
+        }
+      }
+    }
 
     // Generate a more detailed analysis with clearer, actionable advice
     let analysisText = "";
@@ -139,7 +241,10 @@ Be specific but accessible. Use technical terms but explain them clearly.`
                 title: d.title,
                 overview: d.overview,
                 focus: d.focus
-              })), null, 2)}`
+              })), null, 2)}${selectedChallenge ? `\n\nSelected challenge: ${JSON.stringify({
+                title: selectedChallenge.title,
+                description: selectedChallenge.description
+              })}` : ''}`
             }
           ],
           temperature: 0.3,
@@ -155,7 +260,8 @@ Be specific but accessible. Use technical terms but explain them clearly.`
     return new Response(
       JSON.stringify({ 
         drills: recommendedDrills,
-        analysis: analysisText
+        analysis: analysisText,
+        challenge: selectedChallenge
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

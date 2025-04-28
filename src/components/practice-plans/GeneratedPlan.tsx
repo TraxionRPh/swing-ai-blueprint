@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GeneratedPracticePlan, DrillWithSets, DayPlan } from "@/types/practice-plan";
@@ -18,7 +17,6 @@ interface GeneratedPlanProps {
   planId?: string;
 }
 
-// Challenge component extracted for better organization and reusability
 const ChallengeCard = ({ 
   title, 
   description, 
@@ -61,7 +59,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     return saved ? JSON.parse(saved) : {};
   });
 
-  // For debugging purposes - log plan data on mount and updates
   useEffect(() => {
     console.log("Plan loaded:", {
       problem: plan.problem,
@@ -70,7 +67,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       challenge: plan.practicePlan?.challenge ? "Present" : "Missing"
     });
     
-    // Detailed debug about plan days
     if (plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan)) {
       console.log("Plan days details:", plan.practicePlan.plan.map(day => ({
         day: day.day,
@@ -83,11 +79,9 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
       })));
     }
     
-    // Check for any issue with the plan
     if (!plan.practicePlan?.plan || !Array.isArray(plan.practicePlan.plan) || plan.practicePlan.plan.length === 0) {
       console.error("Plan has no days!");
     } else {
-      // Check if any day has no drills
       const emptyDays = plan.practicePlan.plan.filter(day => !day.drills || day.drills.length === 0);
       if (emptyDays.length > 0) {
         console.error(`Found ${emptyDays.length} days with no drills`);
@@ -107,7 +101,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     if (planId) {
       localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(updatedCompletionState));
       
-      // Give user feedback
       toast({
         title: newCompletedState ? "Drill completed!" : "Drill marked as incomplete",
         description: `${drillName} ${newCompletedState ? 'marked as completed' : 'marked as not completed'}`,
@@ -116,13 +109,10 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
     }
   };
 
-  // Process and validate the plan data
   const processedPlanDays = usePlanData(plan, planDuration);
   
-  // Prepare challenge data
   const displayChallenge = useChallenge(plan.problem, plan.practicePlan.challenge);
 
-  // Extract challenge instructions for the component
   const challengeInstructions = [
     displayChallenge.instruction1,
     displayChallenge.instruction2,
@@ -136,7 +126,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         Back to Plans
       </Button>
       
-      {/* Plan Overview */}
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Practice Plan: {plan.problem}</CardTitle>
@@ -149,7 +138,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         </CardContent>
       </Card>
       
-      {/* Initial Challenge */}
       <ChallengeCard
         title={displayChallenge.title}
         description={displayChallenge.description}
@@ -159,7 +147,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         type="initial"
       />
 
-      {/* AI Diagnosis */}
       <DiagnosisCard 
         diagnosis={plan.diagnosis} 
         rootCauses={plan.rootCauses} 
@@ -167,7 +154,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         problem={plan.problem}
       />
 
-      {/* Daily Plans */}
       <Card>
         <CardHeader>
           <CardTitle>Daily Drills Breakdown</CardTitle>
@@ -189,7 +175,6 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
         </CardContent>
       </Card>
       
-      {/* Final Challenge */}
       <ChallengeCard
         title={displayChallenge.title}
         description="Complete this challenge again to measure your improvement"
@@ -202,14 +187,10 @@ export const GeneratedPlan = ({ plan, onClear, planDuration = "1", planId }: Gen
   );
 };
 
-/**
- * Custom hook to validate and process plan day data
- */
 function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): DayPlan[] {
   return useMemo(() => {
     console.log("Processing plan data with duration:", planDuration);
     
-    // Extract and validate plan days
     const planData = plan.practicePlan?.plan && Array.isArray(plan.practicePlan.plan) 
       ? plan.practicePlan.plan 
       : [];
@@ -221,9 +202,7 @@ function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): D
     const durationNum = parseInt(planDuration) || 1;
     let filteredDays = planData.slice(0, durationNum);
     
-    // Further validation and processing of drill data
     return filteredDays.map(day => {
-      // Ensure drills array exists and is valid
       const drills = Array.isArray(day.drills) 
         ? day.drills.filter(drill => drill && drill.drill)
         : [];
@@ -232,13 +211,11 @@ function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): D
         console.warn(`Day ${day.day} has no valid drills after filtering`);
       }
       
-      // For debugging, list the actual drills by title
       console.log(`Day ${day.day} valid drills:`, drills.map(d => ({
         title: d.drill?.title || 'Unknown',
         id: d.drill?.id || 'No ID'
       })));
       
-      // Return the processed day with validated drills
       return {
         ...day,
         drills
@@ -247,14 +224,9 @@ function usePlanData(plan: GeneratedPracticePlan, planDuration: string = "1"): D
   }, [plan, planDuration]);
 }
 
-/**
- * Custom hook to handle challenge data
- */
 function useChallenge(problem: string, providedChallenge?: Challenge) {
-  // Create category-specific default challenges based on the problem
   const defaultChallenge = useMemo(() => getDefaultChallenge(problem), [problem]);
   
-  // Use the challenge from the plan or the default challenge
   const displayChallenge = useMemo(() => {
     const hasValidProvidedChallenge = providedChallenge && Object.keys(providedChallenge).length > 0;
     
@@ -267,7 +239,6 @@ function useChallenge(problem: string, providedChallenge?: Challenge) {
     }
   }, [providedChallenge, defaultChallenge, problem]);
   
-  // If attempts not provided, calculate based on instructions
   if (!displayChallenge.attempts) {
     const instructionCount = [
       displayChallenge.instruction1, 
@@ -281,9 +252,7 @@ function useChallenge(problem: string, providedChallenge?: Challenge) {
   return displayChallenge;
 }
 
-// Helper function to create appropriate default challenges
 function getDefaultChallenge(problem: string): Challenge {
-  // Base default challenge
   const defaultChallenge: Challenge = {
     id: "default-challenge",
     title: "Golf Skill Challenge",
@@ -357,8 +326,9 @@ function getDefaultChallenge(problem: string): Challenge {
     defaultChallenge.metrics = ["Successful Escapes"];
     defaultChallenge.metric = "Successful Escapes";
     defaultChallenge.instruction1 = "Hit 10 bunker shots aiming to get out in one attempt";
-    defaultChallenge.instruction2 = "Count how many successfully exit the bunker";
-    defaultChallenge.instruction3 = "Calculate your bunker escape percentage";
+    defaultChallenge.instruction2 = "Count how many successfully exit the bunker and land on the green";
+    defaultChallenge.instruction3 = "Calculate your bunker escape and accuracy percentage";
+    defaultChallenge.attempts = 10;
   }
   
   return defaultChallenge;

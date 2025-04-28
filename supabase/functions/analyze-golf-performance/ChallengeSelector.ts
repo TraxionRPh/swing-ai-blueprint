@@ -41,9 +41,14 @@ export class ChallengeSelector {
     // Higher thresholds for better specificity
     let minimumThreshold = 0.5; // Increased from previous values
     
+    // Special handling for bunker problems - lower threshold for more flexibility
+    if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
+      console.log("Bunker problem detected - using more flexible matching");
+      minimumThreshold = 0.4;
+    }
     // Lower threshold slightly only for specific cases where we need more flexibility
-    if (normalizedProblem.includes('putt') || 
-        normalizedProblem.includes('bunker')) {
+    else if (normalizedProblem.includes('putt') || 
+        normalizedProblem.includes('chip')) {
       minimumThreshold = 0.4;
     }
 
@@ -68,27 +73,24 @@ export class ChallengeSelector {
 
       let score = 0;
 
-      // Special handling for putting challenges
-      if (normalizedProblem.includes('putt')) {
-        if (!challengeText.includes('putt') && !challengeText.includes('green')) {
-          continue; // Skip non-putting challenges for putting problems
-        }
-        score += this.calculatePuttingChallengeScore(challengeText, normalizedProblem);
-      }
-      
       // Special handling for bunker challenges
-      else if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
+      if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
         if (!challengeText.includes('bunker') && !challengeText.includes('sand')) {
           continue; // Skip non-bunker challenges for bunker problems
         }
         score += this.calculateBunkerChallengeScore(challengeText, normalizedProblem);
       }
-      
+      // Special handling for putting challenges
+      else if (normalizedProblem.includes('putt')) {
+        if (!challengeText.includes('putt') && !challengeText.includes('green')) {
+          continue; // Skip non-putting challenges for putting problems
+        }
+        score += this.calculatePuttingChallengeScore(challengeText, normalizedProblem);
+      }
       // Special handling for topping/thin hit challenges
       else if (normalizedProblem.includes('top') || normalizedProblem.includes('thin')) {
         score += this.calculateContactChallengeScore(challengeText, normalizedProblem);
       }
-      
       // General challenge scoring
       else {
         score += this.calculateGeneralChallengeScore(challengeText, normalizedProblem);
@@ -159,16 +161,29 @@ export class ChallengeSelector {
   private calculateBunkerChallengeScore(challengeText: string, problem: string): number {
     let score = 0;
     
-    // Core bunker context validation
+    // Core bunker context validation - highly important!
     if (challengeText.includes('bunker') || challengeText.includes('sand')) {
-      score += 5;
+      score += 7; // Increased significantly for bunker problems
     }
     
     // Validate actual bunker focus in instructions
     if (challengeText.includes('explosion') || 
         challengeText.includes('splash') || 
         challengeText.includes('sand shot')) {
-      score += 4; // Increased from 3
+      score += 5; // Increased from 4
+    }
+    
+    // Additional bunker-specific terminology
+    if (challengeText.includes('trap') || 
+        challengeText.includes('rake') || 
+        challengeText.includes('greenside bunker')) {
+      score += 3;
+    }
+    
+    // Check if category explicitly mentions bunker
+    if (challengeText.includes('category') && 
+        (challengeText.includes('bunker') || challengeText.includes('sand'))) {
+      score += 3;
     }
     
     // Penalize challenges focusing on non-bunker aspects
@@ -252,7 +267,8 @@ export class ChallengeSelector {
       ['distance', 'carry', 'yardage', 'power'],
       ['direction', 'aim', 'target', 'alignment'],
       ['chip', 'pitch', 'around', 'green'],
-      ['contact', 'strike', 'compression', 'ball first']
+      ['contact', 'strike', 'compression', 'ball first'],
+      ['bunker', 'sand', 'explosion', 'splash'] // Added bunker-specific group
     ];
     
     let compoundMatches = 0;
@@ -296,13 +312,14 @@ export class ChallengeSelector {
   
   private calculateInstructionRelevanceScore(challenge: any, problem: string): number {
     let score = 0;
-    const relevantInstructions = 0;
+    let relevantInstructions = 0;
     
     // Check if instructions specifically address the problem
     if (challenge.instruction1) {
       const instruction = challenge.instruction1.toLowerCase();
       if (this.isInstructionRelevant(instruction, problem)) {
         score += 2;
+        relevantInstructions++;
       }
     }
     
@@ -310,6 +327,7 @@ export class ChallengeSelector {
       const instruction = challenge.instruction2.toLowerCase();
       if (this.isInstructionRelevant(instruction, problem)) {
         score += 2;
+        relevantInstructions++;
       }
     }
     
@@ -317,6 +335,7 @@ export class ChallengeSelector {
       const instruction = challenge.instruction3.toLowerCase();
       if (this.isInstructionRelevant(instruction, problem)) {
         score += 2;
+        relevantInstructions++;
       }
     }
     
