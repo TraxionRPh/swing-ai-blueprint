@@ -36,8 +36,8 @@ export const InProgressRoundCard = ({
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
     
-    // Use direct navigate with replace:true to ensure we fully replace the current route
-    navigate(`/rounds/${roundId}`, { replace: true });
+    // Force a full page reload to ensure we get fresh state
+    window.location.href = `/rounds/${roundId}`;
   };
 
   return (

@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 
 interface LoadingStateProps {
   onBack: () => void;
@@ -21,9 +22,7 @@ export const LoadingState = ({ onBack }: LoadingStateProps) => {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
       </div>
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Loading round data...</p>
-      </div>
+      <Loading message="Loading round data..." />
     </div>
   );
 };

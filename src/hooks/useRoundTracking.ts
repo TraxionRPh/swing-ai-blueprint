@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
@@ -11,7 +12,7 @@ export const useRoundTracking = () => {
   const { user } = useAuth();
   const [holeCount, setHoleCount] = useState<number | null>(null);
   const { roundId: urlRoundId } = useParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);  // Start with loading true
   const [courseName, setCourseName] = useState<string | null>(null);
   
   const {
@@ -44,43 +45,59 @@ export const useRoundTracking = () => {
   useEffect(() => {
     const initializeRound = async () => {
       setIsLoading(true);
-      // If roundId is provided in URL, use that instead of fetching
-      if (urlRoundId) {
-        console.log("Using round ID from URL:", urlRoundId);
-        setCurrentRoundId(urlRoundId);
-        
-        // Fetch course name for the round
-        try {
-          const { data } = await supabase
+      try {
+        // If roundId is provided in URL, use that instead of fetching
+        if (urlRoundId) {
+          console.log("Using round ID from URL:", urlRoundId);
+          setCurrentRoundId(urlRoundId);
+          
+          // Fetch course name and hole count for the round
+          const { data, error } = await supabase
             .from('rounds')
             .select(`
+              hole_count,
               golf_courses:course_id (
-                name
+                id,
+                name,
+                city,
+                state,
+                total_par,
+                course_tees (*)
               )
             `)
             .eq('id', urlRoundId)
             .single();
             
+          if (error) {
+            console.error("Error fetching round data:", error);
+            throw error;
+          }
+          
           if (data?.golf_courses?.name) {
             setCourseName(data.golf_courses.name);
           }
-        } catch (error) {
-          console.error("Error fetching course name:", error);
+          
+          if (data?.hole_count) {
+            setHoleCount(data.hole_count);
+          }
+        } else {
+          const roundData = await fetchInProgressRound();
+          if (roundData) {
+            setCurrentRoundId(roundData.roundId);
+            setHoleScores(roundData.holeScores);
+            setHoleCount(roundData.holeCount || 18);
+            setCourseName(roundData.course?.name || null);
+          }
         }
-      } else {
-        const roundData = await fetchInProgressRound();
-        if (roundData) {
-          setCurrentRoundId(roundData.roundId);
-          setHoleScores(roundData.holeScores);
-          setHoleCount(roundData.holeCount || 18);
-          setCourseName(roundData.course?.name || null);
-        }
+      } catch (error) {
+        console.error("Error initializing round:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initializeRound();
-  }, [urlRoundId, user]);
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores]);
 
   useEffect(() => {
     // Load hole scores when roundId changes
