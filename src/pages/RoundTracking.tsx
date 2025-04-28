@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,8 @@ const RoundTracking = () => {
   const navigate = useNavigate();
   const { roundId, holeNumber } = useParams();
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [courseName, setCourseName] = useState<string | null>(null);
+
   const {
     selectedCourse,
     selectedTee,
@@ -49,6 +50,29 @@ const RoundTracking = () => {
       }
     }
   }, [roundId, holeNumber, setHoleCount, setCurrentRoundId]);
+
+  useEffect(() => {
+    const fetchCourseName = async () => {
+      if (!currentRoundId) return;
+      
+      const { data: round } = await supabase
+        .from('rounds')
+        .select(`
+          course_id,
+          golf_courses (
+            name
+          )
+        `)
+        .eq('id', currentRoundId)
+        .single();
+        
+      if (round?.golf_courses) {
+        setCourseName(round.golf_courses.name);
+      }
+    };
+
+    fetchCourseName();
+  }, [currentRoundId]);
 
   useEffect(() => {
     console.log('RoundTracking component state:', {
@@ -121,9 +145,10 @@ const RoundTracking = () => {
       {!selectedCourse && currentRoundId && (
         <InProgressRoundCard
           roundId={currentRoundId}
-          courseName={selectedCourse?.name || "Your course"}
+          courseName={courseName || "Loading course..."}
           lastHole={holeScores.filter(h => h.score > 0).length}
           holeCount={holeCount || 18}
+          onDelete={() => deleteRound(currentRoundId)}
         />
       )}
 
