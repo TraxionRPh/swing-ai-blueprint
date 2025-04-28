@@ -13,6 +13,7 @@ import { RecommendedDrillsSection } from "@/components/drill-library/Recommended
 import { AllDrillsSection } from "@/components/drill-library/AllDrillsSection";
 import { useAPIUsageCheck } from "@/hooks/useAPIUsageCheck";
 import { useAuth } from "@/context/AuthContext";
+import { DrillLibraryHeader } from "@/components/drill-library/DrillLibraryHeader";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -141,6 +142,8 @@ const DrillLibrary = () => {
   
   return (
     <div className="space-y-8">
+      <DrillLibraryHeader />
+      
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Drill Library</h1>
         <p className="text-muted-foreground">
