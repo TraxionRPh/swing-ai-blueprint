@@ -44,11 +44,13 @@ export const InProgressRoundCard = ({
         description: "Retrieving your round data..."
       });
       
-      // Use React Router's navigate instead of direct window.location
-      // This prevents full page reloads which can cause state issues
-      navigate(`/rounds/${roundId}`);
+      // Use direct navigation to prevent potential React Router issues
+      navigate(`/rounds/${roundId}`, { replace: true });
     } catch (error) {
       console.error("Navigation error:", error);
+      
+      // Fallback to direct location change if navigate fails
+      window.location.href = `/rounds/${roundId}`;
     }
   };
 

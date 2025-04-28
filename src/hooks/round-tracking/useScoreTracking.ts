@@ -11,8 +11,9 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [loadAttempts, setLoadAttempts] = useState(0);
-  const fetchTimeoutRef = useRef<number | null>(null);
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialFetchRef = useRef<boolean>(false);
+  const maxAttempts = 3;
   
   // Clean up any existing timeouts when component unmounts or roundId changes
   useEffect(() => {
@@ -36,13 +37,6 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
         return;
       }
       
-      // Prevent duplicate loading if we've already started fetching
-      if (initialFetchRef.current) {
-        return;
-      }
-      
-      initialFetchRef.current = true;
-      
       try {
         console.log("Fetching hole scores for round ID:", roundId, "attempt:", loadAttempts + 1);
         
@@ -51,11 +45,15 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
         if (!isMounted) return;
         
         // If we got a successful result or we've reached max attempts, stop loading
-        if (result || loadAttempts >= 2) {
+        if (result && result.length > 0) {
           setIsInitialLoad(false);
-          console.log("Successfully loaded hole scores or reached max attempts");
-        } else if (loadAttempts < 2) {
-          // If we haven't reached max attempts, try again after a delay
+          console.log("Successfully loaded hole scores");
+        } else if (loadAttempts >= maxAttempts) {
+          // Maximum attempts reached, stop trying
+          setIsInitialLoad(false);
+          console.log("Reached max attempts without loading hole scores");
+        } else if (isMounted) {
+          // Try again after a delay with exponential backoff
           console.log("Retrying hole score fetch after delay");
           
           // Clear any existing timeout
@@ -63,23 +61,29 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
             clearTimeout(fetchTimeoutRef.current);
           }
           
-          // Set a new timeout for retry
-          fetchTimeoutRef.current = window.setTimeout(() => {
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, loadAttempts) * 1000;
+          
+          fetchTimeoutRef.current = setTimeout(() => {
             if (isMounted) {
               setLoadAttempts(prev => prev + 1);
-              // Reset the initialFetchRef so we can try again
-              initialFetchRef.current = false;
             }
-          }, 1500);
-        } else {
-          // We've reached max attempts
-          setIsInitialLoad(false);
-          console.log("Max load attempts reached, stopping retries");
+          }, delay);
         }
       } catch (error) {
         console.error("Error fetching hole scores:", error);
         if (isMounted) {
-          setIsInitialLoad(false);
+          if (loadAttempts >= maxAttempts) {
+            setIsInitialLoad(false);
+          } else {
+            // Try again after a delay with exponential backoff
+            const delay = Math.pow(2, loadAttempts) * 1000;
+            fetchTimeoutRef.current = setTimeout(() => {
+              if (isMounted) {
+                setLoadAttempts(prev => prev + 1);
+              }
+            }, delay);
+          }
         }
       }
     };
@@ -88,13 +92,12 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     
     return () => {
       isMounted = false;
-      initialFetchRef.current = false;
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = null;
       }
     };
-  }, [roundId, fetchHoleScoresFromRound, loadAttempts]);
+  }, [roundId, fetchHoleScoresFromRound, loadAttempts, maxAttempts]);
 
   // Reset load attempts when roundId changes
   useEffect(() => {
@@ -102,6 +105,18 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     setIsInitialLoad(true);
     initialFetchRef.current = false;
   }, [roundId]);
+
+  // Force timeout to exit loading state after 10 seconds to prevent permanent loading
+  useEffect(() => {
+    if (!isInitialLoad) return;
+    
+    const forceExitTimeout = setTimeout(() => {
+      setIsInitialLoad(false);
+      console.log("Forced exit from loading state after timeout");
+    }, 10000);
+    
+    return () => clearTimeout(forceExitTimeout);
+  }, [isInitialLoad]);
 
   const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);

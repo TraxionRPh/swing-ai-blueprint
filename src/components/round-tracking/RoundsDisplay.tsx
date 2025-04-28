@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +32,10 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const fetchRounds = async () => {
+  const fetchRounds = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
     try {
       console.log("Fetching rounds data from supabase");
       const { data: rounds, error } = await supabase
@@ -89,7 +90,19 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Add a timeout to ensure we exit loading state even if fetch fails
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        console.log("Forced exit from loading state in RoundsDisplay after timeout");
+      }
+    }, 8000);
+    
+    return () => clearTimeout(loadingTimeout);
+  }, [loading]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -102,7 +115,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [fetchRounds]);
 
   const handleDeleteRound = async (roundId: string) => {
     try {
@@ -140,8 +153,15 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     }
   };
 
+  // Return placeholder content while loading
   if (loading) {
-    return <Loading message="Loading rounds..." className="min-h-[200px]" />;
+    return (
+      <Card className="mb-6 min-h-[200px]">
+        <CardContent className="pt-6 flex justify-center items-center">
+          <Loading message="Loading rounds..." className="min-h-[150px]" />
+        </CardContent>
+      </Card>
+    );
   }
   
   if (error) {
@@ -178,6 +198,17 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     });
   };
 
+  // If we have no data at all, show a message
+  if (inProgressRounds.length === 0 && completedRounds.length === 0) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <p className="text-center text-muted-foreground">No rounds found. Start a new round by selecting a course below.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const renderRoundsList = (rounds: RoundWithCourse[], title: string, isInProgress: boolean) => {
     if (rounds.length === 0) return null;
 
@@ -192,7 +223,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               key={round.id}
               course={round.golf_courses}
               onSelect={isInProgress ? 
-                () => navigate(`/rounds/${round.id}`) : 
+                () => navigate(`/rounds/${round.id}`, { replace: true }) : 
                 (course) => onCourseSelect(course, round.hole_count || 18)
               }
               isInProgress={isInProgress}

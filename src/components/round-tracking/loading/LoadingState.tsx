@@ -11,7 +11,7 @@ interface LoadingStateProps {
 
 export const LoadingState = ({ onBack, children }: LoadingStateProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex items-center space-x-4">
         <Button 
           variant="outline" 
@@ -24,7 +24,11 @@ export const LoadingState = ({ onBack, children }: LoadingStateProps) => {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
       </div>
-      <Loading message="Loading round data..." />
+      
+      <div className="w-full flex justify-center">
+        <Loading message="Loading round data..." />
+      </div>
+      
       {children}
     </div>
   );
