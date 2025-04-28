@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ import { RecommendedDrillsSection } from "@/components/drill-library/Recommended
 import { AllDrillsSection } from "@/components/drill-library/AllDrillsSection";
 import { useAPIUsageCheck } from "@/hooks/useAPIUsageCheck";
 import { useAuth } from "@/context/AuthContext";
-import { DrillLibraryHeader } from "@/components/drill-library/DrillLibraryHeader";
 
 const DrillLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,7 +25,6 @@ const DrillLibrary = () => {
   const { checkAPIUsage } = useAPIUsageCheck();
   const { user } = useAuth();
 
-  // Fetch all drills with React Query for automatic caching and state management
   const { data: drills, isLoading } = useQuery({
     queryKey: ['drills'],
     queryFn: async () => {
@@ -44,10 +41,9 @@ const DrillLibrary = () => {
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes caching
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Memoized filter function to prevent unnecessary recalculations
   const filterDrills = useCallback((drillsToFilter: Drill[] = []) => {
     if (!drillsToFilter) return [];
     
@@ -55,7 +51,6 @@ const DrillLibrary = () => {
       const matchesSearch = !searchQuery || 
         drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         drill.overview?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        // Safely check if focus exists and is an array before calling .some()
         (Array.isArray(drill.focus) && drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
       
       const matchesCategory = selectedCategory === 'all' || drill.category === selectedCategory;
@@ -66,19 +61,16 @@ const DrillLibrary = () => {
     });
   }, [searchQuery, selectedCategory, selectedDifficulty]);
 
-  // Memoize filtered drills to avoid unnecessary re-renders
   const filteredDrills = useMemo(() => {
     return filterDrills(drills);
   }, [drills, filterDrills]);
 
-  // Optimized AI search function with API usage check
   const handleAISearch = useCallback(async (query: string) => {
     setIsAnalyzing(true);
     setSearchQuery(query);
     setSearchError(null);
     
     try {
-      // Check API usage limits
       const canProceed = await checkAPIUsage(user?.id, 'ai_analysis');
       if (!canProceed) {
         setIsAnalyzing(false);
@@ -102,7 +94,6 @@ const DrillLibrary = () => {
             description: "We've found the perfect drills to help with your issue.",
           });
           
-          // Auto-scroll to results
           setTimeout(() => {
             const resultsSection = document.getElementById('recommended-drills');
             if (resultsSection) {
@@ -131,7 +122,7 @@ const DrillLibrary = () => {
       setIsAnalyzing(false);
     }
   }, [checkAPIUsage, user?.id, toast]);
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -142,8 +133,6 @@ const DrillLibrary = () => {
   
   return (
     <div className="space-y-8">
-      <DrillLibraryHeader />
-      
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Drill Library</h1>
         <p className="text-muted-foreground">
