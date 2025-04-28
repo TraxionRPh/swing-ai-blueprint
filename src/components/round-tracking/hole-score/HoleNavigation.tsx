@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { ClipboardList } from "lucide-react";
 
 interface HoleNavigationProps {
   onNext?: () => void;
@@ -19,9 +20,21 @@ export const HoleNavigation = ({
       <Button variant="outline" onClick={onPrevious} disabled={isFirst}>
         Previous Hole
       </Button>
-      <Button onClick={onNext} disabled={isLast}>
-        Next Hole
+      <Button 
+        onClick={onNext} 
+        disabled={isLast}
+        className={isLast ? "bg-primary hover:bg-primary/90" : ""}
+      >
+        {isLast ? (
+          <>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Review Round
+          </>
+        ) : (
+          "Next Hole"
+        )}
       </Button>
     </div>
   );
 };
+

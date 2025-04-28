@@ -1,8 +1,8 @@
 
 import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "./score/useHoleNavigation";
-import { useHolePersistence } from "./score/useHolePersistence";
 import { useHoleScores } from "./score/useHoleScores";
+import { useHolePersistence } from "./score/useHolePersistence";
 
 export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
@@ -45,3 +45,4 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     currentHoleData
   };
 };
+
