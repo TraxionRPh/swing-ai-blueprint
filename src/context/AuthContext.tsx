@@ -2,7 +2,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+// We'll temporarily remove the useToast import and implement a simpler notification
+// to avoid the circular dependency
+// import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   session: Session | null;
@@ -20,7 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  // Temporarily remove toast usage
+  // const { toast } = useToast();
 
   useEffect(() => {
     let mounted = true;
@@ -30,10 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, currentSession) => {
         if (mounted) {
           if (event === 'SIGNED_OUT') {
-            toast({
-              title: "Signed out",
-              description: "You have been signed out successfully.",
-            });
+            // Temporarily comment out toast usage
+            // toast({
+            //   title: "Signed out",
+            //   description: "You have been signed out successfully.",
+            // });
+            console.log("User signed out successfully");
           }
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
@@ -55,7 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [toast]);
+  // Remove toast dependency
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, user, loading }}>
