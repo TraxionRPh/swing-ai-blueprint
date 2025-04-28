@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { PlayCircle, Trash2 } from "lucide-react";
+import { PlayCircle, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -33,24 +33,39 @@ export const InProgressRoundCard = ({
 }: InProgressRoundProps) => {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
     
     try {
+      setIsLoading(true);
+      
       toast({
         title: "Loading round",
         description: "Retrieving your round data..."
       });
       
-      // Use direct navigation to prevent potential React Router issues
-      navigate(`/rounds/${roundId}`, { replace: true });
+      // Add a small delay to let the toast show before navigation
+      setTimeout(() => {
+        // Use direct navigation to prevent potential React Router issues
+        navigate(`/rounds/${roundId}`, { replace: true });
+      }, 300);
     } catch (error) {
       console.error("Navigation error:", error);
+      setIsLoading(false);
+      
+      toast({
+        title: "Navigation error",
+        description: "There was an issue loading this round. Please try again.",
+        variant: "destructive"
+      });
       
       // Fallback to direct location change if navigate fails
-      window.location.href = `/rounds/${roundId}`;
+      setTimeout(() => {
+        window.location.href = `/rounds/${roundId}`;
+      }, 1000);
     }
   };
 
@@ -77,9 +92,22 @@ export const InProgressRoundCard = ({
             <p className="text-sm text-muted-foreground">
               Progress: {lastHole} of {holeCount} holes completed
             </p>
-            <Button onClick={handleResumeRound} className="w-full">
-              <PlayCircle className="mr-2 h-4 w-4" />
-              Continue Round
+            <Button 
+              onClick={handleResumeRound} 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading Round...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="mr-2 h-4 w-4" />
+                  Continue Round
+                </>
+              )}
             </Button>
           </div>
         </CardContent>

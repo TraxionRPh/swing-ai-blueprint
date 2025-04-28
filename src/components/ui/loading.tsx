@@ -23,14 +23,19 @@ export function Loading({
     lg: "h-12 w-12"
   };
 
+  // Fix minHeight prop handling - directly use the value rather than trying to interpolate it
+  const minHeightStyle = {
+    minHeight: typeof minHeight === 'string' ? minHeight : `${minHeight}px`
+  };
+
   return (
     <div 
       className={cn(
         "flex w-full flex-col items-center justify-center",
-        typeof minHeight === 'string' ? `min-h-[${minHeight}]` : `min-h-[${minHeight}px]`,
         fixed && "fixed inset-0 bg-background/95 z-50",
         className
       )}
+      style={minHeightStyle}
     >
       <div className="flex flex-col items-center justify-center">
         <Loader2 className={cn(sizeClasses[size], "animate-spin text-primary")} />

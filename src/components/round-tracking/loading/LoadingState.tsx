@@ -9,17 +9,45 @@ interface LoadingStateProps {
   children?: ReactNode;
   hideHeader?: boolean;
   message?: string;
+  retryFn?: () => void;
+  roundId?: string;
 }
 
-export const LoadingState = ({ onBack, children, hideHeader = false, message = "Loading round data..." }: LoadingStateProps) => {
+export const LoadingState = ({ 
+  onBack, 
+  children, 
+  hideHeader = false, 
+  message = "Loading round data...",
+  retryFn,
+  roundId
+}: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   
+  // Show retry option sooner - after 4 seconds instead of 6
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 6000);
+    const timer = setTimeout(() => setShowRetry(true), 4000);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleRefresh = () => window.location.reload();
+  const handleRefresh = () => {
+    if (retryFn) {
+      // Use provided retry function if available
+      retryFn();
+      // Reset the retry state
+      setShowRetry(false);
+      // Set timeout again
+      const timer = setTimeout(() => setShowRetry(true), 4000);
+      return () => clearTimeout(timer);
+    } else {
+      // Fallback to page reload
+      window.location.reload();
+    }
+  };
+
+  // If we have a roundId, append it to the message
+  const displayMessage = roundId 
+    ? `${message} (Round ID: ${roundId.substring(0, 8)}...)`
+    : message;
   
   return (
     <div className="space-y-6 w-full">
@@ -39,7 +67,7 @@ export const LoadingState = ({ onBack, children, hideHeader = false, message = "
       )}
       
       <div className="w-full flex justify-center">
-        <Loading message={message} />
+        <Loading message={displayMessage} />
       </div>
       
       {showRetry && (
@@ -49,7 +77,7 @@ export const LoadingState = ({ onBack, children, hideHeader = false, message = "
           </p>
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Refresh page
+            Retry loading round
           </Button>
         </div>
       )}
