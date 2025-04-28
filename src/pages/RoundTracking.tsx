@@ -118,12 +118,21 @@ const RoundTracking = () => {
         </div>
       </div>
 
-      {!roundId && holeScores.length > 0 && selectedCourse && (
+      {!selectedCourse && currentRoundId && (
         <InProgressRoundCard
-          roundId={currentRoundId || ''}
-          courseName={selectedCourse.name}
+          roundId={currentRoundId}
+          courseName={selectedCourse?.name || "Your course"}
           lastHole={holeScores.filter(h => h.score > 0).length}
           holeCount={holeCount || 18}
+        />
+      )}
+
+      {!selectedCourse && (
+        <CourseSelector
+          selectedCourse={selectedCourse}
+          selectedTee={selectedTee}
+          onCourseSelect={handleCourseSelection}
+          onTeeSelect={setSelectedTee}
         />
       )}
 
