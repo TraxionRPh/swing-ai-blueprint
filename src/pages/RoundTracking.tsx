@@ -58,14 +58,8 @@ const RoundTracking = () => {
       holeCount
     });
     
-    // Automatically show the final scorecard when the user completes the last hole
-    if (holeCount && currentHole === holeCount && holeScores.length >= holeCount) {
-      // Check if the current hole has a score entered
-      const currentHoleScore = holeScores.find(h => h.holeNumber === currentHole);
-      if (currentHoleScore && currentHoleScore.score > 0) {
-        setShowFinalScore(true);
-      }
-    }
+    // Remove the automatic showing of final scorecard
+    // This was causing the summary to appear when moving from hole 17 to 18
   }, [roundId, selectedCourse, currentHoleData, holeScores, currentHole, holeCount]);
 
   const handleBack = () => {
@@ -74,6 +68,7 @@ const RoundTracking = () => {
 
   const handleNext = () => {
     if (currentHole === holeCount) {
+      // Only show the final score when explicitly clicking the "Review Round" button
       setShowFinalScore(true);
     } else {
       moveToNextHole();
