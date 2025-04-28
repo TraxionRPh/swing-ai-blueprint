@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
+import { ScoreChartTooltip } from "./ScoreChartTooltip";
 
 interface ScoreData {
   date: string;
@@ -109,24 +109,7 @@ export const ScoreChart = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis domain={[minScore, maxScore]} reversed />
-              <Tooltip 
-                formatter={(value, name) => {
-                  const dataPoint = displayData.find(item => item.score === value);
-                  if (name === 'score' && dataPoint) {
-                    const overUnder = dataPoint.score - dataPoint.totalPar;
-                    const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
-                    return [`${value} (${overUnderText})`, 'Score'];
-                  }
-                  return [value, name];
-                }}
-                labelFormatter={(label) => {
-                  const dataPoint = displayData.find(item => item.date === label);
-                  if (dataPoint) {
-                    return `${dataPoint.courseName}\n${dataPoint.location}`;
-                  }
-                  return label;
-                }}
-              />
+              <Tooltip content={<ScoreChartTooltip />} />
               <Legend />
               <Line 
                 type="monotone" 
