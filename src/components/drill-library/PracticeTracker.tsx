@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Play, Stop } from "lucide-react";
+import { Play, CircleStop } from "lucide-react";
 import { Drill } from "@/types/drill";
 import { usePracticeTracking } from "@/hooks/usePracticeTracking";
 
@@ -21,7 +21,7 @@ export const PracticeTracker = ({ drill }: PracticeTrackerProps) => {
             onClick={completePractice}
             className="flex items-center gap-2"
           >
-            <Stop className="h-4 w-4" />
+            <CircleStop className="h-4 w-4" />
             Complete Practice
           </Button>
         </>
