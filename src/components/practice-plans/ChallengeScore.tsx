@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScorePr
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Record your score out of {attempts} attempts:
+        Enter your score out of {attempts} attempts:
       </p>
       <div className="flex gap-2">
         <Input
