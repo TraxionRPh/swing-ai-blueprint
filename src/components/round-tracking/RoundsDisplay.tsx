@@ -81,8 +81,8 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const handleInProgressRoundSelect = (round: RoundWithCourse) => {
     console.log("In-progress round selected:", round.id);
     
-    // Use navigate to go to the round details page
-    navigate(`/rounds/${round.id}`);
+    // Force a full page reload to ensure we get fresh state
+    window.location.href = `/rounds/${round.id}`;
   };
 
   const handleDeleteRound = async (roundId: string) => {

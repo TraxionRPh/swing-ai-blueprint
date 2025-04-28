@@ -5,7 +5,7 @@ import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
 import { Course } from "@/types/round-tracking";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +16,11 @@ export const useRoundTracking = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [courseName, setCourseName] = useState<string | null>(null);
   const { toast } = useToast();
+  const location = useLocation();
+  
+  // Debug current state
+  console.log("useRoundTracking init - roundId from URL:", urlRoundId);
+  console.log("Current path:", location.pathname);
   
   const {
     currentRoundId,
@@ -46,6 +51,7 @@ export const useRoundTracking = () => {
 
   useEffect(() => {
     let isMounted = true;
+    
     const initializeRound = async () => {
       try {
         // If roundId is provided in URL, use that instead of fetching
@@ -78,10 +84,12 @@ export const useRoundTracking = () => {
             
             if (data?.golf_courses?.name && isMounted) {
               setCourseName(data.golf_courses.name);
+              console.log("Set course name:", data.golf_courses.name);
             }
             
             if (data?.hole_count && isMounted) {
               setHoleCount(data.hole_count);
+              console.log("Set hole count:", data.hole_count);
             }
           } catch (error) {
             console.error("Error fetching round data:", error);
@@ -93,12 +101,16 @@ export const useRoundTracking = () => {
           }
         } else {
           try {
+            console.log("No roundId in URL, fetching in-progress round");
             const roundData = await fetchInProgressRound();
             if (roundData && isMounted) {
               setCurrentRoundId(roundData.roundId);
               setHoleScores(roundData.holeScores);
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
+              console.log("Fetched in-progress round:", roundData.roundId);
+            } else {
+              console.log("No in-progress round found");
             }
           } catch (error) {
             console.error("Error fetching in-progress round:", error);
@@ -114,23 +126,18 @@ export const useRoundTracking = () => {
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          console.log("Loading complete, isLoading set to false");
         }
       }
     };
 
+    setIsLoading(true);
     initializeRound();
     
     return () => {
       isMounted = false;
     };
   }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast]);
-
-  useEffect(() => {
-    // Load hole scores when roundId changes
-    if (currentRoundId) {
-      console.log("Current round ID changed, loading hole scores:", currentRoundId);
-    }
-  }, [currentRoundId]);
 
   useEffect(() => {
     // Update course name when selected course changes
@@ -181,6 +188,16 @@ export const useRoundTracking = () => {
     if (!holeCount) return false;
     return baseFinishRound(holeScores.slice(0, holeCount), holeCount);
   };
+
+  // Log the current state for debugging
+  console.log("useRoundTracking state:", { 
+    currentRoundId, 
+    urlRoundId, 
+    isLoading, 
+    courseName,
+    selectedCourse: selectedCourse?.name,
+    holeCount
+  });
 
   return {
     selectedCourse,

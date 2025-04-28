@@ -110,6 +110,13 @@ const RoundTracking = () => {
     );
   }
 
+  // Debug logs to help diagnose rendering conditions
+  console.log("Round tracking render conditions:", { 
+    selectedCourse: !!selectedCourse, 
+    currentRoundId: !!currentRoundId, 
+    isLoading 
+  });
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={handleBack} />
@@ -126,7 +133,7 @@ const RoundTracking = () => {
       )}
 
       {/* Show course selector when no course is selected AND no current round */}
-      {!selectedCourse && !currentRoundId && !isLoading && (
+      {(!selectedCourse && !currentRoundId && !isLoading) && (
         <CourseSelector
           selectedCourse={selectedCourse}
           selectedTee={selectedTee}
