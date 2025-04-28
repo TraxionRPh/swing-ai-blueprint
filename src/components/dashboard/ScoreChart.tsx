@@ -32,7 +32,7 @@ export const ScoreChart = () => {
             )
           `)
           .eq('user_id', user.id)
-          .is('total_score', 'not.null')
+          .not('total_score', 'is', null) // Fixed: proper syntax for IS NOT NULL filter
           .order('date', { ascending: true })
           .limit(6);
 
@@ -60,13 +60,13 @@ export const ScoreChart = () => {
     fetchRounds();
   }, [user]);
 
-  const fallbackData = [
-    { date: 'Jan 15', score: 92 },
-    { date: 'Jan 29', score: 89 },
-    { date: 'Feb 12', score: 87 },
-    { date: 'Feb 26', score: 90 },
-    { date: 'Mar 10', score: 85 },
-    { date: 'Mar 24', score: 83 },
+  const fallbackData: ScoreData[] = [
+    { date: 'Jan 15', score: 92, courseName: 'Sample Course' },
+    { date: 'Jan 29', score: 89, courseName: 'Sample Course' },
+    { date: 'Feb 12', score: 87, courseName: 'Sample Course' },
+    { date: 'Feb 26', score: 90, courseName: 'Sample Course' },
+    { date: 'Mar 10', score: 85, courseName: 'Sample Course' },
+    { date: 'Mar 24', score: 83, courseName: 'Sample Course' },
   ];
 
   // Use the fetched data if available, otherwise use fallback data for new users
