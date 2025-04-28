@@ -11,6 +11,7 @@ interface ScoreData {
   score: number;
   courseName: string;
   totalPar: number;
+  location: string;
 }
 
 export const ScoreChart = () => {
@@ -33,7 +34,9 @@ export const ScoreChart = () => {
             date,
             golf_courses (
               name,
-              total_par
+              total_par,
+              city,
+              state
             )
           `)
           .eq('user_id', user.id)
@@ -55,12 +58,11 @@ export const ScoreChart = () => {
             date: format(new Date(round.date), 'MMM d'),
             score: round.total_score,
             courseName: round.golf_courses?.name || 'Unknown Course',
-            totalPar: round.golf_courses?.total_par || 72
+            totalPar: round.golf_courses?.total_par || 72,
+            location: `${round.golf_courses?.city || ''}, ${round.golf_courses?.state || ''}`
           }));
           console.log("Formatted data:", formattedData);
           setScoreData(formattedData);
-        } else {
-          console.log("No rounds data found, using fallback data");
         }
       } catch (err) {
         console.error('Error in score chart:', err);
@@ -74,12 +76,12 @@ export const ScoreChart = () => {
   }, [user]);
 
   const fallbackData: ScoreData[] = [
-    { date: 'Jan 15', score: 92, courseName: 'Sample Course', totalPar: 72 },
-    { date: 'Jan 29', score: 89, courseName: 'Sample Course', totalPar: 72 },
-    { date: 'Feb 12', score: 87, courseName: 'Sample Course', totalPar: 72 },
-    { date: 'Feb 26', score: 90, courseName: 'Sample Course', totalPar: 72 },
-    { date: 'Mar 10', score: 85, courseName: 'Sample Course', totalPar: 72 },
-    { date: 'Mar 24', score: 83, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Jan 15', score: 92, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
+    { date: 'Jan 29', score: 89, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
+    { date: 'Feb 12', score: 87, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
+    { date: 'Feb 26', score: 90, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
+    { date: 'Mar 10', score: 85, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
+    { date: 'Mar 24', score: 83, courseName: 'Sample Course', totalPar: 72, location: 'Sample, ST' },
   ];
 
   const displayData = scoreData.length > 0 ? scoreData : fallbackData;
@@ -88,7 +90,7 @@ export const ScoreChart = () => {
   const maxScore = Math.max(...scores) + 3;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-[400px]">
       <CardHeader className="pb-2">
         <CardTitle>Recent Scores</CardTitle>
         <CardDescription>
@@ -119,7 +121,10 @@ export const ScoreChart = () => {
                 }}
                 labelFormatter={(label) => {
                   const dataPoint = displayData.find(item => item.date === label);
-                  return dataPoint?.courseName ? `${label} - ${dataPoint.courseName}` : label;
+                  if (dataPoint) {
+                    return `${dataPoint.courseName}\n${dataPoint.location}`;
+                  }
+                  return label;
                 }}
               />
               <Legend />
