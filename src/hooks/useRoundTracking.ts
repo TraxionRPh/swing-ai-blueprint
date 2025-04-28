@@ -14,7 +14,8 @@ export const useRoundTracking = () => {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
-    finishRound: baseFinishRound
+    finishRound: baseFinishRound,
+    deleteRound
   } = useRoundManagement(user);
 
   const {
@@ -98,6 +99,7 @@ export const useRoundTracking = () => {
     holeCount,
     setHoleCount,
     setCurrentRoundId,
-    currentRoundId  // Added this to the return value
+    currentRoundId,
+    deleteRound  // Added this to ensure it's properly exposed
   };
 };
