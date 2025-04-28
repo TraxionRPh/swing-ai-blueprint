@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,7 @@ export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScorePr
           type="number"
           value={score}
           onChange={(e) => setScore(e.target.value)}
-          placeholder={`Enter score (out of ${attempts})`}
+          placeholder="Enter Score"
           className="max-w-[200px]"
           min="0"
           max={attempts}
