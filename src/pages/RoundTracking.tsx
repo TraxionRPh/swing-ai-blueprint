@@ -3,24 +3,36 @@ import { useNavigate } from "react-router-dom";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState, useEffect } from "react";
-import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { HoleCountSelector } from "@/components/round-tracking/hole-count/HoleCountSelector";
 import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoundContent";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
 import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loading } from "@/components/ui/loading";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
   const [showFinalScore, setShowFinalScore] = useState(false);
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const { toast } = useToast();
+  
+  // Only load the complex hook if we're not on the main page
+  const isMainPage = window.location.pathname === '/rounds';
+  const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
+  
+  // Simplified loading for the main page
+  const [pageLoading, setPageLoading] = useState(!isMainPage);
+  
+  useEffect(() => {
+    // If we're on the main rounds page, set loading to false after a short delay
+    if (isMainPage) {
+      const timer = setTimeout(() => setPageLoading(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isMainPage]);
+  
+  // Only use the complex hook when necessary (for detail pages or active rounds)
+  const roundTracking = useRoundTracking();
   
   const {
     selectedCourse,
-    selectedTee,
     currentHole,
     holeScores,
     currentRoundId,
@@ -35,36 +47,11 @@ const RoundTracking = () => {
     finishRound,
     holeCount,
     setHoleCount,
-    setCurrentRoundId,
-    deleteRound,
-    courseName,
-    isLoading
-  } = useRoundTracking();
-
-  // Show refresh option if loading takes too long
-  useEffect(() => {
-    let timeoutId: number;
-    
-    if (isLoading) {
-      timeoutId = window.setTimeout(() => {
-        setLoadingTimeout(true);
-      }, 6000); // Reduced from 8s to 6s for faster feedback
-    } else {
-      setLoadingTimeout(false);
-    }
-    
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [isLoading]);
+    isLoading: hookIsLoading
+  } = roundTracking;
 
   const handleBack = () => {
     navigate(-1);
-  };
-
-  const handleRefresh = () => {
-    console.log("Manual refresh requested");
-    window.location.reload();
   };
 
   const handleNext = () => {
@@ -84,52 +71,59 @@ const RoundTracking = () => {
     }
   };
 
-  const handleDeleteRound = () => {
-    if (currentRoundId) {
-      deleteRound(currentRoundId);
-      setCurrentRoundId(null);
-    }
-  };
-
   const handleHoleCountSelect = (count: number) => {
     setHoleCount(count);
     sessionStorage.setItem('current-hole-count', count.toString());
-    if (selectedCourse) {
-      handleCourseSelect(selectedCourse);
-    }
   };
 
-  // Check if we're on a specific round page
-  const isRoundDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
+  // Main page - show rounds display and course selector
+  if (isMainPage) {
+    return (
+      <div className="space-y-6">
+        <RoundTrackingHeader 
+          onBack={handleBack} 
+          subtitle="View your rounds and start tracking new ones"
+        />
+        
+        {pageLoading ? (
+          <Card>
+            <CardContent className="pt-6 flex justify-center items-center">
+              <Loading message="Loading rounds..." minHeight={150} size="md" />
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Rounds display showing in-progress rounds */}
+            <RoundsDisplay 
+              onCourseSelect={(course, courseHoleCount) => {
+                if (courseHoleCount) {
+                  setHoleCount(courseHoleCount);
+                }
+                handleCourseSelect(course);
+              }} 
+            />
+            
+            {/* Course selector to start a new round */}
+            <CourseSelector
+              selectedCourse={selectedCourse}
+              selectedTee={roundTracking.selectedTee}
+              onCourseSelect={handleCourseSelect}
+              onTeeSelect={setSelectedTee}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
 
-  // Debug logs to help diagnose rendering conditions
-  console.log("Round tracking render conditions:", { 
-    selectedCourse: !!selectedCourse, 
-    currentRoundId: !!currentRoundId, 
-    isLoading,
-    currentPath: window.location.pathname,
-    isRoundDetailPage: !!isRoundDetailPage
-  });
-
-  // If we're on the round detail page with active round, show the round content
-  if (isRoundDetailPage && currentRoundId) {
+  // Round detail page - show specific round
+  if (isDetailPage && currentRoundId) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
-        {isLoading ? (
-          <LoadingState onBack={handleBack} hideHeader={true}>
-            {loadingTimeout && (
-              <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Taking longer than expected. There might be a connection issue.
-                </p>
-                <Button onClick={handleRefresh}>
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Refresh page
-                </Button>
-              </div>
-            )}
-          </LoadingState>
+        
+        {hookIsLoading ? (
+          <Loading message="Loading round data..." />
         ) : (
           <ActiveRoundContent
             holeScores={holeScores}
@@ -151,101 +145,29 @@ const RoundTracking = () => {
     );
   }
 
-  // If still loading on the main rounds page, show loading state
-  if (isLoading && window.location.pathname === '/rounds') {
-    return (
-      <div className="space-y-6">
-        <RoundTrackingHeader onBack={handleBack} />
-        <LoadingState onBack={handleBack} hideHeader={true}>
-          {loadingTimeout && (
-            <div className="mt-8 text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Taking longer than expected. There might be a connection issue.
-              </p>
-              <Button onClick={handleRefresh}>
-                <RefreshCcw className="h-4 w-4 mr-2" />
-                Refresh page
-              </Button>
-            </div>
-          )}
-        </LoadingState>
-      </div>
-    );
-  }
-
-  // We're on the main rounds list page and data is loaded
-  if (window.location.pathname === '/rounds') {
-    return (
-      <div className="space-y-6">
-        <RoundTrackingHeader onBack={handleBack} />
-        
-        {/* Always show RoundsDisplay with any in-progress rounds */}
-        <RoundsDisplay 
-          onCourseSelect={(course, holeCount) => {
-            if (holeCount) {
-              setHoleCount(holeCount);
-            }
-            handleCourseSelect(course);
-          }} 
-        />
-        
-        {/* Always show CourseSelector as well */}
-        <CourseSelector
-          selectedCourse={selectedCourse}
-          selectedTee={selectedTee}
-          onCourseSelect={handleCourseSelect}
-          onTeeSelect={setSelectedTee}
-        />
-      </div>
-    );
-  }
-
-  // For all other pages in the rounds flow
+  // All other pages in the round flow
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={handleBack} />
-
-      {isLoading ? (
-        <LoadingState onBack={handleBack} hideHeader={true}>
-          {loadingTimeout && (
-            <div className="mt-8 text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Taking longer than expected. There might be a connection issue.
-              </p>
-              <Button onClick={handleRefresh}>
-                <RefreshCcw className="h-4 w-4 mr-2" />
-                Refresh page
-              </Button>
-            </div>
-          )}
-        </LoadingState>
+      
+      {hookIsLoading ? (
+        <Loading message="Loading round data..." />
       ) : (
-        <>
-          {selectedCourse && !holeCount && (
-            <HoleCountSelector
-              selectedCourse={selectedCourse}
-              onHoleCountSelect={handleHoleCountSelect}
-            />
-          )}
-
-          {selectedCourse && holeCount > 0 && (
-            <ActiveRoundContent
-              holeScores={holeScores}
-              currentHoleData={currentHoleData}
-              onHoleUpdate={handleHoleUpdate}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              currentHole={currentHole}
-              holeCount={holeCount}
-              teeColor={currentTeeColor}
-              courseId={selectedCourse.id}
-              isSaving={isSaving}
-              showFinalScore={showFinalScore}
-              onConfirmRound={handleConfirmRound}
-              onCancelFinalScore={() => setShowFinalScore(false)}
-            />
-          )}
-        </>
+        <ActiveRoundContent
+          holeScores={holeScores}
+          currentHoleData={currentHoleData}
+          onHoleUpdate={handleHoleUpdate}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          currentHole={currentHole}
+          holeCount={holeCount || 18}
+          teeColor={currentTeeColor}
+          courseId={selectedCourse?.id}
+          isSaving={isSaving}
+          showFinalScore={showFinalScore}
+          onConfirmRound={handleConfirmRound}
+          onCancelFinalScore={() => setShowFinalScore(false)}
+        />
       )}
     </div>
   );
