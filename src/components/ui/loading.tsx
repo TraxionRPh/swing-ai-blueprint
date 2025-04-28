@@ -12,12 +12,12 @@ export function Loading({ className, message = "Loading...", fixed = false }: Lo
   return (
     <div 
       className={cn(
-        "flex min-h-[400px] flex-col items-center justify-center relative",
+        "flex min-h-[400px] flex-col items-center justify-center",
         fixed && "fixed inset-0 bg-background/95 z-50",
         className
       )}
     >
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+      <div className="flex flex-col items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="mt-4 text-sm text-muted-foreground text-center">{message}</p>
       </div>

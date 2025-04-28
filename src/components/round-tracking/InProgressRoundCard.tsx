@@ -39,13 +39,14 @@ export const InProgressRoundCard = ({
     console.log("Resume round clicked for round ID:", roundId);
     
     try {
-      // Force browser navigation to ensure a clean state
-      window.location.href = `/rounds/${roundId}`;
-      
       toast({
         title: "Loading round",
         description: "Retrieving your round data..."
       });
+      
+      // Use React Router's navigate instead of direct window.location
+      // This prevents full page reloads which can cause state issues
+      navigate(`/rounds/${roundId}`);
     } catch (error) {
       console.error("Navigation error:", error);
     }

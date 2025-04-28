@@ -28,11 +28,13 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const [inProgressRounds, setInProgressRounds] = useState<RoundWithCourse[]>([]);
   const [completedRounds, setCompletedRounds] = useState<RoundWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const fetchRounds = async () => {
     setLoading(true);
+    setError(null);
     try {
       console.log("Fetching rounds data from supabase");
       const { data: rounds, error } = await supabase
@@ -78,6 +80,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       setCompletedRounds(completed as RoundWithCourse[]);
     } catch (error) {
       console.error("Error loading rounds:", error);
+      setError("Failed to load rounds data");
       toast({
         title: "Error loading rounds",
         description: "Please try again later",
@@ -89,8 +92,17 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   };
 
   useEffect(() => {
-    fetchRounds();
-  }, [toast]);
+    const controller = new AbortController();
+    
+    fetchRounds().catch(err => {
+      if (controller.signal.aborted) return;
+      console.error("Failed to fetch rounds:", err);
+    });
+    
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   const handleDeleteRound = async (roundId: string) => {
     try {
@@ -129,7 +141,21 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   };
 
   if (loading) {
-    return <Loading message="Loading rounds..." />;
+    return <Loading message="Loading rounds..." className="min-h-[200px]" />;
+  }
+  
+  if (error) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <p className="text-center text-destructive">{error}</p>
+          <Button variant="outline" onClick={fetchRounds} className="mt-4 mx-auto block">
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   const renderInProgressRounds = () => {
@@ -186,3 +212,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     </div>
   );
 };
+
+// Add Button and RefreshCcw imports at the top
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
