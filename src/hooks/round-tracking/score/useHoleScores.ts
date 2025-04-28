@@ -78,7 +78,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       setHoleScores(formattedScores);
       
       // Return an object with holeCount instead of returning the formatted scores directly
-      return { holeCount, formattedScores };
+      return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
       toast({
@@ -87,7 +87,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         variant: "destructive"
       });
       initializeDefaultScores();
-      throw error;
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -132,12 +132,9 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       const formattedScores = formatHoleScores([], holeInfo);
       console.log('Formatted hole scores with course data (direct):', formattedScores);
       setHoleScores(formattedScores);
-      
-      return { holeCount: 18, formattedScores };
     } catch (error) {
       console.error('Error fetching hole scores from course:', error);
       initializeDefaultScores();
-      throw error;
     } finally {
       setIsLoading(false);
     }
