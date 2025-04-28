@@ -12,6 +12,8 @@ export const useRoundManagement = (user: any) => {
     if (!user) return null;
 
     try {
+      console.log("Fetching in-progress round for user:", user.id);
+      
       const { data, error } = await supabase
         .from('rounds')
         .select(`
@@ -22,7 +24,8 @@ export const useRoundManagement = (user: any) => {
             id,
             name,
             city,
-            state
+            state,
+            total_par
           ),
           hole_scores (*)
         `)
@@ -30,7 +33,12 @@ export const useRoundManagement = (user: any) => {
         .is('total_score', null)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching in-progress round:', error);
+        throw error;
+      }
+
+      console.log("In-progress round data:", data);
 
       if (data) {
         // Get tees for the course
@@ -40,7 +48,10 @@ export const useRoundManagement = (user: any) => {
             .select('*')
             .eq('course_id', data.course_id) : null;
             
-        if (courseTeesResponse?.error) throw courseTeesResponse.error;
+        if (courseTeesResponse?.error) {
+          console.error('Error fetching course tees:', courseTeesResponse.error);
+          throw courseTeesResponse.error;
+        }
         
         // Get hole information including distance
         const holeInfoResponse = data.course_id ?
@@ -49,7 +60,10 @@ export const useRoundManagement = (user: any) => {
             .select('*')
             .eq('course_id', data.course_id) : null;
             
-        if (holeInfoResponse?.error) throw holeInfoResponse.error;
+        if (holeInfoResponse?.error) {
+          console.error('Error fetching hole info:', holeInfoResponse.error);
+          throw holeInfoResponse.error;
+        }
         
         const holeInfo = holeInfoResponse?.data || [];
         
@@ -87,19 +101,35 @@ export const useRoundManagement = (user: any) => {
     if (!currentRoundId) return false;
 
     try {
+      console.log("Finishing round with ID:", currentRoundId);
+      console.log("Hole scores:", holeScores.slice(0, holeCount));
+      console.log("Hole count:", holeCount);
+      
       // Only consider holes up to the hole count limit
       const relevantScores = holeScores.slice(0, holeCount);
       
-      await supabase
+      const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
+      const totalPutts = relevantScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
+      const fairwaysHit = relevantScores.filter(hole => hole.fairwayHit).length;
+      const greensInRegulation = relevantScores.filter(hole => hole.greenInRegulation).length;
+      
+      const updateResult = await supabase
         .from('rounds')
         .update({ 
-          total_score: relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
-          total_putts: relevantScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
-          fairways_hit: relevantScores.filter(hole => hole.fairwayHit).length,
-          greens_in_regulation: relevantScores.filter(hole => hole.greenInRegulation).length,
+          total_score: totalScore,
+          total_putts: totalPutts,
+          fairways_hit: fairwaysHit,
+          greens_in_regulation: greensInRegulation,
           hole_count: holeCount
         })
         .eq('id', currentRoundId);
+        
+      if (updateResult.error) {
+        console.error('Error updating round:', updateResult.error);
+        throw updateResult.error;
+      }
+      
+      console.log("Round successfully updated with final scores:", updateResult);
 
       toast({
         title: "Round Completed",

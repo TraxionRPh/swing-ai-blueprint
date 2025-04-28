@@ -16,6 +16,7 @@ interface ScoreData {
 export const ScoreChart = () => {
   const [scoreData, setScoreData] = useState<ScoreData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -23,6 +24,8 @@ export const ScoreChart = () => {
       if (!user) return;
 
       try {
+        console.log("Fetching rounds for user:", user.id);
+        
         const { data, error } = await supabase
           .from('rounds')
           .select(`
@@ -40,9 +43,12 @@ export const ScoreChart = () => {
 
         if (error) {
           console.error('Error fetching rounds:', error);
+          setError(error.message);
           setLoading(false);
           return;
         }
+
+        console.log("Rounds data received:", data);
 
         if (data && data.length > 0) {
           const formattedData = data.map(round => ({
@@ -51,10 +57,14 @@ export const ScoreChart = () => {
             courseName: round.golf_courses?.name || 'Unknown Course',
             totalPar: round.golf_courses?.total_par || 72
           }));
+          console.log("Formatted data:", formattedData);
           setScoreData(formattedData);
+        } else {
+          console.log("No rounds data found, using fallback data");
         }
       } catch (err) {
         console.error('Error in score chart:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -82,40 +92,47 @@ export const ScoreChart = () => {
       <CardHeader className="pb-2">
         <CardTitle>Recent Scores</CardTitle>
         <CardDescription>
-          Your last {displayData.length} rounds
+          Your last {scoreData.length > 0 ? scoreData.length : fallbackData.length} rounds
+          {error && <span className="text-red-500 ml-2 text-xs">({error})</span>}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={displayData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis domain={[minScore, maxScore]} reversed />
-            <Tooltip 
-              formatter={(value, name) => {
-                const dataPoint = displayData.find(item => item.score === value);
-                if (name === 'score' && dataPoint) {
-                  const overUnder = dataPoint.score - dataPoint.totalPar;
-                  const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
-                  return [`${value} (${overUnderText})`, 'Score'];
-                }
-                return [value, name];
-              }}
-              labelFormatter={(label) => {
-                const dataPoint = displayData.find(item => item.date === label);
-                return dataPoint?.courseName ? `${label} - ${dataPoint.courseName}` : label;
-              }}
-            />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="score" 
-              stroke="#FFC300"
-              strokeWidth={2}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">Loading scores...</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={displayData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis domain={[minScore, maxScore]} reversed />
+              <Tooltip 
+                formatter={(value, name) => {
+                  const dataPoint = displayData.find(item => item.score === value);
+                  if (name === 'score' && dataPoint) {
+                    const overUnder = dataPoint.score - dataPoint.totalPar;
+                    const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
+                    return [`${value} (${overUnderText})`, 'Score'];
+                  }
+                  return [value, name];
+                }}
+                labelFormatter={(label) => {
+                  const dataPoint = displayData.find(item => item.date === label);
+                  return dataPoint?.courseName ? `${label} - ${dataPoint.courseName}` : label;
+                }}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="score" 
+                stroke="#FFC300"
+                strokeWidth={2}
+                activeDot={{ r: 8 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   );
