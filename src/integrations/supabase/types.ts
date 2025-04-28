@@ -452,6 +452,36 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_sessions: {
+        Row: {
+          created_at: string | null
+          date: string
+          duration_minutes: number
+          focus_area: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          duration_minutes: number
+          focus_area: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          duration_minutes?: number
+          focus_area?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -656,6 +686,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_user_handicap: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
       has_premium_access: {
         Args: { user_id: string }
         Returns: boolean
