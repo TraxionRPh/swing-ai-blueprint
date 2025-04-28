@@ -7,12 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const toast = useToast();
+  const { toast } = useToast();
 
   const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
     setIsLoading(true);
     try {
       console.log('Fetching hole scores for round:', roundId);
+      
       // First get the scores for this round
       const { data: holeScoresData, error: holeScoresError } = await supabase
         .from('hole_scores')
@@ -26,42 +27,59 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       }
 
       // Get course info to fetch hole data
-      const { data: roundData, error: roundError } = await supabase
-        .from('rounds')
-        .select('course_id, hole_count')
-        .eq('id', roundId)
-        .single();
-        
-      if (roundError) {
-        console.error('Error fetching round data:', roundError);
-        throw roundError;
+      let roundData = null;
+      let courseId = null;
+      let holeCount = 18;
+      
+      try {
+        const roundResponse = await supabase
+          .from('rounds')
+          .select('course_id, hole_count')
+          .eq('id', roundId)
+          .maybeSingle();
+          
+        if (roundResponse.error) {
+          console.error('Error fetching round data:', roundResponse.error);
+        } else {
+          roundData = roundResponse.data;
+          courseId = roundData?.course_id;
+          holeCount = roundData?.hole_count || 18;
+        }
+      } catch (roundError) {
+        console.error('Failed to fetch round data:', roundError);
+        // Continue with default values
       }
       
       let holeInfo: any[] = [];
-      if (roundData?.course_id) {
-        console.log('Fetching course holes for course (from round):', roundData.course_id);
-        const { data: courseHoles, error: courseHolesError } = await supabase
-          .from('course_holes')
-          .select('*')
-          .eq('course_id', roundData.course_id)
-          .order('hole_number');
-          
-        if (courseHolesError) {
-          console.error('Error fetching course holes:', courseHolesError);
-          throw courseHolesError;
+      
+      if (courseId) {
+        try {
+          console.log('Fetching course holes for course (from round):', courseId);
+          const courseHolesResponse = await supabase
+            .from('course_holes')
+            .select('*')
+            .eq('course_id', courseId)
+            .order('hole_number');
+            
+          if (courseHolesResponse.error) {
+            console.error('Error fetching course holes:', courseHolesResponse.error);
+          } else {
+            holeInfo = courseHolesResponse.data || [];
+            console.log('Course holes data (from round):', holeInfo);
+          }
+        } catch (courseError) {
+          console.error('Failed to fetch course holes:', courseError);
+          // Continue with empty hole info
         }
-        holeInfo = courseHoles || [];
-        console.log('Course holes data (from round):', holeInfo);
       }
 
-      const holeCount = roundData?.hole_count || 18;
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
       console.log('Formatted hole scores with course data (from round):', formattedScores);
       setHoleScores(formattedScores);
       return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
-      toast.toast({
+      toast({
         title: "Error loading round data",
         description: "Could not load hole scores. Please try again.",
         variant: "destructive"
@@ -75,9 +93,15 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
 
   useEffect(() => {
     if (roundId) {
-      fetchHoleScoresFromRound(roundId);
+      fetchHoleScoresFromRound(roundId).catch(error => {
+        console.error('Failed to fetch hole scores in useEffect:', error);
+        initializeDefaultScores();
+      });
     } else if (courseId) {
-      fetchHoleScoresFromCourse(courseId);
+      fetchHoleScoresFromCourse(courseId).catch(error => {
+        console.error('Failed to fetch course holes in useEffect:', error);
+        initializeDefaultScores();
+      });
     } else if (holeScores.length === 0) {
       initializeDefaultScores();
     }
@@ -95,7 +119,10 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         .eq('course_id', courseId)
         .order('hole_number');
         
-      if (courseHolesError) throw courseHolesError;
+      if (courseHolesError) {
+        console.error('Error fetching course holes:', courseHolesError);
+        throw courseHolesError;
+      }
       
       const holeInfo = courseHoles || [];
       console.log('Course holes data (direct):', holeInfo);

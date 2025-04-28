@@ -35,46 +35,60 @@ export const useRoundManagement = (user: any) => {
 
       if (error) {
         console.error('Error fetching in-progress round:', error);
-        throw error;
+        return null;
       }
 
       console.log("In-progress round data:", data);
 
       if (data) {
         // Get tees for the course
-        const courseTeesResponse = data.course_id ? 
-          await supabase
-            .from('course_tees')
-            .select('*')
-            .eq('course_id', data.course_id) : null;
-            
-        if (courseTeesResponse?.error) {
-          console.error('Error fetching course tees:', courseTeesResponse.error);
-          throw courseTeesResponse.error;
+        let courseTeesData = [];
+        try {
+          if (data.course_id) {
+            const courseTeesResponse = await supabase
+              .from('course_tees')
+              .select('*')
+              .eq('course_id', data.course_id);
+              
+            if (courseTeesResponse.error) {
+              console.error('Error fetching course tees:', courseTeesResponse.error);
+            } else {
+              courseTeesData = courseTeesResponse.data || [];
+            }
+          }
+        } catch (teesError) {
+          console.error('Failed to fetch course tees:', teesError);
+          // Continue with what we have
         }
         
         // Get hole information including distance
-        const holeInfoResponse = data.course_id ?
-          await supabase
-            .from('course_holes')
-            .select('*')
-            .eq('course_id', data.course_id) : null;
-            
-        if (holeInfoResponse?.error) {
-          console.error('Error fetching hole info:', holeInfoResponse.error);
-          throw holeInfoResponse.error;
+        let holeInfo = [];
+        try {
+          if (data.course_id) {
+            const holeInfoResponse = await supabase
+              .from('course_holes')
+              .select('*')
+              .eq('course_id', data.course_id);
+              
+            if (holeInfoResponse.error) {
+              console.error('Error fetching hole info:', holeInfoResponse.error);
+            } else {
+              holeInfo = holeInfoResponse.data || [];
+            }
+          }
+        } catch (holeError) {
+          console.error('Failed to fetch hole info:', holeError);
+          // Continue with what we have
         }
-        
-        const holeInfo = holeInfoResponse?.data || [];
         
         return {
           roundId: data.id,
           holeCount: data.hole_count || 18,
           course: data.golf_courses ? {
             ...data.golf_courses,
-            course_tees: courseTeesResponse?.data || []
+            course_tees: courseTeesData
           } : null,
-          holeScores: data.hole_scores?.map((hole: any) => {
+          holeScores: (data.hole_scores || []).map((hole: any) => {
             // Find corresponding hole info to get distance
             const courseHole = holeInfo.find((h: any) => h.hole_number === hole.hole_number);
             
@@ -93,6 +107,11 @@ export const useRoundManagement = (user: any) => {
       return null;
     } catch (error) {
       console.error('Error fetching in-progress round:', error);
+      toast({
+        title: "Error loading round",
+        description: "Could not load round data. Please try again.",
+        variant: "destructive"
+      });
       return null;
     }
   };

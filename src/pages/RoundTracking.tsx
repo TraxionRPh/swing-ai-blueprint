@@ -3,15 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { InProgressRoundCard } from "@/components/round-tracking/InProgressRoundCard";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { HoleCountSelector } from "@/components/round-tracking/hole-count/HoleCountSelector";
 import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoundContent";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const { toast } = useToast();
+  
   const {
     selectedCourse,
     selectedTee,
@@ -35,8 +41,23 @@ const RoundTracking = () => {
     isLoading
   } = useRoundTracking();
 
+  useEffect(() => {
+    // Set a timeout to show a refresh option if loading takes too long
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        setLoadingTimeout(true);
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const handleNext = () => {
@@ -72,7 +93,21 @@ const RoundTracking = () => {
   };
 
   if (isLoading) {
-    return <LoadingState onBack={handleBack} />;
+    return (
+      <LoadingState onBack={handleBack}>
+        {loadingTimeout && (
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Taking longer than expected. There might be a connection issue.
+            </p>
+            <Button onClick={handleRefresh}>
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Refresh page
+            </Button>
+          </div>
+        )}
+      </LoadingState>
+    );
   }
 
   return (

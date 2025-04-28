@@ -7,13 +7,15 @@ import { useRoundManagement } from "./round-tracking/useRoundManagement";
 import { Course } from "@/types/round-tracking";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
   const [holeCount, setHoleCount] = useState<number | null>(null);
   const { roundId: urlRoundId } = useParams();
-  const [isLoading, setIsLoading] = useState(true);  // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
   const [courseName, setCourseName] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const {
     currentRoundId,
@@ -43,8 +45,8 @@ export const useRoundTracking = () => {
   } = useScoreTracking(currentRoundId, selectedCourse?.id);
 
   useEffect(() => {
+    let isMounted = true;
     const initializeRound = async () => {
-      setIsLoading(true);
       try {
         // If roundId is provided in URL, use that instead of fetching
         if (urlRoundId) {
@@ -52,52 +54,76 @@ export const useRoundTracking = () => {
           setCurrentRoundId(urlRoundId);
           
           // Fetch course name and hole count for the round
-          const { data, error } = await supabase
-            .from('rounds')
-            .select(`
-              hole_count,
-              golf_courses:course_id (
-                id,
-                name,
-                city,
-                state,
-                total_par,
-                course_tees (*)
-              )
-            `)
-            .eq('id', urlRoundId)
-            .single();
+          try {
+            const { data, error } = await supabase
+              .from('rounds')
+              .select(`
+                hole_count,
+                golf_courses:course_id (
+                  id,
+                  name,
+                  city,
+                  state,
+                  total_par,
+                  course_tees (*)
+                )
+              `)
+              .eq('id', urlRoundId)
+              .single();
+              
+            if (error) {
+              console.error("Error fetching round data:", error);
+              throw error;
+            }
             
-          if (error) {
+            if (data?.golf_courses?.name && isMounted) {
+              setCourseName(data.golf_courses.name);
+            }
+            
+            if (data?.hole_count && isMounted) {
+              setHoleCount(data.hole_count);
+            }
+          } catch (error) {
             console.error("Error fetching round data:", error);
-            throw error;
-          }
-          
-          if (data?.golf_courses?.name) {
-            setCourseName(data.golf_courses.name);
-          }
-          
-          if (data?.hole_count) {
-            setHoleCount(data.hole_count);
+            toast({
+              title: "Error loading round",
+              description: "Could not load round data. Please try again.",
+              variant: "destructive"
+            });
           }
         } else {
-          const roundData = await fetchInProgressRound();
-          if (roundData) {
-            setCurrentRoundId(roundData.roundId);
-            setHoleScores(roundData.holeScores);
-            setHoleCount(roundData.holeCount || 18);
-            setCourseName(roundData.course?.name || null);
+          try {
+            const roundData = await fetchInProgressRound();
+            if (roundData && isMounted) {
+              setCurrentRoundId(roundData.roundId);
+              setHoleScores(roundData.holeScores);
+              setHoleCount(roundData.holeCount || 18);
+              setCourseName(roundData.course?.name || null);
+            }
+          } catch (error) {
+            console.error("Error fetching in-progress round:", error);
+            toast({
+              title: "Error loading round",
+              description: "Could not load in-progress round. Please try again.",
+              variant: "destructive"
+            });
           }
         }
       } catch (error) {
         console.error("Error initializing round:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeRound();
-  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast]);
 
   useEffect(() => {
     // Load hole scores when roundId changes
@@ -115,20 +141,31 @@ export const useRoundTracking = () => {
 
   const handleCourseSelect = async (course: Course) => {
     // We always want to use the holeCount that's already been set
-    const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
-    if (newRoundId) {
-      setCurrentRoundId(newRoundId);
-      // Create default holes based on the selected hole count
-      const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
-        holeNumber: i + 1,
-        par: 4,
-        distance: 0,
-        score: 0,
-        putts: 0,
-        fairwayHit: false,
-        greenInRegulation: false
-      }));
-      setHoleScores(defaultHoles);
+    try {
+      const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
+      if (newRoundId) {
+        setCurrentRoundId(newRoundId);
+        // Create default holes based on the selected hole count
+        const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+          holeNumber: i + 1,
+          par: 4,
+          distance: 0,
+          score: 0,
+          putts: 0,
+          fairwayHit: false,
+          greenInRegulation: false
+        }));
+        setHoleScores(defaultHoles);
+      }
+      return newRoundId;
+    } catch (error) {
+      console.error("Error selecting course:", error);
+      toast({
+        title: "Error selecting course",
+        description: "Could not create a new round. Please try again.",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 

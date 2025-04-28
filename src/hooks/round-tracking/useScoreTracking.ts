@@ -4,7 +4,6 @@ import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHoleScores } from "./score/useHoleScores";
 import { useHolePersistence } from "./score/useHolePersistence";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 
 export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
@@ -14,13 +13,22 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   
   // Add useEffect to refetch hole scores when roundId changes
   useEffect(() => {
-    if (roundId) {
-      console.log("Fetching hole scores for round ID:", roundId);
-      fetchHoleScoresFromRound(roundId)
-        .finally(() => setIsInitialLoad(false));
-    } else {
-      setIsInitialLoad(false);
-    }
+    const loadHoleScores = async () => {
+      if (roundId) {
+        try {
+          console.log("Fetching hole scores for round ID:", roundId);
+          await fetchHoleScoresFromRound(roundId);
+        } catch (error) {
+          console.error("Error fetching hole scores:", error);
+        } finally {
+          setIsInitialLoad(false);
+        }
+      } else {
+        setIsInitialLoad(false);
+      }
+    };
+    
+    loadHoleScores();
   }, [roundId, fetchHoleScoresFromRound]);
 
   const handleHoleUpdate = (data: HoleData) => {
@@ -32,7 +40,9 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     );
     
     if (roundId) {
-      saveHoleScore(data);
+      saveHoleScore(data).catch(error => {
+        console.error('Failed to save hole score:', error);
+      });
     }
   };
 
