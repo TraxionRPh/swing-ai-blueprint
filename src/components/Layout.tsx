@@ -34,7 +34,7 @@ const LayoutContent = () => {
               </Button>
             )}
           </div>
-          <div className="w-full max-w-[1400px] mx-auto [&>div>h1]:text-center [&>div>p]:text-center [&>div>div>h1]:text-center [&>div>div>p]:text-center">
+          <div className="w-full max-w-[1400px] mx-auto">
             <Outlet />
           </div>
         </div>
