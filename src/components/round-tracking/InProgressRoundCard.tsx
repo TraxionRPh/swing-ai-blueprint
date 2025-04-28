@@ -47,6 +47,14 @@ export const InProgressRoundCard = ({
         description: "Retrieving your round data..."
       });
       
+      // Calculate the next hole to resume play at
+      // If lastHole is 8, we want to go to hole 9
+      const nextHole = lastHole + 1;
+      
+      // Store the next hole to resume at in session storage
+      // This will be read by useHoleNavigation
+      sessionStorage.setItem('resume-hole-number', nextHole.toString());
+      
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {
         // Use direct navigation to prevent potential React Router issues

@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
@@ -8,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import type { Course } from "@/types/round-tracking";
 import { InProgressRoundCard } from "./InProgressRoundCard";
 import { Loading } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface RoundsDisplayProps {
   onCourseSelect: (course: Course, holeCount?: number) => void;
@@ -69,9 +70,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       
       console.log("Rounds data fetched:", rounds?.length || 0, "rounds");
 
-      // Filter in-progress rounds (no total_score)
       const inProgress = rounds?.filter(round => round.total_score === null) || [];
-      // Filter completed rounds (have total_score)
       const completed = rounds?.filter(round => round.total_score !== null) || [];
       
       console.log("In-progress rounds:", inProgress.length);
@@ -92,7 +91,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     }
   }, [toast]);
 
-  // Add a timeout to ensure we exit loading state even if fetch fails
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (loading) {
@@ -121,7 +119,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     try {
       console.log("Deleting round:", roundId);
       
-      // Delete hole scores first due to foreign key constraints
       const { error: holeScoresError } = await supabase
         .from('hole_scores')
         .delete()
@@ -129,7 +126,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
 
       if (holeScoresError) throw holeScoresError;
 
-      // Then delete the round
       const { error } = await supabase
         .from('rounds')
         .delete()
@@ -153,7 +149,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     }
   };
 
-  // Return placeholder content while loading
   if (loading) {
     return (
       <Card className="mb-6 min-h-[200px]">
@@ -178,19 +173,26 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     );
   }
 
+  const getLastCompletedHole = (holeScores) => {
+    if (!holeScores || holeScores.length === 0) return 0;
+    
+    const scoredHoles = holeScores
+      .filter(hole => hole.score > 0)
+      .sort((a, b) => b.holeNumber - a.holeNumber);
+    
+    return scoredHoles.length > 0 ? scoredHoles[0].holeNumber : 0;
+  };
+
   const renderInProgressRounds = () => {
     if (inProgressRounds.length === 0) return null;
     
     return inProgressRounds.map((round) => {
-      // Count holes with scores (score > 0)
-      const holesCompleted = round.hole_scores?.filter(h => h.score && h.score > 0)?.length || 0;
-      
       return (
         <InProgressRoundCard
           key={round.id}
           roundId={round.id}
           courseName={round.golf_courses.name}
-          lastHole={holesCompleted}
+          lastHole={getLastCompletedHole(round.hole_scores)}
           holeCount={round.hole_count || 18}
           onDelete={() => handleDeleteRound(round.id)}
         />
@@ -198,7 +200,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     });
   };
 
-  // If we have no data at all, show a message
   if (inProgressRounds.length === 0 && completedRounds.length === 0) {
     return (
       <Card className="mb-6">
@@ -243,7 +244,3 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     </div>
   );
 };
-
-// Add Button and RefreshCcw imports at the top
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
