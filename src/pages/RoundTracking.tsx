@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,12 +13,15 @@ import { Label } from "@/components/ui/label";
 import { InProgressRoundCard } from "@/components/round-tracking/InProgressRoundCard";
 import { supabase } from "@/integrations/supabase/client";
 import type { Course } from "@/types/round-tracking";
+import { useToast } from "@/hooks/use-toast";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
-  const { roundId, holeNumber } = useParams();
+  const { roundId } = useParams();
+  const { toast } = useToast();
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [courseName, setCourseName] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     selectedCourse,
@@ -40,41 +44,63 @@ const RoundTracking = () => {
     deleteRound
   } = useRoundTracking();
 
+  // Load course info when round ID changes
   useEffect(() => {
-    if (roundId && roundId !== 'new') {
-      setCurrentRoundId(roundId);
-    }
-    
-    if (roundId) {
-      const storedHoleCount = sessionStorage.getItem('current-hole-count');
-      if (storedHoleCount) {
-        setHoleCount(parseInt(storedHoleCount));
-      }
-    }
-  }, [roundId, holeNumber, setHoleCount, setCurrentRoundId]);
-
-  useEffect(() => {
-    const fetchCourseName = async () => {
+    const fetchCourseInfo = async () => {
       if (!currentRoundId) return;
       
-      const { data: round } = await supabase
-        .from('rounds')
-        .select(`
-          course_id,
-          golf_courses (
-            name
-          )
-        `)
-        .eq('id', currentRoundId)
-        .single();
+      setIsLoading(true);
+      try {
+        const { data: round, error } = await supabase
+          .from('rounds')
+          .select(`
+            course_id,
+            hole_count,
+            golf_courses (
+              id,
+              name,
+              city,
+              state,
+              total_par,
+              course_tees (*)
+            )
+          `)
+          .eq('id', currentRoundId)
+          .single();
+          
+        if (error) throw error;
         
-      if (round?.golf_courses) {
-        setCourseName(round.golf_courses.name);
+        if (round?.golf_courses) {
+          setCourseName(round.golf_courses.name);
+          setHoleCount(round.hole_count || 18);
+          
+          // Set selected course if we have the data
+          if (round.golf_courses) {
+            const courseData: Course = {
+              id: round.golf_courses.id,
+              name: round.golf_courses.name,
+              city: round.golf_courses.city || '',
+              state: round.golf_courses.state || '',
+              course_tees: round.golf_courses.course_tees || [],
+              total_par: round.golf_courses.total_par
+            };
+            handleCourseSelect(courseData);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching course info:', error);
+        toast({
+          title: "Error",
+          description: "Could not load round data",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchCourseName();
-  }, [currentRoundId]);
+    fetchCourseInfo();
+  }, [currentRoundId, handleCourseSelect, setHoleCount, toast]);
 
   useEffect(() => {
     console.log('RoundTracking component state:', {
@@ -127,8 +153,32 @@ const RoundTracking = () => {
   const handleDeleteRound = () => {
     if (currentRoundId) {
       deleteRound(currentRoundId);
+      navigate('/rounds');
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleBack}
+            className="text-muted-foreground hover:bg-secondary"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="sr-only">Go back</span>
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading round data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,7 +200,7 @@ const RoundTracking = () => {
         </div>
       </div>
 
-      {!selectedCourse && currentRoundId && (
+      {!selectedCourse && currentRoundId && !isLoading && (
         <InProgressRoundCard
           roundId={currentRoundId}
           courseName={courseName || "Loading course..."}
@@ -160,7 +210,7 @@ const RoundTracking = () => {
         />
       )}
 
-      {!selectedCourse && (
+      {!selectedCourse && !currentRoundId && (
         <CourseSelector
           selectedCourse={selectedCourse}
           selectedTee={selectedTee}

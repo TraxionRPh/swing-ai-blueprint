@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { HoleData } from "@/types/round-tracking";
 
@@ -7,17 +7,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (roundId) {
-      fetchHoleScoresFromRound(roundId);
-    } else if (courseId) {
-      fetchHoleScoresFromCourse(courseId);
-    } else if (holeScores.length === 0) {
-      initializeDefaultScores();
-    }
-  }, [roundId, courseId]);
-
-  const fetchHoleScoresFromRound = async (roundId: string) => {
+  const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
     setIsLoading(true);
     try {
       console.log('Fetching hole scores for round:', roundId);
@@ -33,7 +23,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       // Get course info to fetch hole data
       const { data: roundData, error: roundError } = await supabase
         .from('rounds')
-        .select('course_id')
+        .select('course_id, hole_count')
         .eq('id', roundId)
         .single();
         
@@ -53,16 +43,29 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         console.log('Course holes data (from round):', holeInfo);
       }
 
-      const formattedScores = formatHoleScores(holeScoresData || [], holeInfo);
+      const holeCount = roundData?.hole_count || 18;
+      const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
       console.log('Formatted hole scores with course data (from round):', formattedScores);
       setHoleScores(formattedScores);
+      return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
       initializeDefaultScores();
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (roundId) {
+      fetchHoleScoresFromRound(roundId);
+    } else if (courseId) {
+      fetchHoleScoresFromCourse(courseId);
+    } else if (holeScores.length === 0) {
+      initializeDefaultScores();
+    }
+  }, []);
 
   const fetchHoleScoresFromCourse = async (courseId: string) => {
     setIsLoading(true);
@@ -92,8 +95,8 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     }
   };
 
-  const formatHoleScores = (scores: any[], holeInfo: any[]): HoleData[] => {
-    return Array.from({ length: 18 }, (_, i) => {
+  const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18): HoleData[] => {
+    return Array.from({ length: holeCount }, (_, i) => {
       const existingHole = scores.find(h => h.hole_number === i + 1);
       const courseHole = holeInfo.find(h => h.hole_number === i + 1);
       
@@ -125,6 +128,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   return {
     holeScores,
     setHoleScores,
-    isLoading
+    isLoading,
+    fetchHoleScoresFromRound
   };
 };

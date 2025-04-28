@@ -5,10 +5,12 @@ import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
 import { Course } from "@/types/round-tracking";
+import { useParams } from "react-router-dom";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
   const [holeCount, setHoleCount] = useState<number | null>(null);
+  const { roundId: urlRoundId } = useParams();
   
   const {
     currentRoundId,
@@ -39,6 +41,13 @@ export const useRoundTracking = () => {
 
   useEffect(() => {
     const initializeRound = async () => {
+      // If roundId is provided in URL, use that instead of fetching
+      if (urlRoundId) {
+        console.log("Using round ID from URL:", urlRoundId);
+        setCurrentRoundId(urlRoundId);
+        return;
+      }
+      
       const roundData = await fetchInProgressRound();
       if (roundData) {
         setCurrentRoundId(roundData.roundId);
@@ -48,7 +57,14 @@ export const useRoundTracking = () => {
     };
 
     initializeRound();
-  }, [user]);
+  }, [urlRoundId, user]);
+
+  useEffect(() => {
+    // Load hole scores when roundId changes
+    if (currentRoundId) {
+      console.log("Current round ID changed, loading hole scores:", currentRoundId);
+    }
+  }, [currentRoundId]);
 
   const handleCourseSelect = async (course: Course) => {
     // We always want to use the holeCount that's already been set
@@ -100,6 +116,6 @@ export const useRoundTracking = () => {
     setHoleCount,
     setCurrentRoundId,
     currentRoundId,
-    deleteRound  // Added this to ensure it's properly exposed
+    deleteRound
   };
 };
