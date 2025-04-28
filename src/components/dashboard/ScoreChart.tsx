@@ -114,9 +114,10 @@ export const ScoreChart = () => {
               <Line 
                 type="monotone" 
                 dataKey="score" 
-                stroke="#FFC300"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                activeDot={{ r: 8 }}
+                dot={{ fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                activeDot={{ r: 8, fill: "hsl(var(--primary))" }}
               />
             </LineChart>
           </ResponsiveContainer>
