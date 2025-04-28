@@ -26,12 +26,12 @@ export const ScoringBreakdown = () => {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Greens in Regulation</span>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-[#10B981]">48%</span>
+              <span className="text-2xl font-bold text-[#FFC300]">48%</span>
               <span className="text-xs text-muted-foreground">(+5%)</span>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full">
-            <div className="h-2 bg-[#10B981] rounded-full" style={{ width: '48%' }} />
+            <div className="h-2 bg-[#FFC300] rounded-full" style={{ width: '48%' }} />
           </div>
         </div>
         
@@ -39,12 +39,12 @@ export const ScoringBreakdown = () => {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Average Putts per Round</span>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-[#FFC300]">31.4</span>
+              <span className="text-2xl font-bold text-[#ea384c]">31.4</span>
               <span className="text-xs text-muted-foreground">(-0.6)</span>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full">
-            <div className="h-2 bg-[#FFC300] rounded-full" style={{ width: '78%' }} />
+            <div className="h-2 bg-[#ea384c] rounded-full" style={{ width: '78%' }} />
           </div>
         </div>
       </CardContent>

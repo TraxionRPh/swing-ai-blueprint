@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const StatCards = () => {
@@ -30,7 +29,7 @@ export const StatCards = () => {
           <CardDescription>Hours practiced this month</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-bold text-[#FFC300]">12</div>
+          <div className="text-4xl font-bold text-primary">12</div>
         </CardContent>
       </Card>
     </div>
