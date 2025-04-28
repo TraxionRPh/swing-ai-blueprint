@@ -3,19 +3,23 @@ import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHoleScores } from "./score/useHoleScores";
 import { useHolePersistence } from "./score/useHolePersistence";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { holeScores, setHoleScores, isLoading, fetchHoleScoresFromRound } = useHoleScores(roundId, courseId);
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Add useEffect to refetch hole scores when roundId changes
   useEffect(() => {
     if (roundId) {
       console.log("Fetching hole scores for round ID:", roundId);
-      fetchHoleScoresFromRound(roundId);
+      fetchHoleScoresFromRound(roundId)
+        .finally(() => setIsInitialLoad(false));
+    } else {
+      setIsInitialLoad(false);
     }
   }, [roundId, fetchHoleScoresFromRound]);
 
@@ -51,7 +55,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     handleHoleUpdate,
     handleNext,
     handlePrevious,
-    isSaving: isSaving || isLoading,
+    isSaving: isSaving || isLoading || isInitialLoad,
     currentHoleData
   };
 };

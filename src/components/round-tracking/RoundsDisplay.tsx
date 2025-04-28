@@ -79,15 +79,11 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   }, [toast]);
 
   const handleInProgressRoundSelect = (round: RoundWithCourse) => {
-    // Get the highest hole number recorded to determine where to resume
-    const lastHole = round.hole_scores.reduce((max, score) => 
-      Math.max(max, score.hole_number), 0);
+    console.log("In-progress round selected:", round.id);
     
-    // Store hole count in sessionStorage to use in RoundTracking
-    sessionStorage.setItem('current-hole-count', round.hole_count?.toString() || '18');
-    
-    // Navigate to the round tracking page with the round ID and next hole
-    navigate(`/rounds/${round.id}/${lastHole + 1}`);
+    // Simply navigate to the round page with the ID
+    // Do not use lastHole or specify a hole number to avoid confusion
+    navigate(`/rounds/${round.id}`, { replace: true });
   };
 
   const handleDeleteRound = async (roundId: string) => {
@@ -135,7 +131,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               }
               isInProgress={isInProgress}
               roundId={isInProgress ? round.id : undefined}
-              onDelete={isInProgress ? handleDeleteRound : undefined}
+              onDelete={isInProgress ? () => handleDeleteRound(round.id) : undefined}
             />
           ))}
         </CardContent>

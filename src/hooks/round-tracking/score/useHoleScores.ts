@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { HoleData } from "@/types/round-tracking";
+import { useToast } from "@/hooks/use-toast";
 
 export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
 
   const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
     setIsLoading(true);
@@ -18,7 +20,10 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         .eq('round_id', roundId)
         .order('hole_number');
 
-      if (holeScoresError) throw holeScoresError;
+      if (holeScoresError) {
+        console.error('Error fetching hole scores:', holeScoresError);
+        throw holeScoresError;
+      }
 
       // Get course info to fetch hole data
       const { data: roundData, error: roundError } = await supabase
@@ -27,7 +32,10 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         .eq('id', roundId)
         .single();
         
-      if (roundError) throw roundError;
+      if (roundError) {
+        console.error('Error fetching round data:', roundError);
+        throw roundError;
+      }
       
       let holeInfo: any[] = [];
       if (roundData?.course_id) {
@@ -38,7 +46,10 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
           .eq('course_id', roundData.course_id)
           .order('hole_number');
           
-        if (courseHolesError) throw courseHolesError;
+        if (courseHolesError) {
+          console.error('Error fetching course holes:', courseHolesError);
+          throw courseHolesError;
+        }
         holeInfo = courseHoles || [];
         console.log('Course holes data (from round):', holeInfo);
       }
@@ -50,12 +61,17 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
+      toast.toast({
+        title: "Error loading round data",
+        description: "Could not load hole scores. Please try again.",
+        variant: "destructive"
+      });
       initializeDefaultScores();
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (roundId) {
@@ -65,7 +81,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     } else if (holeScores.length === 0) {
       initializeDefaultScores();
     }
-  }, []);
+  }, [roundId, courseId]);
 
   const fetchHoleScoresFromCourse = async (courseId: string) => {
     setIsLoading(true);

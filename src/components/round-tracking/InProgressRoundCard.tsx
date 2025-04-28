@@ -34,8 +34,10 @@ export const InProgressRoundCard = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleResumeRound = () => {
-    // Navigate to the round with the round ID - corrected navigation path
-    navigate(`/rounds/${roundId}`);
+    console.log("Resume round clicked for round ID:", roundId);
+    
+    // Use direct navigate with replace:true to ensure we fully replace the current route
+    navigate(`/rounds/${roundId}`, { replace: true });
   };
 
   return (
