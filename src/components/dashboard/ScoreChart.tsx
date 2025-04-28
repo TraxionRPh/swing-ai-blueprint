@@ -10,6 +10,7 @@ interface ScoreData {
   date: string;
   score: number;
   courseName: string;
+  totalPar: number;
 }
 
 export const ScoreChart = () => {
@@ -28,11 +29,12 @@ export const ScoreChart = () => {
             total_score,
             date,
             golf_courses (
-              name
+              name,
+              total_par
             )
           `)
           .eq('user_id', user.id)
-          .not('total_score', 'is', null) // Fixed: proper syntax for IS NOT NULL filter
+          .not('total_score', 'is', null)
           .order('date', { ascending: true })
           .limit(6);
 
@@ -46,7 +48,8 @@ export const ScoreChart = () => {
           const formattedData = data.map(round => ({
             date: format(new Date(round.date), 'MMM d'),
             score: round.total_score,
-            courseName: round.golf_courses?.name || 'Unknown Course'
+            courseName: round.golf_courses?.name || 'Unknown Course',
+            totalPar: round.golf_courses?.total_par || 72
           }));
           setScoreData(formattedData);
         }
@@ -61,27 +64,26 @@ export const ScoreChart = () => {
   }, [user]);
 
   const fallbackData: ScoreData[] = [
-    { date: 'Jan 15', score: 92, courseName: 'Sample Course' },
-    { date: 'Jan 29', score: 89, courseName: 'Sample Course' },
-    { date: 'Feb 12', score: 87, courseName: 'Sample Course' },
-    { date: 'Feb 26', score: 90, courseName: 'Sample Course' },
-    { date: 'Mar 10', score: 85, courseName: 'Sample Course' },
-    { date: 'Mar 24', score: 83, courseName: 'Sample Course' },
+    { date: 'Jan 15', score: 92, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Jan 29', score: 89, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Feb 12', score: 87, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Feb 26', score: 90, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Mar 10', score: 85, courseName: 'Sample Course', totalPar: 72 },
+    { date: 'Mar 24', score: 83, courseName: 'Sample Course', totalPar: 72 },
   ];
 
-  // Use the fetched data if available, otherwise use fallback data for new users
   const displayData = scoreData.length > 0 ? scoreData : fallbackData;
-
-  // Calculate the min and max values for domain
   const scores = displayData.map(item => item.score);
-  const minScore = Math.min(...scores) - 3; // Add some padding
+  const minScore = Math.min(...scores) - 3;
   const maxScore = Math.max(...scores) + 3;
 
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle>Recent Scores</CardTitle>
-        <CardDescription>Your last {displayData.length} rounds</CardDescription>
+        <CardDescription>
+          Your last {displayData.length} rounds
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
@@ -91,7 +93,12 @@ export const ScoreChart = () => {
             <YAxis domain={[minScore, maxScore]} reversed />
             <Tooltip 
               formatter={(value, name) => {
-                if (name === 'score') return [`${value}`, 'Score'];
+                const dataPoint = displayData.find(item => item.score === value);
+                if (name === 'score' && dataPoint) {
+                  const overUnder = dataPoint.score - dataPoint.totalPar;
+                  const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
+                  return [`${value} (${overUnderText})`, 'Score'];
+                }
                 return [value, name];
               }}
               labelFormatter={(label) => {
