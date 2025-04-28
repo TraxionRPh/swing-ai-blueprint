@@ -3,7 +3,13 @@ import * as React from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_KEYBOARD_SHORTCUT, SidebarContext } from "./sidebar-context"
+import { 
+  SIDEBAR_COOKIE_NAME, 
+  SIDEBAR_COOKIE_MAX_AGE, 
+  SIDEBAR_KEYBOARD_SHORTCUT, 
+  SidebarContext,
+  type SidebarContextType 
+} from "./sidebar-context"
 
 export const SidebarProvider = React.forwardRef<
   HTMLDivElement,
@@ -66,7 +72,7 @@ export const SidebarProvider = React.forwardRef<
 
     const state = open ? "expanded" : "collapsed"
 
-    const contextValue = React.useMemo(
+    const contextValue: SidebarContextType = React.useMemo(
       () => ({
         state,
         open,
