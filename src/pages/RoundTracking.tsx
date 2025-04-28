@@ -9,6 +9,7 @@ import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { InProgressRoundCard } from "@/components/round-tracking/InProgressRoundCard";
 import type { Course } from "@/types/round-tracking";
 
 const RoundTracking = () => {
@@ -48,7 +49,6 @@ const RoundTracking = () => {
   }, [roundId, holeNumber, setHoleCount, setCurrentRoundId]);
 
   useEffect(() => {
-    // Log important state values to help debugging
     console.log('RoundTracking component state:', {
       roundId,
       selectedCourse,
@@ -58,8 +58,9 @@ const RoundTracking = () => {
       holeCount
     });
     
-    // Remove the automatic showing of final scorecard
-    // This was causing the summary to appear when moving from hole 17 to 18
+    if (currentHole === holeCount) {
+      setShowFinalScore(true);
+    }
   }, [roundId, selectedCourse, currentHoleData, holeScores, currentHole, holeCount]);
 
   const handleBack = () => {
@@ -68,7 +69,6 @@ const RoundTracking = () => {
 
   const handleNext = () => {
     if (currentHole === holeCount) {
-      // Only show the final score when explicitly clicking the "Review Round" button
       setShowFinalScore(true);
     } else {
       moveToNextHole();
@@ -80,7 +80,6 @@ const RoundTracking = () => {
     setShowFinalScore(false);
     
     if (success) {
-      // Navigate back to dashboard after round completion
       navigate('/dashboard');
     }
   };
@@ -117,12 +116,14 @@ const RoundTracking = () => {
         </div>
       </div>
 
-      <CourseSelector
-        selectedCourse={selectedCourse}
-        selectedTee={selectedTee}
-        onCourseSelect={handleCourseSelection}
-        onTeeSelect={setSelectedTee}
-      />
+      {!roundId && holeScores.length > 0 && selectedCourse && (
+        <InProgressRoundCard
+          roundId={currentRoundId || ''}
+          courseName={selectedCourse.name}
+          lastHole={holeScores.filter(h => h.score > 0).length}
+          holeCount={holeCount || 18}
+        />
+      )}
 
       {selectedCourse && !holeCount && (
         <div className="bg-card p-6 rounded-lg border shadow-sm">
