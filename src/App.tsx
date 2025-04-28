@@ -72,27 +72,20 @@ const router = createBrowserRouter([
         element: <RoundTracking />,
       },
       {
+        path: "rounds/:roundId",
+        element: <RoundTracking />,
+      },
+      {
+        path: "rounds/:roundId/:holeNumber",
+        element: <RoundTracking />,
+      },
+      {
         path: "ai-analysis",
         element: <AIAnalysis />,
       },
       {
         path: "profile",
         element: <Profile />,
-      },
-    ],
-    errorElement: <NotFound />,
-  },
-  {
-    path: "/rounds/:roundId",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "",
-        element: <RoundTracking />,
       },
     ],
     errorElement: <NotFound />,

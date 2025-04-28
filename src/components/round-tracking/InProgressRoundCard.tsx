@@ -34,7 +34,8 @@ export const InProgressRoundCard = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleResumeRound = () => {
-    navigate(`/rounds/${roundId}/${lastHole + 1}`);
+    // Navigate to the round with the round ID - corrected navigation path
+    navigate(`/rounds/${roundId}`);
   };
 
   return (

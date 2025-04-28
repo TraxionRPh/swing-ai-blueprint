@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,6 +124,12 @@ const RoundTracking = () => {
     }
   };
 
+  const handleDeleteRound = () => {
+    if (currentRoundId) {
+      deleteRound(currentRoundId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -151,7 +156,7 @@ const RoundTracking = () => {
           courseName={courseName || "Loading course..."}
           lastHole={holeScores.filter(h => h.score > 0).length}
           holeCount={holeCount || 18}
-          onDelete={() => deleteRound(currentRoundId)}
+          onDelete={handleDeleteRound}
         />
       )}
 
