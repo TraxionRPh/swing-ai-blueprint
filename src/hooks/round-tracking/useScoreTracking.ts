@@ -44,8 +44,8 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
         
         if (!isMounted) return;
         
-        // If we got a successful result or we've reached max attempts, stop loading
-        if (result && result.length > 0) {
+        // Fix: Check if result exists and has holeCount property instead of checking length
+        if (result && result.holeCount > 0) {
           setIsInitialLoad(false);
           console.log("Successfully loaded hole scores");
         } else if (loadAttempts >= maxAttempts) {

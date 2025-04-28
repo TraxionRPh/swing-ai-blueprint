@@ -76,6 +76,8 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
       console.log('Formatted hole scores with course data (from round):', formattedScores);
       setHoleScores(formattedScores);
+      
+      // Return an object with holeCount instead of returning the formatted scores directly
       return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
