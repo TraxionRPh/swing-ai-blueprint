@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCcw } from "lucide-react";
+import { ArrowLeft, RefreshCcw, Loader2 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 
 interface LoadingStateProps {
   onBack: () => void;
@@ -22,25 +22,49 @@ export const LoadingState = ({
   roundId
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxRetries = 2;
   
-  // Show retry option sooner - after 4 seconds instead of 6
+  // Clear any existing timers on unmount
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 4000);
-    return () => clearTimeout(timer);
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
   }, []);
+  
+  // Show retry option sooner - after 3.5 seconds instead of 4
+  useEffect(() => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+    }
+    
+    retryTimerRef.current = setTimeout(() => {
+      setShowRetry(true);
+    }, 3500);
+    
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, [retryCount]);
 
   const handleRefresh = () => {
+    setRetryCount(prev => prev + 1);
+    setShowRetry(false);
+    
     if (retryFn) {
       // Use provided retry function if available
       retryFn();
-      // Reset the retry state
-      setShowRetry(false);
-      // Set timeout again
-      const timer = setTimeout(() => setShowRetry(true), 4000);
-      return () => clearTimeout(timer);
-    } else {
-      // Fallback to page reload
+    } else if (retryCount >= maxRetries) {
+      // If we've retried too many times, reload the page
       window.location.reload();
+    } else {
+      // Just reset the timer and state as a fallback
+      console.log("Retrying load attempt:", retryCount + 1);
     }
   };
 
@@ -73,11 +97,22 @@ export const LoadingState = ({
       {showRetry && (
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            Taking longer than expected. There might be a connection issue.
+            {retryCount > 0 
+              ? "Still having trouble loading your round. Let's try again."
+              : "Taking longer than expected. There might be a connection issue."}
           </p>
-          <Button onClick={handleRefresh}>
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            Retry loading round
+          <Button onClick={handleRefresh} disabled={retryCount >= maxRetries && !retryFn}>
+            {retryCount >= maxRetries && !retryFn ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Reloading page...
+              </>
+            ) : (
+              <>
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Retry loading round
+              </>
+            )}
           </Button>
         </div>
       )}

@@ -8,6 +8,8 @@ interface LoadingProps {
   fixed?: boolean;
   size?: 'sm' | 'md' | 'lg';
   minHeight?: string | number;
+  error?: Error | string | null;
+  onRetry?: () => void;
 }
 
 export function Loading({ 
@@ -15,7 +17,9 @@ export function Loading({
   message = "Loading...", 
   fixed = false,
   size = 'md',
-  minHeight = "400px"
+  minHeight = "400px",
+  error = null,
+  onRetry
 }: LoadingProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
@@ -27,6 +31,8 @@ export function Loading({
   const minHeightStyle = {
     minHeight: typeof minHeight === 'string' ? minHeight : `${minHeight}px`
   };
+
+  const errorMessage = error instanceof Error ? error.message : error;
 
   return (
     <div 
@@ -41,6 +47,19 @@ export function Loading({
         <Loader2 className={cn(sizeClasses[size], "animate-spin text-primary")} />
         {message && (
           <p className="mt-4 text-sm text-muted-foreground text-center">{message}</p>
+        )}
+        {errorMessage && (
+          <div className="mt-4 flex flex-col items-center">
+            <p className="text-sm text-destructive text-center">{errorMessage}</p>
+            {onRetry && (
+              <button 
+                onClick={onRetry}
+                className="mt-2 text-xs text-primary hover:underline"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

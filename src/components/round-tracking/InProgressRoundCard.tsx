@@ -44,14 +44,31 @@ export const InProgressRoundCard = ({
       
       toast({
         title: "Loading round",
-        description: "Retrieving your round data..."
+        description: `Retrieving your round at ${courseName}...`
       });
       
+      // Use a more robust navigation approach
+      const navigateToRound = () => {
+        try {
+          // First try React Router navigation
+          navigate(`/rounds/${roundId}`);
+          
+          // Set a backup direct navigation in case React Router fails
+          setTimeout(() => {
+            if (window.location.pathname !== `/rounds/${roundId}`) {
+              console.log("Fallback to direct location change");
+              window.location.href = `/rounds/${roundId}`;
+            }
+          }, 1000);
+        } catch (navError) {
+          console.error("Navigation error:", navError);
+          // Direct fallback
+          window.location.href = `/rounds/${roundId}`;
+        }
+      };
+      
       // Add a small delay to let the toast show before navigation
-      setTimeout(() => {
-        // Use direct navigation to prevent potential React Router issues
-        navigate(`/rounds/${roundId}`, { replace: true });
-      }, 300);
+      setTimeout(navigateToRound, 300);
     } catch (error) {
       console.error("Navigation error:", error);
       setIsLoading(false);
@@ -61,11 +78,6 @@ export const InProgressRoundCard = ({
         description: "There was an issue loading this round. Please try again.",
         variant: "destructive"
       });
-      
-      // Fallback to direct location change if navigate fails
-      setTimeout(() => {
-        window.location.href = `/rounds/${roundId}`;
-      }, 1000);
     }
   };
 
@@ -79,6 +91,7 @@ export const InProgressRoundCard = ({
             size="icon"
             className="text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={() => setShowDeleteDialog(true)}
+            disabled={isLoading}
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete round</span>

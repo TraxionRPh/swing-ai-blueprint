@@ -1,8 +1,7 @@
-
 import { useNavigate } from "react-router-dom";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoundContent";
 import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
@@ -21,10 +20,16 @@ const RoundTracking = () => {
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
+  // Improved logging to diagnose issues
+  useEffect(() => {
+    console.log("RoundTracking Page - Current path:", window.location.pathname);
+    console.log("isMainPage:", isMainPage, "isDetailPage:", isDetailPage, "roundId:", roundId);
+  }, [isMainPage, isDetailPage, roundId]);
+  
   // Simplified loading for the main page
   const [pageLoading, setPageLoading] = useState(!isMainPage);
   const [loadRetries, setLoadRetries] = useState(0);
-  const maxRetries = 2;
+  const maxRetries = 3;
   
   useEffect(() => {
     // If we're on the main rounds page, set loading to false after a short delay
@@ -56,7 +61,27 @@ const RoundTracking = () => {
     isLoading: hookIsLoading
   } = roundTracking;
 
-  // Force timeout of loading state after 12 seconds to prevent infinite loading
+  // Callback for retry functionality
+  const retryLoading = useCallback(() => {
+    console.log("Retrying load attempt manually:", loadRetries + 1);
+    setLoadRetries(prev => prev + 1);
+    
+    // If we're on a specific round page, force navigation to refresh the page
+    if (isDetailPage && roundId && loadRetries >= 1) {
+      console.log("Hard refresh triggered after multiple retry attempts");
+      toast({
+        title: "Refreshing page",
+        description: "Attempting to resolve loading issues"
+      });
+      
+      // Use a small delay to allow the toast to show
+      setTimeout(() => {
+        window.location.href = `/rounds/${roundId}`;
+      }, 800);
+    }
+  }, [loadRetries, isDetailPage, roundId, toast]);
+
+  // Force timeout of loading state after 10 seconds to prevent infinite loading
   useEffect(() => {
     if (!isDetailPage || !hookIsLoading) return;
     
@@ -71,13 +96,13 @@ const RoundTracking = () => {
             description: "Refreshing the page to resolve loading issues",
             variant: "destructive",
           });
-          setTimeout(() => window.location.reload(), 1500);
+          setTimeout(() => window.location.href = `/rounds/${roundId}`, 1500);
         }
       }
-    }, 10000); // 10 seconds timeout
+    }, 9000); // 9 seconds timeout (reduced from 10)
     
     return () => clearTimeout(forceTimeout);
-  }, [hookIsLoading, loadRetries, isDetailPage, toast]);
+  }, [hookIsLoading, loadRetries, isDetailPage, toast, roundId, maxRetries]);
 
   const handleBack = () => {
     navigate(-1);
@@ -103,12 +128,6 @@ const RoundTracking = () => {
   const handleHoleCountSelect = (count: number) => {
     setHoleCount(count);
     sessionStorage.setItem('current-hole-count', count.toString());
-  };
-
-  const retryLoading = () => {
-    // This will trigger the useEffect above to retry loading
-    setLoadRetries(prev => prev + 1);
-    // Could also reload specific data here
   };
 
   // Main page - show rounds display and course selector
@@ -153,6 +172,9 @@ const RoundTracking = () => {
 
   // Round detail page - show specific round
   if (isDetailPage && currentRoundId) {
+    console.log("Rendering round detail page for:", currentRoundId);
+    console.log("hookIsLoading:", hookIsLoading, "holeScores:", holeScores.length);
+    
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
@@ -160,7 +182,7 @@ const RoundTracking = () => {
         {hookIsLoading ? (
           <LoadingState 
             onBack={handleBack} 
-            message="Loading your round data..." 
+            message={`Loading round data (attempt ${loadRetries + 1})...`}
             retryFn={retryLoading}
             roundId={currentRoundId}
           />
