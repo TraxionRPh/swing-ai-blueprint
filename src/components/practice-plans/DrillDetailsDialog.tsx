@@ -1,7 +1,7 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Drill } from "@/types/drill";
+import { PracticeTracker } from "@/components/drill-library/PracticeTracker";
 
 interface DrillDetailsDialogProps {
   drill: Drill | null;
@@ -34,6 +34,8 @@ export const DrillDetailsDialog = ({ drill, isOpen, onClose }: DrillDetailsDialo
             </Badge>
           </div>
         </DialogHeader>
+        
+        <PracticeTracker drill={drill} />
         
         <div className="mt-6">
           <div className="prose prose-invert max-w-none">
