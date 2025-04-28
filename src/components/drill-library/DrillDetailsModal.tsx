@@ -3,6 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Drill } from "@/types/drill";
+import { PracticeTracker } from "./PracticeTracker";
 
 interface DrillDetailsModalProps {
   drill: Drill;
@@ -93,6 +94,10 @@ export const DrillDetailsModal: React.FC<DrillDetailsModalProps> = ({
         <div className="mt-6">
           <div className="prose prose-invert max-w-none">
             <p className="text-sm text-muted-foreground">{drill.overview}</p>
+          </div>
+          
+          <div className="my-6">
+            <PracticeTracker drill={drill} />
           </div>
           
           {renderInstructions()}
