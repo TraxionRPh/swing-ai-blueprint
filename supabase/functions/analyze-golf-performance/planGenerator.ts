@@ -97,7 +97,7 @@ export class PlanGenerator {
           drill.title?.toLowerCase() || '',
           drill.overview?.toLowerCase() || '',
           drill.category?.toLowerCase() || '',
-          ...(drill.focus?.map(f => f.toLowerCase()) || [])
+          ...(Array.isArray(drill.focus) ? drill.focus.map(f => f.toLowerCase()) : [])
         ].join(' ');
 
         // Enhanced relevance scoring with user handicap level factored in
@@ -218,9 +218,11 @@ export class PlanGenerator {
         }
         
         // For additional variety, add a different drill from the back of the list
-        const extraDrillIndex = (relevantDrills.length - 1 - index) % relevantDrills.length;
-        if (!drillsForDay.includes(relevantDrills[extraDrillIndex])) {
-          drillsForDay.push(relevantDrills[extraDrillIndex]);
+        if (relevantDrills.length > 0) {  // Add safety check here
+          const extraDrillIndex = (relevantDrills.length - 1 - index) % relevantDrills.length;
+          if (extraDrillIndex >= 0 && !drillsForDay.includes(relevantDrills[extraDrillIndex])) {
+            drillsForDay.push(relevantDrills[extraDrillIndex]);
+          }
         }
         
         // Make sure we don't have duplicate drills in the day
@@ -453,10 +455,12 @@ export class PlanGenerator {
       }
       
       // Add one more drill for variety (from a different part of the list)
-      const extraDrillIndex = (relevantDrills.length - 1 - i) % relevantDrills.length;
-      if (extraDrillIndex >= 0 && relevantDrills[extraDrillIndex] && 
-          !dayDrills.includes(relevantDrills[extraDrillIndex])) {
-        dayDrills.push(relevantDrills[extraDrillIndex]);
+      if (relevantDrills.length > 0) { // Safety check
+        const extraDrillIndex = (relevantDrills.length - 1 - i) % relevantDrills.length;
+        if (extraDrillIndex >= 0 && relevantDrills[extraDrillIndex] && 
+            !dayDrills.includes(relevantDrills[extraDrillIndex])) {
+          dayDrills.push(relevantDrills[extraDrillIndex]);
+        }
       }
       
       // Ensure no duplicates
@@ -517,3 +521,4 @@ export class PlanGenerator {
     };
   }
 }
+
