@@ -93,7 +93,7 @@ export class ChallengeSelector {
         } else {
           continue; // Skip non-bunker challenges for bunker problems
         }
-        score += this.calculateBunkerChallengeScore(challengeText, normalizedProblem);
+        score += this.calculateBunkerChallengeScore(challengeText, normalizedProblem, challenge);
       }
       // Special handling for putting challenges
       else if (normalizedProblem.includes('putt')) {
@@ -173,7 +173,7 @@ export class ChallengeSelector {
     return score;
   }
 
-  private calculateBunkerChallengeScore(challengeText: string, problem: string): number {
+  private calculateBunkerChallengeScore(challengeText: string, problem: string, currentChallenge: any): number {
     let score = 0;
     
     // Core bunker context validation - highly important!
@@ -202,15 +202,15 @@ export class ChallengeSelector {
     }
     
     // Check if title explicitly mentions bunker
-    if ((challengeText.includes('title') || challenge.title) && 
-        (challengeText.includes('bunker') || challengeText.includes('sand'))) {
+    if (currentChallenge && currentChallenge.title && 
+        (currentChallenge.title.toLowerCase().includes('bunker') || currentChallenge.title.toLowerCase().includes('sand'))) {
       score += 8;
       console.log(`Bunker mentioned in challenge title`);
     }
     
     // Check if category explicitly mentions bunker
-    if ((challengeText.includes('category') || challenge.category) && 
-        (challengeText.includes('bunker') || challengeText.includes('sand'))) {
+    if (currentChallenge && currentChallenge.category && 
+        (currentChallenge.category.toLowerCase().includes('bunker') || currentChallenge.category.toLowerCase().includes('sand'))) {
       score += 5;
       console.log(`Bunker mentioned in challenge category`);
     }
