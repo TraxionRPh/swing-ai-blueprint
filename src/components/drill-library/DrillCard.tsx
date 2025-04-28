@@ -12,6 +12,7 @@ import { Drill } from "@/types/drill";
 import { useState } from "react";
 import { DrillDetailsModal } from "./DrillDetailsModal";
 import { DifficultyBadge } from "./DifficultyBadge";
+import { PracticeTracker } from "./PracticeTracker";
 
 interface DrillCardProps {
   drill: Drill;
@@ -35,12 +36,12 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
             {drill.overview?.substring(0, 150)}
             {drill.overview?.length > 150 ? '...' : ''}
           </p>
+          <PracticeTracker drill={drill} />
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-end">
           <Button 
             variant="secondary" 
             size="sm" 
-            className="w-full"
             onClick={() => setShowDetails(true)}
           >
             View Details

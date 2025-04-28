@@ -7,19 +7,21 @@ import { Drill } from '@/types/drill';
 
 export const usePracticeTracking = (drill: Drill) => {
   const [isTracking, setIsTracking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [pausedTime, setPausedTime] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Update elapsed time every second when tracking
+  // Update elapsed time every second when tracking and not paused
   useEffect(() => {
     let intervalId: number;
     
-    if (isTracking && startTime) {
+    if (isTracking && !isPaused && startTime) {
       intervalId = window.setInterval(() => {
         const now = new Date();
-        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000) - pausedTime;
         setElapsedTime(elapsed);
       }, 1000);
     }
@@ -27,7 +29,7 @@ export const usePracticeTracking = (drill: Drill) => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isTracking, startTime]);
+  }, [isTracking, isPaused, startTime, pausedTime]);
 
   const startPractice = useCallback(() => {
     if (!user) {
@@ -40,8 +42,10 @@ export const usePracticeTracking = (drill: Drill) => {
     }
     
     setIsTracking(true);
+    setIsPaused(false);
     setStartTime(new Date());
     setElapsedTime(0);
+    setPausedTime(0);
     
     toast({
       title: "Practice Started",
@@ -49,11 +53,31 @@ export const usePracticeTracking = (drill: Drill) => {
     });
   }, [user, drill.title, toast]);
 
+  const pausePractice = useCallback(() => {
+    if (isPaused) {
+      // Resuming practice
+      const pauseDuration = Math.floor((new Date().getTime() - (startTime?.getTime() || 0)) / 1000) - elapsedTime;
+      setPausedTime(prev => prev + pauseDuration);
+      setIsPaused(false);
+      toast({
+        title: "Practice Resumed",
+        description: "Timer resumed",
+      });
+    } else {
+      // Pausing practice
+      setIsPaused(true);
+      toast({
+        title: "Practice Paused",
+        description: "Timer paused",
+      });
+    }
+  }, [isPaused, startTime, elapsedTime, toast]);
+
   const completePractice = useCallback(async () => {
     if (!user || !startTime || !isTracking) return;
     
     const endTime = new Date();
-    const durationMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    const durationMinutes = Math.floor((endTime.getTime() - startTime.getTime() - (pausedTime * 1000)) / (1000 * 60));
     
     try {
       const { error } = await supabase
@@ -81,9 +105,11 @@ export const usePracticeTracking = (drill: Drill) => {
     }
     
     setIsTracking(false);
+    setIsPaused(false);
     setStartTime(null);
     setElapsedTime(0);
-  }, [user, startTime, isTracking, drill.category, toast]);
+    setPausedTime(0);
+  }, [user, startTime, isTracking, pausedTime, drill.category, toast]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -93,9 +119,11 @@ export const usePracticeTracking = (drill: Drill) => {
 
   return {
     isTracking,
+    isPaused,
     elapsedTime,
     formattedTime: formatTime(elapsedTime),
     startPractice,
+    pausePractice,
     completePractice
   };
 };
