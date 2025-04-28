@@ -1,7 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
-import { InProgressRoundCard } from "@/components/round-tracking/InProgressRoundCard";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState, useEffect } from "react";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
@@ -49,22 +48,13 @@ const RoundTracking = () => {
     if (isLoading) {
       timeoutId = window.setTimeout(() => {
         setLoadingTimeout(true);
-      }, 8000); // Reduced from 10s to 8s
+      }, 6000); // Reduced from 8s to 6s for faster feedback
     } else {
       setLoadingTimeout(false);
     }
     
     return () => {
       clearTimeout(timeoutId);
-    };
-  }, [isLoading]);
-
-  // Clear any timeouts when component unmounts
-  useEffect(() => {
-    console.log("Round tracking component mounted with loading state:", isLoading);
-    
-    return () => {
-      console.log("Round tracking component unmounted");
     };
   }, [isLoading]);
 
@@ -97,8 +87,6 @@ const RoundTracking = () => {
   const handleDeleteRound = () => {
     if (currentRoundId) {
       deleteRound(currentRoundId);
-      
-      // Force clear the current round ID to ensure fresh state
       setCurrentRoundId(null);
     }
   };
@@ -129,7 +117,7 @@ const RoundTracking = () => {
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
         {isLoading ? (
-          <LoadingState onBack={handleBack}>
+          <LoadingState onBack={handleBack} hideHeader={true}>
             {loadingTimeout && (
               <div className="mt-8 text-center">
                 <p className="text-sm text-muted-foreground mb-4">
@@ -168,7 +156,7 @@ const RoundTracking = () => {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
-        <LoadingState onBack={handleBack}>
+        <LoadingState onBack={handleBack} hideHeader={true}>
           {loadingTimeout && (
             <div className="mt-8 text-center">
               <p className="text-sm text-muted-foreground mb-4">
@@ -218,7 +206,7 @@ const RoundTracking = () => {
       <RoundTrackingHeader onBack={handleBack} />
 
       {isLoading ? (
-        <LoadingState onBack={handleBack}>
+        <LoadingState onBack={handleBack} hideHeader={true}>
           {loadingTimeout && (
             <div className="mt-8 text-center">
               <p className="text-sm text-muted-foreground mb-4">

@@ -16,6 +16,11 @@ const LayoutContent = () => {
     setOpenMobile(false);
   }, [location, setOpenMobile]);
 
+  // Don't show back button on specific pages where we have custom headers
+  const hideGlobalBackButton = ['/rounds', '/rounds/'].some(path => 
+    location.pathname === path || location.pathname.startsWith('/rounds/')
+  );
+
   return (
     <>
       <AppSidebar />
@@ -23,7 +28,7 @@ const LayoutContent = () => {
         <div className="container mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex items-center gap-4 py-4">
             <SidebarTrigger />
-            {location.pathname !== "/" && (
+            {location.pathname !== "/" && !hideGlobalBackButton && (
               <Button 
                 variant="ghost" 
                 size="icon"

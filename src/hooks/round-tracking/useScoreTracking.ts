@@ -44,7 +44,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
         
         if (!isMounted) return;
         
-        // Fix: Check if result exists and has holeCount property instead of checking length
+        // Check if result exists and has holeCount property
         if (result && result.holeCount > 0) {
           setIsInitialLoad(false);
           console.log("Successfully loaded hole scores");
@@ -61,8 +61,8 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
             clearTimeout(fetchTimeoutRef.current);
           }
           
-          // Exponential backoff: 1s, 2s, 4s
-          const delay = Math.pow(2, loadAttempts) * 1000;
+          // Exponential backoff: 1s, 2s, 4s with smaller initial delay
+          const delay = Math.pow(1.5, loadAttempts) * 1000;
           
           fetchTimeoutRef.current = setTimeout(() => {
             if (isMounted) {
@@ -77,7 +77,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
             setIsInitialLoad(false);
           } else {
             // Try again after a delay with exponential backoff
-            const delay = Math.pow(2, loadAttempts) * 1000;
+            const delay = Math.pow(1.5, loadAttempts) * 1000;
             fetchTimeoutRef.current = setTimeout(() => {
               if (isMounted) {
                 setLoadAttempts(prev => prev + 1);
@@ -113,7 +113,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     const forceExitTimeout = setTimeout(() => {
       setIsInitialLoad(false);
       console.log("Forced exit from loading state after timeout");
-    }, 10000);
+    }, 8000); // reduced from 10s to 8s
     
     return () => clearTimeout(forceExitTimeout);
   }, [isInitialLoad]);
