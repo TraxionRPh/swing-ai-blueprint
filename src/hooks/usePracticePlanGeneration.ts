@@ -710,6 +710,16 @@ export const usePracticePlanGeneration = () => {
       challenge.instruction1 = "Set up 10 putts at 6 feet distance";
       challenge.instruction2 = "Count how many you make successfully";
       challenge.instruction3 = "Calculate your make percentage";
+    } else if (lowerProblem.includes('bunker') || lowerProblem.includes('sand')) {
+      challenge.title = "Bunker Escape Challenge";
+      challenge.description = "Test your ability to escape bunkers efficiently";
+      challenge.category = "Bunker Play";
+      challenge.metrics = ["Successful Escapes"];
+      challenge.metric = "Successful Escapes";
+      challenge.instruction1 = "Hit 10 bunker shots from a greenside bunker";
+      challenge.instruction2 = "Count how many successfully exit the bunker in one shot and land on the green";
+      challenge.instruction3 = "Calculate your percentage of successful bunker escapes";
+      challenge.attempts = 10;
     }
     
     return challenge;

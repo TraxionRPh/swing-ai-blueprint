@@ -67,6 +67,14 @@ serve(async (req) => {
     if (challengeResponse.ok) {
       challenges = await challengeResponse.json();
       console.log(`Fetched ${challenges?.length || 0} challenges from database`);
+      
+      // Log all challenge titles and content for debugging
+      if (challenges?.length > 0) {
+        console.log("Available challenges:");
+        challenges.forEach((c, i) => {
+          console.log(`[${i+1}] ${c.title || 'Untitled'} | Category: ${c.category || 'None'} | Contains 'bunker': ${(c.title + c.description + c.instruction1 + c.instruction2 + c.instruction3).toLowerCase().includes('bunker')}`);
+        });
+      }
     } else {
       console.error("Failed to fetch challenges");
     }
@@ -141,25 +149,55 @@ Your response should ONLY contain UUIDs in the format: "xxxxxxxx-xxxx-xxxx-xxxx-
     if (challenges && challenges.length > 0) {
       console.log("Selecting a relevant challenge for:", lowerQuery);
       
-      // Special handling for bunker-related queries which have been problematic
+      // Enhanced handling for bunker-related queries
       if (lowerQuery.includes('bunker') || lowerQuery.includes('sand')) {
-        // First try to find an exact bunker challenge
-        selectedChallenge = challenges.find(c => 
-          c.title && c.title.toLowerCase().includes('bunker') &&
-          c.description && c.description.toLowerCase().includes('bunker')
+        console.log("🏖️ DETECTED BUNKER-RELATED QUERY - Special handling enabled");
+        
+        // First try to find an exact bunker challenge with higher priority on title and category
+        const bunkerChallenges = challenges.filter(c => 
+          (c.title && c.title.toLowerCase().includes('bunker')) || 
+          (c.category && c.category.toLowerCase().includes('bunker')) ||
+          (c.description && c.description.toLowerCase().includes('bunker'))
         );
         
-        console.log("Bunker-specific challenge found:", selectedChallenge ? selectedChallenge.title : "None");
+        console.log(`Found ${bunkerChallenges.length} potential bunker challenges`);
         
-        // If no exact match, try more general sand-related challenges 
-        if (!selectedChallenge) {
-          selectedChallenge = challenges.find(c => 
-            c.category && c.category.toLowerCase().includes('bunker') ||
-            (c.instruction1 && c.instruction1.toLowerCase().includes('sand')) ||
-            (c.instruction2 && c.instruction2.toLowerCase().includes('sand')) ||
-            (c.instruction3 && c.instruction3.toLowerCase().includes('sand'))
-          );
-          console.log("Sand-related challenge found:", selectedChallenge ? selectedChallenge.title : "None");
+        // Enhanced scoring system for bunker challenges
+        if (bunkerChallenges.length > 0) {
+          const scoredChallenges = bunkerChallenges.map(c => {
+            const text = [
+              c.title || '',
+              c.description || '', 
+              c.category || '',
+              c.instruction1 || '',
+              c.instruction2 || '',
+              c.instruction3 || ''
+            ].join(' ').toLowerCase();
+            
+            let score = 0;
+            
+            // Scoring based on bunker terminology in different fields
+            if ((c.title || '').toLowerCase().includes('bunker')) score += 10;
+            if ((c.category || '').toLowerCase().includes('bunker')) score += 8;
+            if ((c.instruction1 || '').toLowerCase().includes('bunker') || 
+                (c.instruction1 || '').toLowerCase().includes('sand')) score += 6;
+            if ((c.instruction2 || '').toLowerCase().includes('bunker') || 
+                (c.instruction2 || '').toLowerCase().includes('sand')) score += 5;
+            if (text.includes('explosion')) score += 7;
+            if (text.includes('sand shot')) score += 7;
+            if (text.includes('splash')) score += 6;
+            
+            console.log(`Challenge "${c.title}" scored: ${score}`);
+            
+            return { challenge: c, score };
+          });
+          
+          // Sort by score and select highest
+          const sortedChallenges = scoredChallenges.sort((a, b) => b.score - a.score);
+          if (sortedChallenges[0] && sortedChallenges[0].score > 0) {
+            selectedChallenge = sortedChallenges[0].challenge;
+            console.log(`Selected bunker challenge: ${selectedChallenge.title} with score ${sortedChallenges[0].score}`);
+          }
         }
       } 
       

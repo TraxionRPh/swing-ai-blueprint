@@ -44,7 +44,7 @@ export class ChallengeSelector {
     // Special handling for bunker problems - lower threshold for more flexibility
     if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
       console.log("Bunker problem detected - using more flexible matching");
-      minimumThreshold = 0.4;
+      minimumThreshold = 0.3; // Lower threshold for bunker problems to ensure we find something
     }
     // Lower threshold slightly only for specific cases where we need more flexibility
     else if (normalizedProblem.includes('putt') || 
@@ -65,8 +65,19 @@ export class ChallengeSelector {
         challenge.instruction3?.toLowerCase() || '',
       ].join(' ');
 
-      // First, validate basic context match
-      if (!validateContextMatch(challengeText, this.problem, this.category)) {
+      // Special case for bunker challenges to bypass context match check
+      const isBunkerProblem = normalizedProblem.includes('bunker') || normalizedProblem.includes('sand');
+      const isBunkerChallenge = challengeText.includes('bunker') || challengeText.includes('sand');
+      
+      let contextValid = validateContextMatch(challengeText, this.problem, this.category);
+      
+      // Override context validation for bunker challenges if needed
+      if (isBunkerProblem && isBunkerChallenge) {
+        contextValid = true;
+        console.log(`Force validating bunker challenge context for: ${challenge.title}`);
+      }
+
+      if (!contextValid) {
         // Skip this challenge as it doesn't match the required context
         continue;
       }
@@ -75,7 +86,11 @@ export class ChallengeSelector {
 
       // Special handling for bunker challenges
       if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
-        if (!challengeText.includes('bunker') && !challengeText.includes('sand')) {
+        // Give a big boost to bunker challenges for bunker problems
+        if (challengeText.includes('bunker') || challengeText.includes('sand')) {
+          score += 15; // Significant boost
+          console.log(`💯 Bunker match found for challenge: ${challenge.title}`);
+        } else {
           continue; // Skip non-bunker challenges for bunker problems
         }
         score += this.calculateBunkerChallengeScore(challengeText, normalizedProblem);
@@ -163,27 +178,41 @@ export class ChallengeSelector {
     
     // Core bunker context validation - highly important!
     if (challengeText.includes('bunker') || challengeText.includes('sand')) {
-      score += 7; // Increased significantly for bunker problems
+      score += 10; // Increased significantly for bunker problems
+      
+      // Check for additional specific bunker terms
+      const bunkerTerms = [
+        'explosion', 'splash', 'sand shot', 'trap', 'rake', 
+        'greenside bunker', 'fairway bunker', 'open face', 'sand wedge'
+      ];
+      
+      for (const term of bunkerTerms) {
+        if (challengeText.includes(term)) {
+          score += 3;
+          console.log(`Bunker term match in challenge: ${term}`);
+        }
+      }
     }
     
-    // Validate actual bunker focus in instructions
-    if (challengeText.includes('explosion') || 
-        challengeText.includes('splash') || 
-        challengeText.includes('sand shot')) {
-      score += 5; // Increased from 4
+    // Validate actual bunker focus in instructions - critical!
+    if ((challengeText.includes('instruction') || challengeText.includes('step')) && 
+        (challengeText.includes('bunker') || challengeText.includes('sand'))) {
+      score += 6; // Very important that instructions specifically mention bunker/sand
+      console.log(`Bunker-specific instructions found in challenge`);
     }
     
-    // Additional bunker-specific terminology
-    if (challengeText.includes('trap') || 
-        challengeText.includes('rake') || 
-        challengeText.includes('greenside bunker')) {
-      score += 3;
+    // Check if title explicitly mentions bunker
+    if ((challengeText.includes('title') || challenge.title) && 
+        (challengeText.includes('bunker') || challengeText.includes('sand'))) {
+      score += 8;
+      console.log(`Bunker mentioned in challenge title`);
     }
     
     // Check if category explicitly mentions bunker
-    if (challengeText.includes('category') && 
+    if ((challengeText.includes('category') || challenge.category) && 
         (challengeText.includes('bunker') || challengeText.includes('sand'))) {
-      score += 3;
+      score += 5;
+      console.log(`Bunker mentioned in challenge category`);
     }
     
     // Penalize challenges focusing on non-bunker aspects
@@ -268,7 +297,7 @@ export class ChallengeSelector {
       ['direction', 'aim', 'target', 'alignment'],
       ['chip', 'pitch', 'around', 'green'],
       ['contact', 'strike', 'compression', 'ball first'],
-      ['bunker', 'sand', 'explosion', 'splash'] // Added bunker-specific group
+      ['bunker', 'sand', 'explosion', 'splash', 'sand wedge', 'trap'] // Extended bunker-specific group
     ];
     
     let compoundMatches = 0;
@@ -321,6 +350,13 @@ export class ChallengeSelector {
         score += 2;
         relevantInstructions++;
       }
+      
+      // Extra points for bunker-related instructions
+      if ((problem.includes('bunker') || problem.includes('sand')) && 
+          (instruction.includes('bunker') || instruction.includes('sand'))) {
+        score += 3;
+        console.log(`Bunker mentioned in instruction1: ${challenge.instruction1}`);
+      }
     }
     
     if (challenge.instruction2) {
@@ -329,6 +365,13 @@ export class ChallengeSelector {
         score += 2;
         relevantInstructions++;
       }
+      
+      // Extra points for bunker-related instructions
+      if ((problem.includes('bunker') || problem.includes('sand')) && 
+          (instruction.includes('bunker') || instruction.includes('sand'))) {
+        score += 2;
+        console.log(`Bunker mentioned in instruction2: ${challenge.instruction2}`);
+      }
     }
     
     if (challenge.instruction3) {
@@ -336,6 +379,13 @@ export class ChallengeSelector {
       if (this.isInstructionRelevant(instruction, problem)) {
         score += 2;
         relevantInstructions++;
+      }
+      
+      // Extra points for bunker-related instructions
+      if ((problem.includes('bunker') || problem.includes('sand')) && 
+          (instruction.includes('bunker') || instruction.includes('sand'))) {
+        score += 2;
+        console.log(`Bunker mentioned in instruction3: ${challenge.instruction3}`);
       }
     }
     
@@ -354,6 +404,11 @@ export class ChallengeSelector {
       .split(/\s+/)
       .filter(word => word.length > 3);
       
+    // Special case for bunker problems
+    if (problem.includes('bunker') || problem.includes('sand')) {
+      return instruction.includes('bunker') || instruction.includes('sand');
+    }
+    
     // Check if any problem term appears in the instruction
     return problemTerms.some(term => instruction.includes(term));
   }
