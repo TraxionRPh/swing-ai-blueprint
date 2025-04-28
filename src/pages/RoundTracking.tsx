@@ -114,6 +114,7 @@ const RoundTracking = () => {
     <div className="space-y-6">
       <RoundTrackingHeader onBack={handleBack} />
 
+      {/* Handle in-progress round display */}
       {!selectedCourse && currentRoundId && !isLoading && (
         <InProgressRoundCard
           roundId={currentRoundId}
@@ -124,7 +125,8 @@ const RoundTracking = () => {
         />
       )}
 
-      {!selectedCourse && !currentRoundId && (
+      {/* Show course selector when no course is selected AND no current round */}
+      {!selectedCourse && !currentRoundId && !isLoading && (
         <CourseSelector
           selectedCourse={selectedCourse}
           selectedTee={selectedTee}

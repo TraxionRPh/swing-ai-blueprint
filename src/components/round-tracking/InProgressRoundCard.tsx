@@ -36,8 +36,8 @@ export const InProgressRoundCard = ({
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
     
-    // Force a full page reload to ensure we get fresh state
-    window.location.href = `/rounds/${roundId}`;
+    // Navigate directly to the round URL with the ID
+    navigate(`/rounds/${roundId}`);
   };
 
   return (

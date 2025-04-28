@@ -13,22 +13,35 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   
   // Add useEffect to refetch hole scores when roundId changes
   useEffect(() => {
+    let isMounted = true;
+    
     const loadHoleScores = async () => {
       if (roundId) {
         try {
           console.log("Fetching hole scores for round ID:", roundId);
+          
           await fetchHoleScoresFromRound(roundId);
+          
+          if (!isMounted) return;
         } catch (error) {
           console.error("Error fetching hole scores:", error);
         } finally {
-          setIsInitialLoad(false);
+          if (isMounted) {
+            setIsInitialLoad(false);
+          }
         }
       } else {
-        setIsInitialLoad(false);
+        if (isMounted) {
+          setIsInitialLoad(false);
+        }
       }
     };
     
     loadHoleScores();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [roundId, fetchHoleScoresFromRound]);
 
   const handleHoleUpdate = (data: HoleData) => {

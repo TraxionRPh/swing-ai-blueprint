@@ -81,9 +81,8 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const handleInProgressRoundSelect = (round: RoundWithCourse) => {
     console.log("In-progress round selected:", round.id);
     
-    // Simply navigate to the round page with the ID
-    // Do not use lastHole or specify a hole number to avoid confusion
-    navigate(`/rounds/${round.id}`, { replace: true });
+    // Use navigate to go to the round details page
+    navigate(`/rounds/${round.id}`);
   };
 
   const handleDeleteRound = async (roundId: string) => {
