@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -64,9 +63,9 @@ export const FinalScoreCard = ({
               <TableRow>
                 <TableCell className="font-medium py-1">Par</TableCell>
                 {frontNine.map((hole, i) => (
-                  <TableCell key={i} className="text-center p-1">{hole.par}</TableCell>
+                  <TableCell key={i} className="text-center p-1 text-muted-foreground">{hole.par}</TableCell>
                 ))}
-                <TableCell className="text-center font-bold p-1">{frontNineTotals.par}</TableCell>
+                <TableCell className="text-center font-bold p-1 text-muted-foreground">{frontNineTotals.par}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium py-1">Score</TableCell>
@@ -93,9 +92,9 @@ export const FinalScoreCard = ({
                 <TableRow>
                   <TableCell className="font-medium py-1">Par</TableCell>
                   {backNine.map((hole, i) => (
-                    <TableCell key={i} className="text-center p-1">{hole.par}</TableCell>
+                    <TableCell key={i} className="text-center p-1 text-muted-foreground">{hole.par}</TableCell>
                   ))}
-                  <TableCell className="text-center font-bold p-1">{backNineTotals.par}</TableCell>
+                  <TableCell className="text-center font-bold p-1 text-muted-foreground">{backNineTotals.par}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-medium py-1">Score</TableCell>
