@@ -6,20 +6,24 @@ import { ListTodo } from "lucide-react";
 
 export const ActivePracticePlan = () => {
   return (
-    <Card className="mb-4 border-2 border-primary/20">
-      <CardHeader>
-        <CardTitle>Active Practice Plan</CardTitle>
-        <CardDescription>Continue with your personalized practice plan</CardDescription>
+    <Card className="mb-4 bg-[#1A1F2C] text-white border border-primary/20">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-2xl font-bold">Active Practice Plan</CardTitle>
+        <CardDescription className="text-gray-400">
+          Continue with your personalized practice plan
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-medium">Improving Your Golf Game</h3>
-            <p className="text-sm text-muted-foreground">Follow your custom practice plan to enhance your skills</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Improving Your Golf Game</h3>
+            <p className="text-sm text-gray-400">
+              Follow your custom practice plan to enhance your skills
+            </p>
           </div>
-          <Button asChild>
-            <Link to="/my-practice-plans">
-              <ListTodo className="mr-2 h-4 w-4" />
+          <Button asChild size="lg" className="bg-[#10B981] hover:bg-[#10B981]/90 text-white">
+            <Link to="/my-practice-plans" className="flex items-center gap-2">
+              <ListTodo className="h-5 w-5" />
               View Plan
             </Link>
           </Button>
