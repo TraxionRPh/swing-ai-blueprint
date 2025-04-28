@@ -30,7 +30,7 @@ export const ChallengeScore = ({ planId, type }: ChallengeScoreProps) => {
     localStorage.setItem(`challenge-${type}-${planId}`, score);
     toast({
       title: "Score Saved",
-      description: `Your ${type} score of ${score}/${attempts} has been saved.`
+      description: `Your ${type} score of ${score}/10 has been saved.`
     });
   };
 
