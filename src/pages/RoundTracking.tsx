@@ -42,8 +42,8 @@ const RoundTracking = () => {
     isLoading
   } = useRoundTracking();
 
+  // Show refresh option if loading takes too long
   useEffect(() => {
-    // Set a timeout to show a refresh option if loading takes too long
     const timer = setTimeout(() => {
       if (isLoading) {
         setLoadingTimeout(true);
@@ -53,13 +53,12 @@ const RoundTracking = () => {
     return () => clearTimeout(timer);
   }, [isLoading]);
 
-  // Force re-render after a major operation like navigation
+  // Clear any timeouts when component unmounts
   useEffect(() => {
-    console.log("Component mounted or route changed");
+    console.log("Round tracking component mounted");
     
-    // Clear any timeouts when component unmounts
     return () => {
-      console.log("Component will unmount");
+      console.log("Round tracking component unmounted");
     };
   }, []);
 
@@ -106,12 +105,16 @@ const RoundTracking = () => {
     }
   };
 
+  // Check if we're on a specific round page
+  const isRoundDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
+
   // Debug logs to help diagnose rendering conditions
   console.log("Round tracking render conditions:", { 
     selectedCourse: !!selectedCourse, 
     currentRoundId: !!currentRoundId, 
     isLoading,
-    currentPath: window.location.pathname
+    currentPath: window.location.pathname,
+    isRoundDetailPage: !!isRoundDetailPage
   });
 
   if (isLoading) {
@@ -132,33 +135,47 @@ const RoundTracking = () => {
     );
   }
 
-  // We're on the main rounds list page
-  if (window.location.pathname === '/rounds' && !currentRoundId) {
+  // If we're on the round detail page with active round, show the round content
+  if (isRoundDetailPage && currentRoundId) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
-        <CourseSelector
-          selectedCourse={selectedCourse}
-          selectedTee={selectedTee}
-          onCourseSelect={handleCourseSelect}
-          onTeeSelect={setSelectedTee}
+        <ActiveRoundContent
+          holeScores={holeScores}
+          currentHoleData={currentHoleData}
+          onHoleUpdate={handleHoleUpdate}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          currentHole={currentHole}
+          holeCount={holeCount || 18}
+          teeColor={currentTeeColor}
+          courseId={selectedCourse?.id}
+          isSaving={isSaving}
+          showFinalScore={showFinalScore}
+          onConfirmRound={handleConfirmRound}
+          onCancelFinalScore={() => setShowFinalScore(false)}
         />
       </div>
     );
   }
 
-  // We're on the main rounds list page with in-progress round
-  if (window.location.pathname === '/rounds' && currentRoundId && !selectedCourse) {
+  // We're on the main rounds list page
+  if (window.location.pathname === '/rounds') {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBack} />
-        <InProgressRoundCard
-          roundId={currentRoundId}
-          courseName={courseName || "Loading course..."}
-          lastHole={holeScores.filter(h => h.score > 0).length}
-          holeCount={holeCount || 18}
-          onDelete={handleDeleteRound}
+        
+        {/* Always show RoundsDisplay with any in-progress rounds */}
+        <RoundsDisplay 
+          onCourseSelect={(course, holeCount) => {
+            if (holeCount) {
+              setHoleCount(holeCount);
+            }
+            handleCourseSelect(course);
+          }} 
         />
+        
+        {/* Always show CourseSelector as well */}
         <CourseSelector
           selectedCourse={selectedCourse}
           selectedTee={selectedTee}

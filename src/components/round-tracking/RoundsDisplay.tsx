@@ -19,6 +19,7 @@ interface RoundWithCourse {
   hole_count: number;
   hole_scores: {
     hole_number: number;
+    score?: number;
   }[];
   golf_courses: Course;
 }
@@ -41,7 +42,8 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
           total_score,
           hole_count,
           hole_scores (
-            hole_number
+            hole_number,
+            score
           ),
           golf_courses (
             id,
@@ -64,7 +66,9 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       
       console.log("Rounds data fetched:", rounds?.length || 0, "rounds");
 
-      const inProgress = rounds?.filter(round => !round.total_score) || [];
+      // Filter in-progress rounds (no total_score)
+      const inProgress = rounds?.filter(round => round.total_score === null) || [];
+      // Filter completed rounds (have total_score)
       const completed = rounds?.filter(round => round.total_score !== null) || [];
       
       console.log("In-progress rounds:", inProgress.length);
@@ -87,11 +91,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   useEffect(() => {
     fetchRounds();
   }, [toast]);
-
-  const handleInProgressRoundSelect = (roundId: string) => {
-    console.log("In-progress round selected:", roundId);
-    navigate(`/rounds/${roundId}`);
-  };
 
   const handleDeleteRound = async (roundId: string) => {
     try {
@@ -136,16 +135,21 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const renderInProgressRounds = () => {
     if (inProgressRounds.length === 0) return null;
     
-    return inProgressRounds.map((round) => (
-      <InProgressRoundCard
-        key={round.id}
-        roundId={round.id}
-        courseName={round.golf_courses.name}
-        lastHole={round.hole_scores?.length || 0}
-        holeCount={round.hole_count || 18}
-        onDelete={() => handleDeleteRound(round.id)}
-      />
-    ));
+    return inProgressRounds.map((round) => {
+      // Count holes with scores (score > 0)
+      const holesCompleted = round.hole_scores?.filter(h => h.score && h.score > 0)?.length || 0;
+      
+      return (
+        <InProgressRoundCard
+          key={round.id}
+          roundId={round.id}
+          courseName={round.golf_courses.name}
+          lastHole={holesCompleted}
+          holeCount={round.hole_count || 18}
+          onDelete={() => handleDeleteRound(round.id)}
+        />
+      );
+    });
   };
 
   const renderRoundsList = (rounds: RoundWithCourse[], title: string, isInProgress: boolean) => {
@@ -162,7 +166,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               key={round.id}
               course={round.golf_courses}
               onSelect={isInProgress ? 
-                () => handleInProgressRoundSelect(round.id) : 
+                () => navigate(`/rounds/${round.id}`) : 
                 (course) => onCourseSelect(course, round.hole_count || 18)
               }
               isInProgress={isInProgress}

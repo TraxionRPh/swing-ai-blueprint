@@ -39,8 +39,8 @@ export const InProgressRoundCard = ({
     console.log("Resume round clicked for round ID:", roundId);
     
     try {
-      // Navigate directly to the round URL
-      navigate(`/rounds/${roundId}`);
+      // Force browser navigation to ensure a clean state
+      window.location.href = `/rounds/${roundId}`;
       
       toast({
         title: "Loading round",
@@ -48,9 +48,6 @@ export const InProgressRoundCard = ({
       });
     } catch (error) {
       console.error("Navigation error:", error);
-      
-      // Fallback to window.location as a last resort
-      window.location.href = `/rounds/${roundId}`;
     }
   };
 
