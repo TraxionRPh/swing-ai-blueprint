@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,12 @@ export const FinalScoreCard = ({
   const backNineTotals = holeCount > 9 ? calculateTotal(backNine) : { score: 0, putts: 0, fairways: 0, greens: 0, par: 0 };
   const totalScore = frontNineTotals.score + backNineTotals.score;
   const totalPar = frontNineTotals.par + backNineTotals.par;
+
+  const calculateOverUnder = () => {
+    const difference = totalScore - totalPar;
+    if (difference === 0) return "E";
+    return difference > 0 ? `(+${difference})` : `(${difference})`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onCancel()}>
@@ -104,7 +109,9 @@ export const FinalScoreCard = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <div className="bg-muted p-2 rounded-lg text-center">
-              <div className="text-xl font-bold">{totalScore}</div>
+              <div className="text-xl font-bold">
+                {totalScore} <span className="text-muted-foreground">{calculateOverUnder()}</span>
+              </div>
               <div className="text-xs text-muted-foreground">Total Score</div>
             </div>
             <div className="bg-muted p-2 rounded-lg text-center">
