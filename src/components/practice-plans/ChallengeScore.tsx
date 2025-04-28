@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ interface ChallengeScoreProps {
   attempts?: number;
 }
 
-export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScoreProps) => {
+export const ChallengeScore = ({ planId, type }: ChallengeScoreProps) => {
   const { toast } = useToast();
   const [score, setScore] = useState(() => {
     const saved = localStorage.getItem(`challenge-${type}-${planId}`);
@@ -37,7 +37,7 @@ export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScorePr
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Enter your score out of {attempts} attempts:
+        Enter your score out of 10 attempts:
       </p>
       <div className="flex gap-2">
         <Input
@@ -47,7 +47,7 @@ export const ChallengeScore = ({ planId, type, attempts = 10 }: ChallengeScorePr
           placeholder="Enter Score"
           className="max-w-[200px]"
           min="0"
-          max={attempts}
+          max={10}
         />
         <Button onClick={handleSave}>Save Score</Button>
       </div>
