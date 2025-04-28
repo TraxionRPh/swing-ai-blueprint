@@ -15,7 +15,7 @@ export const ScoreChartTooltip = ({ active, payload, label }: ScoreChartTooltipP
   const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
 
   return (
-    <Card className="bg-card border-border shadow-lg">
+    <Card className="bg-card border-primary/20 shadow-lg">
       <CardContent className="p-3 space-y-2">
         <div className="text-sm font-medium text-foreground">
           {dataPoint.courseName}
@@ -24,7 +24,7 @@ export const ScoreChartTooltip = ({ active, payload, label }: ScoreChartTooltipP
           {dataPoint.location}
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-accent">{dataPoint.score}</span>
+          <span className="text-2xl font-bold text-primary">{dataPoint.score}</span>
           <span className="text-sm text-muted-foreground">({overUnderText})</span>
         </div>
         <div className="text-xs text-muted-foreground">
