@@ -11,6 +11,7 @@ import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoun
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
+import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
@@ -52,11 +53,22 @@ const RoundTracking = () => {
     return () => clearTimeout(timer);
   }, [isLoading]);
 
+  // Force re-render after a major operation like navigation
+  useEffect(() => {
+    console.log("Component mounted or route changed");
+    
+    // Clear any timeouts when component unmounts
+    return () => {
+      console.log("Component will unmount");
+    };
+  }, []);
+
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleRefresh = () => {
+    console.log("Manual refresh requested");
     window.location.reload();
   };
 
@@ -80,7 +92,9 @@ const RoundTracking = () => {
   const handleDeleteRound = () => {
     if (currentRoundId) {
       deleteRound(currentRoundId);
-      navigate('/rounds');
+      
+      // Force clear the current round ID to ensure fresh state
+      setCurrentRoundId(null);
     }
   };
 
@@ -91,6 +105,14 @@ const RoundTracking = () => {
       handleCourseSelect(selectedCourse);
     }
   };
+
+  // Debug logs to help diagnose rendering conditions
+  console.log("Round tracking render conditions:", { 
+    selectedCourse: !!selectedCourse, 
+    currentRoundId: !!currentRoundId, 
+    isLoading,
+    currentPath: window.location.pathname
+  });
 
   if (isLoading) {
     return (
@@ -110,19 +132,26 @@ const RoundTracking = () => {
     );
   }
 
-  // Debug logs to help diagnose rendering conditions
-  console.log("Round tracking render conditions:", { 
-    selectedCourse: !!selectedCourse, 
-    currentRoundId: !!currentRoundId, 
-    isLoading 
-  });
+  // We're on the main rounds list page
+  if (window.location.pathname === '/rounds' && !currentRoundId) {
+    return (
+      <div className="space-y-6">
+        <RoundTrackingHeader onBack={handleBack} />
+        <CourseSelector
+          selectedCourse={selectedCourse}
+          selectedTee={selectedTee}
+          onCourseSelect={handleCourseSelect}
+          onTeeSelect={setSelectedTee}
+        />
+      </div>
+    );
+  }
 
-  return (
-    <div className="space-y-6">
-      <RoundTrackingHeader onBack={handleBack} />
-
-      {/* Handle in-progress round display */}
-      {!selectedCourse && currentRoundId && !isLoading && (
+  // We're on the main rounds list page with in-progress round
+  if (window.location.pathname === '/rounds' && currentRoundId && !selectedCourse) {
+    return (
+      <div className="space-y-6">
+        <RoundTrackingHeader onBack={handleBack} />
         <InProgressRoundCard
           roundId={currentRoundId}
           courseName={courseName || "Loading course..."}
@@ -130,17 +159,19 @@ const RoundTracking = () => {
           holeCount={holeCount || 18}
           onDelete={handleDeleteRound}
         />
-      )}
-
-      {/* Show course selector when no course is selected AND no current round */}
-      {(!selectedCourse && !currentRoundId && !isLoading) && (
         <CourseSelector
           selectedCourse={selectedCourse}
           selectedTee={selectedTee}
           onCourseSelect={handleCourseSelect}
           onTeeSelect={setSelectedTee}
         />
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <RoundTrackingHeader onBack={handleBack} />
 
       {selectedCourse && !holeCount && (
         <HoleCountSelector

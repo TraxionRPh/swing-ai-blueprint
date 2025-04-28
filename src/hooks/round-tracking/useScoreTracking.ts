@@ -3,13 +3,14 @@ import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHoleScores } from "./score/useHoleScores";
 import { useHolePersistence } from "./score/useHolePersistence";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { holeScores, setHoleScores, isLoading, fetchHoleScoresFromRound } = useHoleScores(roundId, courseId);
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [loadAttempts, setLoadAttempts] = useState(0);
   
   // Add useEffect to refetch hole scores when roundId changes
   useEffect(() => {
@@ -18,14 +19,27 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     const loadHoleScores = async () => {
       if (roundId) {
         try {
-          console.log("Fetching hole scores for round ID:", roundId);
+          console.log("Fetching hole scores for round ID:", roundId, "attempt:", loadAttempts + 1);
           
-          await fetchHoleScoresFromRound(roundId);
+          const result = await fetchHoleScoresFromRound(roundId);
           
           if (!isMounted) return;
+          
+          // If we got a successful result or we've reached max attempts, stop loading
+          if (result || loadAttempts >= 2) {
+            setIsInitialLoad(false);
+          } else {
+            // If we haven't reached max attempts, try again after a delay
+            if (loadAttempts < 2) {
+              setTimeout(() => {
+                setLoadAttempts(prev => prev + 1);
+              }, 1500);
+            } else {
+              setIsInitialLoad(false);
+            }
+          }
         } catch (error) {
           console.error("Error fetching hole scores:", error);
-        } finally {
           if (isMounted) {
             setIsInitialLoad(false);
           }
@@ -42,9 +56,15 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     return () => {
       isMounted = false;
     };
-  }, [roundId, fetchHoleScoresFromRound]);
+  }, [roundId, fetchHoleScoresFromRound, loadAttempts]);
 
-  const handleHoleUpdate = (data: HoleData) => {
+  // Reset load attempts when roundId changes
+  useEffect(() => {
+    setLoadAttempts(0);
+    setIsInitialLoad(true);
+  }, [roundId]);
+
+  const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);
     setHoleScores(prev => 
       prev.map(hole => 
@@ -57,7 +77,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
         console.error('Failed to save hole score:', error);
       });
     }
-  };
+  }, [roundId, saveHoleScore, setHoleScores]);
 
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
     holeNumber: currentHole,

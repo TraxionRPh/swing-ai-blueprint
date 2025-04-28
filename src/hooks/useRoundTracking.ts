@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
@@ -17,6 +17,7 @@ export const useRoundTracking = () => {
   const [courseName, setCourseName] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+  const [initAttempt, setInitAttempt] = useState(0);
   
   // Debug current state
   console.log("useRoundTracking init - roundId from URL:", urlRoundId);
@@ -49,55 +50,60 @@ export const useRoundTracking = () => {
     isSaving
   } = useScoreTracking(currentRoundId, selectedCourse?.id);
 
+  const fetchRoundDetails = useCallback(async (roundId: string) => {
+    try {
+      console.log("Fetching round details for:", roundId);
+      const { data, error } = await supabase
+        .from('rounds')
+        .select(`
+          hole_count,
+          golf_courses:course_id (
+            id,
+            name,
+            city,
+            state,
+            total_par,
+            course_tees (*)
+          )
+        `)
+        .eq('id', roundId)
+        .maybeSingle();
+          
+      if (error) {
+        console.error("Error fetching round data:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in fetchRoundDetails:", error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     
     const initializeRound = async () => {
       try {
+        setIsLoading(true);
+        
         // If roundId is provided in URL, use that instead of fetching
         if (urlRoundId) {
           console.log("Using round ID from URL:", urlRoundId);
           setCurrentRoundId(urlRoundId);
           
           // Fetch course name and hole count for the round
-          try {
-            const { data, error } = await supabase
-              .from('rounds')
-              .select(`
-                hole_count,
-                golf_courses:course_id (
-                  id,
-                  name,
-                  city,
-                  state,
-                  total_par,
-                  course_tees (*)
-                )
-              `)
-              .eq('id', urlRoundId)
-              .single();
-              
-            if (error) {
-              console.error("Error fetching round data:", error);
-              throw error;
-            }
-            
-            if (data?.golf_courses?.name && isMounted) {
-              setCourseName(data.golf_courses.name);
-              console.log("Set course name:", data.golf_courses.name);
-            }
-            
-            if (data?.hole_count && isMounted) {
-              setHoleCount(data.hole_count);
-              console.log("Set hole count:", data.hole_count);
-            }
-          } catch (error) {
-            console.error("Error fetching round data:", error);
-            toast({
-              title: "Error loading round",
-              description: "Could not load round data. Please try again.",
-              variant: "destructive"
-            });
+          const data = await fetchRoundDetails(urlRoundId);
+          
+          if (data?.golf_courses?.name && isMounted) {
+            setCourseName(data.golf_courses.name);
+            console.log("Set course name:", data.golf_courses.name);
+          }
+          
+          if (data?.hole_count && isMounted) {
+            setHoleCount(data.hole_count);
+            console.log("Set hole count:", data.hole_count);
           }
         } else {
           try {
@@ -131,13 +137,21 @@ export const useRoundTracking = () => {
       }
     };
 
-    setIsLoading(true);
     initializeRound();
+    
+    // Retry initializing if we're still loading after 5 seconds
+    const retryTimer = setTimeout(() => {
+      if (isLoading && isMounted && initAttempt < 2) {
+        console.log("Retrying initialization");
+        setInitAttempt(prev => prev + 1);
+      }
+    }, 5000);
     
     return () => {
       isMounted = false;
+      clearTimeout(retryTimer);
     };
-  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast]);
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt]);
 
   useEffect(() => {
     // Update course name when selected course changes

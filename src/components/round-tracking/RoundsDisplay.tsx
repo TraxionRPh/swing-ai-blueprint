@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import type { Course } from "@/types/round-tracking";
+import { InProgressRoundCard } from "./InProgressRoundCard";
+import { Loading } from "@/components/ui/loading";
 
 interface RoundsDisplayProps {
   onCourseSelect: (course: Course, holeCount?: number) => void;
@@ -29,7 +31,9 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const navigate = useNavigate();
 
   const fetchRounds = async () => {
+    setLoading(true);
     try {
+      console.log("Fetching rounds data from supabase");
       const { data: rounds, error } = await supabase
         .from('rounds')
         .select(`
@@ -57,13 +61,19 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log("Rounds data fetched:", rounds?.length || 0, "rounds");
 
       const inProgress = rounds?.filter(round => !round.total_score) || [];
       const completed = rounds?.filter(round => round.total_score !== null) || [];
+      
+      console.log("In-progress rounds:", inProgress.length);
+      console.log("Completed rounds:", completed.length);
 
       setInProgressRounds(inProgress as RoundWithCourse[]);
       setCompletedRounds(completed as RoundWithCourse[]);
     } catch (error) {
+      console.error("Error loading rounds:", error);
       toast({
         title: "Error loading rounds",
         description: "Please try again later",
@@ -78,15 +88,24 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     fetchRounds();
   }, [toast]);
 
-  const handleInProgressRoundSelect = (round: RoundWithCourse) => {
-    console.log("In-progress round selected:", round.id);
-    
-    // Force a full page reload to ensure we get fresh state
-    window.location.href = `/rounds/${round.id}`;
+  const handleInProgressRoundSelect = (roundId: string) => {
+    console.log("In-progress round selected:", roundId);
+    navigate(`/rounds/${roundId}`);
   };
 
   const handleDeleteRound = async (roundId: string) => {
     try {
+      console.log("Deleting round:", roundId);
+      
+      // Delete hole scores first due to foreign key constraints
+      const { error: holeScoresError } = await supabase
+        .from('hole_scores')
+        .delete()
+        .eq('round_id', roundId);
+
+      if (holeScoresError) throw holeScoresError;
+
+      // Then delete the round
       const { error } = await supabase
         .from('rounds')
         .delete()
@@ -101,6 +120,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
         description: "The round has been successfully deleted"
       });
     } catch (error) {
+      console.error("Error deleting round:", error);
       toast({
         title: "Error deleting round",
         description: "Please try again later",
@@ -109,7 +129,24 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     }
   };
 
-  if (loading) return null;
+  if (loading) {
+    return <Loading message="Loading rounds..." />;
+  }
+
+  const renderInProgressRounds = () => {
+    if (inProgressRounds.length === 0) return null;
+    
+    return inProgressRounds.map((round) => (
+      <InProgressRoundCard
+        key={round.id}
+        roundId={round.id}
+        courseName={round.golf_courses.name}
+        lastHole={round.hole_scores?.length || 0}
+        holeCount={round.hole_count || 18}
+        onDelete={() => handleDeleteRound(round.id)}
+      />
+    ));
+  };
 
   const renderRoundsList = (rounds: RoundWithCourse[], title: string, isInProgress: boolean) => {
     if (rounds.length === 0) return null;
@@ -125,7 +162,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
               key={round.id}
               course={round.golf_courses}
               onSelect={isInProgress ? 
-                () => handleInProgressRoundSelect(round) : 
+                () => handleInProgressRoundSelect(round.id) : 
                 (course) => onCourseSelect(course, round.hole_count || 18)
               }
               isInProgress={isInProgress}
@@ -140,7 +177,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
 
   return (
     <div className="space-y-4">
-      {renderRoundsList(inProgressRounds, "In Progress Rounds", true)}
+      {renderInProgressRounds()}
       {renderRoundsList(completedRounds, "Recently Completed Rounds", false)}
     </div>
   );

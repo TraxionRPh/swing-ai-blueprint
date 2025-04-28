@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface InProgressRoundProps {
   roundId: string;
@@ -32,12 +33,25 @@ export const InProgressRoundCard = ({
 }: InProgressRoundProps) => {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { toast } = useToast();
 
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
     
-    // Force a full page reload to ensure we get fresh state
-    window.location.href = `/rounds/${roundId}`;
+    try {
+      // Navigate directly to the round URL
+      navigate(`/rounds/${roundId}`);
+      
+      toast({
+        title: "Loading round",
+        description: "Retrieving your round data..."
+      });
+    } catch (error) {
+      console.error("Navigation error:", error);
+      
+      // Fallback to window.location as a last resort
+      window.location.href = `/rounds/${roundId}`;
+    }
   };
 
   return (
