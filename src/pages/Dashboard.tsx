@@ -5,6 +5,7 @@ import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { PracticeChart } from "@/components/dashboard/PracticeChart";
 import { ScoringBreakdown } from "@/components/dashboard/ScoringBreakdown";
 import { PerformanceInsights } from "@/components/dashboard/PerformanceInsights";
+import { RoundHistory } from "@/components/dashboard/RoundHistory";
 
 const Dashboard = () => {
   return (
@@ -24,9 +25,10 @@ const Dashboard = () => {
         <PracticeChart />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <ScoringBreakdown />
         <PerformanceInsights />
+        <RoundHistory />
       </div>
     </div>
   );
