@@ -36,7 +36,8 @@ export const usePracticeTracking = (drill: Drill) => {
       toast({
         title: "Authentication Required",
         description: "Please sign in to track your practice time.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 3000
       });
       return;
     }
@@ -50,6 +51,7 @@ export const usePracticeTracking = (drill: Drill) => {
     toast({
       title: "Practice Started",
       description: `Started practicing ${drill.title}`,
+      duration: 3000
     });
   }, [user, drill.title, toast]);
 
@@ -62,6 +64,7 @@ export const usePracticeTracking = (drill: Drill) => {
       toast({
         title: "Practice Resumed",
         description: "Timer resumed",
+        duration: 3000
       });
     } else {
       // Pausing practice
@@ -69,6 +72,7 @@ export const usePracticeTracking = (drill: Drill) => {
       toast({
         title: "Practice Paused",
         description: "Timer paused",
+        duration: 3000
       });
     }
   }, [isPaused, startTime, elapsedTime, toast]);
@@ -94,13 +98,15 @@ export const usePracticeTracking = (drill: Drill) => {
       toast({
         title: "Practice Completed",
         description: `Recorded ${durationMinutes} minutes of practice`,
+        duration: 3000
       });
     } catch (error) {
       console.error('Error saving practice session:', error);
       toast({
         title: "Error",
         description: "Failed to save practice session",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 3000
       });
     }
     
