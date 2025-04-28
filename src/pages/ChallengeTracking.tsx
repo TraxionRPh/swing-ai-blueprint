@@ -9,6 +9,10 @@ import { TrackingForm } from '@/components/challenge/TrackingForm';
 import { useSubmitChallenge } from '@/hooks/useSubmitChallenge';
 
 const extractAttemptsFromInstructions = (challenge: any): number | undefined => {
+  if (challenge.attempts && typeof challenge.attempts === 'number') {
+    return challenge.attempts;
+  }
+  
   const instructions = [
     challenge.instruction1,
     challenge.instruction2,
@@ -23,7 +27,7 @@ const extractAttemptsFromInstructions = (challenge: any): number | undefined => 
     }
   }
   
-  return undefined;
+  return 10;
 };
 
 const ChallengeTracking = () => {
@@ -36,7 +40,7 @@ const ChallengeTracking = () => {
     navigate(-1);
   };
   
-  const totalAttempts = challenge ? extractAttemptsFromInstructions(challenge) : undefined;
+  const totalAttempts = challenge ? extractAttemptsFromInstructions(challenge) : 10;
   
   if (isLoading) {
     return (
