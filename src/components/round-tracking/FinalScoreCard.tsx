@@ -61,7 +61,7 @@ export const FinalScoreCard = ({
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium py-1">Par</TableCell>
+                <TableCell className="font-medium py-1 text-muted-foreground">Par</TableCell>
                 {frontNine.map((hole, i) => (
                   <TableCell key={i} className="text-center p-1 text-muted-foreground">{hole.par}</TableCell>
                 ))}
@@ -90,7 +90,7 @@ export const FinalScoreCard = ({
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell className="font-medium py-1">Par</TableCell>
+                  <TableCell className="font-medium py-1 text-muted-foreground">Par</TableCell>
                   {backNine.map((hole, i) => (
                     <TableCell key={i} className="text-center p-1 text-muted-foreground">{hole.par}</TableCell>
                   ))}
