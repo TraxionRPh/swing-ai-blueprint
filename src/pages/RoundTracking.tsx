@@ -54,9 +54,20 @@ const RoundTracking = () => {
       roundId,
       selectedCourse,
       currentHoleData,
-      holeScores: holeScores.length
+      holeScores: holeScores.length,
+      currentHole,
+      holeCount
     });
-  }, [roundId, selectedCourse, currentHoleData, holeScores]);
+    
+    // Automatically show the final scorecard when the user completes the last hole
+    if (holeCount && currentHole === holeCount && holeScores.length >= holeCount) {
+      // Check if the current hole has a score entered
+      const currentHoleScore = holeScores.find(h => h.holeNumber === currentHole);
+      if (currentHoleScore && currentHoleScore.score > 0) {
+        setShowFinalScore(true);
+      }
+    }
+  }, [roundId, selectedCourse, currentHoleData, holeScores, currentHole, holeCount]);
 
   const handleBack = () => {
     navigate(-1);
@@ -71,8 +82,13 @@ const RoundTracking = () => {
   };
 
   const handleConfirmRound = async () => {
-    await finishRound();
+    const success = await finishRound();
     setShowFinalScore(false);
+    
+    if (success) {
+      // Navigate back to dashboard after round completion
+      navigate('/dashboard');
+    }
   };
 
   const handleCourseSelection = (course: Course, selectedHoleCount?: number) => {
