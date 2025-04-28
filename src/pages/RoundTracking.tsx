@@ -1,3 +1,4 @@
+
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { useState, useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { InProgressRoundCard } from "@/components/round-tracking/InProgressRoundCard";
+import { supabase } from "@/integrations/supabase/client";
 import type { Course } from "@/types/round-tracking";
 
 const RoundTracking = () => {
@@ -35,7 +37,8 @@ const RoundTracking = () => {
     finishRound,
     holeCount,
     setHoleCount,
-    setCurrentRoundId
+    setCurrentRoundId,
+    deleteRound
   } = useRoundTracking();
 
   useEffect(() => {
