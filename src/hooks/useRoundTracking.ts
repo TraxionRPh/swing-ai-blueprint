@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
@@ -6,11 +5,14 @@ import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
 import { Course } from "@/types/round-tracking";
 import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
   const [holeCount, setHoleCount] = useState<number | null>(null);
   const { roundId: urlRoundId } = useParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [courseName, setCourseName] = useState<string | null>(null);
   
   const {
     currentRoundId,
@@ -41,19 +43,40 @@ export const useRoundTracking = () => {
 
   useEffect(() => {
     const initializeRound = async () => {
+      setIsLoading(true);
       // If roundId is provided in URL, use that instead of fetching
       if (urlRoundId) {
         console.log("Using round ID from URL:", urlRoundId);
         setCurrentRoundId(urlRoundId);
-        return;
+        
+        // Fetch course name for the round
+        try {
+          const { data } = await supabase
+            .from('rounds')
+            .select(`
+              golf_courses:course_id (
+                name
+              )
+            `)
+            .eq('id', urlRoundId)
+            .single();
+            
+          if (data?.golf_courses?.name) {
+            setCourseName(data.golf_courses.name);
+          }
+        } catch (error) {
+          console.error("Error fetching course name:", error);
+        }
+      } else {
+        const roundData = await fetchInProgressRound();
+        if (roundData) {
+          setCurrentRoundId(roundData.roundId);
+          setHoleScores(roundData.holeScores);
+          setHoleCount(roundData.holeCount || 18);
+          setCourseName(roundData.course?.name || null);
+        }
       }
-      
-      const roundData = await fetchInProgressRound();
-      if (roundData) {
-        setCurrentRoundId(roundData.roundId);
-        setHoleScores(roundData.holeScores);
-        setHoleCount(roundData.holeCount || 18);
-      }
+      setIsLoading(false);
     };
 
     initializeRound();
@@ -65,6 +88,13 @@ export const useRoundTracking = () => {
       console.log("Current round ID changed, loading hole scores:", currentRoundId);
     }
   }, [currentRoundId]);
+
+  useEffect(() => {
+    // Update course name when selected course changes
+    if (selectedCourse) {
+      setCourseName(selectedCourse.name);
+    }
+  }, [selectedCourse]);
 
   const handleCourseSelect = async (course: Course) => {
     // We always want to use the holeCount that's already been set
@@ -116,6 +146,8 @@ export const useRoundTracking = () => {
     setHoleCount,
     setCurrentRoundId,
     currentRoundId,
-    deleteRound
+    deleteRound,
+    courseName,
+    isLoading
   };
 };
