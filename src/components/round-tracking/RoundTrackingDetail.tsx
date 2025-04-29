@@ -37,45 +37,47 @@ export const RoundTrackingDetail = ({
     currentHoleData,
     isSaving,
     finishRound,
-  } = roundTracking;
+  } = roundTracking || {}; // Add null check with default empty object
 
-  // Check initial rendering status
+  // Check initial rendering status and data availability
   useEffect(() => {
     if (initialRender) {
       console.log("Initial render of RoundTrackingDetail");
       // After a short delay, consider the component as no longer in initial render
-      const timer = setTimeout(() => setInitialRender(false), 500);
+      const timer = setTimeout(() => setInitialRender(false), 300); // Reduced from 500ms for faster response
       return () => clearTimeout(timer);
     }
   }, [initialRender]);
 
-  // Force exit from loading state after 8 seconds
+  // Force exit from loading state after 5 seconds
   useEffect(() => {
     if (!isLoading) return;
     
     const timeoutId = setTimeout(() => {
       setLoadingTimeout(true);
       console.log("Forcing exit from loading state after timeout");
-    }, 5000); // Reduced from 8s to 5s for faster response
+    }, 3000); // Reduced from 5s to 3s for faster response
     
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
   // Log current hole data when it changes
   useEffect(() => {
-    console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
-      currentHoleData,
-      holeCount: holeCount || 18
-    });
+    if (currentHole && currentHoleData) {
+      console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
+        currentHoleData,
+        holeCount: holeCount || 18
+      });
+    }
   }, [currentHole, currentHoleData, holeCount]);
 
-  // Determine effective loading state
-  const effectiveLoading = (isLoading || initialRender) && !loadingTimeout;
+  // Determine effective loading state - consider data availability
+  const effectiveLoading = (isLoading || initialRender || !roundTracking || !currentHoleData) && !loadingTimeout;
 
   const handleNext = () => {
     if (currentHole === holeCount) {
       setShowFinalScore(true);
-    } else {
+    } else if (roundTracking?.handleNext) {
       roundTracking.handleNext();
     }
   };

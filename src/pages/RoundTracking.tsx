@@ -18,18 +18,24 @@ const RoundTracking = () => {
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
   // Simplified loading for the main page
-  const [pageLoading, setPageLoading] = useState(!isMainPage);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Use error boundary fallback for detailed component
   const roundTrackingWithErrorHandling = useRoundTracking();
   
   useEffect(() => {
-    // If we're on the main rounds page, set loading to false after a short delay
-    if (isMainPage) {
-      const timer = setTimeout(() => setPageLoading(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isMainPage]);
+    // Clear any resume-hole-number in session storage on page mount
+    sessionStorage.removeItem('resume-hole-number');
+    
+    // Set loading to false after a short delay
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+      setIsInitialized(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -41,7 +47,7 @@ const RoundTracking = () => {
   const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
   
   // Determine if we should override the loading state
-  const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading;
+  const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading || !isInitialized;
   
   // Wrap the components with error boundary
   return (
