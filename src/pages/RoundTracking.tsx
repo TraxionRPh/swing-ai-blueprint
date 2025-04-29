@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
@@ -13,14 +13,13 @@ const RoundTracking = () => {
   const { toast } = useToast();
   
   // Only load the complex hook if we're not on the main page
-  const isMainPage = useMemo(() => window.location.pathname === '/rounds', []);
-  const isDetailPage = useMemo(() => !!window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/), []);
-  const roundId = useMemo(() => isDetailPage ? window.location.pathname.split('/').pop() : null, [isDetailPage]);
+  const isMainPage = window.location.pathname === '/rounds';
+  const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
+  const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
   // Simplified loading for the main page
   const [pageLoading, setPageLoading] = useState(!isMainPage);
   const [loadRetries, setLoadRetries] = useState(0);
-  const [networkError, setNetworkError] = useState(false);
   const maxRetries = 2;
   
   // Use error boundary fallback for detailed component
@@ -29,38 +28,15 @@ const RoundTracking = () => {
   // Add state to handle forced completion of loading
   const [forceLoadingComplete, setForceLoadingComplete] = useState(false);
   
-  // Check for network connectivity issues
-  useEffect(() => {
-    if (!navigator.onLine) {
-      setNetworkError(true);
-      toast({
-        title: "You're offline",
-        description: "Please check your internet connection to load round data.",
-        variant: "destructive",
-      });
-    }
-    
-    const handleOnline = () => setNetworkError(false);
-    const handleOffline = () => setNetworkError(true);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [toast]);
-  
   useEffect(() => {
     // If we're on the main rounds page, set loading to false after a short delay
     if (isMainPage) {
-      const timer = setTimeout(() => setPageLoading(false), 300); // Reduced from 500ms to 300ms
+      const timer = setTimeout(() => setPageLoading(false), 500);
       return () => clearTimeout(timer);
     }
   }, [isMainPage]);
   
-  // Force timeout of loading state after 5 seconds (reduced from 8s to 5s)
+  // Force timeout of loading state after 12 seconds to prevent infinite loading
   useEffect(() => {
     if (!isDetailPage || !roundTrackingWithErrorHandling.isLoading) return;
     
@@ -72,19 +48,19 @@ const RoundTracking = () => {
         if (loadRetries >= maxRetries - 1) {
           toast({
             title: "Loading issue detected",
-            description: networkError ? 
-              "Network connection issue. Please check your internet connection." : 
-              "Showing available data. Some information may be limited.",
+            description: "Showing available data. Some information may be limited.",
             variant: "destructive",
           });
           
+          // Instead of using setIsLoading which doesn't exist, we'll use our local state
+          // to determine if we should show loading UI or not
           setForceLoadingComplete(true);
         }
       }
-    }, 5000); // Reduced from 8s to 5s
+    }, 10000); // 10 seconds timeout
     
     return () => clearTimeout(forceTimeout);
-  }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast, networkError]);
+  }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -93,15 +69,8 @@ const RoundTracking = () => {
   };
 
   const retryLoading = () => {
+    // This will trigger the useEffect above to retry loading
     setLoadRetries(prev => prev + 1);
-    // If we're offline, show a toast indicating that we need internet
-    if (!navigator.onLine) {
-      toast({
-        title: "Still offline",
-        description: "Internet connection required to load round data.",
-        variant: "destructive",
-      });
-    }
   };
   
   // Determine if we should override the loading state
@@ -123,14 +92,12 @@ const RoundTracking = () => {
           isLoading={effectiveIsLoading}
           retryLoading={retryLoading}
           roundTracking={roundTrackingWithErrorHandling}
-          networkError={networkError}
         />
       ) : (
         <RoundTrackingLoading
           onBack={handleBack}
           roundId={roundId}
           retryLoading={retryLoading}
-          networkError={networkError}
         />
       )}
     </ErrorBoundary>

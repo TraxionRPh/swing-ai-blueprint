@@ -1,12 +1,10 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { WifiOff } from "lucide-react";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -14,7 +12,6 @@ interface RoundTrackingDetailProps {
   isLoading: boolean;
   retryLoading: () => void;
   roundTracking: any;
-  networkError?: boolean;
 }
 
 export const RoundTrackingDetail = ({
@@ -22,8 +19,7 @@ export const RoundTrackingDetail = ({
   currentRoundId,
   isLoading,
   retryLoading,
-  roundTracking,
-  networkError = false,
+  roundTracking
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
@@ -42,22 +38,28 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
-  // Force exit from loading state after 5 seconds (reduced from 8s to 5s)
+  // Force exit from loading state after 8 seconds
   useEffect(() => {
     if (!isLoading) return;
     
     const timeoutId = setTimeout(() => {
       setLoadingTimeout(true);
-    }, 5000);
+      console.log("Forcing exit from loading state after timeout");
+    }, 8000);
     
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
+  // Log current hole data when it changes
+  useEffect(() => {
+    console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
+      currentHoleData,
+      holeCount: holeCount || 18
+    });
+  }, [currentHole, currentHoleData, holeCount]);
+
   // Determine effective loading state
-  const effectiveLoading = useMemo(() => 
-    isLoading && !loadingTimeout, 
-    [isLoading, loadingTimeout]
-  );
+  const effectiveLoading = isLoading && !loadingTimeout;
 
   const handleNext = () => {
     if (currentHole === holeCount) {
@@ -67,19 +69,23 @@ export const RoundTrackingDetail = ({
     }
   };
 
+  // Check if we have resume data in localStorage as a backup
+  useEffect(() => {
+    const sessionResumeHole = sessionStorage.getItem('resume-hole-number');
+    const localResumeHole = localStorage.getItem('resume-hole-number');
+    
+    if (sessionResumeHole) {
+      console.log("Found resume hole in sessionStorage:", sessionResumeHole);
+    }
+    
+    if (localResumeHole) {
+      console.log("Found resume hole in localStorage:", localResumeHole);
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
-      
-      {networkError && (
-        <Alert variant="destructive" className="mb-4">
-          <WifiOff className="h-4 w-4 mr-2" />
-          <AlertTitle>Network Connection Issue</AlertTitle>
-          <AlertDescription>
-            You appear to be offline. Some data may not be available and changes may not be saved.
-          </AlertDescription>
-        </Alert>
-      )}
       
       {effectiveLoading ? (
         <LoadingState 
@@ -87,7 +93,6 @@ export const RoundTrackingDetail = ({
           message="Loading your round data..." 
           retryFn={retryLoading}
           roundId={currentRoundId || undefined}
-          networkError={networkError}
         />
       ) : showFinalScore ? (
         <FinalScoreView 
