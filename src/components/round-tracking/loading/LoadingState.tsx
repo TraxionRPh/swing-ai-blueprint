@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { ReactNode, useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoadingStateProps {
   onBack: () => void;
@@ -22,22 +23,33 @@ export const LoadingState = ({
   roundId
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
+  const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Show retry option sooner - after 4 seconds instead of 6
+  // Show retry option sooner - after 3 seconds instead of 4
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 4000);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => setShowRetry(true), 3000);
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+    return () => {
+      clearTimeout(timer); 
+      clearTimeout(networkTimer);
+    };
   }, []);
 
   const handleRefresh = () => {
+    setShowNetworkAlert(false); // Hide alert when retrying
+    
     if (retryFn) {
       // Use provided retry function if available
       retryFn();
       // Reset the retry state
       setShowRetry(false);
       // Set timeout again
-      const timer = setTimeout(() => setShowRetry(true), 4000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setShowRetry(true), 3000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(networkTimer);
+      };
     } else {
       // Fallback to page reload
       window.location.reload();
@@ -70,10 +82,18 @@ export const LoadingState = ({
         <Loading message={displayMessage} />
       </div>
       
+      {showNetworkAlert && (
+        <Alert className="mt-4 mx-auto max-w-md">
+          <AlertDescription className="text-center">
+            There might be a connection issue. Check your network connection and try again.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {showRetry && (
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            Taking longer than expected. There might be a connection issue.
+            Taking longer than expected. 
           </p>
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />

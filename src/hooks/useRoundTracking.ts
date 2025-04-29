@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
@@ -51,6 +51,8 @@ export const useRoundTracking = () => {
     currentTeeColor
   } = useCourseManagement(currentRoundId);
 
+  // Instead of calling useScoreTracking conditionally (which would violate Rules of Hooks),
+  // we always call it but might not use its results if we're still loading
   const {
     currentHole,
     holeScores,
@@ -87,12 +89,20 @@ export const useRoundTracking = () => {
   // Update course name when selected course changes
   useEffect(() => {
     updateCourseName(selectedCourse);
-  }, [selectedCourse]);
+  }, [selectedCourse, updateCourseName]);
 
+  // Initialize the round when the component mounts
   useEffect(() => {
     let isMounted = true;
+    const maxInitAttempts = 3;
     
     const initializeRound = async () => {
+      if (initAttempt > maxInitAttempts) {
+        console.log(`Max initialization attempts (${maxInitAttempts}) reached, stopping retries`);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         
@@ -102,16 +112,34 @@ export const useRoundTracking = () => {
           setCurrentRoundId(urlRoundId);
           
           // Fetch course name and hole count for the round
-          const data = await fetchRoundDetails(urlRoundId);
-          
-          if (data?.golf_courses?.name && isMounted) {
-            setCourseName(data.golf_courses.name);
-            console.log("Set course name:", data.golf_courses.name);
-          }
-          
-          if (data?.hole_count && isMounted) {
-            setHoleCount(data.hole_count);
-            console.log("Set hole count:", data.hole_count);
+          try {
+            const data = await fetchRoundDetails(urlRoundId);
+            
+            if (data?.golf_courses?.name && isMounted) {
+              setCourseName(data.golf_courses.name);
+              console.log("Set course name:", data.golf_courses.name);
+            }
+            
+            if (data?.hole_count && isMounted) {
+              setHoleCount(data.hole_count);
+              console.log("Set hole count:", data.hole_count);
+            }
+          } catch (error) {
+            console.error("Error fetching round details:", error);
+            
+            // Show toast only if this isn't a retry
+            if (initAttempt === 0) {
+              toast({
+                title: "Error loading round",
+                description: "Could not load round details. Will retry automatically.",
+                variant: "destructive"
+              });
+            }
+            
+            // Set retry
+            if (isMounted && initAttempt < maxInitAttempts) {
+              setTimeout(() => setInitAttempt(prev => prev + 1), 2000);
+            }
           }
         } else {
           try {
@@ -147,19 +175,10 @@ export const useRoundTracking = () => {
 
     initializeRound();
     
-    // Retry initializing if we're still loading after 5 seconds
-    const retryTimer = setTimeout(() => {
-      if (isLoading && isMounted && initAttempt < 2) {
-        console.log("Retrying initialization");
-        setInitAttempt(prev => prev + 1);
-      }
-    }, 5000);
-    
     return () => {
       isMounted = false;
-      clearTimeout(retryTimer);
     };
-  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt, isLoading, setInitAttempt]);
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt, setInitAttempt, setIsLoading]);
 
   const handleHoleCountSelect = (count: number) => {
     setHoleCount(count);

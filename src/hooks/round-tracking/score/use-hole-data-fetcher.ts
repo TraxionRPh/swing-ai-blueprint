@@ -76,12 +76,20 @@ export const useHoleDataFetcher = () => {
       return { holeCount, formattedScores };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
-      toast({
-        title: "Error loading round data",
-        description: "Could not load hole scores. Please try again.",
-        variant: "destructive"
-      });
-      throw error;
+      // Don't show toast on network errors - they're expected in offline scenarios
+      if (!(error instanceof TypeError && error.message === "Failed to fetch")) {
+        toast({
+          title: "Error loading round data",
+          description: "Could not load hole scores. Please try again.",
+          variant: "destructive"
+        });
+      }
+      
+      // Return default formatted scores instead of throwing
+      return { 
+        holeCount: 18, 
+        formattedScores: formatHoleScores([], [], 18) 
+      };
     }
   };
 
@@ -110,7 +118,8 @@ export const useHoleDataFetcher = () => {
       return formattedScores;
     } catch (error) {
       console.error('Error fetching hole scores from course:', error);
-      throw error;
+      // Return default scores instead of throwing
+      return formatHoleScores([], [], 18);
     }
   };
 
