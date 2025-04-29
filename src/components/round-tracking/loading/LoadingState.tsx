@@ -28,13 +28,12 @@ export const LoadingState = ({
   // Add a state to force exit loading after a certain time
   const [forceExit, setForceExit] = useState(false);
   
-  // Increase timeout for retry button to 4 seconds
+  // Reduce timeouts for faster user experience
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 4000);
-    // Increase timeout for network alert to 7 seconds
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 7000);
-    // Force exit loading state after 10 seconds if needed
-    const forceExitTimer = setTimeout(() => setForceExit(true), 10000);
+    const timer = setTimeout(() => setShowRetry(true), 2000); // Reduced from 4s to 2s
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3500); // Reduced from 7s to 3.5s
+    // Force exit loading state after 5 seconds (down from 10s)
+    const forceExitTimer = setTimeout(() => setForceExit(true), 5000);
     
     return () => {
       clearTimeout(timer); 
@@ -59,9 +58,9 @@ export const LoadingState = ({
       retryFn();
       // Reset the retry state
       setShowRetry(false);
-      // Set timeout again with the new longer delays
-      const timer = setTimeout(() => setShowRetry(true), 4000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 7000);
+      // Set timeout again with new shorter delays
+      const timer = setTimeout(() => setShowRetry(true), 2000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3500);
       return () => {
         clearTimeout(timer);
         clearTimeout(networkTimer);

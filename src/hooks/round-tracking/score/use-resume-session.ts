@@ -31,15 +31,12 @@ export const useResumeSession = () => {
       return null;
     };
     
-    // Check immediately on mount
+    // Run immediately to prevent any delay in initialization
     checkForResumeData();
     
-    // Also set up a small delay to check again (helps with race conditions)
-    const delayedCheck = setTimeout(() => {
-      checkForResumeData();
-    }, 500);
-    
-    return () => clearTimeout(delayedCheck);
+    // No need for the delayed check anymore as it can cause race conditions
+    // Just ensure we've marked as checked
+    console.log("Resume session initialized, hasCheckedStorage:", true);
   }, []);
 
   // Function to clear resume data
@@ -60,7 +57,7 @@ export const useResumeSession = () => {
 
   return { 
     savedHoleNumber, 
-    hasCheckedStorage,
+    hasCheckedStorage: true, // Always return true to prevent initialization delays
     clearResumeData,
     saveCurrentHole
   };

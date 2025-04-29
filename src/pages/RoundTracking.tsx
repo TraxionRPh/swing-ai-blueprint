@@ -13,7 +13,7 @@ const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const didInitializeRef = useRef(false);
-  const { savedHoleNumber, hasCheckedStorage } = useResumeSession();
+  const { savedHoleNumber } = useResumeSession();
   
   // Track whether this is the first render since page load
   const isFirstLoadRef = useRef(true);
@@ -30,40 +30,25 @@ const RoundTracking = () => {
   // Use error boundary fallback for detailed component
   const roundTrackingWithErrorHandling = useRoundTracking();
   
+  // Initialize component on mount
   useEffect(() => {
+    // Mark as initialized immediately to avoid loading issues
+    didInitializeRef.current = true;
+    setIsInitialized(true);
+    
+    // Short timeout to load data
+    setTimeout(() => {
+      setPageLoading(false);
+      console.log("Initialized RoundTracking component");
+    }, 300);
+    
     // Only run once on initial page load
     if (isFirstLoadRef.current) {
       isFirstLoadRef.current = false;
       console.log("Initial page load of RoundTracking, path:", window.location.pathname);
       console.log("Checking for resume data...", { savedHoleNumber });
-      
-      // Force initialization after reasonable delay
-      const initTimer = setTimeout(() => {
-        if (!didInitializeRef.current) {
-          didInitializeRef.current = true;
-          setIsInitialized(true);
-          setPageLoading(false);
-          console.log("Force completed initialization after timeout");
-        }
-      }, 1500);
-      
-      return () => clearTimeout(initTimer);
     }
   }, [savedHoleNumber]);
-  
-  useEffect(() => {
-    // Set loading to false after a short delay
-    const timer = setTimeout(() => {
-      if (hasCheckedStorage) {
-        setPageLoading(false);
-        setIsInitialized(true);
-        didInitializeRef.current = true;
-        console.log("Page initialization complete");
-      }
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [hasCheckedStorage]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -75,15 +60,8 @@ const RoundTracking = () => {
   // Directly use retryLoading from the hook
   const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
   
-  // Determine if we should override the loading state
-  const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading || !isInitialized || !hasCheckedStorage;
-  
-  // Helper for debugging
-  useEffect(() => {
-    if (roundId && didInitializeRef.current) {
-      console.log("Round tracking detail is initialized with round ID:", roundId);
-    }
-  }, [roundId, isInitialized]);
+  // Determine if we should override the loading state - use a shorter timeout
+  const effectiveIsLoading = isLoading && !didInitializeRef.current;
   
   // Wrap the components with error boundary
   return (

@@ -12,31 +12,12 @@ export const useRouteInitialization = (roundId: string | null) => {
     // Set a flag that we've attempted to load
     setInitialLoadAttempt(true);
 
-    // Mark as initialized after a short delay to ensure other hooks have time to run
-    // But only once we've checked storage for resume data
-    const timer = setTimeout(() => {
-      if (hasCheckedStorage) {
-        setIsInitialized(true);
-        console.log(`Route initialization complete for round: ${roundId}`);
-      }
-    }, 300);
+    // Mark as initialized immediately to prevent loading issues
+    setIsInitialized(true);
+    console.log(`Route initialization complete for round: ${roundId}`);
+    
+    // No need to wait for storage checks anymore
+  }, [roundId]);
 
-    return () => clearTimeout(timer);
-  }, [roundId, hasCheckedStorage]);
-
-  // Force initialization after a timeout as a fallback
-  useEffect(() => {
-    if (isInitialized) return;
-
-    const forceTimer = setTimeout(() => {
-      if (!isInitialized) {
-        setIsInitialized(true);
-        console.log("Force initializing route after timeout");
-      }
-    }, 2000);
-
-    return () => clearTimeout(forceTimer);
-  }, [isInitialized]);
-
-  return { isInitialized, initialLoadAttempt };
+  return { isInitialized: true, initialLoadAttempt };
 };

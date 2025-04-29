@@ -24,23 +24,8 @@ export const RoundTrackingDetail = ({
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [initialRender, setInitialRender] = useState(true);
   const [componentMounted, setComponentMounted] = useState(false);
   const { toast } = useToast();
-  const { hasCheckedStorage } = useResumeSession();
-  
-  const {
-    selectedCourse,
-    currentHole,
-    holeScores,
-    holeCount,
-    handleHoleUpdate,
-    handlePrevious,
-    currentTeeColor,
-    currentHoleData,
-    isSaving,
-    finishRound,
-  } = roundTracking || {}; // Add null check with default empty object
   
   // Track component mount status
   useEffect(() => {
@@ -48,17 +33,7 @@ export const RoundTrackingDetail = ({
     return () => setComponentMounted(false);
   }, []);
 
-  // Check initial rendering status and data availability
-  useEffect(() => {
-    if (initialRender) {
-      console.log("Initial render of RoundTrackingDetail");
-      // After a short delay, consider the component as no longer in initial render
-      const timer = setTimeout(() => setInitialRender(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [initialRender]);
-
-  // Force exit from loading state after timeout
+  // Force exit from loading state after a short timeout
   useEffect(() => {
     if (!isLoading) return;
     
@@ -67,33 +42,34 @@ export const RoundTrackingDetail = ({
         setLoadingTimeout(true);
         console.log("Forcing exit from loading state after timeout");
       }
-    }, 3000);
+    }, 1000); // Reduced from 3000 to 1000ms for faster response
     
     return () => clearTimeout(timeoutId);
   }, [isLoading, componentMounted]);
 
-  // Log when roundTracking data becomes available
-  useEffect(() => {
-    if (roundTracking && currentRoundId) {
-      console.log("RoundTrackingDetail - roundTracking data is now available");
-    }
-  }, [roundTracking, currentRoundId]);
+  // Destructure roundTracking with default values to prevent errors
+  const {
+    selectedCourse,
+    currentHole = 1,
+    holeScores = [],
+    holeCount = 18,
+    handleHoleUpdate = () => {},
+    handlePrevious = () => {},
+    currentTeeColor = '',
+    currentHoleData = null,
+    isSaving = false,
+    finishRound = () => {},
+    handleNext: roundTrackingHandleNext = () => {}
+  } = roundTracking || {};
 
-  // Log current hole data when it changes
-  useEffect(() => {
-    if (currentHole && currentHoleData) {
-      console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
-        currentHoleData,
-        holeCount: holeCount || 18
-      });
-    }
-  }, [currentHole, currentHoleData, holeCount]);
-
-  // Determine effective loading state - consider data availability
-  const effectiveLoading = (isLoading || initialRender || !roundTracking || !currentHoleData || !hasCheckedStorage) && !loadingTimeout;
+  // Determine if we have enough data to show content
+  const hasEnoughData = !!(roundTracking && currentHoleData);
+  
+  // Determine effective loading state - exit loading if we have data or after timeout
+  const effectiveLoading = isLoading && !hasEnoughData && !loadingTimeout;
 
   const handleNext = () => {
-    if (!roundTracking?.handleNext) {
+    if (!roundTrackingHandleNext) {
       console.error("handleNext function is not available");
       return;
     }
@@ -101,7 +77,7 @@ export const RoundTrackingDetail = ({
     if (currentHole === holeCount) {
       setShowFinalScore(true);
     } else {
-      roundTracking.handleNext();
+      roundTrackingHandleNext();
     }
   };
 
@@ -125,7 +101,15 @@ export const RoundTrackingDetail = ({
         />
       ) : (
         <HoleScoreView 
-          currentHoleData={currentHoleData}
+          currentHoleData={currentHoleData || {
+            holeNumber: currentHole,
+            par: 4,
+            distance: 0,
+            score: 0,
+            putts: 0,
+            fairwayHit: false,
+            greenInRegulation: false
+          }}
           handleHoleUpdate={handleHoleUpdate}
           handleNext={handleNext}
           handlePrevious={handlePrevious}
