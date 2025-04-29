@@ -2,7 +2,7 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
 
 interface HoleScoreViewProps {
@@ -32,19 +32,6 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   // Make sure we always have valid hole data that matches the current hole
   const [validatedData, setValidatedData] = useState<HoleData>(currentHoleData);
-  const initializedRef = useRef(false);
-  const [dataReady, setDataReady] = useState(false);
-  
-  // Create a default hole data object function
-  const createDefaultHoleData = (holeNumber: number): HoleData => ({
-    holeNumber,
-    par: 4,
-    distance: 0,
-    score: 0,
-    putts: 0,
-    fairwayHit: false,
-    greenInRegulation: false
-  });
   
   useEffect(() => {
     // Always ensure we have a valid data object for the current hole
@@ -52,35 +39,25 @@ export const HoleScoreView = ({
     
     if (matchingHole) {
       setValidatedData(matchingHole);
-      initializedRef.current = true;
-      setDataReady(true);
     } else if (currentHoleData && currentHoleData.holeNumber === currentHole) {
       setValidatedData(currentHoleData);
-      initializedRef.current = true;
-      setDataReady(true);
     } else {
-      // If we still don't have data after a short delay, create default data
-      if (!initializedRef.current) {
-        const timer = setTimeout(() => {
-          if (!initializedRef.current) {
-            console.log(`Creating default data for hole ${currentHole} as fallback`);
-            setValidatedData(createDefaultHoleData(currentHole));
-            initializedRef.current = true;
-            setDataReady(true);
-          }
-        }, 1000); // Reduced from 2000ms to 1000ms for faster response
-        return () => clearTimeout(timer);
-      }
+      // Create a default hole data if nothing else is available
+      setValidatedData({
+        holeNumber: currentHole,
+        par: 4,
+        distance: 0,
+        score: 0,
+        putts: 0,
+        fairwayHit: false,
+        greenInRegulation: false
+      });
     }
     
     console.log(`HoleScoreView - Displaying hole ${currentHole}`, 
       matchingHole || currentHoleData || "Using default data");
       
   }, [currentHole, currentHoleData, holeScores]);
-    
-  if (!dataReady && !initializedRef.current) {
-    return <Loading message="Preparing hole data..." />;
-  }
   
   return (
     <>

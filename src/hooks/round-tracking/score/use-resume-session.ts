@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 export const useResumeSession = () => {
   const [savedHoleNumber, setSavedHoleNumber] = useState<number | null>(null);
-  const [hasCheckedStorage, setHasCheckedStorage] = useState(true); // Always start as true
   
   // Check for resume data in sessionStorage and localStorage
   useEffect(() => {
@@ -17,7 +16,6 @@ export const useResumeSession = () => {
       const holeNum = parseInt(localHoleNumber, 10);
       setSavedHoleNumber(holeNum);
     }
-    
   }, []);
 
   // Function to clear resume data

@@ -2,8 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { ReactNode, useState, useEffect, useRef } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ReactNode, useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
 interface LoadingStateProps {
@@ -25,11 +24,7 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
-  // Add a state to force exit loading after a certain time
-  const [forceExit, setForceExit] = useState(false);
-  // Track if component is still mounted
-  const isMountedRef = useRef(true);
-  // Track if content has been loaded
+  // Add a state to track if content has been loaded
   const [contentLoaded, setContentLoaded] = useState(!!children);
   
   // Check if we have children content which indicates successful loading
@@ -42,41 +37,18 @@ export const LoadingState = ({
     }
   }, [children]);
   
-  // Set up cleanup and timeout management
   useEffect(() => {
-    isMountedRef.current = true;
-    
-    // Set a shorter force exit timer to prevent prolonged loading states
-    const forceExitTimer = setTimeout(() => {
-      if (isMountedRef.current) {
-        setForceExit(true);
-      }
-    }, 3000); // Reduced from 8s to 3s
-    
-    // Only set timeouts if we haven't loaded content yet
+    // Show retry button after a short delay if content isn't loaded
     if (!contentLoaded) {
       const retryTimer = setTimeout(() => {
-        if (isMountedRef.current && !contentLoaded) {
-          setShowRetry(true);
-        }
-      }, 2000); // Reduced from 3.5s
+        setShowRetry(true);
+      }, 2000);
       
-      return () => {
-        isMountedRef.current = false;
-        clearTimeout(retryTimer);
-        clearTimeout(forceExitTimer);
-      };
+      return () => clearTimeout(retryTimer);
     }
-    
-    return () => {
-      isMountedRef.current = false;
-      clearTimeout(forceExitTimer);
-    };
   }, [contentLoaded]);
 
   const handleRefresh = () => {
-    setShowNetworkAlert(false);
-    
     if (retryFn) {
       retryFn();
       setShowRetry(false);
@@ -90,9 +62,6 @@ export const LoadingState = ({
     ? `${message} (Round ID: ${roundId.substring(0, 8)}...)`
     : message;
   
-  // If content is loaded or we've forced exit, don't show loading indicators
-  const showLoadingIndicators = !contentLoaded && !forceExit;
-  
   return (
     <div className="space-y-6 w-full">
       {!hideHeader && (
@@ -104,13 +73,13 @@ export const LoadingState = ({
         />
       )}
       
-      {showLoadingIndicators && (
+      {!contentLoaded && (
         <div className="w-full flex justify-center">
           <Loading message={displayMessage} size="md" minHeight={150} />
         </div>
       )}
       
-      {showRetry && showLoadingIndicators && (
+      {showRetry && !contentLoaded && (
         <div className="mt-4 text-center">
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
@@ -119,9 +88,9 @@ export const LoadingState = ({
         </div>
       )}
       
-      {(children || forceExit) && (
-        <div className={contentLoaded ? "" : "opacity-0 h-0 overflow-hidden"}>
-          {children || <div className="p-4 text-center">Loading complete</div>}
+      {children && (
+        <div>
+          {children}
         </div>
       )}
     </div>
