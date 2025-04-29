@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { ReactNode, useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
 interface LoadingStateProps {
@@ -24,35 +25,35 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
-  // Add a state to track if content has been loaded
-  const [contentLoaded, setContentLoaded] = useState(!!children);
   
-  // Check if we have children content which indicates successful loading
+  // Increase timeout for retry button to 5 seconds
   useEffect(() => {
-    if (children) {
-      setContentLoaded(true);
-      // If content is loaded, we don't need to show alerts
-      setShowNetworkAlert(false);
-      setShowRetry(false);
-    }
-  }, [children]);
-  
-  useEffect(() => {
-    // Show retry button after a short delay if content isn't loaded
-    if (!contentLoaded) {
-      const retryTimer = setTimeout(() => {
-        setShowRetry(true);
-      }, 2000);
-      
-      return () => clearTimeout(retryTimer);
-    }
-  }, [contentLoaded]);
+    const timer = setTimeout(() => setShowRetry(true), 5000);
+    // Increase timeout for network alert to 8 seconds
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+    return () => {
+      clearTimeout(timer); 
+      clearTimeout(networkTimer);
+    };
+  }, []);
 
   const handleRefresh = () => {
+    setShowNetworkAlert(false); // Hide alert when retrying
+    
     if (retryFn) {
+      // Use provided retry function if available
       retryFn();
+      // Reset the retry state
       setShowRetry(false);
+      // Set timeout again with the new longer delays
+      const timer = setTimeout(() => setShowRetry(true), 5000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(networkTimer);
+      };
     } else {
+      // Fallback to page reload
       window.location.reload();
     }
   };
@@ -73,26 +74,31 @@ export const LoadingState = ({
         />
       )}
       
-      {!contentLoaded && (
-        <div className="w-full flex justify-center">
-          <Loading message={displayMessage} size="md" minHeight={150} />
-        </div>
+      <div className="w-full flex justify-center">
+        <Loading message={displayMessage} />
+      </div>
+      
+      {showNetworkAlert && (
+        <Alert className="mt-4 mx-auto max-w-md">
+          <AlertDescription className="text-center">
+            There might be a connection issue. Check your network connection and try again.
+          </AlertDescription>
+        </Alert>
       )}
       
-      {showRetry && !contentLoaded && (
-        <div className="mt-4 text-center">
+      {showRetry && (
+        <div className="mt-8 text-center">
+          <p className="text-sm text-muted-foreground mb-4">
+            Taking longer than expected. 
+          </p>
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Retry loading
+            Retry loading round
           </Button>
         </div>
       )}
       
-      {children && (
-        <div>
-          {children}
-        </div>
-      )}
+      {children}
     </div>
   );
 };

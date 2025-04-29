@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { PlayCircle, Trash2, Loader2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface InProgressRoundProps {
   roundId: string;
@@ -35,38 +34,7 @@ export const InProgressRoundCard = ({
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const isMountedRef = useRef(true);
   const { toast } = useToast();
-
-  // Ensure we clean up properly when component unmounts
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  // Prefetch round data when component mounts to speed up loading
-  useEffect(() => {
-    // Silently prefetch hole scores data
-    const prefetchData = async () => {
-      try {
-        console.log("Prefetching round data for:", roundId);
-        await Promise.all([
-          // Prefetch hole scores
-          supabase.from('hole_scores').select('*').eq('round_id', roundId),
-          // Prefetch round details
-          supabase.from('rounds').select('*').eq('id', roundId)
-        ]);
-        console.log("Prefetch complete for round:", roundId);
-      } catch (error) {
-        // Silent fail - this is just optimization
-        console.log("Prefetch failed silently:", error);
-      }
-    };
-    
-    prefetchData();
-  }, [roundId]);
 
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
@@ -75,13 +43,15 @@ export const InProgressRoundCard = ({
     try {
       setIsLoading(true);
       
-      // Show a toast with neutral variant instead of error
       toast({
         title: "Loading round",
         description: "Retrieving your round data..."
       });
       
-      // Calculate the next hole to resume play at
+      // Calculate the next hole to resume play at:
+      // If lastHole is 8, we want to go to hole 9 (so we use lastHole + 1)
+      // Unless that's beyond the hole count
+      // If no holes completed yet (lastHole === 0), start at hole 1
       const nextHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
       
       console.log("Resuming at hole:", nextHole);
@@ -90,27 +60,22 @@ export const InProgressRoundCard = ({
       sessionStorage.setItem('resume-hole-number', nextHole.toString());
       localStorage.setItem('resume-hole-number', nextHole.toString());
       
-      // Clear any existing error flags that might exist in storage
-      localStorage.removeItem('round-loading-error');
-      sessionStorage.removeItem('round-loading-error');
+      // Log the URL we're going to navigate to for debugging
+      console.log(`Navigating to: /rounds/${roundId}`);
       
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {
-        if (isMountedRef.current) {
-          navigate(`/rounds/${roundId}`);
-        }
+        navigate(`/rounds/${roundId}`);
       }, 300);
     } catch (error) {
       console.error("Navigation error:", error);
-      if (isMountedRef.current) {
-        setIsLoading(false);
-        
-        toast({
-          title: "Navigation error",
-          description: "There was an issue loading this round. Please try again.",
-          variant: "destructive"
-        });
-      }
+      setIsLoading(false);
+      
+      toast({
+        title: "Navigation error",
+        description: "There was an issue loading this round. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
