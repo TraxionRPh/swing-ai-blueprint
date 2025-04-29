@@ -6,8 +6,8 @@ import { useHolePersistence } from "./score/use-hole-persistence";
 
 export const useScoreTracking = (
   roundId: string | null, 
-  courseId?: string, 
-  holeScores: HoleData[] = [], 
+  courseId: string | undefined, 
+  holeScores: HoleData[], 
   setHoleScores: (scores: HoleData[]) => void
 ) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
@@ -36,20 +36,19 @@ export const useScoreTracking = (
     console.log('Updating hole data:', data);
     
     // Update the hole scores array
-    setHoleScores(prev => {
-      // Find if this hole already exists in our array
-      const holeIndex = prev.findIndex(hole => hole.holeNumber === data.holeNumber);
-      
-      if (holeIndex >= 0) {
-        // Update existing hole
-        const newScores = [...prev];
-        newScores[holeIndex] = data;
-        return newScores;
-      } else {
-        // Add new hole
-        return [...prev, data];
-      }
-    });
+    const updatedScores = [...holeScores];
+    const holeIndex = updatedScores.findIndex(hole => hole.holeNumber === data.holeNumber);
+    
+    if (holeIndex >= 0) {
+      // Update existing hole
+      updatedScores[holeIndex] = data;
+    } else {
+      // Add new hole
+      updatedScores.push(data);
+    }
+    
+    // Set the updated scores array directly
+    setHoleScores(updatedScores);
     
     // Save to database if we have a valid round ID
     if (roundId) {
@@ -57,7 +56,7 @@ export const useScoreTracking = (
         console.error('Failed to save hole score:', error);
       });
     }
-  }, [roundId, saveHoleScore, setHoleScores]);
+  }, [roundId, saveHoleScore, setHoleScores, holeScores]);
 
   return {
     currentHole,
