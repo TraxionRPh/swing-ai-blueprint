@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { ReactNode, useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,11 +26,10 @@ export const LoadingState = ({
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Increase timeout for retry button to 5 seconds
+  // Show retry button after a short delay
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 5000);
-    // Increase timeout for network alert to 8 seconds
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+    const timer = setTimeout(() => setShowRetry(true), 2000);
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3000);
     return () => {
       clearTimeout(timer); 
       clearTimeout(networkTimer);
@@ -45,9 +44,9 @@ export const LoadingState = ({
       retryFn();
       // Reset the retry state
       setShowRetry(false);
-      // Set timeout again with the new longer delays
-      const timer = setTimeout(() => setShowRetry(true), 5000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+      // Set timeout again
+      const timer = setTimeout(() => setShowRetry(true), 2000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3000);
       return () => {
         clearTimeout(timer);
         clearTimeout(networkTimer);
@@ -74,31 +73,30 @@ export const LoadingState = ({
         />
       )}
       
-      <div className="w-full flex justify-center">
-        <Loading message={displayMessage} />
-      </div>
-      
-      {showNetworkAlert && (
-        <Alert className="mt-4 mx-auto max-w-md">
-          <AlertDescription className="text-center">
-            There might be a connection issue. Check your network connection and try again.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {showRetry && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Taking longer than expected. 
-          </p>
-          <Button onClick={handleRefresh}>
+      <div className="w-full flex flex-col items-center">
+        <Loading message={displayMessage} minHeight="200px" />
+        
+        {showRetry && (
+          <Button 
+            onClick={handleRefresh} 
+            className="mt-4"
+            variant="outline"
+          >
             <RefreshCcw className="h-4 w-4 mr-2" />
             Retry loading round
           </Button>
-        </div>
-      )}
-      
-      {children}
+        )}
+        
+        {showNetworkAlert && (
+          <Alert className="mt-4 mx-auto max-w-md">
+            <AlertDescription className="text-center">
+              There might be a connection issue. Check your network connection and try again.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {children}
+      </div>
     </div>
   );
 };

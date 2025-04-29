@@ -1,11 +1,18 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export const useResumeSession = () => {
   const [savedHoleNumber, setSavedHoleNumber] = useState<number | null>(null);
+  const hasCheckedRef = useRef(false);
   
-  // Check for resume data in sessionStorage and localStorage
+  // Check for resume data in sessionStorage and localStorage - only once
   useEffect(() => {
+    // Skip if we've already checked
+    if (hasCheckedRef.current) return;
+    
+    // Mark as checked immediately
+    hasCheckedRef.current = true;
+    
     const checkForResumeData = () => {
       const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
       const localHoleNumber = localStorage.getItem('resume-hole-number');
@@ -13,27 +20,18 @@ export const useResumeSession = () => {
       if (sessionHoleNumber) {
         console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
         setSavedHoleNumber(parseInt(sessionHoleNumber, 10));
-        return parseInt(sessionHoleNumber, 10);
+        return;
       }
       
       if (localHoleNumber) {
         console.log("Found resume hole in localStorage:", localHoleNumber);
         setSavedHoleNumber(parseInt(localHoleNumber, 10));
-        return parseInt(localHoleNumber, 10);
+        return;
       }
-      
-      return null;
     };
     
-    // Check immediately on mount
+    // Check immediately on mount - no delay
     checkForResumeData();
-    
-    // Also set up a small delay to check again (helps with race conditions)
-    const delayedCheck = setTimeout(() => {
-      checkForResumeData();
-    }, 500);
-    
-    return () => clearTimeout(delayedCheck);
   }, []);
 
   // Function to clear resume data

@@ -1,9 +1,8 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useHoleScoresFetcher } from "./use-hole-scores-fetcher";
 import { useHoleScoresState } from "./use-hole-scores-state";
 import { useResumeSession } from "./use-resume-session";
-import { useRouteInitialization } from "./use-route-initialization";
 
 export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const {
@@ -26,25 +25,27 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     initialize: initializeFetcher
   } = useHoleScoresFetcher();
 
-  // Check for route initialization
-  const { isInitialized } = useRouteInitialization(roundId);
-
   // Check for resume data
   const { savedHoleNumber, clearResumeData } = useResumeSession();
 
+  // Track if we've initialized
+  const hasInitializedRef = useRef(false);
+
   // Initialize data and handle retries when dependencies change
   useEffect(() => {
-    // Don't start fetching until we're fully initialized
-    if (!isInitialized) {
-      console.log("Waiting for initialization before fetching hole scores");
-      return;
-    }
+    // Skip if we've already initialized
+    if (hasInitializedRef.current) return;
+    
+    // Mark as initialized immediately
+    hasInitializedRef.current = true;
 
     // Initialize refs
     initializeFetcher();
     retryCount.current = 0;
     
     const fetchData = async () => {
+      if (!isMountedRef.current) return;
+      
       if (roundId) {
         try {
           console.log("Attempting to fetch hole scores for round:", roundId);
@@ -57,26 +58,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
           }
         } catch (error) {
           console.error('Failed to fetch hole scores in useEffect:', error);
-          
-          // If we haven't exceeded max retries, try again
-          if (retryCount.current < maxRetries.current) {
-            retryCount.current++;
-            
-            // Clear any existing timeout
-            cleanupTimeouts();
-            
-            // Set exponential backoff retry (1s, 2s, 4s)
-            const retryDelay = Math.pow(2, retryCount.current - 1) * 1000;
-            console.log(`Retrying fetch (${retryCount.current}/${maxRetries.current}) after ${retryDelay}ms`);
-            
-            fetchTimeoutRef.current = setTimeout(() => {
-              if (isMountedRef.current) {
-                fetchData();
-              }
-            }, retryDelay);
-          } else {
-            initializeDefaultHoleScores();
-          }
+          initializeDefaultHoleScores();
         }
       } else if (courseId) {
         try {
@@ -95,7 +77,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       }
     };
     
-    // Immediate fetch on mount or when dependencies change
+    // Immediate fetch on mount
     fetchData();
     
     // Cleanup function to clear any timeouts and prevent state updates after unmount
@@ -106,7 +88,6 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   }, [
     roundId, 
     courseId, 
-    isInitialized,
     fetchHoleScoresFromRound, 
     fetchHoleScoresFromCourse, 
     setHoleScores, 
@@ -119,7 +100,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
 
   // Refetch function for external components to trigger data reload
   const refetchHoleScores = useCallback(async () => {
-    if (!roundId) return;
+    if (!roundId || !isMountedRef.current) return;
     
     setIsLoading(true);
     try {

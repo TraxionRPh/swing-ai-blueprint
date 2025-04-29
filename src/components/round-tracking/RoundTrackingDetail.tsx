@@ -1,10 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
-import { useToast } from "@/hooks/use-toast";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -22,10 +20,6 @@ export const RoundTrackingDetail = ({
   roundTracking
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [initialRender, setInitialRender] = useState(true);
-  const [componentMounted, setComponentMounted] = useState(false);
-  const { toast } = useToast();
   
   const {
     selectedCourse,
@@ -38,58 +32,9 @@ export const RoundTrackingDetail = ({
     currentHoleData,
     isSaving,
     finishRound,
-  } = roundTracking || {}; // Add null check with default empty object
-  
-  // Track component mount status
-  useEffect(() => {
-    setComponentMounted(true);
-    return () => setComponentMounted(false);
-  }, []);
+  } = roundTracking || {};
 
-  // Check initial rendering status and data availability
-  useEffect(() => {
-    if (initialRender) {
-      console.log("Initial render of RoundTrackingDetail");
-      // After a short delay, consider the component as no longer in initial render
-      const timer = setTimeout(() => setInitialRender(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [initialRender]);
-
-  // Force exit from loading state after timeout
-  useEffect(() => {
-    if (!isLoading) return;
-    
-    const timeoutId = setTimeout(() => {
-      if (componentMounted) {
-        setLoadingTimeout(true);
-        console.log("Forcing exit from loading state after timeout");
-      }
-    }, 3000);
-    
-    return () => clearTimeout(timeoutId);
-  }, [isLoading, componentMounted]);
-
-  // Log when roundTracking data becomes available
-  useEffect(() => {
-    if (roundTracking && currentRoundId) {
-      console.log("RoundTrackingDetail - roundTracking data is now available");
-    }
-  }, [roundTracking, currentRoundId]);
-
-  // Log current hole data when it changes
-  useEffect(() => {
-    if (currentHole && currentHoleData) {
-      console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
-        currentHoleData,
-        holeCount: holeCount || 18
-      });
-    }
-  }, [currentHole, currentHoleData, holeCount]);
-
-  // Determine effective loading state - consider data availability
-  const effectiveLoading = (isLoading || initialRender || !roundTracking || !currentHoleData) && !loadingTimeout;
-
+  // Handle next hole - if on last hole, show final score view
   const handleNext = () => {
     if (!roundTracking?.handleNext) {
       console.error("handleNext function is not available");
@@ -103,18 +48,12 @@ export const RoundTrackingDetail = ({
     }
   };
 
+  // Always render content without loading state to avoid flicker
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
-      {effectiveLoading ? (
-        <LoadingState 
-          onBack={onBack} 
-          message="Loading your round data..." 
-          retryFn={retryLoading}
-          roundId={currentRoundId || undefined}
-        />
-      ) : showFinalScore ? (
+      {showFinalScore ? (
         <FinalScoreView 
           holeScores={holeScores || []}
           holeCount={holeCount || 18}
@@ -123,13 +62,21 @@ export const RoundTrackingDetail = ({
         />
       ) : (
         <HoleScoreView 
-          currentHoleData={currentHoleData}
-          handleHoleUpdate={handleHoleUpdate}
+          currentHoleData={currentHoleData || {
+            holeNumber: currentHole || 1,
+            par: 4,
+            distance: 0,
+            score: 0,
+            putts: 0,
+            fairwayHit: false,
+            greenInRegulation: false
+          }}
+          handleHoleUpdate={handleHoleUpdate || (() => {})}
           handleNext={handleNext}
-          handlePrevious={handlePrevious}
+          handlePrevious={handlePrevious || (() => {})}
           currentHole={currentHole || 1}
           holeCount={holeCount || 18}
-          teeColor={currentTeeColor}
+          teeColor={currentTeeColor || 'blue'}
           courseId={selectedCourse?.id}
           isSaving={isSaving || false}
           holeScores={holeScores || []}

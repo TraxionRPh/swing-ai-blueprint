@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
@@ -11,51 +11,25 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const didInitializeRef = useRef(false);
   
-  // Track whether this is the first render since page load
-  const isFirstLoadRef = useRef(true);
-  
-  // Only load the complex hook if we're not on the main page
+  // Determine which page we're on
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
-  // Simplified loading for the main page
+  // Simplified loading state - just track if page is loading
   const [pageLoading, setPageLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
   
-  // Use error boundary fallback for detailed component
+  // Load round tracking hook
   const roundTrackingWithErrorHandling = useRoundTracking();
   
+  // Set loading to false after a very short delay
   useEffect(() => {
-    // Only run once on initial page load
-    if (isFirstLoadRef.current) {
-      isFirstLoadRef.current = false;
-      console.log("Initial page load of RoundTracking, path:", window.location.pathname);
-      
-      // Force initialization after reasonable delay
-      const initTimer = setTimeout(() => {
-        if (!didInitializeRef.current) {
-          didInitializeRef.current = true;
-          setIsInitialized(true);
-          setPageLoading(false);
-          console.log("Force completed initialization after timeout");
-        }
-      }, 1500);
-      
-      return () => clearTimeout(initTimer);
-    }
-  }, []);
-  
-  useEffect(() => {
-    // Set loading to false after a short delay
+    // Mark the page as loaded almost immediately
     const timer = setTimeout(() => {
       setPageLoading(false);
-      setIsInitialized(true);
-      didInitializeRef.current = true;
-      console.log("Page initialization complete");
-    }, 300);
+      console.log("Page loading complete");
+    }, 100);
     
     return () => clearTimeout(timer);
   }, []);
@@ -66,33 +40,23 @@ const RoundTracking = () => {
     navigate(-1);
   };
   
-  // Directly use retryLoading from the hook
+  // Get retry function from the hook
   const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
   
-  // Determine if we should override the loading state
-  const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading || !isInitialized;
-  
-  // Helper for debugging
-  useEffect(() => {
-    if (roundId && didInitializeRef.current) {
-      console.log("Round tracking detail is initialized with round ID:", roundId);
-    }
-  }, [roundId, isInitialized]);
-  
-  // Wrap the components with error boundary
+  // Wrap everything with error boundary
   return (
     <ErrorBoundary>
       {isMainPage ? (
         <RoundTrackingMain 
           onBack={handleBack}
-          pageLoading={pageLoading}
+          pageLoading={false} // Always set to false to avoid loading issues
           roundTracking={roundTrackingWithErrorHandling}
         />
       ) : isDetailPage && roundTrackingWithErrorHandling.currentRoundId ? (
         <RoundTrackingDetail
           onBack={handleBack}
           currentRoundId={roundTrackingWithErrorHandling.currentRoundId}
-          isLoading={effectiveIsLoading}
+          isLoading={false} // Always set to false to avoid loading issues
           retryLoading={retryLoading}
           roundTracking={roundTrackingWithErrorHandling}
         />
