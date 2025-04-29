@@ -13,18 +13,18 @@ const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Determine page type from URL path
+  // Extract roundId from URL path
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
-  // Simplified loading for the main page
-  const [pageLoading, setPageLoading] = useState(!isMainPage);
+  // Track whether we're in the initial loading state for the page
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loadRetries, setLoadRetries] = useState(0);
   
   // Centralized loading state management
   const {
-    isLoading,
+    isLoading: roundStateLoading,
     loadingStage,
     resetLoading,
     retryCount,
@@ -32,23 +32,38 @@ const RoundTracking = () => {
   } = useRoundLoadingState(roundId);
   
   // Load round tracking hooks with error handling
-  const roundTrackingWithErrorHandling = useRoundTracking();
+  const roundTracking = useRoundTracking();
+  const { currentRoundId, isLoading: roundTrackingLoading } = roundTracking;
   
-  // Initialize the page
+  // Combined loading state that accounts for all loading sources
+  const isLoading = roundStateLoading || roundTrackingLoading || initialLoading;
+  
   useEffect(() => {
-    // If we're on the main rounds page, set loading to false after a short delay
+    // For the main page, we can exit loading after a short delay
     if (isMainPage) {
-      const timer = setTimeout(() => setPageLoading(false), 500);
+      const timer = setTimeout(() => {
+        console.log("Main page loading complete");
+        setInitialLoading(false);
+      }, 500);
       return () => clearTimeout(timer);
     }
     
-    // Update the round ID in the tracking hook when the URL changes
+    // For detail pages, set loading to false once we have the round data
+    if (isDetailPage && currentRoundId === roundId && !roundStateLoading && !roundTrackingLoading) {
+      console.log("Detail page loading complete, data is ready");
+      setInitialLoading(false);
+    }
+  }, [isMainPage, isDetailPage, roundId, currentRoundId, roundStateLoading, roundTrackingLoading]);
+
+  // Initialize the page - update the round ID in the tracking hook when the URL changes
+  useEffect(() => {
     if (isDetailPage && roundId) {
       console.log("Setting round ID from URL:", roundId);
-      roundTrackingWithErrorHandling.setCurrentRoundId(roundId);
+      roundTracking.setCurrentRoundId(roundId);
     }
-  }, [isMainPage, isDetailPage, roundId, roundTrackingWithErrorHandling.setCurrentRoundId]);
+  }, [isDetailPage, roundId, roundTracking.setCurrentRoundId]);
 
+  // Handle back navigation
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
     sessionStorage.removeItem('resume-hole-number');
@@ -56,43 +71,64 @@ const RoundTracking = () => {
     navigate(-1);
   };
 
+  // Handle retry loading
   const retryLoading = () => {
     // Reset loading state and increment retry count
     setLoadRetries(prev => prev + 1);
+    setInitialLoading(true);
     resetLoading();
     
     // If we have a roundId, try to reload the data
     if (roundId) {
-      roundTrackingWithErrorHandling.setCurrentRoundId(null);
+      roundTracking.setCurrentRoundId(null);
       // Small delay before setting the ID again to force a clean reload
       setTimeout(() => {
-        roundTrackingWithErrorHandling.setCurrentRoundId(roundId);
+        roundTracking.setCurrentRoundId(roundId);
       }, 100);
     }
   };
   
-  // Determine if we are in a loading state
-  const effectiveIsLoading = isLoading || roundTrackingWithErrorHandling.isLoading;
+  // Debug loading state
+  console.log("Round tracking render conditions:", {
+    isMainPage,
+    isDetailPage,
+    roundId,
+    currentRoundId,
+    isLoading,
+    initialLoading,
+    roundStateLoading,
+    roundTrackingLoading,
+    loadingStage
+  });
   
-  // Wrap the components with error boundary
   return (
     <ErrorBoundary>
-      {isMainPage ? (
+      {isLoading ? (
+        // Always show loading state when any loading flag is true
+        <RoundTrackingLoading 
+          onBack={handleBack}
+          roundId={roundId}
+          retryLoading={retryLoading}
+        />
+      ) : isMainPage ? (
+        // Show main page when not loading and on the main route
         <RoundTrackingMain 
           onBack={handleBack}
-          pageLoading={pageLoading}
-          roundTracking={roundTrackingWithErrorHandling}
+          pageLoading={false}
+          roundTracking={roundTracking}
         />
-      ) : isDetailPage && roundTrackingWithErrorHandling.currentRoundId ? (
+      ) : isDetailPage && currentRoundId ? (
+        // Show detail page when not loading, on detail route, and have a round ID
         <RoundTrackingDetail
           onBack={handleBack}
-          currentRoundId={roundTrackingWithErrorHandling.currentRoundId}
-          isLoading={effectiveIsLoading}
+          currentRoundId={currentRoundId}
+          isLoading={false}
           loadingStage={loadingStage}
           retryLoading={retryLoading}
-          roundTracking={roundTrackingWithErrorHandling}
+          roundTracking={roundTracking}
         />
       ) : (
+        // Fallback to loading screen if none of the above conditions are met
         <RoundTrackingLoading
           onBack={handleBack}
           roundId={roundId}

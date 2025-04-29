@@ -26,8 +26,8 @@ export const RoundTrackingDetail = ({
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const { toast } = useToast();
-  const [isTransitioning, setIsTransitioning] = useState(false);
   
+  // Get the required data from the roundTracking hook
   const {
     selectedCourse,
     currentHole,
@@ -49,18 +49,13 @@ export const RoundTrackingDetail = ({
     onBack();
   };
 
-  // Add transition delay to prevent flash of loading states
-  useEffect(() => {
-    if (!isLoading) {
-      // Small delay to ensure smooth transition
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setIsTransitioning(true);
-    }
-  }, [isLoading]);
+  // Log to debug component state
+  console.log("RoundTrackingDetail rendering", { 
+    currentRoundId, 
+    isLoading, 
+    holeScores: holeScores?.length || 0,
+    currentHole
+  });
 
   const handleNext = () => {
     if (currentHole === holeCount) {
@@ -70,8 +65,8 @@ export const RoundTrackingDetail = ({
     }
   };
 
-  // Show loading state when we're loading data
-  if (isLoading || isTransitioning) {
+  // If data is still loading, show the loading state
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBackNavigation} />
@@ -86,6 +81,7 @@ export const RoundTrackingDetail = ({
     );
   }
 
+  // Render the actual content when data is loaded
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={handleBackNavigation} />
