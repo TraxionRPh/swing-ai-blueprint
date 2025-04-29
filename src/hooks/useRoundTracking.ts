@@ -13,6 +13,12 @@ import { useRoundLoadingState } from "./round-tracking/useRoundLoadingState";
 import { useRoundDataPreparation } from "./round-tracking/useRoundDataPreparation";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useResumeSession } from "./round-tracking/useResumeSession";
+import type { HoleData, Course } from "@/types/round-tracking";
+
+// Define an interface for round data by ID
+interface RoundsByIdType {
+  [key: string]: any; // Replace 'any' with a more specific type if available
+}
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
@@ -20,6 +26,9 @@ export const useRoundTracking = () => {
   const { toast } = useToast();
   const location = useLocation();
   const initRunRef = useRef(false);
+  
+  // Add state for storing rounds by ID
+  const [roundsById, setRoundsById] = useState<RoundsByIdType>({});
   
   // Debug current state
   console.log("useRoundTracking init - roundId from URL:", urlRoundId);
@@ -150,6 +159,15 @@ export const useRoundTracking = () => {
               console.log("Set hole count:", data.hole_count);
             }
             
+            // Store round data in the roundsById object
+            if (data && isMounted) {
+              setRoundsById(prev => ({
+                ...prev,
+                [urlRoundId]: data
+              }));
+              console.log("Set round data for ID:", urlRoundId);
+            }
+            
             setLoadingStage('preparing');
           } catch (error) {
             console.error("Error fetching round details:", error);
@@ -172,6 +190,16 @@ export const useRoundTracking = () => {
               setHoleScores(roundData.holeScores);
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
+              
+              // Store round data in the roundsById object
+              if (roundData.roundId) {
+                setRoundsById(prev => ({
+                  ...prev,
+                  [roundData.roundId]: roundData
+                }));
+                console.log("Set round data for in-progress round:", roundData.roundId);
+              }
+              
               console.log("Fetched in-progress round:", roundData.roundId);
               setLoadingStage('preparing');
             } else {
@@ -230,6 +258,7 @@ export const useRoundTracking = () => {
     deleteRound,
     courseName,
     isLoading,
-    handleHoleCountSelect
+    handleHoleCountSelect,
+    roundsById // Add roundsById to the return object
   };
 };
