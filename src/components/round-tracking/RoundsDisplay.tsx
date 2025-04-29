@@ -177,22 +177,30 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     if (!holeScores || holeScores.length === 0) return 0;
     
     const scoredHoles = holeScores
-      .filter(hole => hole.score > 0)
-      .sort((a, b) => b.holeNumber - a.holeNumber);
+      .filter(hole => hole.score && hole.score > 0)
+      .sort((a, b) => b.hole_number - a.hole_number);
     
-    return scoredHoles.length > 0 ? scoredHoles[0].holeNumber : 0;
+    if (scoredHoles.length > 0) {
+      console.log("Last scored hole:", scoredHoles[0].hole_number);
+      return scoredHoles[0].hole_number;
+    }
+    
+    return 0;
   };
 
   const renderInProgressRounds = () => {
     if (inProgressRounds.length === 0) return null;
     
     return inProgressRounds.map((round) => {
+      const lastCompletedHole = getLastCompletedHole(round.hole_scores);
+      console.log(`Round ${round.id} - Last completed hole:`, lastCompletedHole);
+      
       return (
         <InProgressRoundCard
           key={round.id}
           roundId={round.id}
           courseName={round.golf_courses.name}
-          lastHole={getLastCompletedHole(round.hole_scores)}
+          lastHole={lastCompletedHole}
           holeCount={round.hole_count || 18}
           onDelete={() => handleDeleteRound(round.id)}
         />

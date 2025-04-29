@@ -38,6 +38,7 @@ export const InProgressRoundCard = ({
 
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);
+    console.log("Last completed hole:", lastHole);
     
     try {
       setIsLoading(true);
@@ -49,7 +50,10 @@ export const InProgressRoundCard = ({
       
       // Calculate the next hole to resume play at
       // If lastHole is 8, we want to go to hole 9
-      const nextHole = lastHole + 1;
+      // If no holes completed yet (lastHole === 0), start at hole 1
+      const nextHole = lastHole >= 1 ? Math.min(lastHole + 1, holeCount) : 1;
+      
+      console.log("Resuming at hole:", nextHole);
       
       // Store the next hole to resume at in session storage
       // This will be read by useHoleNavigation
@@ -69,11 +73,6 @@ export const InProgressRoundCard = ({
         description: "There was an issue loading this round. Please try again.",
         variant: "destructive"
       });
-      
-      // Fallback to direct location change if navigate fails
-      setTimeout(() => {
-        window.location.href = `/rounds/${roundId}`;
-      }, 1000);
     }
   };
 
