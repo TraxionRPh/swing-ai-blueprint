@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
-import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoundContent";
+import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
+import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -27,7 +28,6 @@ export const RoundTrackingDetail = ({
     holeScores,
     holeCount,
     handleHoleUpdate,
-    handleNext: moveToNextHole,
     handlePrevious,
     currentTeeColor,
     currentHoleData,
@@ -39,16 +39,7 @@ export const RoundTrackingDetail = ({
     if (currentHole === holeCount) {
       setShowFinalScore(true);
     } else {
-      moveToNextHole();
-    }
-  };
-
-  const handleConfirmRound = async () => {
-    const success = await finishRound(holeCount);
-    setShowFinalScore(false);
-    
-    if (success) {
-      onBack();
+      roundTracking.handleNext();
     }
   };
 
@@ -63,21 +54,25 @@ export const RoundTrackingDetail = ({
           retryFn={retryLoading}
           roundId={currentRoundId || undefined}
         />
-      ) : (
-        <ActiveRoundContent
+      ) : showFinalScore ? (
+        <FinalScoreView 
           holeScores={holeScores}
+          holeCount={holeCount || 18}
+          finishRound={finishRound}
+          onBack={onBack}
+        />
+      ) : (
+        <HoleScoreView 
           currentHoleData={currentHoleData}
-          onHoleUpdate={handleHoleUpdate}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
+          handleHoleUpdate={handleHoleUpdate}
+          handleNext={handleNext}
+          handlePrevious={handlePrevious}
           currentHole={currentHole}
           holeCount={holeCount || 18}
           teeColor={currentTeeColor}
           courseId={selectedCourse?.id}
           isSaving={isSaving}
-          showFinalScore={showFinalScore}
-          onConfirmRound={handleConfirmRound}
-          onCancelFinalScore={() => setShowFinalScore(false)}
+          holeScores={holeScores}
         />
       )}
     </div>

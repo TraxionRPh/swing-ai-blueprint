@@ -1,7 +1,8 @@
-
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
+import { HoleScoreView } from "./HoleScoreView";
+import { FinalScoreView } from "./FinalScoreView";
 import type { HoleData } from "@/types/round-tracking";
 
 interface ActiveRoundContentProps {
@@ -20,6 +21,8 @@ interface ActiveRoundContentProps {
   onCancelFinalScore: () => void;
 }
 
+// This component is now deprecated and split into HoleScoreView and FinalScoreView
+// Keeping it temporarily for backward compatibility
 export const ActiveRoundContent = ({
   holeScores,
   currentHoleData,
@@ -35,45 +38,26 @@ export const ActiveRoundContent = ({
   onConfirmRound,
   onCancelFinalScore
 }: ActiveRoundContentProps) => {
-  // Add extra check to ensure currentHoleData matches current hole
-  const validatedHoleData = 
-    currentHoleData.holeNumber === currentHole ? 
-    currentHoleData : 
-    {
-      holeNumber: currentHole,
-      par: 4,
-      distance: 0,
-      score: 0,
-      putts: 0,
-      fairwayHit: false,
-      greenInRegulation: false
-    };
-  
-  return (
-    <>
-      {holeScores.length > 0 && (
-        <ScoreSummary holeScores={holeScores.slice(0, holeCount)} />
-      )}
-      
-      <HoleScoreCard
-        holeData={validatedHoleData}
-        onUpdate={onHoleUpdate}
-        onNext={onNext}
-        onPrevious={onPrevious}
-        isFirst={currentHole === 1}
-        isLast={currentHole === holeCount}
-        teeColor={teeColor}
-        courseId={courseId}
-        isSaving={isSaving}
-      />
-
-      <FinalScoreCard
-        holeScores={holeScores.slice(0, holeCount)}
-        isOpen={showFinalScore}
-        onConfirm={onConfirmRound}
-        onCancel={onCancelFinalScore}
-        holeCount={holeCount}
-      />
-    </>
+  return showFinalScore ? (
+    <FinalScoreCard 
+      holeScores={holeScores.slice(0, holeCount)}
+      isOpen={showFinalScore}
+      onConfirm={onConfirmRound}
+      onCancel={onCancelFinalScore}
+      holeCount={holeCount}
+    />
+  ) : (
+    <HoleScoreView
+      currentHoleData={currentHoleData}
+      handleHoleUpdate={onHoleUpdate}
+      handleNext={onNext}
+      handlePrevious={onPrevious}
+      currentHole={currentHole}
+      holeCount={holeCount}
+      teeColor={teeColor}
+      courseId={courseId}
+      isSaving={isSaving}
+      holeScores={holeScores}
+    />
   );
 };
