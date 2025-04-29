@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useHoleScoresFetcher } from "./use-hole-scores-fetcher";
 import { useHoleScoresState } from "./use-hole-scores-state";
 import { useResumeSession } from "./use-resume-session";
@@ -30,16 +30,26 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
 
   // Track if we've initialized
   const hasInitializedRef = useRef(false);
+  const [initializing, setInitializing] = useState(false);
 
   // Initialize data and handle retries when dependencies change
   useEffect(() => {
+    // Skip if we're currently initializing
+    if (initializing) {
+      console.log("useHoleScores: Already initializing, skipping");
+      return;
+    }
+    
     // Skip if we've already initialized
     if (hasInitializedRef.current) {
       console.log("useHoleScores: Already initialized, skipping");
       return;
     }
     
-    // Mark as initialized immediately to prevent multiple initializations
+    // Set initializing flag to prevent duplicate processing
+    setInitializing(true);
+    
+    // Mark as initialized to prevent multiple initializations
     hasInitializedRef.current = true;
     console.log("useHoleScores: Initializing for the first time");
 
@@ -61,10 +71,12 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
             console.log("Successfully loaded hole scores data:", result.formattedScores.length);
             setHoleScores(result.formattedScores);
             setIsLoading(false);
+            setInitializing(false);
           }
         } catch (error) {
           console.error('Failed to fetch hole scores in useEffect:', error);
           initializeDefaultHoleScores();
+          setInitializing(false);
         }
       } else if (courseId) {
         try {
@@ -73,19 +85,22 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
           if (isMountedRef.current && formattedScores) {
             setHoleScores(formattedScores);
             setIsLoading(false);
+            setInitializing(false);
           }
         } catch (error) {
           console.error('Failed to fetch course holes in useEffect:', error);
           initializeDefaultHoleScores();
+          setInitializing(false);
         }
       } else {
         // If both roundId and courseId are null, set default scores and stop loading
         console.log("No roundId or courseId provided, using default scores");
         initializeDefaultHoleScores();
+        setInitializing(false);
       }
     };
     
-    // Immediate fetch on mount without setTimeout
+    // Immediate fetch on mount
     fetchData();
     
     // Cleanup function to clear any timeouts and prevent state updates after unmount
@@ -93,18 +108,12 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       console.log("useHoleScores: Cleaning up");
       cleanupFetcher();
       cleanupTimeouts();
+      setInitializing(false);
     };
   }, [
     roundId, 
-    courseId, 
-    fetchHoleScoresFromRound, 
-    fetchHoleScoresFromCourse, 
-    setHoleScores, 
-    setIsLoading,
-    cleanupTimeouts,
-    initializeDefaultHoleScores,
-    cleanupFetcher,
-    initializeFetcher
+    courseId
+    // Removed dynamic dependencies to prevent re-runs
   ]);
 
   // Refetch function for external components to trigger data reload

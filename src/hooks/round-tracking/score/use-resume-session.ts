@@ -20,21 +20,32 @@ export const useResumeSession = () => {
     const checkForResumeData = () => {
       if (!isMounted.current) return;
       
-      // Get data from storage
-      const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
-      const localHoleNumber = localStorage.getItem('resume-hole-number');
-      
-      // Process resume data if available
-      if (sessionHoleNumber && isMounted.current) {
-        console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
-        setSavedHoleNumber(parseInt(sessionHoleNumber, 10));
-        return;
-      }
-      
-      if (localHoleNumber && isMounted.current) {
-        console.log("Found resume hole in localStorage:", localHoleNumber);
-        setSavedHoleNumber(parseInt(localHoleNumber, 10));
-        return;
+      try {
+        // Get data from storage
+        const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
+        const localHoleNumber = localStorage.getItem('resume-hole-number');
+        
+        // Process resume data if available
+        if (sessionHoleNumber && isMounted.current) {
+          console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
+          const parsedHole = parseInt(sessionHoleNumber, 10);
+          if (!isNaN(parsedHole)) {
+            setSavedHoleNumber(parsedHole);
+            return;
+          }
+        }
+        
+        if (localHoleNumber && isMounted.current) {
+          console.log("Found resume hole in localStorage:", localHoleNumber);
+          const parsedHole = parseInt(localHoleNumber, 10);
+          if (!isNaN(parsedHole)) {
+            setSavedHoleNumber(parsedHole);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking resume data:", error);
+        // Continue without resume data
       }
     };
     
@@ -45,25 +56,33 @@ export const useResumeSession = () => {
     return () => {
       isMounted.current = false;
     };
-  }, []);
+  }, []); // Empty dependency array, run once on mount
 
   // Function to clear resume data
   const clearResumeData = () => {
-    sessionStorage.removeItem('resume-hole-number');
-    localStorage.removeItem('resume-hole-number');
-    if (isMounted.current) {
-      setSavedHoleNumber(null);
-      console.log("Cleared resume hole data");
+    try {
+      sessionStorage.removeItem('resume-hole-number');
+      localStorage.removeItem('resume-hole-number');
+      if (isMounted.current) {
+        setSavedHoleNumber(null);
+        console.log("Cleared resume hole data");
+      }
+    } catch (error) {
+      console.error("Error clearing resume data:", error);
     }
   };
 
   // Function to save current hole for resuming
   const saveCurrentHole = (holeNumber: number) => {
-    sessionStorage.setItem('resume-hole-number', holeNumber.toString());
-    localStorage.setItem('resume-hole-number', holeNumber.toString());
-    if (isMounted.current) {
-      setSavedHoleNumber(holeNumber);
-      console.log("Saved hole", holeNumber, "for resuming");
+    try {
+      sessionStorage.setItem('resume-hole-number', holeNumber.toString());
+      localStorage.setItem('resume-hole-number', holeNumber.toString());
+      if (isMounted.current) {
+        setSavedHoleNumber(holeNumber);
+        console.log("Saved hole", holeNumber, "for resuming");
+      }
+    } catch (error) {
+      console.error("Error saving current hole:", error);
     }
   };
 

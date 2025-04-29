@@ -11,6 +11,7 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
+  const initializationStartedRef = useRef(false);
   const isMountedRef = useRef(true);
   const { isLoading, setIsLoading, loadAttempt, setLoadAttempt } = useRoundLoadingState();
   const { courseName, setCourseName, holeCount, setHoleCount } = useRoundCourseInfo();
@@ -20,6 +21,15 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
   const maxInitAttempts = 3;
   
   const initializeRound = useCallback(async () => {
+    // Skip if initialization has already started
+    if (initializationStartedRef.current) {
+      console.log("Round initialization already started, skipping");
+      return;
+    }
+    
+    // Mark initialization as started
+    initializationStartedRef.current = true;
+    
     if (loadAttempt > maxInitAttempts) {
       console.log(`Max initialization attempts (${maxInitAttempts}) reached, stopping retries`);
       setIsLoading(false);
@@ -27,7 +37,10 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
     }
 
     try {
-      setIsLoading(true);
+      // Only set loading state if it's not already loading to avoid state thrashing
+      if (!isLoading) {
+        setIsLoading(true);
+      }
       
       // If roundId is provided in URL, use that instead of fetching
       if (urlRoundId) {
@@ -79,9 +92,12 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
             setCourseName(roundData.course?.name || null);
             console.log("Fetched in-progress round:", roundData.roundId);
             setInitialized(true);
+            setIsLoading(false);
+            console.log("Loading complete, isLoading set to false");
           } else if (isMountedRef.current) {
             console.log("No in-progress round found");
             setInitialized(true); // Still mark as initialized even if no round was found
+            setIsLoading(false);
           }
         } catch (error) {
           console.error("Error fetching in-progress round:", error);
@@ -94,9 +110,6 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
           // Still mark as initialized to prevent infinite loading
           if (isMountedRef.current) {
             setInitialized(true);
-          }
-        } finally {
-          if (isMountedRef.current) {
             setIsLoading(false);
           }
         }
@@ -110,37 +123,24 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
       }
     }
   }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, 
-      loadAttempt, setLoadAttempt, setIsLoading, toast, fetchRoundDetails,
+      loadAttempt, setLoadAttempt, isLoading, setIsLoading, toast, fetchRoundDetails,
       setHoleCount, setCourseName]);
 
   // Initialize the round when the component mounts
   useEffect(() => {
     isMountedRef.current = true;
     
-    if (initialized && currentRoundId) {
-      // If we're already initialized with a valid round ID, don't re-initialize
-      console.log("Already initialized with round ID:", currentRoundId);
-      setIsLoading(false);
-      return;
+    // Run initialization only once
+    if (!initialized) {
+      console.log("Starting round initialization");
+      initializeRound();
     }
     
-    // Immediate initialization
-    initializeRound();
-    
-    // Set a timeout to ensure we exit loading state after a reasonable time
-    const loadingTimeoutId = setTimeout(() => {
-      if (isMountedRef.current && isLoading) {
-        console.log("Force exiting loading state after timeout");
-        setIsLoading(false);
-        setInitialized(true);
-      }
-    }, 5000);
-    
+    // Cleanup function
     return () => {
       isMountedRef.current = false;
-      clearTimeout(loadingTimeoutId);
     };
-  }, [initialized, currentRoundId, initializeRound, isLoading, setIsLoading]);
+  }, [initialized, initializeRound]);
 
   return {
     currentRoundId,

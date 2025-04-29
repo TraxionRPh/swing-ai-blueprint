@@ -2,22 +2,23 @@
 import { useEffect, useState, useRef } from "react";
 
 export const useRouteInitialization = (roundId: string | null) => {
-  // Simplified state - just track if we're initialized
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationAttemptedRef = useRef(false);
 
-  // Run once on mount - no dependencies to avoid re-runs
+  // Run once on mount - limited dependencies to prevent endless re-runs
   useEffect(() => {
-    // Skip if we've already attempted initialization
-    if (initializationAttemptedRef.current) return;
+    // Do not run initialization more than once
+    if (initializationAttemptedRef.current) {
+      return;
+    }
     
     // Mark as initialization attempted immediately to prevent duplicate runs
     initializationAttemptedRef.current = true;
     
-    // Mark as initialized immediately
+    // Mark as initialized
     setIsInitialized(true);
     console.log(`Route initialization complete for round: ${roundId}`);
-  }, [roundId]);  // Only re-run if roundId changes
+  }, []); // Empty dependency array to ensure it only runs once on mount
 
   return { isInitialized };
 };
