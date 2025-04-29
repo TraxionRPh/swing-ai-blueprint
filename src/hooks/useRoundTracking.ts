@@ -65,7 +65,9 @@ export const useRoundTracking = (): RoundTracking => {
         .insert({
           course_id: course.id,
           hole_count: holeCount,
-          is_completed: false,
+          // Remove is_completed since it's not in the schema
+          // Instead, total_score being null can indicate an incomplete round
+          total_score: null
         })
         .select()
         .single();
@@ -150,13 +152,34 @@ export const useRoundTracking = (): RoundTracking => {
       const { error } = await supabase
         .from('rounds')
         .update({
-          is_completed: true,
+          // Use total_score being set to indicate completion
           total_score: totalScore,
-          hole_scores: holeScores
+          // Store hole_scores in the hole_scores table instead
+          // hole_scores: holeScores
         })
         .eq('id', currentRoundId);
 
       if (error) throw error;
+      
+      // Now save individual hole scores to the hole_scores table
+      for (const holeScore of holeScores) {
+        const { error: holeError } = await supabase
+          .from('hole_scores')
+          .upsert({
+            round_id: currentRoundId,
+            hole_number: holeScore.holeNumber,
+            score: holeScore.score,
+            putts: holeScore.putts || 0,
+            fairway_hit: holeScore.fairwayHit,
+            green_in_regulation: holeScore.greenInRegulation
+          }, {
+            onConflict: 'round_id,hole_number'
+          });
+        
+        if (holeError) {
+          console.error("Error saving hole score:", holeError);
+        }
+      }
       
       toast({
         title: "Round completed!",
@@ -193,6 +216,7 @@ export const useRoundTracking = (): RoundTracking => {
       try {
         setIsLoading(true);
         
+        // First, get the round data and associated course
         const { data, error } = await supabase
           .from('rounds')
           .select(`
@@ -208,19 +232,15 @@ export const useRoundTracking = (): RoundTracking => {
         if (error) throw error;
         
         if (data) {
+          // Store the round data
           setRoundsById(prev => ({
             ...prev,
             [currentRoundId]: data
           }));
           
-          // Set up course and tee data
+          // Set up course data
           if (data.golf_courses) {
             setSelectedCourse(data.golf_courses);
-            
-            // If we have hole_scores data, set it
-            if (data.hole_scores && Array.isArray(data.hole_scores)) {
-              setHoleScores(data.hole_scores);
-            }
             
             // Set hole count
             if (data.hole_count) {
@@ -230,6 +250,30 @@ export const useRoundTracking = (): RoundTracking => {
             // Set current hole from resume point or start at 1
             const resumeHole = parseInt(sessionStorage.getItem('resume-hole-number') || '1');
             setCurrentHole(resumeHole);
+          }
+          
+          // Fetch hole scores separately since they're in a different table
+          const { data: holeScoresData, error: holeScoresError } = await supabase
+            .from('hole_scores')
+            .select('*')
+            .eq('round_id', currentRoundId);
+          
+          if (holeScoresError) throw holeScoresError;
+          
+          if (holeScoresData && Array.isArray(holeScoresData)) {
+            // Transform the data to match our expected HoleData format
+            const formattedHoleScores: HoleData[] = holeScoresData.map(hs => ({
+              holeNumber: hs.hole_number,
+              score: hs.score,
+              putts: hs.putts || 0,
+              // Assuming default values for these if not available
+              par: 4, // This should ideally come from course hole data
+              distance: 0, // This should ideally come from course hole data
+              fairwayHit: hs.fairway_hit,
+              greenInRegulation: hs.green_in_regulation
+            }));
+            
+            setHoleScores(formattedHoleScores);
           }
         }
       } catch (error) {
