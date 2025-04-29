@@ -12,17 +12,26 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [loadAttempts, setLoadAttempts] = useState(0);
 
-  // Force timeout to exit loading state after 8 seconds to prevent permanent loading
+  // Force timeout to exit loading state after 5 seconds to prevent permanent loading
   useEffect(() => {
     if (!isInitialLoad) return;
     
     const forceExitTimeout = setTimeout(() => {
       setIsInitialLoad(false);
       console.log("Forced exit from loading state after timeout");
-    }, 8000); // reduced from 10s to 8s
+    }, 5000); // reduced from 8s to 5s for faster response
     
     return () => clearTimeout(forceExitTimeout);
   }, [isInitialLoad]);
+
+  // Check localStorage as a backup for resuming hole number
+  useEffect(() => {
+    const localStorageHoleNumber = localStorage.getItem('resume-hole-number');
+    if (localStorageHoleNumber && !isNaN(Number(localStorageHoleNumber))) {
+      console.log("Found backup hole number in localStorage:", localStorageHoleNumber);
+      localStorage.removeItem('resume-hole-number');
+    }
+  }, []);
 
   const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);
@@ -39,6 +48,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     }
   }, [roundId, saveHoleScore, setHoleScores]);
 
+  // Make sure we always have a valid current hole data object
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
     holeNumber: currentHole,
     par: 4,

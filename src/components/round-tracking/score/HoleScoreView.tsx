@@ -28,9 +28,10 @@ export const HoleScoreView = ({
   isSaving,
   holeScores
 }: HoleScoreViewProps) => {
-  // Add extra check to ensure currentHoleData matches current hole
+  // Make sure we have a valid hole data object that matches the current hole
+  // This is crucial for round resumption to work correctly
   const validatedHoleData = 
-    currentHoleData.holeNumber === currentHole ? 
+    currentHoleData && currentHoleData.holeNumber === currentHole ? 
     currentHoleData : 
     holeScores.find(hole => hole.holeNumber === currentHole) || {
       holeNumber: currentHole,

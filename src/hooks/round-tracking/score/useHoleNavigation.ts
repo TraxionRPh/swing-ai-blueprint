@@ -39,13 +39,21 @@ export const useHoleNavigation = () => {
 
   const handleNext = () => {
     if (currentHole < 18) {
-      setCurrentHole(prev => prev + 1);
+      setCurrentHole(prev => {
+        const nextHole = prev + 1;
+        console.log(`Moving to next hole: ${nextHole}`);
+        return nextHole;
+      });
     }
   };
 
   const handlePrevious = () => {
     if (currentHole > 1) {
-      setCurrentHole(prev => prev - 1);
+      setCurrentHole(prev => {
+        const prevHole = prev - 1;
+        console.log(`Moving to previous hole: ${prevHole}`);
+        return prevHole;
+      });
     }
   };
 

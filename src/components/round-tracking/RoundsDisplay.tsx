@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
@@ -175,7 +174,10 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   }
 
   const getLastCompletedHole = (holeScores) => {
-    if (!holeScores || holeScores.length === 0) return 0;
+    if (!holeScores || holeScores.length === 0) {
+      console.log("No hole scores found");
+      return 0;
+    }
     
     // Find all holes that have scores
     const scoredHoles = holeScores

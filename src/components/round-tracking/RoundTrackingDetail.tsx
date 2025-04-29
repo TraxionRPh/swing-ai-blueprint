@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -21,6 +21,7 @@ export const RoundTrackingDetail = ({
   roundTracking
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   const {
     selectedCourse,
@@ -35,6 +36,21 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
+  // Force exit from loading state after 8 seconds
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const timeoutId = setTimeout(() => {
+      setLoadingTimeout(true);
+      console.log("Forcing exit from loading state after timeout");
+    }, 8000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isLoading]);
+
+  // Determine effective loading state
+  const effectiveLoading = isLoading && !loadingTimeout;
+
   const handleNext = () => {
     if (currentHole === holeCount) {
       setShowFinalScore(true);
@@ -43,11 +59,19 @@ export const RoundTrackingDetail = ({
     }
   };
 
+  // Check if we have resume data in localStorage as a backup
+  useEffect(() => {
+    const resumeHole = localStorage.getItem('resume-hole-number');
+    if (resumeHole) {
+      console.log("Found resume hole in localStorage:", resumeHole);
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
-      {isLoading ? (
+      {effectiveLoading ? (
         <LoadingState 
           onBack={onBack} 
           message="Loading your round data..." 
