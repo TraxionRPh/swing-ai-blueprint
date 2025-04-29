@@ -11,7 +11,7 @@ export const HoleSavingIndicator = ({ isSaving, message = "Saving..." }: HoleSav
   if (!isSaving) return null;
   
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-50 animate-in fade-in">
       <div className="flex items-center bg-primary/10 text-primary px-3 py-2 rounded-md shadow-sm">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
         <span className="text-sm font-medium">{message}</span>
