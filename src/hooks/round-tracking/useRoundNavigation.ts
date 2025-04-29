@@ -1,6 +1,5 @@
 
 import { useCallback } from "react";
-import { HoleData } from "@/types/round-tracking";
 
 export const useRoundNavigation = (
   handleNextBase: () => void,
@@ -8,14 +7,15 @@ export const useRoundNavigation = (
   currentHole: number,
   holeCount: number | null
 ) => {
-  // Wrapper for next button that checks if we're at the last hole
   const handleNext = useCallback(() => {
-    if (holeCount && currentHole === holeCount) {
-      return;
-    } else {
-      handleNextBase();
-    }
+    // Save the current hole to sessionStorage and localStorage for resuming later
+    // This helps if the app is refreshed or closed accidentally
+    const holeToSave = currentHole === (holeCount || 18) ? 1 : currentHole + 1;
+    sessionStorage.setItem('resume-hole-number', holeToSave.toString());
+    localStorage.setItem('resume-hole-number', holeToSave.toString());
+    
+    handleNextBase();
   }, [handleNextBase, currentHole, holeCount]);
 
-  return { handleNext, handlePrevious };
+  return { handleNext };
 };
