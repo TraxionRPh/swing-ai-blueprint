@@ -10,7 +10,7 @@ export const useRoundLoadingState = () => {
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
-  // Auto-resolve loading state after a timeout
+  // Auto-resolve loading state after a timeout (shortened)
   useEffect(() => {
     // Clear any existing timeout when loading state changes
     if (loadingTimeoutRef.current) {
@@ -18,12 +18,14 @@ export const useRoundLoadingState = () => {
       loadingTimeoutRef.current = null;
     }
     
+    // Only set a timeout if explicitly loading
     if (!isLoading) return;
     
     loadingTimeoutRef.current = setTimeout(() => {
       if (isLoading) {
         console.log("Force exiting loading state after timeout");
         setForceLoadingComplete(true);
+        setIsLoading(false); // Auto-exit loading state
         
         // Only show toast if we haven't shown one already
         if (!errorShown) {
@@ -35,7 +37,7 @@ export const useRoundLoadingState = () => {
           });
         }
       }
-    }, 10000); // Using 10s for very slow connections
+    }, 5000); // Use 5s for better responsiveness
     
     return () => {
       if (loadingTimeoutRef.current) {

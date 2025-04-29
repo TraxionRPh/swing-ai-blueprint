@@ -30,7 +30,7 @@ export const LoadingState = ({
   // Track if component is still mounted
   const isMountedRef = useRef(true);
   // Track if content has been loaded
-  const [contentLoaded, setContentLoaded] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(!!children);
   
   // Check if we have children content which indicates successful loading
   useEffect(() => {
@@ -46,36 +46,31 @@ export const LoadingState = ({
   useEffect(() => {
     isMountedRef.current = true;
     
+    // Set a shorter force exit timer to prevent prolonged loading states
+    const forceExitTimer = setTimeout(() => {
+      if (isMountedRef.current) {
+        setForceExit(true);
+      }
+    }, 3000); // Reduced from 8s to 3s
+    
     // Only set timeouts if we haven't loaded content yet
     if (!contentLoaded) {
       const retryTimer = setTimeout(() => {
         if (isMountedRef.current && !contentLoaded) {
           setShowRetry(true);
         }
-      }, 3500);
-      
-      const networkAlertTimer = setTimeout(() => {
-        if (isMountedRef.current && !contentLoaded) {
-          setShowNetworkAlert(true);
-        }
-      }, 6000);
-      
-      const forceExitTimer = setTimeout(() => {
-        if (isMountedRef.current) {
-          setForceExit(true);
-        }
-      }, 8000);
+      }, 2000); // Reduced from 3.5s
       
       return () => {
         isMountedRef.current = false;
         clearTimeout(retryTimer);
-        clearTimeout(networkAlertTimer);
         clearTimeout(forceExitTimer);
       };
     }
     
     return () => {
       isMountedRef.current = false;
+      clearTimeout(forceExitTimer);
     };
   }, [contentLoaded]);
 
@@ -85,25 +80,6 @@ export const LoadingState = ({
     if (retryFn) {
       retryFn();
       setShowRetry(false);
-      // Reset timeouts only if we haven't loaded content
-      if (!contentLoaded) {
-        const retryTimer = setTimeout(() => {
-          if (isMountedRef.current && !contentLoaded) {
-            setShowRetry(true);
-          }
-        }, 3500);
-        
-        const networkAlertTimer = setTimeout(() => {
-          if (isMountedRef.current && !contentLoaded) {
-            setShowNetworkAlert(true);
-          }
-        }, 6000);
-        
-        return () => {
-          clearTimeout(retryTimer);
-          clearTimeout(networkAlertTimer);
-        };
-      }
     } else {
       window.location.reload();
     }
@@ -114,7 +90,7 @@ export const LoadingState = ({
     ? `${message} (Round ID: ${roundId.substring(0, 8)}...)`
     : message;
   
-  // If content is loaded, don't show loading indicators
+  // If content is loaded or we've forced exit, don't show loading indicators
   const showLoadingIndicators = !contentLoaded && !forceExit;
   
   return (
@@ -130,33 +106,22 @@ export const LoadingState = ({
       
       {showLoadingIndicators && (
         <div className="w-full flex justify-center">
-          <Loading message={displayMessage} />
+          <Loading message={displayMessage} size="md" minHeight={150} />
         </div>
       )}
       
-      {showNetworkAlert && showLoadingIndicators && (
-        <Alert className="mt-4 mx-auto max-w-md">
-          <AlertDescription className="text-center">
-            There might be a connection issue. Check your network connection and try again.
-          </AlertDescription>
-        </Alert>
-      )}
-      
       {showRetry && showLoadingIndicators && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Taking longer than expected. 
-          </p>
+        <div className="mt-4 text-center">
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Retry loading round
+            Retry loading
           </Button>
         </div>
       )}
       
       {(children || forceExit) && (
         <div className={contentLoaded ? "" : "opacity-0 h-0 overflow-hidden"}>
-          {children}
+          {children || <div className="p-4 text-center">Loading complete</div>}
         </div>
       )}
     </div>

@@ -12,16 +12,10 @@ import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-sessio
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const didInitializeRef = useRef(false);
+  const didInitializeRef = useRef(true); // Start as initialized
   const { savedHoleNumber } = useResumeSession();
   
-  // Track whether this is the first render since page load
-  const isFirstLoadRef = useRef(true);
-  
-  // Don't show error toasts on first load
-  const [hasShownError, setHasShownError] = useState(false);
-  
-  // Track if component is mounted - will help prevent state updates after unmount
+  // Track if component is mounted
   const isMountedRef = useRef(true);
   
   // Only load the complex hook if we're not on the main page
@@ -30,8 +24,8 @@ const RoundTracking = () => {
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
   // Simplified loading for the main page
-  const [pageLoading, setPageLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false); // Start as not loading
+  const [isInitialized, setIsInitialized] = useState(true); // Start as initialized
   
   // Use error boundary fallback for detailed component
   const roundTrackingWithErrorHandling = useRoundTracking();
@@ -41,24 +35,16 @@ const RoundTracking = () => {
     // Mark component as mounted
     isMountedRef.current = true;
     
-    // Mark as initialized immediately to avoid loading issues
-    didInitializeRef.current = true;
-    setIsInitialized(true);
-    
-    // Short timeout to load data
+    // Short timeout to ensure UI renders smoothly
     const loadingTimeout = setTimeout(() => {
       if (isMountedRef.current) {
         setPageLoading(false);
         console.log("Initialized RoundTracking component");
       }
-    }, 300);
+    }, 100);
     
-    // Only run once on initial page load
-    if (isFirstLoadRef.current) {
-      isFirstLoadRef.current = false;
-      console.log("Initial page load of RoundTracking, path:", window.location.pathname);
-      console.log("Checking for resume data...", { savedHoleNumber });
-    }
+    // Log initial load info
+    console.log("RoundTracking loaded, path:", window.location.pathname);
     
     return () => {
       // Mark component as unmounted to prevent state updates
@@ -66,7 +52,7 @@ const RoundTracking = () => {
       // Clean up timeout
       clearTimeout(loadingTimeout);
     };
-  }, [savedHoleNumber]);
+  }, []);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -75,21 +61,12 @@ const RoundTracking = () => {
     navigate(-1);
   };
   
-  // Directly use retryLoading from the hook
+  // Get retryLoading from the hook
   const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
   
-  // Determine if we should override the loading state - use a shorter timeout
-  const effectiveIsLoading = isLoading && !didInitializeRef.current;
+  // Always treat as loaded
+  const effectiveIsLoading = false;
 
-  // Clear any error toasts that might have been shown on page exit
-  useEffect(() => {
-    return () => {
-      // Cleanup function that runs when component unmounts
-      isMountedRef.current = false;
-      console.log("Round tracking component unmounting, cleaning up...");
-    };
-  }, []);
-  
   // Wrap the components with error boundary
   return (
     <ErrorBoundary>

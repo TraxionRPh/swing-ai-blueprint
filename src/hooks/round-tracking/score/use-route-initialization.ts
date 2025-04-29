@@ -1,28 +1,15 @@
 
-import { useEffect, useState, useRef } from "react";
-import { useResumeSession } from "./use-resume-session";
+import { useEffect, useState } from "react";
 
 export const useRouteInitialization = (roundId: string | null) => {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [initialLoadAttempt, setInitialLoadAttempt] = useState(false);
-  const { hasCheckedStorage } = useResumeSession();
-  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isInitialized, setIsInitialized] = useState(true); // Always start as initialized
+  const [initialLoadAttempt, setInitialLoadAttempt] = useState(true); // Always start as attempted
 
-  // This effect runs only once when the component mounts
+  // Simple effect for logging only - no state management
   useEffect(() => {
-    // Set a flag that we've attempted to load
-    setInitialLoadAttempt(true);
-
-    // Mark as initialized immediately to prevent loading issues
-    setIsInitialized(true);
-    console.log(`Route initialization complete for round: ${roundId}`);
-    
-    // Clean up any timeouts when component unmounts
+    console.log(`Route initialization started for round: ${roundId}`);
     return () => {
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
+      console.log(`Route cleanup for round: ${roundId}`);
     };
   }, [roundId]);
 
