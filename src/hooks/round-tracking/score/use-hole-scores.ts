@@ -3,6 +3,7 @@ import { useEffect, useCallback } from "react";
 import { useHoleScoresFetcher } from "./use-hole-scores-fetcher";
 import { useHoleScoresState } from "./use-hole-scores-state";
 import { useResumeSession } from "./use-resume-session";
+import { useRouteInitialization } from "./use-route-initialization";
 
 export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const {
@@ -25,11 +26,20 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     initialize: initializeFetcher
   } = useHoleScoresFetcher();
 
+  // Check for route initialization
+  const { isInitialized } = useRouteInitialization(roundId);
+
   // Check for resume data
-  useResumeSession();
+  const { savedHoleNumber, clearResumeData } = useResumeSession();
 
   // Initialize data and handle retries when dependencies change
   useEffect(() => {
+    // Don't start fetching until we're fully initialized
+    if (!isInitialized) {
+      console.log("Waiting for initialization before fetching hole scores");
+      return;
+    }
+
     // Initialize refs
     initializeFetcher();
     retryCount.current = 0;
@@ -41,6 +51,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
           const result = await fetchHoleScoresFromRound(roundId);
           
           if (result && isMountedRef.current) {
+            console.log("Successfully loaded hole scores data:", result.formattedScores.length);
             setHoleScores(result.formattedScores);
             setIsLoading(false);
           }
@@ -95,6 +106,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   }, [
     roundId, 
     courseId, 
+    isInitialized,
     fetchHoleScoresFromRound, 
     fetchHoleScoresFromCourse, 
     setHoleScores, 
@@ -128,7 +140,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     holeScores,
     setHoleScores,
     isLoading,
-    fetchHoleScoresFromRound,
-    refetchHoleScores
+    refetchHoleScores,
+    savedHoleNumber
   };
 };

@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
@@ -11,6 +11,10 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const didInitializeRef = useRef(false);
+  
+  // Track whether this is the first render since page load
+  const isFirstLoadRef = useRef(true);
   
   // Only load the complex hook if we're not on the main page
   const isMainPage = window.location.pathname === '/rounds';
@@ -25,13 +29,32 @@ const RoundTracking = () => {
   const roundTrackingWithErrorHandling = useRoundTracking();
   
   useEffect(() => {
-    // Clear any resume-hole-number in session storage on page mount
-    sessionStorage.removeItem('resume-hole-number');
-    
+    // Only run once on initial page load
+    if (isFirstLoadRef.current) {
+      isFirstLoadRef.current = false;
+      console.log("Initial page load of RoundTracking, path:", window.location.pathname);
+      
+      // Force initialization after reasonable delay
+      const initTimer = setTimeout(() => {
+        if (!didInitializeRef.current) {
+          didInitializeRef.current = true;
+          setIsInitialized(true);
+          setPageLoading(false);
+          console.log("Force completed initialization after timeout");
+        }
+      }, 1500);
+      
+      return () => clearTimeout(initTimer);
+    }
+  }, []);
+  
+  useEffect(() => {
     // Set loading to false after a short delay
     const timer = setTimeout(() => {
       setPageLoading(false);
       setIsInitialized(true);
+      didInitializeRef.current = true;
+      console.log("Page initialization complete");
     }, 300);
     
     return () => clearTimeout(timer);
@@ -48,6 +71,13 @@ const RoundTracking = () => {
   
   // Determine if we should override the loading state
   const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading || !isInitialized;
+  
+  // Helper for debugging
+  useEffect(() => {
+    if (roundId && didInitializeRef.current) {
+      console.log("Round tracking detail is initialized with round ID:", roundId);
+    }
+  }, [roundId, isInitialized]);
   
   // Wrap the components with error boundary
   return (
