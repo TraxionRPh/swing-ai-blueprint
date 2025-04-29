@@ -1,25 +1,16 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
 import { RoundTrackingLoading } from "@/components/round-tracking/RoundTrackingLoading";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-session";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const didInitializeRef = useRef(false);
-  const { savedHoleNumber } = useResumeSession();
-  
-  // Track whether this is the first render since page load
-  const isFirstLoadRef = useRef(true);
-  
-  // Don't show error toasts on first load
-  const [hasShownError, setHasShownError] = useState(false);
   
   // Only load the complex hook if we're not on the main page
   const isMainPage = window.location.pathname === '/rounds';
@@ -27,52 +18,63 @@ const RoundTracking = () => {
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
   // Simplified loading for the main page
-  const [pageLoading, setPageLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [pageLoading, setPageLoading] = useState(!isMainPage);
+  const [loadRetries, setLoadRetries] = useState(0);
+  const maxRetries = 2;
   
   // Use error boundary fallback for detailed component
   const roundTrackingWithErrorHandling = useRoundTracking();
   
-  // Initialize component on mount
+  // Add state to handle forced completion of loading
+  const [forceLoadingComplete, setForceLoadingComplete] = useState(false);
+  
   useEffect(() => {
-    // Mark as initialized immediately to avoid loading issues
-    didInitializeRef.current = true;
-    setIsInitialized(true);
-    
-    // Short timeout to load data
-    setTimeout(() => {
-      setPageLoading(false);
-      console.log("Initialized RoundTracking component");
-    }, 300);
-    
-    // Only run once on initial page load
-    if (isFirstLoadRef.current) {
-      isFirstLoadRef.current = false;
-      console.log("Initial page load of RoundTracking, path:", window.location.pathname);
-      console.log("Checking for resume data...", { savedHoleNumber });
+    // If we're on the main rounds page, set loading to false after a short delay
+    if (isMainPage) {
+      const timer = setTimeout(() => setPageLoading(false), 500);
+      return () => clearTimeout(timer);
     }
-  }, [savedHoleNumber]);
+  }, [isMainPage]);
+  
+  // Force timeout of loading state after 12 seconds to prevent infinite loading
+  useEffect(() => {
+    if (!isDetailPage || !roundTrackingWithErrorHandling.isLoading) return;
+    
+    const forceTimeout = setTimeout(() => {
+      if (roundTrackingWithErrorHandling.isLoading && loadRetries < maxRetries) {
+        console.log("Forcing retry of round loading after timeout");
+        setLoadRetries(prev => prev + 1);
+        // Force reload the page if we're still loading after multiple retries
+        if (loadRetries >= maxRetries - 1) {
+          toast({
+            title: "Loading issue detected",
+            description: "Showing available data. Some information may be limited.",
+            variant: "destructive",
+          });
+          
+          // Instead of using setIsLoading which doesn't exist, we'll use our local state
+          // to determine if we should show loading UI or not
+          setForceLoadingComplete(true);
+        }
+      }
+    }, 10000); // 10 seconds timeout
+    
+    return () => clearTimeout(forceTimeout);
+  }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
     sessionStorage.removeItem('resume-hole-number');
-    localStorage.removeItem('resume-hole-number');
     navigate(-1);
   };
-  
-  // Directly use retryLoading from the hook
-  const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
-  
-  // Determine if we should override the loading state - use a shorter timeout
-  const effectiveIsLoading = isLoading && !didInitializeRef.current;
 
-  // Clear any error toasts that might have been shown on page exit
-  useEffect(() => {
-    return () => {
-      // Cleanup function that runs when component unmounts
-      console.log("Round tracking component unmounting, cleaning up...");
-    };
-  }, []);
+  const retryLoading = () => {
+    // This will trigger the useEffect above to retry loading
+    setLoadRetries(prev => prev + 1);
+  };
+  
+  // Determine if we should override the loading state
+  const effectiveIsLoading = forceLoadingComplete ? false : roundTrackingWithErrorHandling.isLoading;
   
   // Wrap the components with error boundary
   return (

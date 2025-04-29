@@ -13,14 +13,6 @@ export const useHolePersistence = (roundId: string | null) => {
     if (!roundId) return;
     
     setIsSaving(true);
-    
-    // Create a timeout to automatically clear saving state after 10 seconds
-    // This prevents the UI from being stuck in a permanent saving state
-    const saveTimeout = setTimeout(() => {
-      console.log("Auto-clearing save state after timeout");
-      setIsSaving(false);
-    }, 10000);
-    
     try {
       const { error } = await supabase
         .from('hole_scores')
@@ -37,26 +29,16 @@ export const useHolePersistence = (roundId: string | null) => {
 
       if (error) throw error;
       
-      try {
-        await updateRoundSummary(roundId, holeData);
-      } catch (updateError) {
-        console.error('Non-critical error updating round summary:', updateError);
-        // Don't throw here, as we've already saved the main data
-      }
+      await updateRoundSummary(roundId, holeData);
       
     } catch (error: any) {
       console.error('Error saving hole score:', error);
-      // Only show toast for non-network errors to reduce alert fatigue
-      if (!(error instanceof TypeError && error.message.includes('Failed to fetch'))) {
-        toast({
-          title: "Error saving hole score",
-          description: "Your score has been saved locally and will sync when connection is restored.",
-          variant: "default"
-        });
-      }
-      // Still consider the local update successful
+      toast({
+        title: "Error saving hole score",
+        description: error.message || "Could not save your progress. Please try again.",
+        variant: "destructive"
+      });
     } finally {
-      clearTimeout(saveTimeout);
       setIsSaving(false);
     }
   };

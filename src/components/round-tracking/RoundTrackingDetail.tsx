@@ -5,7 +5,6 @@ import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
-import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-session";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -24,62 +23,65 @@ export const RoundTrackingDetail = ({
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [componentMounted, setComponentMounted] = useState(false);
   const { toast } = useToast();
   
-  // Track component mount status
-  useEffect(() => {
-    setComponentMounted(true);
-    return () => setComponentMounted(false);
-  }, []);
+  const {
+    selectedCourse,
+    currentHole,
+    holeScores,
+    holeCount,
+    handleHoleUpdate,
+    handlePrevious,
+    currentTeeColor,
+    currentHoleData,
+    isSaving,
+    finishRound,
+  } = roundTracking;
 
-  // Force exit from loading state after a short timeout
+  // Force exit from loading state after 8 seconds
   useEffect(() => {
     if (!isLoading) return;
     
     const timeoutId = setTimeout(() => {
-      if (componentMounted) {
-        setLoadingTimeout(true);
-        console.log("Forcing exit from loading state after timeout");
-      }
-    }, 1000); // Reduced from 3000 to 1000ms for faster response
+      setLoadingTimeout(true);
+      console.log("Forcing exit from loading state after timeout");
+    }, 8000);
     
     return () => clearTimeout(timeoutId);
-  }, [isLoading, componentMounted]);
+  }, [isLoading]);
 
-  // Destructure roundTracking with default values to prevent errors
-  const {
-    selectedCourse,
-    currentHole = 1,
-    holeScores = [],
-    holeCount = 18,
-    handleHoleUpdate = () => {},
-    handlePrevious = () => {},
-    currentTeeColor = '',
-    currentHoleData = null,
-    isSaving = false,
-    finishRound = () => {},
-    handleNext: roundTrackingHandleNext = () => {}
-  } = roundTracking || {};
+  // Log current hole data when it changes
+  useEffect(() => {
+    console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
+      currentHoleData,
+      holeCount: holeCount || 18
+    });
+  }, [currentHole, currentHoleData, holeCount]);
 
-  // Determine if we have enough data to show content
-  const hasEnoughData = !!(roundTracking && currentHoleData);
-  
-  // Determine effective loading state - exit loading if we have data or after timeout
-  const effectiveLoading = isLoading && !hasEnoughData && !loadingTimeout;
+  // Determine effective loading state
+  const effectiveLoading = isLoading && !loadingTimeout;
 
   const handleNext = () => {
-    if (!roundTrackingHandleNext) {
-      console.error("handleNext function is not available");
-      return;
-    }
-    
     if (currentHole === holeCount) {
       setShowFinalScore(true);
     } else {
-      roundTrackingHandleNext();
+      roundTracking.handleNext();
     }
   };
+
+  // Check if we have resume data in localStorage as a backup
+  useEffect(() => {
+    const sessionResumeHole = sessionStorage.getItem('resume-hole-number');
+    const localResumeHole = localStorage.getItem('resume-hole-number');
+    
+    if (sessionResumeHole) {
+      console.log("Found resume hole in sessionStorage:", sessionResumeHole);
+    }
+    
+    if (localResumeHole) {
+      console.log("Found resume hole in localStorage:", localResumeHole);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -94,31 +96,23 @@ export const RoundTrackingDetail = ({
         />
       ) : showFinalScore ? (
         <FinalScoreView 
-          holeScores={holeScores || []}
+          holeScores={holeScores}
           holeCount={holeCount || 18}
           finishRound={finishRound}
           onBack={onBack}
         />
       ) : (
         <HoleScoreView 
-          currentHoleData={currentHoleData || {
-            holeNumber: currentHole,
-            par: 4,
-            distance: 0,
-            score: 0,
-            putts: 0,
-            fairwayHit: false,
-            greenInRegulation: false
-          }}
+          currentHoleData={currentHoleData}
           handleHoleUpdate={handleHoleUpdate}
           handleNext={handleNext}
           handlePrevious={handlePrevious}
-          currentHole={currentHole || 1}
+          currentHole={currentHole}
           holeCount={holeCount || 18}
           teeColor={currentTeeColor}
           courseId={selectedCourse?.id}
-          isSaving={isSaving || false}
-          holeScores={holeScores || []}
+          isSaving={isSaving}
+          holeScores={holeScores}
         />
       )}
     </div>

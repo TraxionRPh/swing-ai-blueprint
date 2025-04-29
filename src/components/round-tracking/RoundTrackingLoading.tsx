@@ -1,4 +1,5 @@
 
+import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 
 interface RoundTrackingLoadingProps {
@@ -14,12 +15,13 @@ export const RoundTrackingLoading = ({
 }: RoundTrackingLoadingProps) => {
   return (
     <div className="space-y-6">
+      <RoundTrackingHeader onBack={onBack} />
+      
       <LoadingState 
         onBack={onBack} 
         message="Preparing round data..."
         retryFn={retryLoading}
         roundId={roundId || undefined}
-        hideHeader={true} // Hide header to avoid duplication
       />
     </div>
   );

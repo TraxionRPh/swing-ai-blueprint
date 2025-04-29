@@ -1,9 +1,9 @@
 
-import { useState, useCallback, useRef, useEffect } from "react";
 import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHoleScores } from "./score/use-hole-scores";
 import { useHolePersistence } from "./score/use-hole-persistence";
+import { useCallback, useRef, useState } from "react";
 
 export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { currentHole, handleNext, handlePrevious } = useHoleNavigation();
@@ -11,42 +11,18 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [loadAttempts, setLoadAttempts] = useState(0);
-  const scoreDataRef = useRef<HoleData[]>([]);
 
-  // Force timeout to exit loading state after 5 seconds to prevent permanent loading
+  // Force timeout to exit loading state after 8 seconds to prevent permanent loading
   useEffect(() => {
     if (!isInitialLoad) return;
     
     const forceExitTimeout = setTimeout(() => {
       setIsInitialLoad(false);
       console.log("Forced exit from loading state after timeout");
-    }, 5000); // reduced from 8s to 5s for faster response
+    }, 8000); // reduced from 10s to 8s
     
     return () => clearTimeout(forceExitTimeout);
   }, [isInitialLoad]);
-
-  // Save a local copy of hole scores when they're loaded
-  useEffect(() => {
-    if (holeScores.length > 0) {
-      console.log("Saving hole scores to ref:", holeScores);
-      scoreDataRef.current = holeScores;
-      setIsInitialLoad(false);
-    }
-  }, [holeScores]);
-
-  // Check for resume data in sessionStorage and localStorage
-  useEffect(() => {
-    const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
-    const localHoleNumber = localStorage.getItem('resume-hole-number');
-    
-    if (sessionHoleNumber) {
-      console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
-    }
-    
-    if (localHoleNumber) {
-      console.log("Found resume hole in localStorage:", localHoleNumber);
-    }
-  }, []);
 
   const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);
@@ -56,7 +32,6 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
       )
     );
     
-    // Only save to database if roundId exists
     if (roundId) {
       saveHoleScore(data).catch(error => {
         console.error('Failed to save hole score:', error);
@@ -64,24 +39,15 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     }
   }, [roundId, saveHoleScore, setHoleScores]);
 
-  // Make sure we always have a valid current hole data object
-  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || 
-    scoreDataRef.current.find(hole => hole.holeNumber === currentHole) || {
-      holeNumber: currentHole,
-      par: 4,
-      distance: 0,
-      score: 0,
-      putts: 0,
-      fairwayHit: false,
-      greenInRegulation: false
-    };
-
-  console.log("Current score tracking state:", {
-    currentHole,
-    holeScoresLength: holeScores.length,
-    currentHoleData: currentHoleData,
-    isSaving: isSaving || isLoading || isInitialLoad
-  });
+  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
+    holeNumber: currentHole,
+    par: 4,
+    distance: 0,
+    score: 0,
+    putts: 0,
+    fairwayHit: false,
+    greenInRegulation: false
+  };
 
   return {
     currentHole,
@@ -94,3 +60,6 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     currentHoleData
   };
 };
+
+// Import useEffect at the top of the file
+import { useEffect } from 'react';

@@ -1,60 +1,46 @@
 
-import { useEffect, useCallback } from "react";
-import { useHoleScoresFetcher } from "./use-hole-scores-fetcher";
-import { useHoleScoresState } from "./use-hole-scores-state";
-import { useResumeSession } from "./use-resume-session";
-import { useRouteInitialization } from "./use-route-initialization";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { HoleData } from "@/types/round-tracking";
+import { useToast } from "@/hooks/use-toast";
+import { useHoleDataFetcher } from "./use-hole-data-fetcher";
+import { initializeDefaultScores } from "./use-hole-data-formatter";
 
 export const useHoleScores = (roundId: string | null, courseId?: string) => {
-  const {
-    holeScores,
-    setHoleScores,
-    isLoading,
-    setIsLoading,
-    fetchTimeoutRef,
-    maxRetries,
-    retryCount,
-    initializeDefaultHoleScores,
-    cleanupTimeouts
-  } = useHoleScoresState();
+  const [holeScores, setHoleScores] = useState<HoleData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const { fetchHoleScoresFromRound, fetchHoleScoresFromCourse } = useHoleDataFetcher();
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxRetries = useRef(3);
+  const retryCount = useRef(0);
 
-  const {
-    fetchHoleScoresFromRound,
-    fetchHoleScoresFromCourse,
-    isMountedRef,
-    cleanup: cleanupFetcher,
-    initialize: initializeFetcher
-  } = useHoleScoresFetcher();
-
-  // Check for route initialization
-  const { isInitialized } = useRouteInitialization(roundId);
-
-  // Check for resume data
-  const { savedHoleNumber, clearResumeData } = useResumeSession();
-
-  // Initialize data and handle retries when dependencies change
-  useEffect(() => {
-    // Don't start fetching until we're fully initialized
-    if (!isInitialized) {
-      console.log("Waiting for initialization before fetching hole scores");
-      return;
+  const fetchHoleScoresWrapper = useCallback(async (roundId: string) => {
+    setIsLoading(true);
+    try {
+      const result = await fetchHoleScoresFromRound(roundId);
+      if (result?.formattedScores) {
+        setHoleScores(result.formattedScores);
+      } else {
+        initializeDefaultHoleScores();
+      }
+      return { holeCount: result?.holeCount || 18 };
+    } catch (error) {
+      console.error('Failed to fetch hole scores in wrapper:', error);
+      initializeDefaultHoleScores();
+      return { holeCount: 18 };
+    } finally {
+      setIsLoading(false);
     }
+  }, [fetchHoleScoresFromRound]);
 
-    // Initialize refs
-    initializeFetcher();
+  useEffect(() => {
+    // Reset retry count when roundId or courseId changes
     retryCount.current = 0;
     
     const fetchData = async () => {
       if (roundId) {
         try {
-          console.log("Attempting to fetch hole scores for round:", roundId);
-          const result = await fetchHoleScoresFromRound(roundId);
-          
-          if (result && isMountedRef.current) {
-            console.log("Successfully loaded hole scores data:", result.formattedScores.length);
-            setHoleScores(result.formattedScores);
-            setIsLoading(false);
-          }
+          await fetchHoleScoresWrapper(roundId);
         } catch (error) {
           console.error('Failed to fetch hole scores in useEffect:', error);
           
@@ -63,16 +49,16 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
             retryCount.current++;
             
             // Clear any existing timeout
-            cleanupTimeouts();
+            if (fetchTimeoutRef.current) {
+              clearTimeout(fetchTimeoutRef.current);
+            }
             
             // Set exponential backoff retry (1s, 2s, 4s)
             const retryDelay = Math.pow(2, retryCount.current - 1) * 1000;
             console.log(`Retrying fetch (${retryCount.current}/${maxRetries.current}) after ${retryDelay}ms`);
             
             fetchTimeoutRef.current = setTimeout(() => {
-              if (isMountedRef.current) {
-                fetchData();
-              }
+              fetchData();
             }, retryDelay);
           } else {
             initializeDefaultHoleScores();
@@ -81,66 +67,36 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       } else if (courseId) {
         try {
           const formattedScores = await fetchHoleScoresFromCourse(courseId);
-          if (isMountedRef.current && formattedScores) {
-            setHoleScores(formattedScores);
-            setIsLoading(false);
-          }
+          setHoleScores(formattedScores);
         } catch (error) {
           console.error('Failed to fetch course holes in useEffect:', error);
           initializeDefaultHoleScores();
+        } finally {
+          setIsLoading(false);
         }
-      } else {
-        // If both roundId and courseId are null, set default scores and stop loading
+      } else if (holeScores.length === 0) {
         initializeDefaultHoleScores();
       }
     };
     
-    // Immediate fetch on mount or when dependencies change
     fetchData();
     
-    // Cleanup function to clear any timeouts and prevent state updates after unmount
+    // Cleanup function to clear any timeouts
     return () => {
-      cleanupFetcher();
-      cleanupTimeouts();
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
-  }, [
-    roundId, 
-    courseId, 
-    isInitialized,
-    fetchHoleScoresFromRound, 
-    fetchHoleScoresFromCourse, 
-    setHoleScores, 
-    setIsLoading,
-    cleanupTimeouts,
-    initializeDefaultHoleScores,
-    cleanupFetcher,
-    initializeFetcher
-  ]);
+  }, [roundId, courseId, fetchHoleScoresWrapper, fetchHoleScoresFromCourse, holeScores.length]);
 
-  // Refetch function for external components to trigger data reload
-  const refetchHoleScores = useCallback(async () => {
-    if (!roundId) return;
-    
-    setIsLoading(true);
-    try {
-      const result = await fetchHoleScoresFromRound(roundId);
-      if (result && isMountedRef.current) {
-        setHoleScores(result.formattedScores);
-      }
-    } catch (error) {
-      console.error("Failed to refetch hole scores:", error);
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [roundId, fetchHoleScoresFromRound, setHoleScores, setIsLoading]);
+  const initializeDefaultHoleScores = (holeCount: number = 18) => {
+    setHoleScores(initializeDefaultScores(holeCount));
+  };
 
   return {
     holeScores,
     setHoleScores,
     isLoading,
-    refetchHoleScores,
-    savedHoleNumber
+    fetchHoleScoresFromRound: fetchHoleScoresWrapper
   };
 };

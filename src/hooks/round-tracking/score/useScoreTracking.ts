@@ -56,7 +56,6 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
       )
     );
     
-    // Only save to database if roundId exists
     if (roundId) {
       saveHoleScore(data).catch(error => {
         console.error('Failed to save hole score:', error);

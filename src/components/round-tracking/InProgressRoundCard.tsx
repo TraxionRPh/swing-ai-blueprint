@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { PlayCircle, Trash2, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface InProgressRoundProps {
   roundId: string;
@@ -36,25 +35,6 @@ export const InProgressRoundCard = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  // Prefetch round data when component mounts to speed up loading
-  useEffect(() => {
-    // Silently prefetch hole scores data
-    const prefetchData = async () => {
-      try {
-        console.log("Prefetching round data for:", roundId);
-        await supabase
-          .from('hole_scores')
-          .select('*')
-          .eq('round_id', roundId);
-        console.log("Prefetch complete");
-      } catch (error) {
-        // Silent fail - this is just optimization
-      }
-    };
-    
-    prefetchData();
-  }, [roundId]);
 
   const handleResumeRound = () => {
     console.log("Resume round clicked for round ID:", roundId);

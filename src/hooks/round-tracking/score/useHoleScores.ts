@@ -1,17 +1,16 @@
 
-import { useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import type { HoleData } from "@/types/round-tracking";
-import { formatHoleScores, initializeDefaultScores } from "./use-hole-data-formatter";
+import { useToast } from "@/hooks/use-toast";
 
-export const useHoleScoresFetcher = () => {
+export const useHoleScores = (roundId: string | null, courseId?: string) => {
+  const [holeScores, setHoleScores] = useState<HoleData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const isMountedRef = useRef(true);
 
   const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
-    if (!isMountedRef.current) return null;
-    
+    setIsLoading(true);
     try {
       console.log('Fetching hole scores for round:', roundId);
       
@@ -76,27 +75,42 @@ export const useHoleScoresFetcher = () => {
 
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
       console.log('Formatted hole scores with course data (from round):', formattedScores);
+      setHoleScores(formattedScores);
       
-      return { formattedScores, holeCount };
+      // Return an object with holeCount instead of returning the formatted scores directly
+      return { holeCount };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
-      
-      // Only show toast for non-network errors to reduce alert fatigue
-      if (!(error instanceof TypeError && error.message.includes('Failed to fetch'))) {
-        toast({
-          title: "Error loading round data",
-          description: "Could not load hole scores. Please try again.",
-          variant: "destructive"
-        });
-      }
-      
+      toast({
+        title: "Error loading round data",
+        description: "Could not load hole scores. Please try again.",
+        variant: "destructive"
+      });
+      initializeDefaultScores();
       return null;
+    } finally {
+      setIsLoading(false);
     }
   }, [toast]);
 
-  const fetchHoleScoresFromCourse = useCallback(async (courseId: string) => {
-    if (!isMountedRef.current) return null;
-    
+  useEffect(() => {
+    if (roundId) {
+      fetchHoleScoresFromRound(roundId).catch(error => {
+        console.error('Failed to fetch hole scores in useEffect:', error);
+        initializeDefaultScores();
+      });
+    } else if (courseId) {
+      fetchHoleScoresFromCourse(courseId).catch(error => {
+        console.error('Failed to fetch course holes in useEffect:', error);
+        initializeDefaultScores();
+      });
+    } else if (holeScores.length === 0) {
+      initializeDefaultScores();
+    }
+  }, [roundId, courseId]);
+
+  const fetchHoleScoresFromCourse = async (courseId: string) => {
+    setIsLoading(true);
     try {
       console.log('Directly fetching course holes for course:', courseId);
       
@@ -117,29 +131,49 @@ export const useHoleScoresFetcher = () => {
 
       const formattedScores = formatHoleScores([], holeInfo);
       console.log('Formatted hole scores with course data (direct):', formattedScores);
-      
-      return formattedScores;
+      setHoleScores(formattedScores);
     } catch (error) {
       console.error('Error fetching hole scores from course:', error);
-      return initializeDefaultScores();
+      initializeDefaultScores();
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
-  // Reset the mounted ref on unmount
-  const cleanup = useCallback(() => {
-    isMountedRef.current = false;
-  }, []);
+  const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18): HoleData[] => {
+    return Array.from({ length: holeCount }, (_, i) => {
+      const existingHole = scores.find(h => h.hole_number === i + 1);
+      const courseHole = holeInfo.find(h => h.hole_number === i + 1);
+      
+      return {
+        holeNumber: i + 1,
+        par: courseHole?.par || 4,
+        distance: courseHole?.distance_yards || 0,
+        score: existingHole?.score || 0,
+        putts: existingHole?.putts || 0,
+        fairwayHit: existingHole?.fairway_hit || false,
+        greenInRegulation: existingHole?.green_in_regulation || false
+      };
+    });
+  };
 
-  // Set the mounted ref to true for new instances
-  const initialize = useCallback(() => {
-    isMountedRef.current = true;
-  }, []);
+  const initializeDefaultScores = () => {
+    const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+      holeNumber: i + 1,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0,
+      fairwayHit: false,
+      greenInRegulation: false
+    }));
+    setHoleScores(defaultHoles);
+  };
 
   return {
-    fetchHoleScoresFromRound,
-    fetchHoleScoresFromCourse,
-    isMountedRef,
-    cleanup,
-    initialize
+    holeScores,
+    setHoleScores,
+    isLoading,
+    fetchHoleScoresFromRound
   };
 };
