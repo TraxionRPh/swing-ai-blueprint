@@ -10,6 +10,7 @@ export const useHoleNavigation = () => {
   const initializeHole = useCallback(() => {
     // First priority: If a specific hole is specified in the URL, use that
     if (holeNumber && !isNaN(Number(holeNumber))) {
+      console.log("Using hole number from URL:", holeNumber);
       return Number(holeNumber);
     }
     
@@ -32,6 +33,7 @@ export const useHoleNavigation = () => {
 
   useEffect(() => {
     const initialHole = initializeHole();
+    console.log("Setting initial hole to:", initialHole);
     setCurrentHole(initialHole);
   }, [initializeHole]);
 

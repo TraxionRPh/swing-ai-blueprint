@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -47,10 +48,11 @@ export const InProgressRoundCard = ({
         description: "Retrieving your round data..."
       });
       
-      // Calculate the next hole to resume play at
-      // If lastHole is 8, we want to go to hole 9
+      // Calculate the next hole to resume play at:
+      // If lastHole is 8, we want to go to hole 9 (so we use lastHole + 1)
+      // Unless that's beyond the hole count
       // If no holes completed yet (lastHole === 0), start at hole 1
-      const nextHole = lastHole >= 1 ? lastHole : 1;
+      const nextHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
       
       console.log("Resuming at hole:", nextHole);
       

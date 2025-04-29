@@ -32,7 +32,7 @@ export const HoleScoreView = ({
   const validatedHoleData = 
     currentHoleData.holeNumber === currentHole ? 
     currentHoleData : 
-    {
+    holeScores.find(hole => hole.holeNumber === currentHole) || {
       holeNumber: currentHole,
       par: 4,
       distance: 0,
@@ -41,6 +41,8 @@ export const HoleScoreView = ({
       fairwayHit: false,
       greenInRegulation: false
     };
+  
+  console.log("Current hole:", currentHole, "Using hole data:", validatedHoleData);
     
   return (
     <>

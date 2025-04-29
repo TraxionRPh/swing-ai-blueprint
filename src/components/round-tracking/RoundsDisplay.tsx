@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
@@ -181,11 +182,16 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       .filter(hole => hole.score && hole.score > 0)
       .sort((a, b) => a.hole_number - b.hole_number); // Sort by hole number ascending
     
+    console.log("Scored holes:", scoredHoles.map(h => h.hole_number).join(', '));
+    
     if (scoredHoles.length > 0) {
       // Get the last hole with a score
-      return scoredHoles[scoredHoles.length - 1].hole_number;
+      const lastScoredHole = scoredHoles[scoredHoles.length - 1].hole_number;
+      console.log("Last completed hole:", lastScoredHole);
+      return lastScoredHole;
     }
     
+    console.log("No holes with scores found");
     return 0;
   };
 
