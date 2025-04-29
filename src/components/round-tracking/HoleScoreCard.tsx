@@ -3,10 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 import { HoleNavigation } from "./hole-score/HoleNavigation";
-import { HoleStats } from "./hole-score/HoleStats";
-import { PerformanceToggles } from "./hole-score/PerformanceToggles";
+import { HoleHeader } from "./hole-score/HoleHeader";
+import { HoleScoreForm } from "./hole-score/HoleScoreForm";
+import { HoleSavingIndicator } from "./hole-score/HoleSavingIndicator";
 import type { HoleData } from "@/types/round-tracking";
 
 interface HoleScoreCardProps {
@@ -89,12 +89,8 @@ export const HoleScoreCard = ({
     <>
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6 space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold">Hole {data.holeNumber}</h3>
-          </div>
-
-          <HoleStats data={data} onDataChange={handleChange} />
-          <PerformanceToggles data={data} onDataChange={handleChange} />
+          <HoleHeader holeNumber={data.holeNumber} />
+          <HoleScoreForm data={data} onDataChange={handleChange} />
           <HoleNavigation 
             onNext={handleNext}
             onPrevious={onPrevious}
@@ -104,14 +100,7 @@ export const HoleScoreCard = ({
         </CardContent>
       </Card>
       
-      {(isSaving || localIsSaving) && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className="flex items-center bg-primary/10 text-primary px-3 py-2 rounded-md">
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm font-medium">Saving...</span>
-          </div>
-        </div>
-      )}
+      <HoleSavingIndicator isSaving={isSaving || localIsSaving} />
     </>
   );
 };
