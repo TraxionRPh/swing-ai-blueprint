@@ -12,22 +12,22 @@ export const HoleSavingIndicator = ({ isSaving }: HoleSavingIndicatorProps) => {
   const [stuckTimeout, setStuckTimeout] = useState<NodeJS.Timeout | null>(null);
   
   // Use an effect to add a delay before showing the saving indicator
-  // and also to handle stuck states with a timeout (force hide after 15 seconds)
+  // and also to handle stuck states with a timeout (force hide after 8 seconds)
   useEffect(() => {
     if (isSaving) {
       // Add a small delay before showing saving indicator to prevent flashing
       const timer = setTimeout(() => {
         setShowSaving(true);
         
-        // Set a timeout to automatically hide the indicator after 15 seconds
+        // Set a timeout to automatically hide the indicator after 8 seconds
         // This prevents it from getting stuck permanently
         const stuck = setTimeout(() => {
-          console.log("Saving indicator timed out after 15 seconds");
+          console.log("Saving indicator timed out after 8 seconds");
           setShowSaving(false);
-        }, 15000);
+        }, 8000);
         
         setStuckTimeout(stuck);
-      }, 300);
+      }, 500);
       
       return () => {
         clearTimeout(timer);

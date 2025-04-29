@@ -2,7 +2,7 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -29,26 +29,34 @@ export const HoleScoreView = ({
   isSaving,
   holeScores
 }: HoleScoreViewProps) => {
-  // Make sure we have a valid hole data object that matches the current hole
-  // This is crucial for round resumption to work correctly
-  const validatedHoleData = 
-    currentHoleData && currentHoleData.holeNumber === currentHole ? 
-    currentHoleData : 
-    holeScores.find(hole => hole.holeNumber === currentHole) || {
-      holeNumber: currentHole,
-      par: 4,
-      distance: 0,
-      score: 0,
-      putts: 0,
-      fairwayHit: false,
-      greenInRegulation: false
-    };
+  // Make sure we always have valid hole data that matches the current hole
+  const [validatedData, setValidatedData] = useState<HoleData>(currentHoleData);
   
-  // Log current hole data to help with debugging
   useEffect(() => {
-    console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
-    console.log("All hole scores available:", holeScores.map(h => `Hole ${h.holeNumber}: score=${h.score}`));
-  }, [currentHole, validatedHoleData, holeScores]);
+    // Always ensure we have a valid data object for the current hole
+    const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
+    
+    if (matchingHole) {
+      setValidatedData(matchingHole);
+    } else if (currentHoleData && currentHoleData.holeNumber === currentHole) {
+      setValidatedData(currentHoleData);
+    } else {
+      // Create default hole data if nothing else is available
+      setValidatedData({
+        holeNumber: currentHole,
+        par: 4,
+        distance: 0,
+        score: 0,
+        putts: 0,
+        fairwayHit: false,
+        greenInRegulation: false
+      });
+    }
+    
+    console.log(`HoleScoreView - Displaying hole ${currentHole}`, 
+      matchingHole || currentHoleData || "Using default data");
+      
+  }, [currentHole, currentHoleData, holeScores]);
     
   return (
     <>
@@ -57,7 +65,7 @@ export const HoleScoreView = ({
       )}
       
       <HoleScoreCard
-        holeData={validatedHoleData}
+        holeData={validatedData}
         onUpdate={handleHoleUpdate}
         onNext={handleNext}
         onPrevious={handlePrevious}

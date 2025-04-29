@@ -18,9 +18,11 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     setIsLoading(true);
     try {
       const result = await fetchHoleScoresFromRound(roundId);
-      if (result?.formattedScores) {
+      if (result?.formattedScores && result.formattedScores.length > 0) {
+        console.log("Setting formatted scores from fetch:", result.formattedScores);
         setHoleScores(result.formattedScores);
       } else {
+        console.log("No formatted scores returned, initializing defaults");
         initializeDefaultHoleScores();
       }
       return { holeCount: result?.holeCount || 18 };
@@ -40,6 +42,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     const fetchData = async () => {
       if (roundId) {
         try {
+          console.log("Attempting to fetch hole scores for round:", roundId);
           await fetchHoleScoresWrapper(roundId);
         } catch (error) {
           console.error('Failed to fetch hole scores in useEffect:', error);
@@ -89,8 +92,15 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     };
   }, [roundId, courseId, fetchHoleScoresWrapper, fetchHoleScoresFromCourse, holeScores.length]);
 
+  // Debug the initial state
+  useEffect(() => {
+    console.log("Initial hole scores state:", { holeScores, isLoading });
+  }, []);
+
   const initializeDefaultHoleScores = (holeCount: number = 18) => {
-    setHoleScores(initializeDefaultScores(holeCount));
+    const defaultScores = initializeDefaultScores(holeCount);
+    console.log("Setting default hole scores:", defaultScores);
+    setHoleScores(defaultScores);
   };
 
   return {

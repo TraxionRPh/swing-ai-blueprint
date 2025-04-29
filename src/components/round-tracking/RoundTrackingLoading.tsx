@@ -19,7 +19,7 @@ export const RoundTrackingLoading = ({
         message="Preparing round data..."
         retryFn={retryLoading}
         roundId={roundId || undefined}
-        hideHeader={false} // Show header inside LoadingState only
+        hideHeader={true} // Hide header to avoid duplication
       />
     </div>
   );

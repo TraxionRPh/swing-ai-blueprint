@@ -77,7 +77,7 @@ export const useHoleDataFetcher = () => {
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
       // Don't show toast on network errors - they're expected in offline scenarios
-      if (!(error instanceof TypeError && error.message === "Failed to fetch")) {
+      if (!(error instanceof TypeError && error.message.includes('Failed to fetch'))) {
         toast({
           title: "Error loading round data",
           description: "Could not load hole scores. Please try again.",
