@@ -28,32 +28,39 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   // Check for resume data
   const { savedHoleNumber, clearResumeData } = useResumeSession();
 
-  // Track if we've initialized
+  // Track if we've initialized and the last roundId/courseId we processed
   const hasInitializedRef = useRef(false);
+  const lastRoundIdRef = useRef<string | null>(null);
+  const lastCourseIdRef = useRef<string | undefined>(undefined);
   const [initializing, setInitializing] = useState(false);
 
-  // Initialize data and handle retries when dependencies change
+  // Reset initialization when key dependencies change
+  const shouldReinitialize = roundId !== lastRoundIdRef.current || 
+                             courseId !== lastCourseIdRef.current;
+
+  // Initialize data once when dependencies are available
   useEffect(() => {
+    // Update refs to track current values
+    lastRoundIdRef.current = roundId;
+    lastCourseIdRef.current = courseId;
+
     // Skip if we're currently initializing
     if (initializing) {
       console.log("useHoleScores: Already initializing, skipping");
       return;
     }
     
-    // Skip if we've already initialized
-    if (hasInitializedRef.current) {
-      console.log("useHoleScores: Already initialized, skipping");
+    // Skip if we've already initialized and dependencies haven't changed
+    if (hasInitializedRef.current && !shouldReinitialize) {
+      console.log("useHoleScores: Already initialized with same IDs, skipping");
       return;
     }
     
     // Set initializing flag to prevent duplicate processing
     setInitializing(true);
+    console.log("useHoleScores: Starting initialization with roundId:", roundId, "courseId:", courseId);
     
-    // Mark as initialized to prevent multiple initializations
-    hasInitializedRef.current = true;
-    console.log("useHoleScores: Initializing for the first time");
-
-    // Initialize refs
+    // Initialize refs and reset retry count
     initializeFetcher();
     retryCount.current = 0;
     
@@ -72,31 +79,40 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
             setHoleScores(result.formattedScores);
             setIsLoading(false);
             setInitializing(false);
+            hasInitializedRef.current = true;
           }
         } catch (error) {
-          console.error('Failed to fetch hole scores in useEffect:', error);
-          initializeDefaultHoleScores();
+          console.error('Failed to fetch hole scores:', error);
+          // Initialize default scores if we can't get data
+          initializeDefaultHoleScores(18);
           setInitializing(false);
+          hasInitializedRef.current = true;
         }
       } else if (courseId) {
         try {
           setIsLoading(true); // Ensure loading state is true during fetch
+          
           const formattedScores = await fetchHoleScoresFromCourse(courseId);
+          
           if (isMountedRef.current && formattedScores) {
             setHoleScores(formattedScores);
             setIsLoading(false);
             setInitializing(false);
+            hasInitializedRef.current = true;
           }
         } catch (error) {
-          console.error('Failed to fetch course holes in useEffect:', error);
-          initializeDefaultHoleScores();
+          console.error('Failed to fetch course holes:', error);
+          initializeDefaultHoleScores(18);
           setInitializing(false);
+          hasInitializedRef.current = true;
         }
       } else {
         // If both roundId and courseId are null, set default scores and stop loading
         console.log("No roundId or courseId provided, using default scores");
-        initializeDefaultHoleScores();
+        initializeDefaultHoleScores(18);
         setInitializing(false);
+        hasInitializedRef.current = true;
+        setIsLoading(false);
       }
     };
     
@@ -112,8 +128,8 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     };
   }, [
     roundId, 
-    courseId
-    // Removed dynamic dependencies to prevent re-runs
+    courseId,
+    shouldReinitialize // Add this to ensure we re-run when key deps change
   ]);
 
   // Refetch function for external components to trigger data reload

@@ -4,21 +4,28 @@ import { useEffect, useState, useRef } from "react";
 export const useRouteInitialization = (roundId: string | null) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationAttemptedRef = useRef(false);
+  const roundIdRef = useRef<string | null>(null);
 
-  // Run once on mount - limited dependencies to prevent endless re-runs
+  // Compare roundId to see if it's really changed
+  const hasRoundIdChanged = roundId !== roundIdRef.current;
+
+  // Run once on mount or when roundId changes significantly
   useEffect(() => {
-    // Do not run initialization more than once
-    if (initializationAttemptedRef.current) {
+    // Store current roundId for comparison
+    roundIdRef.current = roundId;
+    
+    // Skip if already initialized and roundId hasn't changed
+    if (initializationAttemptedRef.current && !hasRoundIdChanged) {
       return;
     }
     
     // Mark as initialization attempted immediately to prevent duplicate runs
     initializationAttemptedRef.current = true;
     
-    // Mark as initialized
+    // Mark as initialized after a short delay to prevent flickering
     setIsInitialized(true);
     console.log(`Route initialization complete for round: ${roundId}`);
-  }, []); // Empty dependency array to ensure it only runs once on mount
+  }, [roundId, hasRoundIdChanged]); // Only re-run if roundId changes
 
   return { isInitialized };
 };

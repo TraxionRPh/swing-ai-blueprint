@@ -13,49 +13,63 @@ const RoundTracking = () => {
   const { toast } = useToast();
   const initialRenderRef = useRef(true);
   const hasNavigatedRef = useRef(false);
+  const mountedRef = useRef(true);
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Determine which page we're on
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
+  const currentPathRef = useRef(window.location.pathname);
   
   // Load round tracking hook - single instance with lazy initialization
   const roundTracking = useRoundTracking();
   const { isLoading, retryLoading, currentRoundId } = roundTracking;
   
-  // One-time initialization logic
+  // One-time initialization logic that doesn't depend on round data
   useEffect(() => {
-    // Only run this once
+    // Record that we're mounted
+    mountedRef.current = true;
+    
+    // Prevent multiple initialization
     if (!initialRenderRef.current) return;
     initialRenderRef.current = false;
     
     console.log("RoundTracking component mounted, path:", window.location.pathname);
+    currentPathRef.current = window.location.pathname;
     
-    // Clear any resume-hole-number in session storage when viewing the main rounds page
+    // Clear any resume-hole-number when viewing the main rounds page
     if (isMainPage) {
       sessionStorage.removeItem('resume-hole-number');
     }
     
-    // Mark as initialized after a small delay to prevent rapid renders
+    // Mark as initialized after a small delay to allow other hooks to initialize
     const timer = setTimeout(() => {
-      setIsInitialized(true);
+      if (mountedRef.current) {
+        setIsInitialized(true);
+        console.log("RoundTracking marked as initialized");
+      }
     }, 300);
     
-    return () => clearTimeout(timer);
-  }, [isMainPage]);
+    // Cleanup function
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timer);
+    };
+  }, []); // Empty dependency array - run once on mount
 
   // Handle automatic navigation to detail page when current round changes
   useEffect(() => {
-    // Skip if we've already navigated or not initialized
-    if (hasNavigatedRef.current || !isInitialized) return;
+    // Skip if we've already navigated, not initialized, or component is unmounted
+    if (hasNavigatedRef.current || !isInitialized || !mountedRef.current) return;
     
+    // Only navigate if we're on main page, have a round ID, and not in loading state
     if (isMainPage && currentRoundId && !isLoading) {
       console.log("Auto-navigating to round detail:", currentRoundId);
       hasNavigatedRef.current = true;
       navigate(`/rounds/${currentRoundId}`);
     }
-  }, [currentRoundId, isMainPage, navigate, isLoading, isInitialized]);
+  }, [currentRoundId, isMainPage, navigate, isLoading, isInitialized]); // Carefully controlled dependencies
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior

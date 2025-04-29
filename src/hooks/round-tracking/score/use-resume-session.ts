@@ -8,49 +8,41 @@ export const useResumeSession = () => {
   
   // Check for resume data in sessionStorage and localStorage - only once
   useEffect(() => {
-    // Set mounted flag
-    isMounted.current = true;
-    
     // Skip if we've already checked
     if (hasCheckedRef.current) return;
     
     // Mark as checked immediately
     hasCheckedRef.current = true;
     
-    const checkForResumeData = () => {
-      if (!isMounted.current) return;
-      
-      try {
-        // Get data from storage
-        const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
-        const localHoleNumber = localStorage.getItem('resume-hole-number');
-        
-        // Process resume data if available
-        if (sessionHoleNumber && isMounted.current) {
-          console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
-          const parsedHole = parseInt(sessionHoleNumber, 10);
-          if (!isNaN(parsedHole)) {
-            setSavedHoleNumber(parsedHole);
-            return;
-          }
-        }
-        
-        if (localHoleNumber && isMounted.current) {
-          console.log("Found resume hole in localStorage:", localHoleNumber);
-          const parsedHole = parseInt(localHoleNumber, 10);
-          if (!isNaN(parsedHole)) {
-            setSavedHoleNumber(parsedHole);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Error checking resume data:", error);
-        // Continue without resume data
-      }
-    };
+    // Set mounted flag
+    isMounted.current = true;
     
-    // Check immediately on mount - no delay
-    checkForResumeData();
+    try {
+      // Get data from storage
+      const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
+      const localHoleNumber = localStorage.getItem('resume-hole-number');
+      
+      // Process resume data if available (sessionStorage has priority)
+      if (sessionHoleNumber && isMounted.current) {
+        console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
+        const parsedHole = parseInt(sessionHoleNumber, 10);
+        if (!isNaN(parsedHole)) {
+          setSavedHoleNumber(parsedHole);
+          return; // Exit early if we found a valid hole number
+        }
+      }
+      
+      if (localHoleNumber && isMounted.current) {
+        console.log("Found resume hole in localStorage:", localHoleNumber);
+        const parsedHole = parseInt(localHoleNumber, 10);
+        if (!isNaN(parsedHole)) {
+          setSavedHoleNumber(parsedHole);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking resume data:", error);
+      // Continue without resume data
+    }
     
     // Cleanup function to prevent state updates after unmount
     return () => {
