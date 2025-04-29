@@ -9,18 +9,23 @@ export const useRoundLoadingState = () => {
   const { toast } = useToast();
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const hasInitializedRef = useRef(false);
   
-  // Ensure we clean up any lingering timers on unmount
+  // Ensure we clean up any lingering timers on mount/unmount
   useEffect(() => {
+    console.log("useRoundLoadingState initialized");
     mountedRef.current = true;
     
     // Enforce a maximum time to be in loading state (safety net only)
-    loadingTimerRef.current = setTimeout(() => {
-      if (mountedRef.current) {
-        console.log("Safety exit from loading state after timeout");
-        setIsLoading(false);
-      }
-    }, 10000); // 10 seconds is absolute maximum loading time
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      loadingTimerRef.current = setTimeout(() => {
+        if (mountedRef.current) {
+          console.log("Safety exit from loading state after timeout");
+          setIsLoading(false);
+        }
+      }, 5000); // 5 seconds maximum loading time
+    }
     
     return () => {
       mountedRef.current = false;
@@ -41,6 +46,7 @@ export const useRoundLoadingState = () => {
     
     // Set loading to true and increment attempt counter atomically
     if (mountedRef.current) {
+      console.log("Retrying loading");
       setIsLoading(true);
       setLoadAttempt(prev => prev + 1);
     }
@@ -51,7 +57,7 @@ export const useRoundLoadingState = () => {
         console.log("Safety exit from loading state after retry timeout");
         setIsLoading(false);
       }
-    }, 10000);
+    }, 5000);
   };
 
   // Explicit set loading function
@@ -64,7 +70,7 @@ export const useRoundLoadingState = () => {
       loadingTimerRef.current = null;
     }
     
-    // Only update if mounted
+    // Only update if mounted and state is different (prevent unnecessary renders)
     if (mountedRef.current && isLoading !== state) {
       console.log(`Explicitly setting loading state: ${state}`);
       setIsLoading(state);
@@ -77,7 +83,7 @@ export const useRoundLoadingState = () => {
           console.log("Safety exit from loading state after explicit set timeout");
           setIsLoading(false);
         }
-      }, 10000);
+      }, 5000);
     }
   };
 

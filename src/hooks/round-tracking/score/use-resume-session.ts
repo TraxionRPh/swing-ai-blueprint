@@ -8,21 +8,23 @@ export const useResumeSession = () => {
   
   // Check for resume data in sessionStorage and localStorage - only once
   useEffect(() => {
+    // Set mounted flag
+    isMounted.current = true;
+    
     // Skip if we've already checked
-    if (hasCheckedRef.current) return;
+    if (hasCheckedRef.current) {
+      console.log("Resume session already checked, skipping");
+      return;
+    }
     
     // Mark as checked immediately
     hasCheckedRef.current = true;
     
-    // Set mounted flag
-    isMounted.current = true;
-    
     try {
-      // Get data from storage
+      // Get data from storage - sessionStorage has priority
       const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
       const localHoleNumber = localStorage.getItem('resume-hole-number');
       
-      // Process resume data if available (sessionStorage has priority)
       if (sessionHoleNumber && isMounted.current) {
         console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
         const parsedHole = parseInt(sessionHoleNumber, 10);
@@ -41,10 +43,9 @@ export const useResumeSession = () => {
       }
     } catch (error) {
       console.error("Error checking resume data:", error);
-      // Continue without resume data
     }
     
-    // Cleanup function to prevent state updates after unmount
+    // Cleanup function
     return () => {
       isMounted.current = false;
     };
