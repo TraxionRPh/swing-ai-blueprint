@@ -1,8 +1,8 @@
 
 import { useState, useCallback, useMemo } from "react";
 import type { HoleData } from "@/types/round-tracking";
-import { useHoleNavigation } from "./useHoleNavigation";
-import { useHolePersistence } from "./use-hole-persistence";
+import { useHoleNavigation } from "./score/useHoleNavigation";
+import { useHolePersistence } from "./score/use-hole-persistence";
 
 export const useScoreTracking = (
   roundId: string | null, 

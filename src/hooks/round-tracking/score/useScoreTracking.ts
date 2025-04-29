@@ -50,18 +50,26 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
 
   const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);
-    setHoleScores(prev => 
-      prev.map(hole => 
-        hole.holeNumber === data.holeNumber ? data : hole
-      )
+    const updatedScores = [...holeScores];
+    
+    const holeIndex = updatedScores.findIndex(
+      hole => hole.holeNumber === data.holeNumber
     );
+    
+    if (holeIndex >= 0) {
+      updatedScores[holeIndex] = data;
+    } else {
+      updatedScores.push(data);
+    }
+    
+    setHoleScores(updatedScores);
     
     if (roundId) {
       saveHoleScore(data).catch(error => {
         console.error('Failed to save hole score:', error);
       });
     }
-  }, [roundId, saveHoleScore, setHoleScores]);
+  }, [roundId, saveHoleScore, setHoleScores, holeScores]);
 
   // Make sure we always have a valid current hole data object
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || 
