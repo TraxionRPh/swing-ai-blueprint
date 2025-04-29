@@ -22,6 +22,12 @@ const RoundTracking = () => {
   const [loadRetries, setLoadRetries] = useState(0);
   const maxRetries = 2;
   
+  // Use error boundary fallback for detailed component
+  const roundTrackingWithErrorHandling = useRoundTracking();
+  
+  // Add state to handle forced completion of loading
+  const [forceLoadingComplete, setForceLoadingComplete] = useState(false);
+  
   useEffect(() => {
     // If we're on the main rounds page, set loading to false after a short delay
     if (isMainPage) {
@@ -29,9 +35,6 @@ const RoundTracking = () => {
       return () => clearTimeout(timer);
     }
   }, [isMainPage]);
-  
-  // Use error boundary fallback for detailed component
-  const roundTrackingWithErrorHandling = useRoundTracking();
   
   // Force timeout of loading state after 12 seconds to prevent infinite loading
   useEffect(() => {
@@ -49,8 +52,9 @@ const RoundTracking = () => {
             variant: "destructive",
           });
           
-          // Instead of reloading, just force isLoading to false after max retries
-          roundTrackingWithErrorHandling.setIsLoading?.(false);
+          // Instead of using setIsLoading which doesn't exist, we'll use our local state
+          // to determine if we should show loading UI or not
+          setForceLoadingComplete(true);
         }
       }
     }, 10000); // 10 seconds timeout
@@ -69,6 +73,9 @@ const RoundTracking = () => {
     setLoadRetries(prev => prev + 1);
   };
   
+  // Determine if we should override the loading state
+  const effectiveIsLoading = forceLoadingComplete ? false : roundTrackingWithErrorHandling.isLoading;
+  
   // Wrap the components with error boundary
   return (
     <ErrorBoundary>
@@ -82,7 +89,7 @@ const RoundTracking = () => {
         <RoundTrackingDetail
           onBack={handleBack}
           currentRoundId={roundTrackingWithErrorHandling.currentRoundId}
-          isLoading={roundTrackingWithErrorHandling.isLoading}
+          isLoading={effectiveIsLoading}
           retryLoading={retryLoading}
           roundTracking={roundTrackingWithErrorHandling}
         />
