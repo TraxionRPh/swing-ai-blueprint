@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 interface HoleSavingIndicatorProps {
@@ -7,7 +7,39 @@ interface HoleSavingIndicatorProps {
 }
 
 export const HoleSavingIndicator = ({ isSaving }: HoleSavingIndicatorProps) => {
-  if (!isSaving) return null;
+  // Add state to track stuck saving state
+  const [showSaving, setShowSaving] = useState(false);
+  const [stuckTimeout, setStuckTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // Use an effect to add a delay before showing the saving indicator
+  // and also to handle stuck states with a timeout (force hide after 15 seconds)
+  useEffect(() => {
+    if (isSaving) {
+      // Add a small delay before showing saving indicator to prevent flashing
+      const timer = setTimeout(() => {
+        setShowSaving(true);
+        
+        // Set a timeout to automatically hide the indicator after 15 seconds
+        // This prevents it from getting stuck permanently
+        const stuck = setTimeout(() => {
+          console.log("Saving indicator timed out after 15 seconds");
+          setShowSaving(false);
+        }, 15000);
+        
+        setStuckTimeout(stuck);
+      }, 300);
+      
+      return () => {
+        clearTimeout(timer);
+        if (stuckTimeout) clearTimeout(stuckTimeout);
+      };
+    } else {
+      setShowSaving(false);
+      if (stuckTimeout) clearTimeout(stuckTimeout);
+    }
+  }, [isSaving]);
+  
+  if (!showSaving) return null;
   
   return (
     <div className="fixed bottom-4 right-4 z-50">

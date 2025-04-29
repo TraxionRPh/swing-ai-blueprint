@@ -26,10 +26,10 @@ export const LoadingState = ({
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Increase timeout for retry button to 5 seconds (was 3 seconds)
+  // Increase timeout for retry button to 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowRetry(true), 5000);
-    // Increase timeout for network alert to 8 seconds (was 5 seconds)
+    // Increase timeout for network alert to 8 seconds
     const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
     return () => {
       clearTimeout(timer); 
