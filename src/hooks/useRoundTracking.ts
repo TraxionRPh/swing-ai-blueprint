@@ -1,23 +1,21 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
 import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
-import { Course } from "@/types/round-tracking";
 import { useParams, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRoundInitialization } from "./round-tracking/useRoundInitialization";
+import { useRoundCourseSelection } from "./round-tracking/useRoundCourseSelection";
+import { useRoundNavigation } from "./round-tracking/useRoundNavigation";
+import { useRoundFinalization } from "./round-tracking/useRoundFinalization";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
-  const [holeCount, setHoleCount] = useState<number | null>(null);
   const { roundId: urlRoundId } = useParams();
-  const [isLoading, setIsLoading] = useState(true);
-  const [courseName, setCourseName] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
-  const [initAttempt, setInitAttempt] = useState(0);
   
   // Debug current state
   console.log("useRoundTracking init - roundId from URL:", urlRoundId);
@@ -30,6 +28,20 @@ export const useRoundTracking = () => {
     finishRound: baseFinishRound,
     deleteRound
   } = useRoundManagement(user);
+
+  // Round initialization hook
+  const {
+    courseName,
+    setCourseName,
+    holeCount,
+    setHoleCount,
+    isLoading,
+    setIsLoading,
+    initAttempt,
+    setInitAttempt,
+    fetchRoundDetails,
+    updateCourseName
+  } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
 
   const {
     selectedCourse,
@@ -50,36 +62,32 @@ export const useRoundTracking = () => {
     isSaving
   } = useScoreTracking(currentRoundId, selectedCourse?.id);
 
-  const fetchRoundDetails = useCallback(async (roundId: string) => {
-    try {
-      console.log("Fetching round details for:", roundId);
-      const { data, error } = await supabase
-        .from('rounds')
-        .select(`
-          hole_count,
-          golf_courses:course_id (
-            id,
-            name,
-            city,
-            state,
-            total_par,
-            course_tees (*)
-          )
-        `)
-        .eq('id', roundId)
-        .maybeSingle();
-          
-      if (error) {
-        console.error("Error fetching round data:", error);
-        throw error;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error("Error in fetchRoundDetails:", error);
-      return null;
-    }
-  }, []);
+  // Course selection hook
+  const { handleCourseSelect } = useRoundCourseSelection(
+    handleCourseSelectBase,
+    setCurrentRoundId,
+    setHoleScores,
+    holeCount
+  );
+
+  // Navigation hook
+  const { handleNext } = useRoundNavigation(
+    handleNextBase,
+    handlePrevious,
+    currentHole,
+    holeCount
+  );
+
+  // Round finalization hook
+  const { finishRound } = useRoundFinalization(
+    baseFinishRound,
+    holeScores
+  );
+
+  // Update course name when selected course changes
+  useEffect(() => {
+    updateCourseName(selectedCourse);
+  }, [selectedCourse]);
 
   useEffect(() => {
     let isMounted = true;
@@ -151,56 +159,11 @@ export const useRoundTracking = () => {
       isMounted = false;
       clearTimeout(retryTimer);
     };
-  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt]);
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt, isLoading, setInitAttempt]);
 
-  useEffect(() => {
-    // Update course name when selected course changes
-    if (selectedCourse) {
-      setCourseName(selectedCourse.name);
-    }
-  }, [selectedCourse]);
-
-  const handleCourseSelect = async (course: Course) => {
-    // We always want to use the holeCount that's already been set
-    try {
-      const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
-      if (newRoundId) {
-        setCurrentRoundId(newRoundId);
-        // Create default holes based on the selected hole count
-        const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
-          holeNumber: i + 1,
-          par: 4,
-          distance: 0,
-          score: 0,
-          putts: 0,
-          fairwayHit: false,
-          greenInRegulation: false
-        }));
-        setHoleScores(defaultHoles);
-      }
-      return newRoundId;
-    } catch (error) {
-      console.error("Error selecting course:", error);
-      toast({
-        title: "Error selecting course",
-        description: "Could not create a new round. Please try again.",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-
-  const handleNext = () => {
-    if (holeCount && currentHole === holeCount) {
-      return;
-    } else {
-      handleNextBase();
-    }
-  };
-
-  const finishRound = async () => {
-    if (!holeCount) return false;
-    return baseFinishRound(holeScores.slice(0, holeCount), holeCount);
+  const handleHoleCountSelect = (count: number) => {
+    setHoleCount(count);
+    sessionStorage.setItem('current-hole-count', count.toString());
   };
 
   // Log the current state for debugging
@@ -233,6 +196,7 @@ export const useRoundTracking = () => {
     currentRoundId,
     deleteRound,
     courseName,
-    isLoading
+    isLoading,
+    handleHoleCountSelect
   };
 };
