@@ -57,9 +57,11 @@ export const InProgressRoundCard = ({
       console.log("Resuming at hole:", nextHole);
       
       // Use both sessionStorage and localStorage to improve reliability
-      // This will be read by useHoleNavigation
       sessionStorage.setItem('resume-hole-number', nextHole.toString());
       localStorage.setItem('resume-hole-number', nextHole.toString());
+      
+      // Log the URL we're going to navigate to for debugging
+      console.log(`Navigating to: /rounds/${roundId}`);
       
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {

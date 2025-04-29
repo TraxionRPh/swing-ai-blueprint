@@ -11,6 +11,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [loadAttempts, setLoadAttempts] = useState(0);
+  const scoreDataRef = useRef<HoleData[]>([]);
 
   // Force timeout to exit loading state after 5 seconds to prevent permanent loading
   useEffect(() => {
@@ -24,12 +25,26 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     return () => clearTimeout(forceExitTimeout);
   }, [isInitialLoad]);
 
-  // Check localStorage as a backup for resuming hole number
+  // Save a local copy of hole scores when they're loaded
   useEffect(() => {
-    const localStorageHoleNumber = localStorage.getItem('resume-hole-number');
-    if (localStorageHoleNumber && !isNaN(Number(localStorageHoleNumber))) {
-      console.log("Found backup hole number in localStorage:", localStorageHoleNumber);
-      localStorage.removeItem('resume-hole-number');
+    if (holeScores.length > 0) {
+      console.log("Saving hole scores to ref:", holeScores);
+      scoreDataRef.current = holeScores;
+      setIsInitialLoad(false);
+    }
+  }, [holeScores]);
+
+  // Check for resume data in sessionStorage and localStorage
+  useEffect(() => {
+    const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
+    const localHoleNumber = localStorage.getItem('resume-hole-number');
+    
+    if (sessionHoleNumber) {
+      console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
+    }
+    
+    if (localHoleNumber) {
+      console.log("Found resume hole in localStorage:", localHoleNumber);
     }
   }, []);
 
@@ -49,15 +64,23 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   }, [roundId, saveHoleScore, setHoleScores]);
 
   // Make sure we always have a valid current hole data object
-  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
-    holeNumber: currentHole,
-    par: 4,
-    distance: 0,
-    score: 0,
-    putts: 0,
-    fairwayHit: false,
-    greenInRegulation: false
-  };
+  const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || 
+    scoreDataRef.current.find(hole => hole.holeNumber === currentHole) || {
+      holeNumber: currentHole,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0,
+      fairwayHit: false,
+      greenInRegulation: false
+    };
+
+  console.log("Current score tracking state:", {
+    currentHole,
+    holeScoresLength: holeScores.length,
+    currentHoleData: currentHoleData,
+    isSaving: isSaving || isLoading || isInitialLoad
+  });
 
   return {
     currentHole,

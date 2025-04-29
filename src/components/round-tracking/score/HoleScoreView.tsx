@@ -2,6 +2,7 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
+import { useEffect } from "react";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -43,7 +44,11 @@ export const HoleScoreView = ({
       greenInRegulation: false
     };
   
-  console.log("Current hole:", currentHole, "Using hole data:", validatedHoleData);
+  // Log current hole data to help with debugging
+  useEffect(() => {
+    console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
+    console.log("All hole scores available:", holeScores.map(h => `Hole ${h.holeNumber}: score=${h.score}`));
+  }, [currentHole, validatedHoleData, holeScores]);
     
   return (
     <>

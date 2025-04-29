@@ -184,7 +184,15 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       .filter(hole => hole.score && hole.score > 0)
       .sort((a, b) => a.hole_number - b.hole_number); // Sort by hole number ascending
     
-    console.log("Scored holes:", scoredHoles.map(h => h.hole_number).join(', '));
+    // Log all scored holes for debugging
+    if (scoredHoles.length > 0) {
+      console.log("Scored holes:", scoredHoles.map(h => ({
+        hole: h.hole_number,
+        score: h.score
+      })));
+    } else {
+      console.log("No scored holes found");
+    }
     
     if (scoredHoles.length > 0) {
       // Get the last hole with a score
