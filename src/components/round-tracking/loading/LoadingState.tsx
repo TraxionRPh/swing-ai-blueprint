@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
@@ -25,14 +25,19 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const networkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Show retry button after a short delay
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 2000);
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3000);
+    // Set timeouts to show UI elements progressively
+    timeoutRef.current = setTimeout(() => setShowRetry(true), 2000);
+    networkTimeoutRef.current = setTimeout(() => setShowNetworkAlert(true), 5000);
+    
+    // Cleanup timeouts to prevent memory leaks
     return () => {
-      clearTimeout(timer); 
-      clearTimeout(networkTimer);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (networkTimeoutRef.current) clearTimeout(networkTimeoutRef.current);
     };
   }, []);
 
@@ -42,15 +47,15 @@ export const LoadingState = ({
     if (retryFn) {
       // Use provided retry function if available
       retryFn();
-      // Reset the retry state
+      
+      // Reset the UI state
       setShowRetry(false);
-      // Set timeout again
-      const timer = setTimeout(() => setShowRetry(true), 2000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 3000);
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(networkTimer);
-      };
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (networkTimeoutRef.current) clearTimeout(networkTimeoutRef.current);
+      
+      // Set new timeouts
+      timeoutRef.current = setTimeout(() => setShowRetry(true), 2000);
+      networkTimeoutRef.current = setTimeout(() => setShowNetworkAlert(true), 5000);
     } else {
       // Fallback to page reload
       window.location.reload();

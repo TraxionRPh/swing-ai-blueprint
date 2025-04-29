@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
+import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -20,6 +21,12 @@ export const RoundTrackingDetail = ({
   roundTracking
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [componentMounted, setComponentMounted] = useState(false);
+  
+  // Mark component as mounted after initial render
+  useEffect(() => {
+    setComponentMounted(true);
+  }, []);
   
   const {
     selectedCourse,
@@ -48,7 +55,17 @@ export const RoundTrackingDetail = ({
     }
   };
 
-  // Always render content without loading state to avoid flicker
+  // Show loading state if the component just mounted or if explicitly loading
+  if (!componentMounted || isLoading) {
+    return (
+      <LoadingState 
+        onBack={onBack} 
+        message={`Loading round data${currentRoundId ? ` (ID: ${currentRoundId.substring(0, 8)}...)` : ''}...`}
+        retryFn={retryLoading}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
@@ -57,7 +74,7 @@ export const RoundTrackingDetail = ({
         <FinalScoreView 
           holeScores={holeScores || []}
           holeCount={holeCount || 18}
-          finishRound={finishRound}
+          finishRound={finishRound || (() => {})}
           onBack={onBack}
         />
       ) : (

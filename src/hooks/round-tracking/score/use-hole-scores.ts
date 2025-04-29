@@ -34,10 +34,14 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   // Initialize data and handle retries when dependencies change
   useEffect(() => {
     // Skip if we've already initialized
-    if (hasInitializedRef.current) return;
+    if (hasInitializedRef.current) {
+      console.log("useHoleScores: Already initialized, skipping");
+      return;
+    }
     
-    // Mark as initialized immediately
+    // Mark as initialized immediately to prevent multiple initializations
     hasInitializedRef.current = true;
+    console.log("useHoleScores: Initializing for the first time");
 
     // Initialize refs
     initializeFetcher();
@@ -49,6 +53,8 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
       if (roundId) {
         try {
           console.log("Attempting to fetch hole scores for round:", roundId);
+          setIsLoading(true); // Ensure loading state is true during fetch
+          
           const result = await fetchHoleScoresFromRound(roundId);
           
           if (result && isMountedRef.current) {
@@ -62,6 +68,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         }
       } else if (courseId) {
         try {
+          setIsLoading(true); // Ensure loading state is true during fetch
           const formattedScores = await fetchHoleScoresFromCourse(courseId);
           if (isMountedRef.current && formattedScores) {
             setHoleScores(formattedScores);
@@ -73,15 +80,17 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         }
       } else {
         // If both roundId and courseId are null, set default scores and stop loading
+        console.log("No roundId or courseId provided, using default scores");
         initializeDefaultHoleScores();
       }
     };
     
-    // Immediate fetch on mount
+    // Immediate fetch on mount without setTimeout
     fetchData();
     
     // Cleanup function to clear any timeouts and prevent state updates after unmount
     return () => {
+      console.log("useHoleScores: Cleaning up");
       cleanupFetcher();
       cleanupTimeouts();
     };

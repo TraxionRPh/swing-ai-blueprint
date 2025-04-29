@@ -2,7 +2,8 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { HoleSavingIndicator } from "@/components/round-tracking/hole-score/HoleSavingIndicator";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -31,6 +32,7 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   // Make sure we always have valid hole data that matches the current hole
   const [validatedData, setValidatedData] = useState<HoleData>(currentHoleData);
+  const updateBlockedRef = useRef(false);
   
   // Create a default hole data object function
   const createDefaultHoleData = (holeNumber: number): HoleData => ({
@@ -44,6 +46,12 @@ export const HoleScoreView = ({
   });
   
   useEffect(() => {
+    // Skip processing if update is blocked
+    if (updateBlockedRef.current) return;
+    
+    // Block updates briefly
+    updateBlockedRef.current = true;
+    
     // Always ensure we have a valid data object for the current hole
     const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
     
@@ -55,6 +63,11 @@ export const HoleScoreView = ({
       // Create default data immediately if we don't have matching data
       setValidatedData(createDefaultHoleData(currentHole));
     }
+    
+    // Unblock updates after a short delay
+    setTimeout(() => {
+      updateBlockedRef.current = false;
+    }, 300);
   }, [currentHole, currentHoleData, holeScores]);
     
   return (
@@ -74,6 +87,9 @@ export const HoleScoreView = ({
         courseId={courseId}
         isSaving={isSaving}
       />
+      
+      {/* Add saving indicator to show when data is being saved */}
+      <HoleSavingIndicator isSaving={isSaving} />
     </>
   );
 };
