@@ -38,7 +38,7 @@ const RoundTracking = () => {
   };
   
   // Directly use retryLoading from the hook
-  const { retryLoading, isLoading, forceLoadingComplete } = roundTrackingWithErrorHandling;
+  const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
   
   // Determine if we should override the loading state
   const effectiveIsLoading = roundTrackingWithErrorHandling.isLoading;
