@@ -6,16 +6,39 @@ export const useRoundNavigation = (
   handleNextBase: () => void,
   handlePrevious: () => void,
   currentHole: number,
-  holeCount: number | null
+  holeCount: number | null,
+  isLoading: boolean = false
 ) => {
-  // Wrapper for next button that checks if we're at the last hole
+  // Prevent navigation during loading to avoid race conditions
   const handleNext = useCallback(() => {
+    if (isLoading) {
+      console.log("Navigation blocked: loading in progress");
+      return;
+    }
+    
     if (holeCount && currentHole === holeCount) {
+      console.log("Navigation blocked: already at last hole");
       return;
     } else {
+      console.log(`Navigating to next hole from ${currentHole}`);
       handleNextBase();
     }
-  }, [handleNextBase, currentHole, holeCount]);
+  }, [handleNextBase, currentHole, holeCount, isLoading]);
+  
+  const handlePrev = useCallback(() => {
+    if (isLoading) {
+      console.log("Navigation blocked: loading in progress");
+      return;
+    }
+    
+    if (currentHole <= 1) {
+      console.log("Navigation blocked: already at first hole");
+      return;
+    } else {
+      console.log(`Navigating to previous hole from ${currentHole}`);
+      handlePrevious();
+    }
+  }, [handlePrevious, currentHole, isLoading]);
 
-  return { handleNext, handlePrevious };
+  return { handleNext, handlePrevious: handlePrev };
 };

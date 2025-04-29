@@ -1,8 +1,7 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
-import { useScoreTracking } from "./round-tracking/useScoreTracking";
 import { useRoundManagement } from "./round-tracking/useRoundManagement";
 import { useParams, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -10,17 +9,23 @@ import { useRoundInitialization } from "./round-tracking/useRoundInitialization"
 import { useRoundCourseSelection } from "./round-tracking/useRoundCourseSelection";
 import { useRoundNavigation } from "./round-tracking/useRoundNavigation";
 import { useRoundFinalization } from "./round-tracking/useRoundFinalization";
+import { useRoundLoadingState } from "./round-tracking/useRoundLoadingState";
+import { useRoundDataPreparation } from "./round-tracking/useRoundDataPreparation";
+import { useScoreTracking } from "./round-tracking/useScoreTracking";
+import { useResumeSession } from "./round-tracking/useResumeSession";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
   const { roundId: urlRoundId } = useParams();
   const { toast } = useToast();
   const location = useLocation();
+  const initRunRef = useRef(false);
   
   // Debug current state
   console.log("useRoundTracking init - roundId from URL:", urlRoundId);
   console.log("Current path:", location.pathname);
   
+  // Round management hook
   const {
     currentRoundId,
     setCurrentRoundId,
@@ -29,20 +34,25 @@ export const useRoundTracking = () => {
     deleteRound
   } = useRoundManagement(user);
 
+  // Centralized loading state
+  const {
+    isLoading,
+    loadingStage,
+    setLoadingStage,
+    setError
+  } = useRoundLoadingState(currentRoundId);
+
   // Round initialization hook
   const {
     courseName,
     setCourseName,
     holeCount,
     setHoleCount,
-    isLoading,
-    setIsLoading,
-    initAttempt,
-    setInitAttempt,
     fetchRoundDetails,
     updateCourseName
   } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
 
+  // Course management hook
   const {
     selectedCourse,
     selectedTee,
@@ -51,18 +61,25 @@ export const useRoundTracking = () => {
     currentTeeColor
   } = useCourseManagement(currentRoundId);
 
-  // Instead of calling useScoreTracking conditionally (which would violate Rules of Hooks),
-  // we always call it but might not use its results if we're still loading
+  // Round data preparation hook
+  const {
+    holeScores,
+    setHoleScores
+  } = useRoundDataPreparation({
+    roundId: currentRoundId,
+    courseId: selectedCourse?.id,
+    setLoadingStage
+  });
+
+  // Score tracking hook with simplified dependencies
   const {
     currentHole,
-    holeScores,
-    setHoleScores,
     handleHoleUpdate,
     handleNext: handleNextBase,
-    handlePrevious,
-    currentHoleData,
-    isSaving
-  } = useScoreTracking(currentRoundId, selectedCourse?.id);
+    handlePrevious: handlePreviousBase,
+    isSaving,
+    currentHoleData
+  } = useScoreTracking(currentRoundId, selectedCourse?.id, holeScores, setHoleScores);
 
   // Course selection hook
   const { handleCourseSelect } = useRoundCourseSelection(
@@ -72,13 +89,21 @@ export const useRoundTracking = () => {
     holeCount
   );
 
-  // Navigation hook
-  const { handleNext } = useRoundNavigation(
+  // Round navigation hook
+  const { handleNext, handlePrevious } = useRoundNavigation(
     handleNextBase,
-    handlePrevious,
+    handlePreviousBase,
     currentHole,
-    holeCount
+    holeCount,
+    isLoading
   );
+
+  // Session resumption hook
+  const { getResumeHole } = useResumeSession({
+    currentHole,
+    holeCount,
+    roundId: currentRoundId
+  });
 
   // Round finalization hook
   const { finishRound } = useRoundFinalization(
@@ -91,20 +116,20 @@ export const useRoundTracking = () => {
     updateCourseName(selectedCourse);
   }, [selectedCourse, updateCourseName]);
 
-  // Initialize the round when the component mounts
+  // Initialize the round when the component mounts or round ID changes
   useEffect(() => {
     let isMounted = true;
-    const maxInitAttempts = 3;
+    
+    // Prevent redundant initialization
+    if (initRunRef.current && !currentRoundId) {
+      return;
+    }
+    
+    initRunRef.current = true;
     
     const initializeRound = async () => {
-      if (initAttempt > maxInitAttempts) {
-        console.log(`Max initialization attempts (${maxInitAttempts}) reached, stopping retries`);
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        setIsLoading(true);
+        setLoadingStage('initializing');
         
         // If roundId is provided in URL, use that instead of fetching
         if (urlRoundId) {
@@ -124,38 +149,38 @@ export const useRoundTracking = () => {
               setHoleCount(data.hole_count);
               console.log("Set hole count:", data.hole_count);
             }
+            
+            setLoadingStage('preparing');
           } catch (error) {
             console.error("Error fetching round details:", error);
+            setError("Could not load round details");
             
-            // Show toast only if this isn't a retry
-            if (initAttempt === 0) {
-              toast({
-                title: "Error loading round",
-                description: "Could not load round details. Will retry automatically.",
-                variant: "destructive"
-              });
-            }
-            
-            // Set retry
-            if (isMounted && initAttempt < maxInitAttempts) {
-              setTimeout(() => setInitAttempt(prev => prev + 1), 2000);
-            }
+            // Show toast for user feedback
+            toast({
+              title: "Error loading round",
+              description: "Could not load round details. Please try again.",
+              variant: "destructive"
+            });
           }
-        } else {
+        } else if (!currentRoundId) {
           try {
             console.log("No roundId in URL, fetching in-progress round");
             const roundData = await fetchInProgressRound();
+            
             if (roundData && isMounted) {
               setCurrentRoundId(roundData.roundId);
               setHoleScores(roundData.holeScores);
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
               console.log("Fetched in-progress round:", roundData.roundId);
+              setLoadingStage('preparing');
             } else {
               console.log("No in-progress round found");
+              setLoadingStage('ready');
             }
           } catch (error) {
             console.error("Error fetching in-progress round:", error);
+            setError("Could not load in-progress round");
             toast({
               title: "Error loading round",
               description: "Could not load in-progress round. Please try again.",
@@ -165,11 +190,7 @@ export const useRoundTracking = () => {
         }
       } catch (error) {
         console.error("Error initializing round:", error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-          console.log("Loading complete, isLoading set to false");
-        }
+        setError("Failed to initialize round");
       }
     };
 
@@ -178,23 +199,16 @@ export const useRoundTracking = () => {
     return () => {
       isMounted = false;
     };
-  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, initAttempt, setInitAttempt, setIsLoading]);
+  }, [urlRoundId, user, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, 
+      setLoadingStage, setError, fetchInProgressRound, currentRoundId, setCourseName, setHoleCount]);
 
+  // Handle hole count selection and storage
   const handleHoleCountSelect = (count: number) => {
     setHoleCount(count);
     sessionStorage.setItem('current-hole-count', count.toString());
   };
 
-  // Log the current state for debugging
-  console.log("useRoundTracking state:", { 
-    currentRoundId, 
-    urlRoundId, 
-    isLoading, 
-    courseName,
-    selectedCourse: selectedCourse?.name,
-    holeCount
-  });
-
+  // Return all the hooks and state needed for round tracking
   return {
     selectedCourse,
     selectedTee,

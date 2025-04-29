@@ -2,7 +2,8 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -15,6 +16,7 @@ interface HoleScoreViewProps {
   courseId?: string;
   isSaving: boolean;
   holeScores: HoleData[];
+  isLoading?: boolean;
 }
 
 export const HoleScoreView = ({
@@ -27,14 +29,23 @@ export const HoleScoreView = ({
   teeColor,
   courseId,
   isSaving,
-  holeScores
+  holeScores,
+  isLoading = false
 }: HoleScoreViewProps) => {
   // Make sure we have a valid hole data object that matches the current hole
   // This is crucial for round resumption to work correctly
-  const validatedHoleData = 
-    currentHoleData && currentHoleData.holeNumber === currentHole ? 
-    currentHoleData : 
-    holeScores.find(hole => hole.holeNumber === currentHole) || {
+  const validatedHoleData = useMemo(() => {
+    if (currentHoleData && currentHoleData.holeNumber === currentHole) {
+      return currentHoleData;
+    }
+    
+    const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
+    if (matchingHole) {
+      return matchingHole;
+    }
+    
+    // Default hole data if nothing matches
+    return {
       holeNumber: currentHole,
       par: 4,
       distance: 0,
@@ -43,13 +54,24 @@ export const HoleScoreView = ({
       fairwayHit: false,
       greenInRegulation: false
     };
+  }, [currentHoleData, currentHole, holeScores]);
   
   // Log current hole data to help with debugging
   useEffect(() => {
     console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
-    console.log("All hole scores available:", holeScores.map(h => `Hole ${h.holeNumber}: score=${h.score}`));
-  }, [currentHole, validatedHoleData, holeScores]);
+    if (holeScores.length > 0) {
+      console.log("All hole scores available:", 
+        holeScores
+          .slice(0, Math.min(holeCount, holeScores.length))
+          .map(h => `Hole ${h.holeNumber}: score=${h.score}`)
+      );
+    }
+  }, [currentHole, validatedHoleData, holeScores, holeCount]);
     
+  if (isLoading) {
+    return <HoleScoreViewSkeleton />;
+  }
+  
   return (
     <>
       {holeScores.length > 0 && (
@@ -70,3 +92,14 @@ export const HoleScoreView = ({
     </>
   );
 };
+
+const HoleScoreViewSkeleton = () => (
+  <>
+    <div className="mb-6">
+      <Skeleton className="w-full h-20" />
+    </div>
+    <div className="w-full max-w-xl mx-auto">
+      <Skeleton className="w-full h-80" />
+    </div>
+  </>
+);
