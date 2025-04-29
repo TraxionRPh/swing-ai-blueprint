@@ -1,86 +1,63 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export const useResumeSession = () => {
   const [savedHoleNumber, setSavedHoleNumber] = useState<number | null>(null);
-  const hasCheckedRef = useRef(false);
-  const isMounted = useRef(true);
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   
-  // Check for resume data in sessionStorage and localStorage - only once
+  // Check for resume data in sessionStorage and localStorage
   useEffect(() => {
-    // Set mounted flag
-    isMounted.current = true;
-    
-    // Skip if we've already checked
-    if (hasCheckedRef.current) {
-      console.log("Resume session already checked, skipping");
-      return;
-    }
-    
-    // Mark as checked immediately
-    hasCheckedRef.current = true;
-    
-    try {
-      // Get data from storage - sessionStorage has priority
+    const checkForResumeData = () => {
+      // Always clear the loading state after checking
+      setHasCheckedStorage(true);
+      
       const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
       const localHoleNumber = localStorage.getItem('resume-hole-number');
       
-      if (sessionHoleNumber && isMounted.current) {
-        console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
-        const parsedHole = parseInt(sessionHoleNumber, 10);
-        if (!isNaN(parsedHole)) {
-          setSavedHoleNumber(parsedHole);
-          return; // Exit early if we found a valid hole number
-        }
+      if (sessionHoleNumber) {
+        const holeNum = parseInt(sessionHoleNumber, 10);
+        console.log("Found resume hole in sessionStorage:", holeNum);
+        setSavedHoleNumber(holeNum);
+        return holeNum;
       }
       
-      if (localHoleNumber && isMounted.current) {
+      if (localHoleNumber) {
+        const holeNum = parseInt(localHoleNumber, 10);
         console.log("Found resume hole in localStorage:", localHoleNumber);
-        const parsedHole = parseInt(localHoleNumber, 10);
-        if (!isNaN(parsedHole)) {
-          setSavedHoleNumber(parsedHole);
-        }
+        setSavedHoleNumber(holeNum);
+        return holeNum;
       }
-    } catch (error) {
-      console.error("Error checking resume data:", error);
-    }
-    
-    // Cleanup function
-    return () => {
-      isMounted.current = false;
+      
+      return null;
     };
-  }, []); // Empty dependency array, run once on mount
+    
+    // Run immediately to prevent any delay in initialization
+    checkForResumeData();
+    
+    // No need for the delayed check anymore as it can cause race conditions
+    // Just ensure we've marked as checked
+    console.log("Resume session initialized, hasCheckedStorage:", true);
+  }, []);
 
   // Function to clear resume data
   const clearResumeData = () => {
-    try {
-      sessionStorage.removeItem('resume-hole-number');
-      localStorage.removeItem('resume-hole-number');
-      if (isMounted.current) {
-        setSavedHoleNumber(null);
-        console.log("Cleared resume hole data");
-      }
-    } catch (error) {
-      console.error("Error clearing resume data:", error);
-    }
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    setSavedHoleNumber(null);
+    console.log("Cleared resume hole data");
   };
 
   // Function to save current hole for resuming
   const saveCurrentHole = (holeNumber: number) => {
-    try {
-      sessionStorage.setItem('resume-hole-number', holeNumber.toString());
-      localStorage.setItem('resume-hole-number', holeNumber.toString());
-      if (isMounted.current) {
-        setSavedHoleNumber(holeNumber);
-        console.log("Saved hole", holeNumber, "for resuming");
-      }
-    } catch (error) {
-      console.error("Error saving current hole:", error);
-    }
+    sessionStorage.setItem('resume-hole-number', holeNumber.toString());
+    localStorage.setItem('resume-hole-number', holeNumber.toString());
+    setSavedHoleNumber(holeNumber);
+    console.log("Saved hole", holeNumber, "for resuming");
   };
 
   return { 
     savedHoleNumber, 
+    hasCheckedStorage: true, // Always return true to prevent initialization delays
     clearResumeData,
     saveCurrentHole
   };

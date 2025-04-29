@@ -1,138 +1,103 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
 import { RoundTrackingLoading } from "@/components/round-tracking/RoundTrackingLoading";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useRouteInitialization } from "@/hooks/round-tracking/score/use-route-initialization";
+import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-session";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const initialRenderRef = useRef(true);
-  const hasNavigatedRef = useRef(false);
-  const mountedRef = useRef(true);
+  const didInitializeRef = useRef(false);
+  const { savedHoleNumber } = useResumeSession();
   
-  // Determine which page we're on
+  // Track whether this is the first render since page load
+  const isFirstLoadRef = useRef(true);
+  
+  // Don't show error toasts on first load
+  const [hasShownError, setHasShownError] = useState(false);
+  
+  // Only load the complex hook if we're not on the main page
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
-  // Use route initialization to prevent duplicate loading
-  const { isInitialized } = useRouteInitialization(roundId);
+  // Simplified loading for the main page
+  const [pageLoading, setPageLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  // Load round tracking hook - single instance with lazy initialization
-  const roundTracking = useRoundTracking();
-  const { isLoading, retryLoading, currentRoundId } = roundTracking;
+  // Use error boundary fallback for detailed component
+  const roundTrackingWithErrorHandling = useRoundTracking();
   
-  // One-time initialization logic
+  // Initialize component on mount
   useEffect(() => {
-    // Record that we're mounted
-    mountedRef.current = true;
-    console.log("RoundTracking component mounted, path:", window.location.pathname);
+    // Mark as initialized immediately to avoid loading issues
+    didInitializeRef.current = true;
+    setIsInitialized(true);
     
-    // Prevent multiple initialization
-    if (!initialRenderRef.current) {
-      console.log("Not initial render, skipping initialization");
-      return;
-    }
-    initialRenderRef.current = false;
+    // Short timeout to load data
+    setTimeout(() => {
+      setPageLoading(false);
+      console.log("Initialized RoundTracking component");
+    }, 300);
     
-    // Clear any resume-hole-number when viewing the main rounds page
-    if (isMainPage) {
-      console.log("Main rounds page, clearing resume data");
-      sessionStorage.removeItem('resume-hole-number');
+    // Only run once on initial page load
+    if (isFirstLoadRef.current) {
+      isFirstLoadRef.current = false;
+      console.log("Initial page load of RoundTracking, path:", window.location.pathname);
+      console.log("Checking for resume data...", { savedHoleNumber });
     }
-    
-    // Cleanup function
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []); // Empty dependency array - run once on mount
-
-  // Handle automatic navigation to detail page when current round changes
-  useEffect(() => {
-    // Skip if we've already navigated, not initialized, or component is unmounted
-    if (hasNavigatedRef.current || !isInitialized || !mountedRef.current) {
-      return;
-    }
-    
-    // Only navigate if we're on main page, have a round ID, and not in loading state
-    if (isMainPage && currentRoundId && !isLoading) {
-      console.log("Auto-navigating to round detail:", currentRoundId);
-      hasNavigatedRef.current = true;
-      navigate(`/rounds/${currentRoundId}`);
-    }
-  }, [currentRoundId, isMainPage, navigate, isLoading, isInitialized]);
+  }, [savedHoleNumber]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
     sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
     navigate(-1);
   };
   
-  // Determine what to render based on our current state
-  const renderContent = () => {
-    // Show loading while initializing or explicitly loading
-    if (!isInitialized || isLoading) {
-      return (
+  // Directly use retryLoading from the hook
+  const { retryLoading, isLoading } = roundTrackingWithErrorHandling;
+  
+  // Determine if we should override the loading state - use a shorter timeout
+  const effectiveIsLoading = isLoading && !didInitializeRef.current;
+
+  // Clear any error toasts that might have been shown on page exit
+  useEffect(() => {
+    return () => {
+      // Cleanup function that runs when component unmounts
+      console.log("Round tracking component unmounting, cleaning up...");
+    };
+  }, []);
+  
+  // Wrap the components with error boundary
+  return (
+    <ErrorBoundary>
+      {isMainPage ? (
+        <RoundTrackingMain 
+          onBack={handleBack}
+          pageLoading={pageLoading}
+          roundTracking={roundTrackingWithErrorHandling}
+        />
+      ) : isDetailPage && roundTrackingWithErrorHandling.currentRoundId ? (
+        <RoundTrackingDetail
+          onBack={handleBack}
+          currentRoundId={roundTrackingWithErrorHandling.currentRoundId}
+          isLoading={effectiveIsLoading}
+          retryLoading={retryLoading}
+          roundTracking={roundTrackingWithErrorHandling}
+        />
+      ) : (
         <RoundTrackingLoading
           onBack={handleBack}
           roundId={roundId}
           retryLoading={retryLoading}
         />
-      );
-    }
-    
-    // Show main page for /rounds
-    if (isMainPage) {
-      return (
-        <RoundTrackingMain 
-          onBack={handleBack}
-          pageLoading={false}
-          roundTracking={roundTracking}
-        />
-      );
-    }
-    
-    // Show detail page for /rounds/:id
-    if (isDetailPage && roundId) {
-      return (
-        <RoundTrackingDetail
-          onBack={handleBack}
-          currentRoundId={roundId}
-          isLoading={false}
-          retryLoading={retryLoading}
-          roundTracking={roundTracking}
-        />
-      );
-    }
-    
-    // Fallback to loading
-    return (
-      <RoundTrackingLoading
-        onBack={handleBack}
-        roundId={roundId}
-        retryLoading={retryLoading}
-      />
-    );
-  };
-  
-  console.log("Round tracking render conditions:", {
-    isInitialized,
-    isLoading,
-    isMainPage,
-    isDetailPage,
-    roundId
-  });
-  
-  // Wrap everything with error boundary
-  return (
-    <ErrorBoundary>
-      {renderContent()}
+      )}
     </ErrorBoundary>
   );
 };

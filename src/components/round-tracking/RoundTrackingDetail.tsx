@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
+import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
-import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
+import { useToast } from "@/hooks/use-toast";
+import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-session";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -21,29 +23,53 @@ export const RoundTrackingDetail = ({
   roundTracking
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [componentMounted, setComponentMounted] = useState(false);
+  const { toast } = useToast();
   
-  // Mark component as mounted after initial render
+  // Track component mount status
   useEffect(() => {
     setComponentMounted(true);
+    return () => setComponentMounted(false);
   }, []);
-  
+
+  // Force exit from loading state after a short timeout
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (componentMounted) {
+        setLoadingTimeout(true);
+        console.log("Forcing exit from loading state after timeout");
+      }
+    }, 1000); // Reduced from 3000 to 1000ms for faster response
+    
+    return () => clearTimeout(timeoutId);
+  }, [isLoading, componentMounted]);
+
+  // Destructure roundTracking with default values to prevent errors
   const {
     selectedCourse,
-    currentHole,
-    holeScores,
-    holeCount,
-    handleHoleUpdate,
-    handlePrevious,
-    currentTeeColor,
-    currentHoleData,
-    isSaving,
-    finishRound,
+    currentHole = 1,
+    holeScores = [],
+    holeCount = 18,
+    handleHoleUpdate = () => {},
+    handlePrevious = () => {},
+    currentTeeColor = '',
+    currentHoleData = null,
+    isSaving = false,
+    finishRound = () => {},
+    handleNext: roundTrackingHandleNext = () => {}
   } = roundTracking || {};
 
-  // Handle next hole - if on last hole, show final score view
+  // Determine if we have enough data to show content
+  const hasEnoughData = !!(roundTracking && currentHoleData);
+  
+  // Determine effective loading state - exit loading if we have data or after timeout
+  const effectiveLoading = isLoading && !hasEnoughData && !loadingTimeout;
+
   const handleNext = () => {
-    if (!roundTracking?.handleNext) {
+    if (!roundTrackingHandleNext) {
       console.error("handleNext function is not available");
       return;
     }
@@ -51,36 +77,32 @@ export const RoundTrackingDetail = ({
     if (currentHole === holeCount) {
       setShowFinalScore(true);
     } else {
-      roundTracking.handleNext();
+      roundTrackingHandleNext();
     }
   };
-
-  // Show loading state if the component just mounted or if explicitly loading
-  if (!componentMounted || isLoading) {
-    return (
-      <LoadingState 
-        onBack={onBack} 
-        message={`Loading round data${currentRoundId ? ` (ID: ${currentRoundId.substring(0, 8)}...)` : ''}...`}
-        retryFn={retryLoading}
-      />
-    );
-  }
 
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
-      {showFinalScore ? (
+      {effectiveLoading ? (
+        <LoadingState 
+          onBack={onBack} 
+          message="Loading your round data..." 
+          retryFn={retryLoading}
+          roundId={currentRoundId || undefined}
+        />
+      ) : showFinalScore ? (
         <FinalScoreView 
           holeScores={holeScores || []}
           holeCount={holeCount || 18}
-          finishRound={finishRound || (() => {})}
+          finishRound={finishRound}
           onBack={onBack}
         />
       ) : (
         <HoleScoreView 
           currentHoleData={currentHoleData || {
-            holeNumber: currentHole || 1,
+            holeNumber: currentHole,
             par: 4,
             distance: 0,
             score: 0,
@@ -88,12 +110,12 @@ export const RoundTrackingDetail = ({
             fairwayHit: false,
             greenInRegulation: false
           }}
-          handleHoleUpdate={handleHoleUpdate || (() => {})}
+          handleHoleUpdate={handleHoleUpdate}
           handleNext={handleNext}
-          handlePrevious={handlePrevious || (() => {})}
+          handlePrevious={handlePrevious}
           currentHole={currentHole || 1}
           holeCount={holeCount || 18}
-          teeColor={currentTeeColor || 'blue'}
+          teeColor={currentTeeColor}
           courseId={selectedCourse?.id}
           isSaving={isSaving || false}
           holeScores={holeScores || []}

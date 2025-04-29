@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
+import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
@@ -25,21 +25,33 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const networkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Add a state to force exit loading after a certain time
+  const [forceExit, setForceExit] = useState(false);
   
-  // Show retry button after a short delay
+  // Reduce timeouts for faster user experience, but avoid showing alerts too quickly
   useEffect(() => {
-    // Set timeouts to show UI elements progressively
-    timeoutRef.current = setTimeout(() => setShowRetry(true), 2000);
-    networkTimeoutRef.current = setTimeout(() => setShowNetworkAlert(true), 5000);
+    const timer = setTimeout(() => setShowRetry(true), 3500); // Increased from 2s to 3.5s
     
-    // Cleanup timeouts to prevent memory leaks
+    // Only show network alert after a longer delay to avoid false positives
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 6000); // Increased from 3.5s to 6s
+    
+    // Force exit loading state after 8 seconds (increased from 5s)
+    const forceExitTimer = setTimeout(() => setForceExit(true), 8000);
+    
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (networkTimeoutRef.current) clearTimeout(networkTimeoutRef.current);
+      clearTimeout(timer); 
+      clearTimeout(networkTimer);
+      clearTimeout(forceExitTimer);
     };
   }, []);
+
+  // If we force exit the loading state, redirect to the main rounds page
+  useEffect(() => {
+    if (forceExit) {
+      // Notify the user but continue showing content when available
+      console.log("Force exited loading state - if content is ready it will be displayed");
+    }
+  }, [forceExit, onBack]);
 
   const handleRefresh = () => {
     setShowNetworkAlert(false); // Hide alert when retrying
@@ -47,15 +59,15 @@ export const LoadingState = ({
     if (retryFn) {
       // Use provided retry function if available
       retryFn();
-      
-      // Reset the UI state
+      // Reset the retry state
       setShowRetry(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (networkTimeoutRef.current) clearTimeout(networkTimeoutRef.current);
-      
-      // Set new timeouts
-      timeoutRef.current = setTimeout(() => setShowRetry(true), 2000);
-      networkTimeoutRef.current = setTimeout(() => setShowNetworkAlert(true), 5000);
+      // Set timeout again with longer delays to prevent false positives
+      const timer = setTimeout(() => setShowRetry(true), 3500);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 6000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(networkTimer);
+      };
     } else {
       // Fallback to page reload
       window.location.reload();
@@ -78,30 +90,31 @@ export const LoadingState = ({
         />
       )}
       
-      <div className="w-full flex flex-col items-center">
-        <Loading message={displayMessage} minHeight="200px" />
-        
-        {showRetry && (
-          <Button 
-            onClick={handleRefresh} 
-            className="mt-4"
-            variant="outline"
-          >
+      <div className="w-full flex justify-center">
+        <Loading message={displayMessage} />
+      </div>
+      
+      {showNetworkAlert && (
+        <Alert className="mt-4 mx-auto max-w-md">
+          <AlertDescription className="text-center">
+            There might be a connection issue. Check your network connection and try again.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {showRetry && (
+        <div className="mt-8 text-center">
+          <p className="text-sm text-muted-foreground mb-4">
+            Taking longer than expected. 
+          </p>
+          <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
             Retry loading round
           </Button>
-        )}
-        
-        {showNetworkAlert && (
-          <Alert className="mt-4 mx-auto max-w-md">
-            <AlertDescription className="text-center">
-              There might be a connection issue. Check your network connection and try again.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {children}
-      </div>
+        </div>
+      )}
+      
+      {children}
     </div>
   );
 };

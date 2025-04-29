@@ -11,54 +11,28 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
-  const initializationStartedRef = useRef(false);
   const isMountedRef = useRef(true);
-  const previousUrlRoundIdRef = useRef<string | null | undefined>(null);
-  
-  const { isLoading, setIsLoading } = useRoundLoadingState();
+  const { isLoading, setIsLoading, loadAttempt, setLoadAttempt } = useRoundLoadingState();
   const { courseName, setCourseName, holeCount, setHoleCount } = useRoundCourseInfo();
   const { currentRoundId, setCurrentRoundId, fetchInProgressRound } = useRoundManagement(user);
   const { fetchRoundDetails } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
   
-  // Check if urlRoundId has changed significantly to warrant reinitialization
-  const hasRoundIdChanged = urlRoundId !== previousUrlRoundIdRef.current;
-
+  const maxInitAttempts = 3;
+  
   const initializeRound = useCallback(async () => {
-    // Exit if not mounted
-    if (!isMountedRef.current) return;
-    
-    // Update ref to track current urlRoundId
-    previousUrlRoundIdRef.current = urlRoundId;
-    
-    // Skip if we're already initialized and roundId hasn't changed
-    if (initialized && !hasRoundIdChanged) {
-      console.log("Round data already initialized with same roundId, skipping");
+    if (loadAttempt > maxInitAttempts) {
+      console.log(`Max initialization attempts (${maxInitAttempts}) reached, stopping retries`);
+      setIsLoading(false);
       return;
     }
-    
-    // Skip if initialization has already started and we don't have a roundId change
-    if (initializationStartedRef.current && !hasRoundIdChanged) {
-      console.log("Round initialization already started with same roundId, skipping");
-      return;
-    }
-    
-    // Mark initialization as started
-    initializationStartedRef.current = true;
-    console.log("Starting round initialization with urlRoundId:", urlRoundId);
-    
+
     try {
-      // Only set loading state if it's not already loading
-      if (!isLoading && isMountedRef.current) {
-        console.log("Setting loading state to true for initializeRound");
-        setIsLoading(true);
-      }
+      setIsLoading(true);
       
       // If roundId is provided in URL, use that instead of fetching
       if (urlRoundId) {
         console.log("Using round ID from URL:", urlRoundId);
-        if (isMountedRef.current) {
-          setCurrentRoundId(urlRoundId);
-        }
+        setCurrentRoundId(urlRoundId);
         
         // Fetch course name and hole count for the round
         try {
@@ -77,52 +51,52 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
           if (isMountedRef.current) {
             setInitialized(true);
             setIsLoading(false);
-            console.log("Round data initialized from URL roundId, loading complete");
           }
         } catch (error) {
           console.error("Error fetching round details:", error);
           
-          if (isMountedRef.current) {
+          // Show toast only if this isn't a retry
+          if (loadAttempt === 0) {
             toast({
               title: "Error loading round",
-              description: "Could not load round details. Please try again.",
+              description: "Could not load round details. Will retry automatically.",
               variant: "destructive"
             });
-            
-            // Still mark as initialized to prevent infinite loading
-            setInitialized(true);
-            setIsLoading(false);
+          }
+          
+          // Set retry
+          if (isMountedRef.current && loadAttempt < maxInitAttempts) {
+            setTimeout(() => setLoadAttempt(prev => prev + 1), 1000);
           }
         }
       } else {
         try {
           console.log("No roundId in URL, fetching in-progress round");
           const roundData = await fetchInProgressRound();
-          
           if (roundData && isMountedRef.current) {
             setCurrentRoundId(roundData.roundId);
             setHoleCount(roundData.holeCount || 18);
             setCourseName(roundData.course?.name || null);
             console.log("Fetched in-progress round:", roundData.roundId);
             setInitialized(true);
-            setIsLoading(false);
           } else if (isMountedRef.current) {
             console.log("No in-progress round found");
             setInitialized(true); // Still mark as initialized even if no round was found
-            setIsLoading(false);
           }
         } catch (error) {
           console.error("Error fetching in-progress round:", error);
+          toast({
+            title: "Error loading round",
+            description: "Could not load in-progress round. Please try again.",
+            variant: "destructive"
+          });
           
+          // Still mark as initialized to prevent infinite loading
           if (isMountedRef.current) {
-            toast({
-              title: "Error loading round",
-              description: "Could not load in-progress round. Please try again.",
-              variant: "destructive"
-            });
-            
-            // Still mark as initialized to prevent infinite loading
             setInitialized(true);
+          }
+        } finally {
+          if (isMountedRef.current) {
             setIsLoading(false);
           }
         }
@@ -135,35 +109,38 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
         setIsLoading(false);
       }
     }
-  }, [
-    urlRoundId,
-    hasRoundIdChanged,
-    initialized,
-    isLoading,
-    setIsLoading,
-    setCurrentRoundId,
-    fetchRoundDetails,
-    fetchInProgressRound,
-    setHoleCount,
-    setCourseName,
-    toast
-  ]);
+  }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, 
+      loadAttempt, setLoadAttempt, setIsLoading, toast, fetchRoundDetails,
+      setHoleCount, setCourseName]);
 
-  // Initialize the round when the component mounts or urlRoundId changes significantly
+  // Initialize the round when the component mounts
   useEffect(() => {
-    // Set mounted ref
     isMountedRef.current = true;
-    console.log("useRoundDataPreparation effect running, urlRoundId:", urlRoundId);
     
-    // Initialize based on the current state
+    if (initialized && currentRoundId) {
+      // If we're already initialized with a valid round ID, don't re-initialize
+      console.log("Already initialized with round ID:", currentRoundId);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Immediate initialization
     initializeRound();
     
-    // Cleanup function
+    // Set a timeout to ensure we exit loading state after a reasonable time
+    const loadingTimeoutId = setTimeout(() => {
+      if (isMountedRef.current && isLoading) {
+        console.log("Force exiting loading state after timeout");
+        setIsLoading(false);
+        setInitialized(true);
+      }
+    }, 5000);
+    
     return () => {
-      console.log("useRoundDataPreparation unmounting");
       isMountedRef.current = false;
+      clearTimeout(loadingTimeoutId);
     };
-  }, [urlRoundId, initializeRound]);
+  }, [initialized, currentRoundId, initializeRound, isLoading, setIsLoading]);
 
   return {
     currentRoundId,
