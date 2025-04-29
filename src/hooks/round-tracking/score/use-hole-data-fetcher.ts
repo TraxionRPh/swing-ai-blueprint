@@ -8,6 +8,15 @@ export const useHoleDataFetcher = () => {
 
   const fetchHoleScoresFromRound = async (roundId: string) => {
     try {
+      // First check if we're online
+      if (!navigator.onLine) {
+        console.log('Device appears to be offline, using default hole data');
+        return { 
+          holeCount: 18, 
+          formattedScores: formatHoleScores([], [], 18) 
+        };
+      }
+      
       console.log('Fetching hole scores for round:', roundId);
       
       // First get the scores for this round
@@ -77,7 +86,7 @@ export const useHoleDataFetcher = () => {
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
       // Don't show toast on network errors - they're expected in offline scenarios
-      if (!(error instanceof TypeError && error.message === "Failed to fetch")) {
+      if (!(error instanceof TypeError && error.message === "Failed to fetch") && navigator.onLine) {
         toast({
           title: "Error loading round data",
           description: "Could not load hole scores. Please try again.",
@@ -95,6 +104,12 @@ export const useHoleDataFetcher = () => {
 
   const fetchHoleScoresFromCourse = async (courseId: string) => {
     try {
+      // First check if we're online
+      if (!navigator.onLine) {
+        console.log('Device appears to be offline, using default course data');
+        return formatHoleScores([], [], 18);
+      }
+      
       console.log('Directly fetching course holes for course:', courseId);
       
       // Get course hole data directly

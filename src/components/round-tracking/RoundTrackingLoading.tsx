@@ -6,12 +6,14 @@ interface RoundTrackingLoadingProps {
   onBack: () => void;
   roundId?: string | null;
   retryLoading: () => void;
+  networkError?: boolean;
 }
 
 export const RoundTrackingLoading = ({
   onBack,
   roundId,
-  retryLoading
+  retryLoading,
+  networkError = false
 }: RoundTrackingLoadingProps) => {
   return (
     <div className="space-y-6">
@@ -22,6 +24,7 @@ export const RoundTrackingLoading = ({
         message="Preparing round data..."
         retryFn={retryLoading}
         roundId={roundId || undefined}
+        networkError={networkError}
       />
     </div>
   );

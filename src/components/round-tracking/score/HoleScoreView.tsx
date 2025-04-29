@@ -43,6 +43,12 @@ export const HoleScoreView = memo(({
       greenInRegulation: false
     };
   
+  // Log hole scores for debugging
+  console.log("HoleScoreView rendering with hole scores:", 
+    holeScores.length > 0 ? 
+    `${holeScores.length} holes, current hole: ${currentHole}` : 
+    "No hole scores available");
+  
   return (
     <>
       {holeScores.length > 0 && (

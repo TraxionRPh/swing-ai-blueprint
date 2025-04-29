@@ -20,6 +20,7 @@ const RoundTracking = () => {
   // Simplified loading for the main page
   const [pageLoading, setPageLoading] = useState(!isMainPage);
   const [loadRetries, setLoadRetries] = useState(0);
+  const [networkError, setNetworkError] = useState(false);
   const maxRetries = 2;
   
   // Use error boundary fallback for detailed component
@@ -27,6 +28,29 @@ const RoundTracking = () => {
   
   // Add state to handle forced completion of loading
   const [forceLoadingComplete, setForceLoadingComplete] = useState(false);
+  
+  // Check for network connectivity issues
+  useEffect(() => {
+    if (!navigator.onLine) {
+      setNetworkError(true);
+      toast({
+        title: "You're offline",
+        description: "Please check your internet connection to load round data.",
+        variant: "destructive",
+      });
+    }
+    
+    const handleOnline = () => setNetworkError(false);
+    const handleOffline = () => setNetworkError(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [toast]);
   
   useEffect(() => {
     // If we're on the main rounds page, set loading to false after a short delay
@@ -36,7 +60,7 @@ const RoundTracking = () => {
     }
   }, [isMainPage]);
   
-  // Force timeout of loading state after 8 seconds (reduced from 12s to 8s)
+  // Force timeout of loading state after 5 seconds (reduced from 8s to 5s)
   useEffect(() => {
     if (!isDetailPage || !roundTrackingWithErrorHandling.isLoading) return;
     
@@ -48,17 +72,19 @@ const RoundTracking = () => {
         if (loadRetries >= maxRetries - 1) {
           toast({
             title: "Loading issue detected",
-            description: "Showing available data. Some information may be limited.",
+            description: networkError ? 
+              "Network connection issue. Please check your internet connection." : 
+              "Showing available data. Some information may be limited.",
             variant: "destructive",
           });
           
           setForceLoadingComplete(true);
         }
       }
-    }, 8000); // Reduced from 10s to 8s
+    }, 5000); // Reduced from 8s to 5s
     
     return () => clearTimeout(forceTimeout);
-  }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast]);
+  }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast, networkError]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -68,6 +94,14 @@ const RoundTracking = () => {
 
   const retryLoading = () => {
     setLoadRetries(prev => prev + 1);
+    // If we're offline, show a toast indicating that we need internet
+    if (!navigator.onLine) {
+      toast({
+        title: "Still offline",
+        description: "Internet connection required to load round data.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Determine if we should override the loading state
@@ -89,12 +123,14 @@ const RoundTracking = () => {
           isLoading={effectiveIsLoading}
           retryLoading={retryLoading}
           roundTracking={roundTrackingWithErrorHandling}
+          networkError={networkError}
         />
       ) : (
         <RoundTrackingLoading
           onBack={handleBack}
           roundId={roundId}
           retryLoading={retryLoading}
+          networkError={networkError}
         />
       )}
     </ErrorBoundary>

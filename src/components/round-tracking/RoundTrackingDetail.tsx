@@ -5,6 +5,8 @@ import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WifiOff } from "lucide-react";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -12,6 +14,7 @@ interface RoundTrackingDetailProps {
   isLoading: boolean;
   retryLoading: () => void;
   roundTracking: any;
+  networkError?: boolean;
 }
 
 export const RoundTrackingDetail = ({
@@ -19,7 +22,8 @@ export const RoundTrackingDetail = ({
   currentRoundId,
   isLoading,
   retryLoading,
-  roundTracking
+  roundTracking,
+  networkError = false,
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
@@ -67,12 +71,23 @@ export const RoundTrackingDetail = ({
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
+      {networkError && (
+        <Alert variant="destructive" className="mb-4">
+          <WifiOff className="h-4 w-4 mr-2" />
+          <AlertTitle>Network Connection Issue</AlertTitle>
+          <AlertDescription>
+            You appear to be offline. Some data may not be available and changes may not be saved.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {effectiveLoading ? (
         <LoadingState 
           onBack={onBack} 
           message="Loading your round data..." 
           retryFn={retryLoading}
           roundId={currentRoundId || undefined}
+          networkError={networkError}
         />
       ) : showFinalScore ? (
         <FinalScoreView 

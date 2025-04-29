@@ -1,9 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCcw } from "lucide-react";
+import { ArrowLeft, RefreshCcw, WifiOff } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { ReactNode, useState, useEffect } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface LoadingStateProps {
   onBack: () => void;
@@ -12,6 +12,7 @@ interface LoadingStateProps {
   message?: string;
   retryFn?: () => void;
   roundId?: string;
+  networkError?: boolean;
 }
 
 export const LoadingState = ({ 
@@ -20,20 +21,22 @@ export const LoadingState = ({
   hideHeader = false, 
   message = "Loading round data...",
   retryFn,
-  roundId
+  roundId,
+  networkError = false
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Show retry option sooner - after 2 seconds instead of 3
+  // Show retry option sooner - after 2 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowRetry(true), 2000);
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 4000); // reduced from 5s to 4s
+    // Only show network alert if not already showing the networkError prop
+    const networkTimer = !networkError ? setTimeout(() => setShowNetworkAlert(true), 4000) : null;
     return () => {
       clearTimeout(timer); 
-      clearTimeout(networkTimer);
+      if (networkTimer) clearTimeout(networkTimer);
     };
-  }, []);
+  }, [networkError]);
 
   const handleRefresh = () => {
     setShowNetworkAlert(false); // Hide alert when retrying
@@ -45,10 +48,10 @@ export const LoadingState = ({
       setShowRetry(false);
       // Set timeout again
       const timer = setTimeout(() => setShowRetry(true), 2000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 4000);
+      const networkTimer = !networkError ? setTimeout(() => setShowNetworkAlert(true), 4000) : null;
       return () => {
         clearTimeout(timer);
-        clearTimeout(networkTimer);
+        if (networkTimer) clearTimeout(networkTimer);
       };
     } else {
       // Fallback to page reload
@@ -78,11 +81,21 @@ export const LoadingState = ({
         </div>
       )}
       
+      {networkError && (
+        <Alert variant="destructive" className="mb-4">
+          <WifiOff className="h-4 w-4 mr-2" />
+          <AlertTitle>You're offline</AlertTitle>
+          <AlertDescription>
+            Please check your internet connection to load round data.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="w-full flex justify-center">
-        <Loading message={displayMessage} />
+        <Loading message={networkError ? "Waiting for connection..." : displayMessage} />
       </div>
       
-      {showNetworkAlert && (
+      {showNetworkAlert && !networkError && (
         <Alert className="mt-4 mx-auto max-w-md">
           <AlertDescription className="text-center">
             There might be a connection issue. Check your network connection and try again.
@@ -93,11 +106,11 @@ export const LoadingState = ({
       {showRetry && (
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Taking longer than expected. 
+            {networkError ? "Still waiting for connection." : "Taking longer than expected."}
           </p>
           <Button onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4 mr-2" />
-            Retry loading round
+            {networkError ? "Retry connection" : "Retry loading round"}
           </Button>
         </div>
       )}
