@@ -21,6 +21,9 @@ const RoundTracking = () => {
   // Don't show error toasts on first load
   const [hasShownError, setHasShownError] = useState(false);
   
+  // Track if component is mounted - will help prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  
   // Only load the complex hook if we're not on the main page
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
@@ -35,14 +38,19 @@ const RoundTracking = () => {
   
   // Initialize component on mount
   useEffect(() => {
+    // Mark component as mounted
+    isMountedRef.current = true;
+    
     // Mark as initialized immediately to avoid loading issues
     didInitializeRef.current = true;
     setIsInitialized(true);
     
     // Short timeout to load data
-    setTimeout(() => {
-      setPageLoading(false);
-      console.log("Initialized RoundTracking component");
+    const loadingTimeout = setTimeout(() => {
+      if (isMountedRef.current) {
+        setPageLoading(false);
+        console.log("Initialized RoundTracking component");
+      }
     }, 300);
     
     // Only run once on initial page load
@@ -51,6 +59,13 @@ const RoundTracking = () => {
       console.log("Initial page load of RoundTracking, path:", window.location.pathname);
       console.log("Checking for resume data...", { savedHoleNumber });
     }
+    
+    return () => {
+      // Mark component as unmounted to prevent state updates
+      isMountedRef.current = false;
+      // Clean up timeout
+      clearTimeout(loadingTimeout);
+    };
   }, [savedHoleNumber]);
 
   const handleBack = () => {
@@ -70,6 +85,7 @@ const RoundTracking = () => {
   useEffect(() => {
     return () => {
       // Cleanup function that runs when component unmounts
+      isMountedRef.current = false;
       console.log("Round tracking component unmounting, cleaning up...");
     };
   }, []);

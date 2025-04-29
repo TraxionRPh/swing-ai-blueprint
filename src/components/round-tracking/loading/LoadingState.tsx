@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
@@ -27,49 +27,84 @@ export const LoadingState = ({
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   // Add a state to force exit loading after a certain time
   const [forceExit, setForceExit] = useState(false);
+  // Track if component is still mounted
+  const isMountedRef = useRef(true);
+  // Track if content has been loaded
+  const [contentLoaded, setContentLoaded] = useState(false);
   
-  // Reduce timeouts for faster user experience, but avoid showing alerts too quickly
+  // Check if we have children content which indicates successful loading
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 3500); // Increased from 2s to 3.5s
+    if (children) {
+      setContentLoaded(true);
+      // If content is loaded, we don't need to show alerts
+      setShowNetworkAlert(false);
+      setShowRetry(false);
+    }
+  }, [children]);
+  
+  // Set up cleanup and timeout management
+  useEffect(() => {
+    isMountedRef.current = true;
     
-    // Only show network alert after a longer delay to avoid false positives
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 6000); // Increased from 3.5s to 6s
-    
-    // Force exit loading state after 8 seconds (increased from 5s)
-    const forceExitTimer = setTimeout(() => setForceExit(true), 8000);
+    // Only set timeouts if we haven't loaded content yet
+    if (!contentLoaded) {
+      const retryTimer = setTimeout(() => {
+        if (isMountedRef.current && !contentLoaded) {
+          setShowRetry(true);
+        }
+      }, 3500);
+      
+      const networkAlertTimer = setTimeout(() => {
+        if (isMountedRef.current && !contentLoaded) {
+          setShowNetworkAlert(true);
+        }
+      }, 6000);
+      
+      const forceExitTimer = setTimeout(() => {
+        if (isMountedRef.current) {
+          setForceExit(true);
+        }
+      }, 8000);
+      
+      return () => {
+        isMountedRef.current = false;
+        clearTimeout(retryTimer);
+        clearTimeout(networkAlertTimer);
+        clearTimeout(forceExitTimer);
+      };
+    }
     
     return () => {
-      clearTimeout(timer); 
-      clearTimeout(networkTimer);
-      clearTimeout(forceExitTimer);
+      isMountedRef.current = false;
     };
-  }, []);
-
-  // If we force exit the loading state, redirect to the main rounds page
-  useEffect(() => {
-    if (forceExit) {
-      // Notify the user but continue showing content when available
-      console.log("Force exited loading state - if content is ready it will be displayed");
-    }
-  }, [forceExit, onBack]);
+  }, [contentLoaded]);
 
   const handleRefresh = () => {
-    setShowNetworkAlert(false); // Hide alert when retrying
+    setShowNetworkAlert(false);
     
     if (retryFn) {
-      // Use provided retry function if available
       retryFn();
-      // Reset the retry state
       setShowRetry(false);
-      // Set timeout again with longer delays to prevent false positives
-      const timer = setTimeout(() => setShowRetry(true), 3500);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 6000);
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(networkTimer);
-      };
+      // Reset timeouts only if we haven't loaded content
+      if (!contentLoaded) {
+        const retryTimer = setTimeout(() => {
+          if (isMountedRef.current && !contentLoaded) {
+            setShowRetry(true);
+          }
+        }, 3500);
+        
+        const networkAlertTimer = setTimeout(() => {
+          if (isMountedRef.current && !contentLoaded) {
+            setShowNetworkAlert(true);
+          }
+        }, 6000);
+        
+        return () => {
+          clearTimeout(retryTimer);
+          clearTimeout(networkAlertTimer);
+        };
+      }
     } else {
-      // Fallback to page reload
       window.location.reload();
     }
   };
@@ -78,6 +113,9 @@ export const LoadingState = ({
   const displayMessage = roundId 
     ? `${message} (Round ID: ${roundId.substring(0, 8)}...)`
     : message;
+  
+  // If content is loaded, don't show loading indicators
+  const showLoadingIndicators = !contentLoaded && !forceExit;
   
   return (
     <div className="space-y-6 w-full">
@@ -90,11 +128,13 @@ export const LoadingState = ({
         />
       )}
       
-      <div className="w-full flex justify-center">
-        <Loading message={displayMessage} />
-      </div>
+      {showLoadingIndicators && (
+        <div className="w-full flex justify-center">
+          <Loading message={displayMessage} />
+        </div>
+      )}
       
-      {showNetworkAlert && (
+      {showNetworkAlert && showLoadingIndicators && (
         <Alert className="mt-4 mx-auto max-w-md">
           <AlertDescription className="text-center">
             There might be a connection issue. Check your network connection and try again.
@@ -102,7 +142,7 @@ export const LoadingState = ({
         </Alert>
       )}
       
-      {showRetry && (
+      {showRetry && showLoadingIndicators && (
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-4">
             Taking longer than expected. 
@@ -114,7 +154,11 @@ export const LoadingState = ({
         </div>
       )}
       
-      {children}
+      {(children || forceExit) && (
+        <div className={contentLoaded ? "" : "opacity-0 h-0 overflow-hidden"}>
+          {children}
+        </div>
+      )}
     </div>
   );
 };

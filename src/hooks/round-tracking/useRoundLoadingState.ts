@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export const useRoundLoadingState = () => {
@@ -7,13 +7,20 @@ export const useRoundLoadingState = () => {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [forceLoadingComplete, setForceLoadingComplete] = useState(false);
   const [errorShown, setErrorShown] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
   // Auto-resolve loading state after a timeout
   useEffect(() => {
+    // Clear any existing timeout when loading state changes
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    
     if (!isLoading) return;
     
-    const loadingTimeout = setTimeout(() => {
+    loadingTimeoutRef.current = setTimeout(() => {
       if (isLoading) {
         console.log("Force exiting loading state after timeout");
         setForceLoadingComplete(true);
@@ -30,7 +37,12 @@ export const useRoundLoadingState = () => {
       }
     }, 10000); // Using 10s for very slow connections
     
-    return () => clearTimeout(loadingTimeout);
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
   }, [isLoading, toast, errorShown]);
 
   // Reset error shown state when loading changes
