@@ -23,7 +23,7 @@ export const useResumeSession = () => {
       
       if (localHoleNumber) {
         const holeNum = parseInt(localHoleNumber, 10);
-        console.log("Found resume hole in localStorage:", localHoleNum);
+        console.log("Found resume hole in localStorage:", localHoleNumber);
         setSavedHoleNumber(holeNum);
         return holeNum;
       }
