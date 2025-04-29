@@ -1,336 +1,264 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import type { Course, HoleData, CourseTee } from "@/types/round-tracking";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useCourseManagement } from "./round-tracking/useCourseManagement";
+import { useRoundManagement } from "./round-tracking/useRoundManagement";
+import { useParams, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useRoundInitialization } from "./round-tracking/useRoundInitialization";
+import { useRoundCourseSelection } from "./round-tracking/useRoundCourseSelection";
+import { useRoundNavigation } from "./round-tracking/useRoundNavigation";
+import { useRoundFinalization } from "./round-tracking/useRoundFinalization";
+import { useRoundLoadingState } from "./round-tracking/useRoundLoadingState";
+import { useRoundDataPreparation } from "./round-tracking/useRoundDataPreparation";
+import { useScoreTracking } from "./round-tracking/useScoreTracking";
+import { useResumeSession } from "./round-tracking/useResumeSession";
+import type { HoleData, Course } from "@/types/round-tracking";
 
-export interface RoundTracking {
-  selectedCourse: Course | null;
-  selectedTee: string | null;
-  currentTeeColor: string | null;
-  currentHole: number;
-  holeCount: number;
-  holeScores: HoleData[];
-  roundsById: Record<string, any>;
-  currentRoundId: string | null;
-  isLoading: boolean;
-  currentHoleData: HoleData | null;
-  isSaving: boolean;
-  handleCourseSelect: (course: Course) => Promise<string>;
-  handleTeeSelect: (teeId: string) => void;
-  handleHoleUpdate: (data: HoleData) => void;
-  handleNext: () => void;
-  handlePrevious: () => void;
-  setCurrentRoundId: (id: string | null) => void;
-  setHoleCount: (count: number) => void;
-  finishRound: () => Promise<void>;
-  handleHoleCountSelect: (count: number) => void;
+// Define an interface for round data by ID
+interface RoundsByIdType {
+  [key: string]: any; // Replace 'any' with a more specific type if available
 }
 
-export const useRoundTracking = (): RoundTracking => {
-  // State variables for tracking rounds and courses
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedTee, setSelectedTee] = useState<string | null>(null);
-  const [currentTeeColor, setCurrentTeeColor] = useState<string | null>(null);
-  const [currentHole, setCurrentHole] = useState(1);
-  const [holeCount, setHoleCount] = useState(18);
-  const [holeScores, setHoleScores] = useState<HoleData[]>([]);
-  const [roundsById, setRoundsById] = useState<Record<string, any>>({});
-  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const { toast } = useToast();
+export const useRoundTracking = () => {
   const { user } = useAuth();
+  const { roundId: urlRoundId } = useParams();
+  const { toast } = useToast();
+  const location = useLocation();
+  const initRunRef = useRef(false);
   
-  // Derived state for current hole data
-  const currentHoleData = holeScores.find(h => h.holeNumber === currentHole) || {
-    holeNumber: currentHole,
-    par: 4,
-    distance: 400,
-    score: 0,
-    putts: 0
-  };
+  // Add state for storing rounds by ID
+  const [roundsById, setRoundsById] = useState<RoundsByIdType>({});
+  
+  // Debug current state
+  console.log("useRoundTracking init - roundId from URL:", urlRoundId);
+  console.log("Current path:", location.pathname);
+  
+  // Round management hook
+  const {
+    currentRoundId,
+    setCurrentRoundId,
+    fetchInProgressRound,
+    finishRound: baseFinishRound,
+    deleteRound
+  } = useRoundManagement(user);
 
-  // Handle selecting a course
-  const handleCourseSelect = async (course: Course): Promise<string> => {
-    setSelectedCourse(course);
-    // Additional logic for course selection
-    // This would include creating a new round in the database
-    
-    try {
-      setIsLoading(true);
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "You must be logged in to create a round",
-          variant: "destructive",
-        });
-        return "";
-      }
-      
-      const { data, error } = await supabase
-        .from('rounds')
-        .insert({
-          course_id: course.id,
-          hole_count: holeCount,
-          // Add required user_id
-          user_id: user.id,
-          // Remove is_completed since it's not in the schema
-          // Instead, total_score being null can indicate an incomplete round
-          total_score: null
-        })
-        .select()
-        .single();
+  // Centralized loading state
+  const {
+    isLoading,
+    loadingStage,
+    setLoadingStage,
+    setError
+  } = useRoundLoadingState(currentRoundId);
 
-      if (error) throw error;
-      
-      if (data) {
-        setCurrentRoundId(data.id);
-        return data.id;
-      }
-      
-      return "";
-    } catch (error) {
-      console.error("Error creating round:", error);
-      toast({
-        title: "Error creating round",
-        description: "Please try again",
-        variant: "destructive",
-      });
-      return "";
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Round initialization hook
+  const {
+    courseName,
+    setCourseName,
+    holeCount,
+    setHoleCount,
+    fetchRoundDetails,
+    updateCourseName
+  } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
 
-  // Handle selecting a tee
-  const handleTeeSelect = (teeId: string) => {
-    setSelectedTee(teeId);
-    
-    // Update tee color based on selection
-    if (selectedCourse?.course_tees) {
-      const tee = selectedCourse.course_tees.find(t => t.id === teeId);
-      if (tee) {
-        setCurrentTeeColor(tee.color);
-      }
-    }
-  };
+  // Course management hook
+  const {
+    selectedCourse,
+    selectedTee,
+    setSelectedTee,
+    handleCourseSelect: handleCourseSelectBase,
+    currentTeeColor
+  } = useCourseManagement(currentRoundId);
 
-  // Update hole data
-  const handleHoleUpdate = (data: HoleData) => {
-    setIsSaving(true);
-    
-    setHoleScores(prev => {
-      const index = prev.findIndex(h => h.holeNumber === data.holeNumber);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = data;
-        return updated;
-      }
-      return [...prev, data];
-    });
-    
-    // Simulate saving to database
-    setTimeout(() => {
-      setIsSaving(false);
-    }, 500);
-  };
+  // Round data preparation hook
+  const {
+    holeScores,
+    setHoleScores
+  } = useRoundDataPreparation({
+    roundId: currentRoundId,
+    courseId: selectedCourse?.id,
+    setLoadingStage
+  });
 
-  // Navigation handlers
-  const handleNext = useCallback(() => {
-    if (currentHole < holeCount) {
-      setCurrentHole(prev => prev + 1);
-    }
-  }, [currentHole, holeCount]);
+  // Score tracking hook with simplified dependencies
+  const {
+    currentHole,
+    handleHoleUpdate,
+    handleNext: handleNextBase,
+    handlePrevious: handlePreviousBase,
+    isSaving,
+    currentHoleData
+  } = useScoreTracking(currentRoundId, selectedCourse?.id, holeScores, setHoleScores);
 
-  const handlePrevious = useCallback(() => {
-    if (currentHole > 1) {
-      setCurrentHole(prev => prev - 1);
-    }
-  }, [currentHole]);
+  // Course selection hook
+  const { handleCourseSelect } = useRoundCourseSelection(
+    handleCourseSelectBase,
+    setCurrentRoundId,
+    setHoleScores,
+    holeCount
+  );
 
-  // Handle finishing a round
-  const finishRound = async (): Promise<void> => {
-    if (!currentRoundId) return;
-    
-    try {
-      setIsSaving(true);
-      
-      // Calculate total score
-      const totalScore = holeScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
-      
-      const { error } = await supabase
-        .from('rounds')
-        .update({
-          // Use total_score being set to indicate completion
-          total_score: totalScore,
-          // Store hole_scores in the hole_scores table instead
-          // hole_scores: holeScores
-        })
-        .eq('id', currentRoundId);
+  // Round navigation hook
+  const { handleNext, handlePrevious } = useRoundNavigation(
+    handleNextBase,
+    handlePreviousBase,
+    currentHole,
+    holeCount,
+    isLoading
+  );
 
-      if (error) throw error;
-      
-      // Now save individual hole scores to the hole_scores table
-      for (const holeScore of holeScores) {
-        const { error: holeError } = await supabase
-          .from('hole_scores')
-          .upsert({
-            round_id: currentRoundId,
-            hole_number: holeScore.holeNumber,
-            score: holeScore.score,
-            putts: holeScore.putts || 0,
-            fairway_hit: holeScore.fairwayHit,
-            green_in_regulation: holeScore.greenInRegulation
-          }, {
-            onConflict: 'round_id,hole_number'
-          });
-        
-        if (holeError) {
-          console.error("Error saving hole score:", holeError);
-        }
-      }
-      
-      toast({
-        title: "Round completed!",
-        description: `Total score: ${totalScore}`,
-      });
-      
-      // Reset state after completion
-      setSelectedCourse(null);
-      setSelectedTee(null);
-      setCurrentHole(1);
-      setHoleScores([]);
-      setCurrentRoundId(null);
-    } catch (error) {
-      console.error("Error completing round:", error);
-      toast({
-        title: "Error completing round",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Session resumption hook
+  const { getResumeHole } = useResumeSession({
+    currentHole,
+    holeCount,
+    roundId: currentRoundId
+  });
 
-  const handleHoleCountSelect = (count: number) => {
-    setHoleCount(count);
-  };
+  // Round finalization hook
+  const { finishRound } = useRoundFinalization(
+    baseFinishRound,
+    holeScores
+  );
 
-  // Load round data when currentRoundId changes
+  // Update course name when selected course changes
   useEffect(() => {
-    if (!currentRoundId) return;
-    
-    const fetchRoundData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // First, get the round data and associated course
-        const { data, error } = await supabase
-          .from('rounds')
-          .select(`
-            *,
-            golf_courses (
-              *,
-              course_tees (*)
-            )
-          `)
-          .eq('id', currentRoundId)
-          .single();
+    updateCourseName(selectedCourse);
+  }, [selectedCourse, updateCourseName]);
 
-        if (error) throw error;
+  // Initialize the round when the component mounts or round ID changes
+  useEffect(() => {
+    let isMounted = true;
+    
+    // Prevent redundant initialization
+    if (initRunRef.current && !currentRoundId) {
+      return;
+    }
+    
+    initRunRef.current = true;
+    
+    const initializeRound = async () => {
+      try {
+        setLoadingStage('initializing');
         
-        if (data) {
-          // Store the round data
-          setRoundsById(prev => ({
-            ...prev,
-            [currentRoundId]: data
-          }));
+        // If roundId is provided in URL, use that instead of fetching
+        if (urlRoundId) {
+          console.log("Using round ID from URL:", urlRoundId);
+          setCurrentRoundId(urlRoundId);
           
-          // Set up course data
-          if (data.golf_courses) {
-            setSelectedCourse(data.golf_courses);
+          // Fetch course name and hole count for the round
+          try {
+            const data = await fetchRoundDetails(urlRoundId);
             
-            // Set hole count
-            if (data.hole_count) {
-              setHoleCount(data.hole_count);
+            if (data?.golf_courses?.name && isMounted) {
+              setCourseName(data.golf_courses.name);
+              console.log("Set course name:", data.golf_courses.name);
             }
             
-            // Set current hole from resume point or start at 1
-            const resumeHole = parseInt(sessionStorage.getItem('resume-hole-number') || '1');
-            setCurrentHole(resumeHole);
-          }
-          
-          // Fetch hole scores separately since they're in a different table
-          const { data: holeScoresData, error: holeScoresError } = await supabase
-            .from('hole_scores')
-            .select('*')
-            .eq('round_id', currentRoundId);
-          
-          if (holeScoresError) throw holeScoresError;
-          
-          if (holeScoresData && Array.isArray(holeScoresData)) {
-            // Transform the data to match our expected HoleData format
-            const formattedHoleScores: HoleData[] = holeScoresData.map(hs => ({
-              holeNumber: hs.hole_number,
-              score: hs.score,
-              putts: hs.putts || 0,
-              // Assuming default values for these if not available
-              par: 4, // This should ideally come from course hole data
-              distance: 0, // This should ideally come from course hole data
-              fairwayHit: hs.fairway_hit,
-              greenInRegulation: hs.green_in_regulation
-            }));
+            if (data?.hole_count && isMounted) {
+              setHoleCount(data.hole_count);
+              console.log("Set hole count:", data.hole_count);
+            }
             
-            setHoleScores(formattedHoleScores);
+            // Store round data in the roundsById object
+            if (data && isMounted) {
+              setRoundsById(prev => ({
+                ...prev,
+                [urlRoundId]: data
+              }));
+              console.log("Set round data for ID:", urlRoundId);
+            }
+            
+            setLoadingStage('preparing');
+          } catch (error) {
+            console.error("Error fetching round details:", error);
+            setError("Could not load round details");
+            
+            // Show toast for user feedback
+            toast({
+              title: "Error loading round",
+              description: "Could not load round details. Please try again.",
+              variant: "destructive"
+            });
+          }
+        } else if (!currentRoundId) {
+          try {
+            console.log("No roundId in URL, fetching in-progress round");
+            const roundData = await fetchInProgressRound();
+            
+            if (roundData && isMounted) {
+              setCurrentRoundId(roundData.roundId);
+              setHoleScores(roundData.holeScores);
+              setHoleCount(roundData.holeCount || 18);
+              setCourseName(roundData.course?.name || null);
+              
+              // Store round data in the roundsById object
+              if (roundData.roundId) {
+                setRoundsById(prev => ({
+                  ...prev,
+                  [roundData.roundId]: roundData
+                }));
+                console.log("Set round data for in-progress round:", roundData.roundId);
+              }
+              
+              console.log("Fetched in-progress round:", roundData.roundId);
+              setLoadingStage('preparing');
+            } else {
+              console.log("No in-progress round found");
+              setLoadingStage('ready');
+            }
+          } catch (error) {
+            console.error("Error fetching in-progress round:", error);
+            setError("Could not load in-progress round");
+            toast({
+              title: "Error loading round",
+              description: "Could not load in-progress round. Please try again.",
+              variant: "destructive"
+            });
           }
         }
       } catch (error) {
-        console.error("Error fetching round:", error);
-        toast({
-          title: "Error loading round data",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+        console.error("Error initializing round:", error);
+        setError("Failed to initialize round");
       }
     };
+
+    initializeRound();
     
-    fetchRoundData();
-  }, [currentRoundId, toast]);
+    return () => {
+      isMounted = false;
+    };
+  }, [urlRoundId, user, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, 
+      setLoadingStage, setError, fetchInProgressRound, currentRoundId, setCourseName, setHoleCount]);
 
-  // Save current hole to session storage for resuming later
-  useEffect(() => {
-    if (currentHole > 0 && currentRoundId) {
-      sessionStorage.setItem('resume-hole-number', currentHole.toString());
-    }
-  }, [currentHole, currentRoundId]);
+  // Handle hole count selection and storage
+  const handleHoleCountSelect = (count: number) => {
+    setHoleCount(count);
+    sessionStorage.setItem('current-hole-count', count.toString());
+  };
 
+  // Return all the hooks and state needed for round tracking
   return {
     selectedCourse,
     selectedTee,
-    currentTeeColor,
     currentHole,
-    holeCount,
     holeScores,
-    roundsById,
-    currentRoundId,
-    isLoading,
-    currentHoleData,
-    isSaving,
     handleCourseSelect,
-    handleTeeSelect,
+    setSelectedTee,
     handleHoleUpdate,
     handleNext,
     handlePrevious,
-    setCurrentRoundId,
-    setHoleCount,
+    currentTeeColor,
+    currentHoleData,
+    isSaving,
     finishRound,
+    holeCount,
+    setHoleCount,
+    setCurrentRoundId,
+    currentRoundId,
+    deleteRound,
+    courseName,
+    isLoading,
     handleHoleCountSelect,
+    roundsById // Add roundsById to the return object
   };
 };
