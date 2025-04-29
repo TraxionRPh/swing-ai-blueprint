@@ -80,6 +80,8 @@ const RoundTracking = () => {
   }, [hookIsLoading, loadRetries, isDetailPage, toast]);
 
   const handleBack = () => {
+    // Clear any resume-hole-number in session storage to prevent unexpected behavior
+    sessionStorage.removeItem('resume-hole-number');
     navigate(-1);
   };
 

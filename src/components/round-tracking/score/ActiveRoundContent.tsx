@@ -35,6 +35,20 @@ export const ActiveRoundContent = ({
   onConfirmRound,
   onCancelFinalScore
 }: ActiveRoundContentProps) => {
+  // Add extra check to ensure currentHoleData matches current hole
+  const validatedHoleData = 
+    currentHoleData.holeNumber === currentHole ? 
+    currentHoleData : 
+    {
+      holeNumber: currentHole,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0,
+      fairwayHit: false,
+      greenInRegulation: false
+    };
+  
   return (
     <>
       {holeScores.length > 0 && (
@@ -42,7 +56,7 @@ export const ActiveRoundContent = ({
       )}
       
       <HoleScoreCard
-        holeData={currentHoleData}
+        holeData={validatedHoleData}
         onUpdate={onHoleUpdate}
         onNext={onNext}
         onPrevious={onPrevious}

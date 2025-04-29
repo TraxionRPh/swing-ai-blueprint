@@ -62,7 +62,7 @@ export const InProgressRoundCard = ({
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {
         // Use direct navigation to prevent potential React Router issues
-        navigate(`/rounds/${roundId}`, { replace: true });
+        navigate(`/rounds/${roundId}`);
       }, 300);
     } catch (error) {
       console.error("Navigation error:", error);

@@ -14,6 +14,12 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
   const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialFetchRef = useRef<boolean>(false);
   const maxAttempts = 3;
+  const stableRoundId = useRef<string | null>(roundId);
+  
+  // Update the stable ref when roundId changes
+  useEffect(() => {
+    stableRoundId.current = roundId;
+  }, [roundId]);
   
   // Clean up any existing timeouts when component unmounts or roundId changes
   useEffect(() => {
@@ -106,7 +112,7 @@ export const useScoreTracking = (roundId: string | null, courseId?: string) => {
     initialFetchRef.current = false;
   }, [roundId]);
 
-  // Force timeout to exit loading state after 10 seconds to prevent permanent loading
+  // Force timeout to exit loading state after 8 seconds to prevent permanent loading
   useEffect(() => {
     if (!isInitialLoad) return;
     
