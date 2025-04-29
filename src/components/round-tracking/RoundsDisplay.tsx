@@ -176,13 +176,14 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
   const getLastCompletedHole = (holeScores) => {
     if (!holeScores || holeScores.length === 0) return 0;
     
+    // Find all holes that have scores
     const scoredHoles = holeScores
       .filter(hole => hole.score && hole.score > 0)
-      .sort((a, b) => b.hole_number - a.hole_number);
+      .sort((a, b) => a.hole_number - b.hole_number); // Sort by hole number ascending
     
     if (scoredHoles.length > 0) {
-      console.log("Last scored hole:", scoredHoles[0].hole_number);
-      return scoredHoles[0].hole_number;
+      // Get the last hole with a score
+      return scoredHoles[scoredHoles.length - 1].hole_number;
     }
     
     return 0;

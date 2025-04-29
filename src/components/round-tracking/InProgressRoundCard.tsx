@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -51,17 +50,16 @@ export const InProgressRoundCard = ({
       // Calculate the next hole to resume play at
       // If lastHole is 8, we want to go to hole 9
       // If no holes completed yet (lastHole === 0), start at hole 1
-      const nextHole = lastHole >= 1 ? Math.min(lastHole + 1, holeCount) : 1;
+      const nextHole = lastHole >= 1 ? lastHole : 1;
       
       console.log("Resuming at hole:", nextHole);
       
-      // Store the next hole to resume at in session storage
+      // Store the hole to resume at in session storage
       // This will be read by useHoleNavigation
       sessionStorage.setItem('resume-hole-number', nextHole.toString());
       
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {
-        // Use direct navigation to prevent potential React Router issues
         navigate(`/rounds/${roundId}`);
       }, 300);
     } catch (error) {
