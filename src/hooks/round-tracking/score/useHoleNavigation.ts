@@ -1,13 +1,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import { useResumeSession } from "./use-resume-session";
 
 export const useHoleNavigation = () => {
   const [currentHole, setCurrentHole] = useState(1);
   const { holeNumber } = useParams();
+  const { savedHoleNumber, clearResumeData } = useResumeSession();
   
   // Use a callback for initializing the hole number to prevent dependency issues
   const initializeHole = useCallback(() => {
+    // First priority: Check for resume data from session
+    if (savedHoleNumber !== null) {
+      console.log(`Resuming round at saved hole: ${savedHoleNumber}`);
+      // Clear resume data after using it to prevent affecting future rounds
+      clearResumeData();
+      return savedHoleNumber; 
+    }
+    
     // First check sessionStorage (primary storage method)
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number');
     if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
@@ -43,7 +53,7 @@ export const useHoleNavigation = () => {
     // Default to hole 1 if no specific instructions
     console.log("No resume instructions found, defaulting to hole 1");
     return 1;
-  }, [holeNumber]);
+  }, [holeNumber, savedHoleNumber, clearResumeData]);
 
   useEffect(() => {
     const initialHole = initializeHole();

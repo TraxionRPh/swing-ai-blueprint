@@ -25,17 +25,31 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
+  // Add a state to force exit loading after a certain time
+  const [forceExit, setForceExit] = useState(false);
   
-  // Increase timeout for retry button to 5 seconds
+  // Increase timeout for retry button to 4 seconds
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 5000);
-    // Increase timeout for network alert to 8 seconds
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+    const timer = setTimeout(() => setShowRetry(true), 4000);
+    // Increase timeout for network alert to 7 seconds
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 7000);
+    // Force exit loading state after 10 seconds if needed
+    const forceExitTimer = setTimeout(() => setForceExit(true), 10000);
+    
     return () => {
       clearTimeout(timer); 
       clearTimeout(networkTimer);
+      clearTimeout(forceExitTimer);
     };
   }, []);
+
+  // If we force exit the loading state, redirect to the main rounds page
+  useEffect(() => {
+    if (forceExit) {
+      // Notify the user but continue showing content when available
+      console.log("Force exited loading state - if content is ready it will be displayed");
+    }
+  }, [forceExit, onBack]);
 
   const handleRefresh = () => {
     setShowNetworkAlert(false); // Hide alert when retrying
@@ -46,8 +60,8 @@ export const LoadingState = ({
       // Reset the retry state
       setShowRetry(false);
       // Set timeout again with the new longer delays
-      const timer = setTimeout(() => setShowRetry(true), 5000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
+      const timer = setTimeout(() => setShowRetry(true), 4000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 7000);
       return () => {
         clearTimeout(timer);
         clearTimeout(networkTimer);

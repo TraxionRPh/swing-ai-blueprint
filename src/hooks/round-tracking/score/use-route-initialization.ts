@@ -1,9 +1,11 @@
 
 import { useEffect, useState } from "react";
+import { useResumeSession } from "./use-resume-session";
 
 export const useRouteInitialization = (roundId: string | null) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [initialLoadAttempt, setInitialLoadAttempt] = useState(false);
+  const { hasCheckedStorage } = useResumeSession();
 
   // This effect runs only once when the component mounts
   useEffect(() => {
@@ -11,13 +13,16 @@ export const useRouteInitialization = (roundId: string | null) => {
     setInitialLoadAttempt(true);
 
     // Mark as initialized after a short delay to ensure other hooks have time to run
+    // But only once we've checked storage for resume data
     const timer = setTimeout(() => {
-      setIsInitialized(true);
-      console.log(`Route initialization complete for round: ${roundId}`);
+      if (hasCheckedStorage) {
+        setIsInitialized(true);
+        console.log(`Route initialization complete for round: ${roundId}`);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [roundId]);
+  }, [roundId, hasCheckedStorage]);
 
   // Force initialization after a timeout as a fallback
   useEffect(() => {

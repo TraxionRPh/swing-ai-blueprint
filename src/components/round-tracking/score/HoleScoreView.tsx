@@ -3,6 +3,7 @@ import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
 import { useEffect, useState, useRef } from "react";
+import { Loading } from "@/components/ui/loading";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -32,6 +33,7 @@ export const HoleScoreView = ({
   // Make sure we always have valid hole data that matches the current hole
   const [validatedData, setValidatedData] = useState<HoleData>(currentHoleData);
   const initializedRef = useRef(false);
+  const [dataReady, setDataReady] = useState(false);
   
   // Create a default hole data object function
   const createDefaultHoleData = (holeNumber: number): HoleData => ({
@@ -51,19 +53,22 @@ export const HoleScoreView = ({
     if (matchingHole) {
       setValidatedData(matchingHole);
       initializedRef.current = true;
+      setDataReady(true);
     } else if (currentHoleData && currentHoleData.holeNumber === currentHole) {
       setValidatedData(currentHoleData);
       initializedRef.current = true;
+      setDataReady(true);
     } else {
-      // If we still don't have data after 2 seconds, create default data
+      // If we still don't have data after a short delay, create default data
       if (!initializedRef.current) {
         const timer = setTimeout(() => {
           if (!initializedRef.current) {
             console.log(`Creating default data for hole ${currentHole} as fallback`);
             setValidatedData(createDefaultHoleData(currentHole));
             initializedRef.current = true;
+            setDataReady(true);
           }
-        }, 2000);
+        }, 1000); // Reduced from 2000ms to 1000ms for faster response
         return () => clearTimeout(timer);
       }
     }
@@ -73,6 +78,10 @@ export const HoleScoreView = ({
       
   }, [currentHole, currentHoleData, holeScores]);
     
+  if (!dataReady && !initializedRef.current) {
+    return <Loading message="Preparing hole data..." />;
+  }
+  
   return (
     <>
       {holeScores.length > 0 && (

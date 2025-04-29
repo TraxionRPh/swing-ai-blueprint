@@ -3,23 +3,29 @@ import { useEffect, useState } from "react";
 
 export const useResumeSession = () => {
   const [savedHoleNumber, setSavedHoleNumber] = useState<number | null>(null);
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   
   // Check for resume data in sessionStorage and localStorage
   useEffect(() => {
     const checkForResumeData = () => {
+      // Always clear the loading state after checking
+      setHasCheckedStorage(true);
+      
       const sessionHoleNumber = sessionStorage.getItem('resume-hole-number');
       const localHoleNumber = localStorage.getItem('resume-hole-number');
       
       if (sessionHoleNumber) {
-        console.log("Found resume hole in sessionStorage:", sessionHoleNumber);
-        setSavedHoleNumber(parseInt(sessionHoleNumber, 10));
-        return parseInt(sessionHoleNumber, 10);
+        const holeNum = parseInt(sessionHoleNumber, 10);
+        console.log("Found resume hole in sessionStorage:", holeNum);
+        setSavedHoleNumber(holeNum);
+        return holeNum;
       }
       
       if (localHoleNumber) {
-        console.log("Found resume hole in localStorage:", localHoleNumber);
-        setSavedHoleNumber(parseInt(localHoleNumber, 10));
-        return parseInt(localHoleNumber, 10);
+        const holeNum = parseInt(localHoleNumber, 10);
+        console.log("Found resume hole in localStorage:", localHoleNum);
+        setSavedHoleNumber(holeNum);
+        return holeNum;
       }
       
       return null;
@@ -54,6 +60,7 @@ export const useResumeSession = () => {
 
   return { 
     savedHoleNumber, 
+    hasCheckedStorage,
     clearResumeData,
     saveCurrentHole
   };

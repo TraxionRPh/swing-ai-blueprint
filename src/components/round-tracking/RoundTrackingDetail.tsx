@@ -5,6 +5,7 @@ import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
+import { useResumeSession } from "@/hooks/round-tracking/score/use-resume-session";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -26,6 +27,7 @@ export const RoundTrackingDetail = ({
   const [initialRender, setInitialRender] = useState(true);
   const [componentMounted, setComponentMounted] = useState(false);
   const { toast } = useToast();
+  const { hasCheckedStorage } = useResumeSession();
   
   const {
     selectedCourse,
@@ -88,7 +90,7 @@ export const RoundTrackingDetail = ({
   }, [currentHole, currentHoleData, holeCount]);
 
   // Determine effective loading state - consider data availability
-  const effectiveLoading = (isLoading || initialRender || !roundTracking || !currentHoleData) && !loadingTimeout;
+  const effectiveLoading = (isLoading || initialRender || !roundTracking || !currentHoleData || !hasCheckedStorage) && !loadingTimeout;
 
   const handleNext = () => {
     if (!roundTracking?.handleNext) {
