@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useRoundCourseInfo } from "./useRoundCourseInfo";
 import { useRoundLoadingState } from "./useRoundLoadingState";
 import { useRoundManagement } from "./useRoundManagement";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useRoundDataPreparation = (urlRoundId?: string | null) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [initialized, setInitialized] = useState(false);
   const { isLoading, setIsLoading, loadAttempt, setLoadAttempt } = useRoundLoadingState();
   const { courseName, setCourseName, holeCount, setHoleCount } = useRoundCourseInfo();
   const { currentRoundId, setCurrentRoundId, fetchInProgressRound } = useRoundManagement(user);
@@ -20,6 +21,11 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
   // Initialize the round when the component mounts
   useEffect(() => {
     let isMounted = true;
+    
+    if (initialized && currentRoundId) {
+      // If we're already initialized with a valid round ID, don't re-initialize
+      return;
+    }
     
     const initializeRound = async () => {
       if (loadAttempt > maxInitAttempts) {
@@ -49,6 +55,10 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
               setHoleCount(data.hole_count);
               console.log("Set hole count:", data.hole_count);
             }
+            
+            if (isMounted) {
+              setInitialized(true);
+            }
           } catch (error) {
             console.error("Error fetching round details:", error);
             
@@ -75,8 +85,10 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
               console.log("Fetched in-progress round:", roundData.roundId);
+              setInitialized(true);
             } else {
               console.log("No in-progress round found");
+              setInitialized(true); // Still mark as initialized even if no round was found
             }
           } catch (error) {
             console.error("Error fetching in-progress round:", error);
@@ -85,10 +97,19 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
               description: "Could not load in-progress round. Please try again.",
               variant: "destructive"
             });
+            
+            // Still mark as initialized to prevent infinite loading
+            if (isMounted) {
+              setInitialized(true);
+            }
           }
         }
       } catch (error) {
         console.error("Error initializing round:", error);
+        // Always ensure we exit loading state
+        if (isMounted) {
+          setInitialized(true);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -104,7 +125,7 @@ export const useRoundDataPreparation = (urlRoundId?: string | null) => {
     };
   }, [urlRoundId, user, fetchInProgressRound, setCurrentRoundId, 
       loadAttempt, setLoadAttempt, setIsLoading, toast, fetchRoundDetails,
-      setHoleCount, setCourseName]);
+      setHoleCount, setCourseName, initialized, currentRoundId]);
 
   return {
     currentRoundId,

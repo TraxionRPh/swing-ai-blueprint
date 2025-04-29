@@ -23,6 +23,7 @@ export const RoundTrackingDetail = ({
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [initialRender, setInitialRender] = useState(true);
   const { toast } = useToast();
   
   const {
@@ -38,6 +39,16 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
+  // Check initial rendering status
+  useEffect(() => {
+    if (initialRender) {
+      console.log("Initial render of RoundTrackingDetail");
+      // After a short delay, consider the component as no longer in initial render
+      const timer = setTimeout(() => setInitialRender(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [initialRender]);
+
   // Force exit from loading state after 8 seconds
   useEffect(() => {
     if (!isLoading) return;
@@ -45,7 +56,7 @@ export const RoundTrackingDetail = ({
     const timeoutId = setTimeout(() => {
       setLoadingTimeout(true);
       console.log("Forcing exit from loading state after timeout");
-    }, 8000);
+    }, 5000); // Reduced from 8s to 5s for faster response
     
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
@@ -59,7 +70,7 @@ export const RoundTrackingDetail = ({
   }, [currentHole, currentHoleData, holeCount]);
 
   // Determine effective loading state
-  const effectiveLoading = isLoading && !loadingTimeout;
+  const effectiveLoading = (isLoading || initialRender) && !loadingTimeout;
 
   const handleNext = () => {
     if (currentHole === holeCount) {
@@ -69,7 +80,7 @@ export const RoundTrackingDetail = ({
     }
   };
 
-  // Check if we have resume data in localStorage as a backup
+  // Check if we have resume data in storage
   useEffect(() => {
     const sessionResumeHole = sessionStorage.getItem('resume-hole-number');
     const localResumeHole = localStorage.getItem('resume-hole-number');
