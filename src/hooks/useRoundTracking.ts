@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Course, HoleData, CourseTee } from "@/types/round-tracking";
+import { useAuth } from "@/context/AuthContext";
 
 export interface RoundTracking {
   selectedCourse: Course | null;
@@ -41,6 +42,7 @@ export const useRoundTracking = (): RoundTracking => {
   const [isSaving, setIsSaving] = useState(false);
   
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Derived state for current hole data
   const currentHoleData = holeScores.find(h => h.holeNumber === currentHole) || {
@@ -60,11 +62,22 @@ export const useRoundTracking = (): RoundTracking => {
     try {
       setIsLoading(true);
       
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "You must be logged in to create a round",
+          variant: "destructive",
+        });
+        return "";
+      }
+      
       const { data, error } = await supabase
         .from('rounds')
         .insert({
           course_id: course.id,
           hole_count: holeCount,
+          // Add required user_id
+          user_id: user.id,
           // Remove is_completed since it's not in the schema
           // Instead, total_score being null can indicate an incomplete round
           total_score: null
