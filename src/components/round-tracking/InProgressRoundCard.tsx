@@ -49,19 +49,20 @@ export const InProgressRoundCard = ({
       });
       
       // Calculate the next hole to resume play at:
-      // If lastHole is 8, we want to go to hole 9 (so we use lastHole + 1)
+      // If lastHole is 8, and we've completed scoring that hole, we want to go to hole 9 (lastHole + 1)
       // Unless that's beyond the hole count
       // If no holes completed yet (lastHole === 0), start at hole 1
-      const nextHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
+      const resumeHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
       
-      console.log("Resuming at hole:", nextHole);
+      console.log("Resuming at hole:", resumeHole);
       
-      // Use both sessionStorage and localStorage to improve reliability
-      sessionStorage.setItem('resume-hole-number', nextHole.toString());
-      localStorage.setItem('resume-hole-number', nextHole.toString());
+      // Store both in sessionStorage and localStorage to improve reliability
+      // The key name 'resume-hole-number' is what the hooks will look for
+      sessionStorage.setItem('resume-hole-number', resumeHole.toString());
+      localStorage.setItem('resume-hole-number', resumeHole.toString());
       
-      // Log the URL we're going to navigate to for debugging
-      console.log(`Navigating to: /rounds/${roundId}`);
+      // Force a flag to ensure the round is properly resumed
+      sessionStorage.setItem('force-resume', 'true');
       
       // Add a small delay to let the toast show before navigation
       setTimeout(() => {

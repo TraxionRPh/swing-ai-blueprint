@@ -16,7 +16,28 @@ export const useHoleNavigation = () => {
     
     // Check potential sources for hole number in decreasing priority
     
-    // 1. Check session storage (primary storage method)
+    // 1. Check for force-resume flag (highest priority)
+    const forceResume = sessionStorage.getItem('force-resume');
+    if (forceResume === 'true') {
+      console.log("Force resume detected, checking for resume hole");
+      
+      // Look for resume hole number
+      const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
+                              localStorage.getItem('resume-hole-number');
+      
+      if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
+        const holeNum = Number(resumeHoleNumber);
+        if (holeNum >= 1 && holeNum <= 18) {
+          console.log("Force resuming round at hole:", holeNum);
+          // Clear the session storage after retrieval
+          sessionStorage.removeItem('force-resume');
+          setCurrentHole(holeNum);
+          return;
+        }
+      }
+    }
+    
+    // 2. Check session storage (primary storage method)
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number');
     if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
       const holeNum = Number(resumeHoleNumber);
@@ -29,7 +50,7 @@ export const useHoleNavigation = () => {
       }
     }
     
-    // 2. Check localStorage as fallback
+    // 3. Check localStorage as fallback
     const localStorageHoleNumber = localStorage.getItem('resume-hole-number');
     if (localStorageHoleNumber && !isNaN(Number(localStorageHoleNumber))) {
       const holeNum = Number(localStorageHoleNumber);
@@ -42,14 +63,14 @@ export const useHoleNavigation = () => {
       }
     }
     
-    // 3. If a specific hole is specified in the URL, use that
+    // 4. If a specific hole is specified in the URL, use that
     if (holeNumber && !isNaN(Number(holeNumber))) {
       console.log("Using hole number from URL:", holeNumber);
       setCurrentHole(Number(holeNumber));
       return;
     }
     
-    // 4. Default to hole 1 if no specific instructions
+    // 5. Default to hole 1 if no specific instructions
     console.log("No resume instructions found, defaulting to hole 1");
     setCurrentHole(1);
   }, [holeNumber]);

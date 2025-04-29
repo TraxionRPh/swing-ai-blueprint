@@ -1,5 +1,6 @@
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useToast } from "@/hooks/use-toast";
 
 interface ResumeSessionProps {
   currentHole: number;
@@ -9,6 +10,30 @@ interface ResumeSessionProps {
 
 export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSessionProps) => {
   const hasInitialized = useRef(false);
+  const hasResumed = useRef(false);
+  const [resumeHole, setResumeHole] = useState<number | null>(null);
+  const { toast } = useToast();
+  
+  // Check for forced resume
+  useEffect(() => {
+    const forceResume = sessionStorage.getItem('force-resume');
+    if (forceResume === 'true' && roundId && !hasResumed.current) {
+      console.log("Force resume detected for round:", roundId);
+      const resumeHoleNumber = getResumeHole();
+      
+      if (resumeHoleNumber) {
+        setResumeHole(resumeHoleNumber);
+        toast({
+          title: "Resuming round",
+          description: `Continuing from hole ${resumeHoleNumber}`
+        });
+      }
+      
+      // Clear the force-resume flag
+      sessionStorage.removeItem('force-resume');
+      hasResumed.current = true;
+    }
+  }, [roundId]);
   
   // Store the current hole for resumption and to prevent losing progress
   useEffect(() => {
@@ -32,7 +57,7 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
     
     // Clean up storage on unmount to prevent unexpected behavior when starting a new round
     return () => {
-      if (roundId) {
+      if (roundId && !hasResumed.current) {
         console.log('Cleaning up resume session data');
         sessionStorage.removeItem('resume-hole-number');
       }
@@ -67,5 +92,5 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
     return null;
   }, [holeCount]);
   
-  return { getResumeHole };
+  return { getResumeHole, resumeHole };
 };
