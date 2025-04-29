@@ -35,6 +35,9 @@ const RoundTracking = () => {
   const roundTracking = useRoundTracking();
   const { currentRoundId, isLoading: roundTrackingLoading } = roundTracking;
   
+  // Get actual round data object
+  const currentRoundData = roundTracking.roundsById?.[currentRoundId];
+  
   // Combined loading state that accounts for all loading sources
   const isLoading = roundStateLoading || roundTrackingLoading || pageLoading;
   
@@ -98,12 +101,13 @@ const RoundTracking = () => {
     roundStateLoading,
     roundTrackingLoading,
     hasRoundData: !!currentRoundId,
-    shouldShowLoading: pageLoading || roundStateLoading || roundTrackingLoading || (isDetailPage && !currentRoundId)
+    currentRoundDataExists: !!currentRoundData,
+    shouldShowLoading: pageLoading || roundStateLoading || roundTrackingLoading || (isDetailPage && (!currentRoundId || !currentRoundData))
   });
   
-  // Only show the main content when ALL loading flags are false
+  // Only show the main content when ALL loading flags are false AND we have actual round data
   const isDataReady = !pageLoading && !roundStateLoading && !roundTrackingLoading && 
-                      (isMainPage || (isDetailPage && currentRoundId === roundId));
+                      (isMainPage || (isDetailPage && currentRoundId === roundId && !!currentRoundData));
   
   return (
     <ErrorBoundary>
@@ -121,8 +125,8 @@ const RoundTracking = () => {
           pageLoading={false}
           roundTracking={roundTracking}
         />
-      ) : isDetailPage && currentRoundId ? (
-        // Show detail page when not loading, on detail route, and have a round ID
+      ) : isDetailPage && currentRoundId && currentRoundData ? (
+        // Show detail page when not loading, on detail route, and have a round data
         <RoundTrackingDetail
           onBack={handleBack}
           currentRoundId={currentRoundId}

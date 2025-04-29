@@ -41,6 +41,9 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
+  // Get the current round data
+  const currentRoundData = roundTracking.roundsById?.[currentRoundId];
+
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -53,6 +56,7 @@ export const RoundTrackingDetail = ({
   console.log("RoundTrackingDetail rendering", { 
     currentRoundId, 
     isLoading, 
+    hasRoundData: !!currentRoundData,
     holeScores: holeScores?.length || 0,
     currentHole
   });
@@ -65,8 +69,8 @@ export const RoundTrackingDetail = ({
     }
   };
 
-  // If data is still loading, show the loading state
-  if (isLoading) {
+  // If data is still loading or we don't have round data, show the loading state
+  if (isLoading || !currentRoundData) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBackNavigation} />
