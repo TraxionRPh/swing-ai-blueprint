@@ -16,8 +16,12 @@ export const useRouteInitialization = (roundId: string | null) => {
     setIsInitialized(true);
     console.log(`Route initialization complete for round: ${roundId}`);
     
-    // No need to wait for storage checks anymore
+    // No need to wait for storage checks anymore - we always return true
   }, [roundId]);
 
-  return { isInitialized: true, initialLoadAttempt };
+  // Always return true for isInitialized to prevent loading issues
+  return { 
+    isInitialized: true, 
+    initialLoadAttempt: true 
+  };
 };

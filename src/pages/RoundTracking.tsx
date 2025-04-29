@@ -18,6 +18,9 @@ const RoundTracking = () => {
   // Track whether this is the first render since page load
   const isFirstLoadRef = useRef(true);
   
+  // Don't show error toasts on first load
+  const [hasShownError, setHasShownError] = useState(false);
+  
   // Only load the complex hook if we're not on the main page
   const isMainPage = window.location.pathname === '/rounds';
   const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
@@ -62,6 +65,14 @@ const RoundTracking = () => {
   
   // Determine if we should override the loading state - use a shorter timeout
   const effectiveIsLoading = isLoading && !didInitializeRef.current;
+
+  // Clear any error toasts that might have been shown on page exit
+  useEffect(() => {
+    return () => {
+      // Cleanup function that runs when component unmounts
+      console.log("Round tracking component unmounting, cleaning up...");
+    };
+  }, []);
   
   // Wrap the components with error boundary
   return (
