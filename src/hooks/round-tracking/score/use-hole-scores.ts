@@ -11,7 +11,7 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
   const { toast } = useToast();
   const { fetchHoleScoresFromRound, fetchHoleScoresFromCourse } = useHoleDataFetcher();
   const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const maxRetries = useRef(3);
+  const maxRetries = useRef(2); // Reduced from 3 to 2
   const retryCount = useRef(0);
 
   const fetchHoleScoresWrapper = useCallback(async (roundId: string) => {
@@ -44,17 +44,16 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
         } catch (error) {
           console.error('Failed to fetch hole scores in useEffect:', error);
           
-          // If we haven't exceeded max retries, try again
+          // Retry with shorter delay if needed (reduced timeout)
           if (retryCount.current < maxRetries.current) {
             retryCount.current++;
             
-            // Clear any existing timeout
             if (fetchTimeoutRef.current) {
               clearTimeout(fetchTimeoutRef.current);
             }
             
-            // Set exponential backoff retry (1s, 2s, 4s)
-            const retryDelay = Math.pow(2, retryCount.current - 1) * 1000;
+            // Reduced exponential backoff (500ms, 1s)
+            const retryDelay = Math.pow(2, retryCount.current - 1) * 500;
             console.log(`Retrying fetch (${retryCount.current}/${maxRetries.current}) after ${retryDelay}ms`);
             
             fetchTimeoutRef.current = setTimeout(() => {
@@ -81,7 +80,6 @@ export const useHoleScores = (roundId: string | null, courseId?: string) => {
     
     fetchData();
     
-    // Cleanup function to clear any timeouts
     return () => {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);

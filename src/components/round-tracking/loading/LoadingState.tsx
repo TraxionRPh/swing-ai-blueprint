@@ -25,10 +25,10 @@ export const LoadingState = ({
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Show retry option sooner - after 3 seconds instead of 4
+  // Show retry option sooner - after 2 seconds instead of 3
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 3000);
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+    const timer = setTimeout(() => setShowRetry(true), 2000);
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 4000); // reduced from 5s to 4s
     return () => {
       clearTimeout(timer); 
       clearTimeout(networkTimer);
@@ -44,8 +44,8 @@ export const LoadingState = ({
       // Reset the retry state
       setShowRetry(false);
       // Set timeout again
-      const timer = setTimeout(() => setShowRetry(true), 3000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+      const timer = setTimeout(() => setShowRetry(true), 2000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 4000);
       return () => {
         clearTimeout(timer);
         clearTimeout(networkTimer);
@@ -56,9 +56,9 @@ export const LoadingState = ({
     }
   };
 
-  // If we have a roundId, append it to the message
+  // If we have a roundId, show a shortened version
   const displayMessage = roundId 
-    ? `${message} (Round ID: ${roundId.substring(0, 8)}...)`
+    ? `${message} (Round: ${roundId.substring(0, 6)}...)`
     : message;
   
   return (
@@ -91,8 +91,8 @@ export const LoadingState = ({
       )}
       
       {showRetry && (
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
             Taking longer than expected. 
           </p>
           <Button onClick={handleRefresh}>

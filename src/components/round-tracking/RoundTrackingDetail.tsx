@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -38,28 +38,22 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
-  // Force exit from loading state after 8 seconds
+  // Force exit from loading state after 5 seconds (reduced from 8s to 5s)
   useEffect(() => {
     if (!isLoading) return;
     
     const timeoutId = setTimeout(() => {
       setLoadingTimeout(true);
-      console.log("Forcing exit from loading state after timeout");
-    }, 8000);
+    }, 5000);
     
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
-  // Log current hole data when it changes
-  useEffect(() => {
-    console.log(`RoundTrackingDetail - Current hole: ${currentHole}`, {
-      currentHoleData,
-      holeCount: holeCount || 18
-    });
-  }, [currentHole, currentHoleData, holeCount]);
-
   // Determine effective loading state
-  const effectiveLoading = isLoading && !loadingTimeout;
+  const effectiveLoading = useMemo(() => 
+    isLoading && !loadingTimeout, 
+    [isLoading, loadingTimeout]
+  );
 
   const handleNext = () => {
     if (currentHole === holeCount) {
@@ -68,20 +62,6 @@ export const RoundTrackingDetail = ({
       roundTracking.handleNext();
     }
   };
-
-  // Check if we have resume data in localStorage as a backup
-  useEffect(() => {
-    const sessionResumeHole = sessionStorage.getItem('resume-hole-number');
-    const localResumeHole = localStorage.getItem('resume-hole-number');
-    
-    if (sessionResumeHole) {
-      console.log("Found resume hole in sessionStorage:", sessionResumeHole);
-    }
-    
-    if (localResumeHole) {
-      console.log("Found resume hole in localStorage:", localResumeHole);
-    }
-  }, []);
 
   return (
     <div className="space-y-6">

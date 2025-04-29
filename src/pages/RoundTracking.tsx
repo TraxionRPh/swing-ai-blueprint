@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
@@ -13,9 +13,9 @@ const RoundTracking = () => {
   const { toast } = useToast();
   
   // Only load the complex hook if we're not on the main page
-  const isMainPage = window.location.pathname === '/rounds';
-  const isDetailPage = window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
-  const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
+  const isMainPage = useMemo(() => window.location.pathname === '/rounds', []);
+  const isDetailPage = useMemo(() => !!window.location.pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/), []);
+  const roundId = useMemo(() => isDetailPage ? window.location.pathname.split('/').pop() : null, [isDetailPage]);
   
   // Simplified loading for the main page
   const [pageLoading, setPageLoading] = useState(!isMainPage);
@@ -31,12 +31,12 @@ const RoundTracking = () => {
   useEffect(() => {
     // If we're on the main rounds page, set loading to false after a short delay
     if (isMainPage) {
-      const timer = setTimeout(() => setPageLoading(false), 500);
+      const timer = setTimeout(() => setPageLoading(false), 300); // Reduced from 500ms to 300ms
       return () => clearTimeout(timer);
     }
   }, [isMainPage]);
   
-  // Force timeout of loading state after 12 seconds to prevent infinite loading
+  // Force timeout of loading state after 8 seconds (reduced from 12s to 8s)
   useEffect(() => {
     if (!isDetailPage || !roundTrackingWithErrorHandling.isLoading) return;
     
@@ -52,12 +52,10 @@ const RoundTracking = () => {
             variant: "destructive",
           });
           
-          // Instead of using setIsLoading which doesn't exist, we'll use our local state
-          // to determine if we should show loading UI or not
           setForceLoadingComplete(true);
         }
       }
-    }, 10000); // 10 seconds timeout
+    }, 8000); // Reduced from 10s to 8s
     
     return () => clearTimeout(forceTimeout);
   }, [roundTrackingWithErrorHandling.isLoading, loadRetries, isDetailPage, toast]);
@@ -69,7 +67,6 @@ const RoundTracking = () => {
   };
 
   const retryLoading = () => {
-    // This will trigger the useEffect above to retry loading
     setLoadRetries(prev => prev + 1);
   };
   

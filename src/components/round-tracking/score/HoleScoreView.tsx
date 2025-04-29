@@ -2,7 +2,7 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -17,7 +17,7 @@ interface HoleScoreViewProps {
   holeScores: HoleData[];
 }
 
-export const HoleScoreView = ({
+export const HoleScoreView = memo(({
   currentHoleData,
   handleHoleUpdate,
   handleNext,
@@ -30,7 +30,6 @@ export const HoleScoreView = ({
   holeScores
 }: HoleScoreViewProps) => {
   // Make sure we have a valid hole data object that matches the current hole
-  // This is crucial for round resumption to work correctly
   const validatedHoleData = 
     currentHoleData && currentHoleData.holeNumber === currentHole ? 
     currentHoleData : 
@@ -44,12 +43,6 @@ export const HoleScoreView = ({
       greenInRegulation: false
     };
   
-  // Log current hole data to help with debugging
-  useEffect(() => {
-    console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
-    console.log("All hole scores available:", holeScores.map(h => `Hole ${h.holeNumber}: score=${h.score}`));
-  }, [currentHole, validatedHoleData, holeScores]);
-    
   return (
     <>
       {holeScores.length > 0 && (
@@ -69,4 +62,6 @@ export const HoleScoreView = ({
       />
     </>
   );
-};
+});
+
+HoleScoreView.displayName = 'HoleScoreView';
