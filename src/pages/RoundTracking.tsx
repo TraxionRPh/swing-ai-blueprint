@@ -19,7 +19,7 @@ const RoundTracking = () => {
   const roundId = isDetailPage ? window.location.pathname.split('/').pop() : null;
   
   // Track whether we're in the initial loading state for the page
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [loadRetries, setLoadRetries] = useState(0);
   
   // Centralized loading state management
@@ -36,14 +36,14 @@ const RoundTracking = () => {
   const { currentRoundId, isLoading: roundTrackingLoading } = roundTracking;
   
   // Combined loading state that accounts for all loading sources
-  const isLoading = roundStateLoading || roundTrackingLoading || initialLoading;
+  const isLoading = roundStateLoading || roundTrackingLoading || pageLoading;
   
   useEffect(() => {
     // For the main page, we can exit loading after a short delay
     if (isMainPage) {
       const timer = setTimeout(() => {
         console.log("Main page loading complete");
-        setInitialLoading(false);
+        setPageLoading(false);
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -51,7 +51,7 @@ const RoundTracking = () => {
     // For detail pages, set loading to false once we have the round data
     if (isDetailPage && currentRoundId === roundId && !roundStateLoading && !roundTrackingLoading) {
       console.log("Detail page loading complete, data is ready");
-      setInitialLoading(false);
+      setPageLoading(false);
     }
   }, [isMainPage, isDetailPage, roundId, currentRoundId, roundStateLoading, roundTrackingLoading]);
 
@@ -75,7 +75,7 @@ const RoundTracking = () => {
   const retryLoading = () => {
     // Reset loading state and increment retry count
     setLoadRetries(prev => prev + 1);
-    setInitialLoading(true);
+    setPageLoading(true);
     resetLoading();
     
     // If we have a roundId, try to reload the data
@@ -88,23 +88,27 @@ const RoundTracking = () => {
     }
   };
   
-  // Debug loading state
-  console.log("Round tracking render conditions:", {
+  // Log all loading flags for debugging
+  console.log("Round tracking loading flags:", {
     isMainPage,
     isDetailPage,
     roundId,
     currentRoundId,
-    isLoading,
-    initialLoading,
+    pageLoading,
     roundStateLoading,
     roundTrackingLoading,
-    loadingStage
+    hasRoundData: !!currentRoundId,
+    shouldShowLoading: pageLoading || roundStateLoading || roundTrackingLoading || (isDetailPage && !currentRoundId)
   });
+  
+  // Only show the main content when ALL loading flags are false
+  const isDataReady = !pageLoading && !roundStateLoading && !roundTrackingLoading && 
+                      (isMainPage || (isDetailPage && currentRoundId === roundId));
   
   return (
     <ErrorBoundary>
-      {isLoading ? (
-        // Always show loading state when any loading flag is true
+      {!isDataReady ? (
+        // Show loading state if ANY loading condition is true or we don't have the round data yet
         <RoundTrackingLoading 
           onBack={handleBack}
           roundId={roundId}
