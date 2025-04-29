@@ -1,19 +1,14 @@
 
 import { useNavigate } from "react-router-dom";
-import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { useState, useEffect } from "react";
-import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { ActiveRoundContent } from "@/components/round-tracking/score/ActiveRoundContent";
-import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loading } from "@/components/ui/loading";
-import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { useToast } from "@/hooks/use-toast";
+import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
+import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
+import { RoundTrackingLoading } from "@/components/round-tracking/RoundTrackingLoading";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
-  const [showFinalScore, setShowFinalScore] = useState(false);
   const { toast } = useToast();
   
   // Only load the complex hook if we're not on the main page
@@ -37,31 +32,12 @@ const RoundTracking = () => {
   // Only use the complex hook when necessary (for detail pages or active rounds)
   const roundTracking = useRoundTracking();
   
-  const {
-    selectedCourse,
-    currentHole,
-    holeScores,
-    currentRoundId,
-    handleCourseSelect,
-    setSelectedTee,
-    handleHoleUpdate,
-    handleNext: moveToNextHole,
-    handlePrevious,
-    currentTeeColor,
-    currentHoleData,
-    isSaving,
-    finishRound,
-    holeCount,
-    setHoleCount,
-    isLoading: hookIsLoading
-  } = roundTracking;
-
   // Force timeout of loading state after 12 seconds to prevent infinite loading
   useEffect(() => {
-    if (!isDetailPage || !hookIsLoading) return;
+    if (!isDetailPage || !roundTracking.isLoading) return;
     
     const forceTimeout = setTimeout(() => {
-      if (hookIsLoading && loadRetries < maxRetries) {
+      if (roundTracking.isLoading && loadRetries < maxRetries) {
         console.log("Forcing retry of round loading after timeout");
         setLoadRetries(prev => prev + 1);
         // Force reload the page if we're still loading after multiple retries
@@ -77,7 +53,7 @@ const RoundTracking = () => {
     }, 10000); // 10 seconds timeout
     
     return () => clearTimeout(forceTimeout);
-  }, [hookIsLoading, loadRetries, isDetailPage, toast]);
+  }, [roundTracking.isLoading, loadRetries, isDetailPage, toast]);
 
   const handleBack = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
@@ -85,120 +61,42 @@ const RoundTracking = () => {
     navigate(-1);
   };
 
-  const handleNext = () => {
-    if (currentHole === holeCount) {
-      setShowFinalScore(true);
-    } else {
-      moveToNextHole();
-    }
-  };
-
-  const handleConfirmRound = async () => {
-    const success = await finishRound();
-    setShowFinalScore(false);
-    
-    if (success) {
-      navigate('/dashboard');
-    }
-  };
-
-  const handleHoleCountSelect = (count: number) => {
-    setHoleCount(count);
-    sessionStorage.setItem('current-hole-count', count.toString());
-  };
-
   const retryLoading = () => {
     // This will trigger the useEffect above to retry loading
     setLoadRetries(prev => prev + 1);
-    // Could also reload specific data here
   };
 
   // Main page - show rounds display and course selector
   if (isMainPage) {
     return (
-      <div className="space-y-6">
-        <RoundTrackingHeader 
-          onBack={handleBack} 
-          subtitle="View your rounds and start tracking new ones"
-        />
-        
-        {pageLoading ? (
-          <Card>
-            <CardContent className="pt-6 flex justify-center items-center">
-              <Loading message="Loading rounds..." minHeight={150} size="md" />
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Rounds display showing in-progress rounds */}
-            <RoundsDisplay 
-              onCourseSelect={(course, courseHoleCount) => {
-                if (courseHoleCount) {
-                  setHoleCount(courseHoleCount);
-                }
-                handleCourseSelect(course);
-              }} 
-            />
-            
-            {/* Course selector to start a new round */}
-            <CourseSelector
-              selectedCourse={selectedCourse}
-              selectedTee={roundTracking.selectedTee}
-              onCourseSelect={handleCourseSelect}
-              onTeeSelect={setSelectedTee}
-            />
-          </>
-        )}
-      </div>
+      <RoundTrackingMain 
+        onBack={handleBack}
+        pageLoading={pageLoading}
+        roundTracking={roundTracking}
+      />
     );
   }
 
   // Round detail page - show specific round
-  if (isDetailPage && currentRoundId) {
+  if (isDetailPage && roundTracking.currentRoundId) {
     return (
-      <div className="space-y-6">
-        <RoundTrackingHeader onBack={handleBack} />
-        
-        {hookIsLoading ? (
-          <LoadingState 
-            onBack={handleBack} 
-            message="Loading your round data..." 
-            retryFn={retryLoading}
-            roundId={currentRoundId}
-          />
-        ) : (
-          <ActiveRoundContent
-            holeScores={holeScores}
-            currentHoleData={currentHoleData}
-            onHoleUpdate={handleHoleUpdate}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            currentHole={currentHole}
-            holeCount={holeCount || 18}
-            teeColor={currentTeeColor}
-            courseId={selectedCourse?.id}
-            isSaving={isSaving}
-            showFinalScore={showFinalScore}
-            onConfirmRound={handleConfirmRound}
-            onCancelFinalScore={() => setShowFinalScore(false)}
-          />
-        )}
-      </div>
+      <RoundTrackingDetail
+        onBack={handleBack}
+        currentRoundId={roundTracking.currentRoundId}
+        isLoading={roundTracking.isLoading}
+        retryLoading={retryLoading}
+        roundTracking={roundTracking}
+      />
     );
   }
 
   // Loading state or no round ID yet
   return (
-    <div className="space-y-6">
-      <RoundTrackingHeader onBack={handleBack} />
-      
-      <LoadingState 
-        onBack={handleBack} 
-        message="Preparing round data..."
-        retryFn={retryLoading}
-        roundId={roundId || undefined}
-      />
-    </div>
+    <RoundTrackingLoading
+      onBack={handleBack}
+      roundId={roundId}
+      retryLoading={retryLoading}
+    />
   );
 };
 
