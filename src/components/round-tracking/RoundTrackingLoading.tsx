@@ -15,13 +15,13 @@ export const RoundTrackingLoading = ({
 }: RoundTrackingLoadingProps) => {
   return (
     <div className="space-y-6">
-      <RoundTrackingHeader onBack={onBack} />
-      
+      {/* Remove the RoundTrackingHeader since LoadingState includes it */}
       <LoadingState 
         onBack={onBack} 
         message="Preparing round data..."
         retryFn={retryLoading}
         roundId={roundId || undefined}
+        hideHeader={false} // Set to false to show the header inside LoadingState
       />
     </div>
   );

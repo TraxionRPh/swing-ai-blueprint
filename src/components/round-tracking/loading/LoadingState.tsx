@@ -4,6 +4,7 @@ import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { ReactNode, useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 
 interface LoadingStateProps {
   onBack: () => void;
@@ -25,10 +26,11 @@ export const LoadingState = ({
   const [showRetry, setShowRetry] = useState(false);
   const [showNetworkAlert, setShowNetworkAlert] = useState(false);
   
-  // Show retry option sooner - after 3 seconds instead of 4
+  // Increase timeout for retry button to 5 seconds (was 3 seconds)
   useEffect(() => {
-    const timer = setTimeout(() => setShowRetry(true), 3000);
-    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+    const timer = setTimeout(() => setShowRetry(true), 5000);
+    // Increase timeout for network alert to 8 seconds (was 5 seconds)
+    const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
     return () => {
       clearTimeout(timer); 
       clearTimeout(networkTimer);
@@ -43,9 +45,9 @@ export const LoadingState = ({
       retryFn();
       // Reset the retry state
       setShowRetry(false);
-      // Set timeout again
-      const timer = setTimeout(() => setShowRetry(true), 3000);
-      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 5000);
+      // Set timeout again with the new longer delays
+      const timer = setTimeout(() => setShowRetry(true), 5000);
+      const networkTimer = setTimeout(() => setShowNetworkAlert(true), 8000);
       return () => {
         clearTimeout(timer);
         clearTimeout(networkTimer);
@@ -64,18 +66,12 @@ export const LoadingState = ({
   return (
     <div className="space-y-6 w-full">
       {!hideHeader && (
-        <div className="flex items-center space-x-4 mb-6">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={onBack}
-            className="text-muted-foreground hover:bg-secondary"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="sr-only">Go back</span>
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Round Tracking</h1>
-        </div>
+        <RoundTrackingHeader
+          onBack={onBack}
+          hideBackButton={false}
+          title="Round Tracking"
+          subtitle="Track your round hole by hole"
+        />
       )}
       
       <div className="w-full flex justify-center">
