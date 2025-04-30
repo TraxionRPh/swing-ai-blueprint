@@ -32,12 +32,11 @@ export const HoleScoreView = ({
   holeScores,
   isLoading = false
 }: HoleScoreViewProps) => {
-  console.log("HoleScoreView rendered:", { 
+  console.log("HoleScoreView rendered with navigation handlers:", { 
+    hasNextHandler: !!handleNext,
+    hasPrevHandler: !!handlePrevious,
     currentHole, 
-    holeCount,
-    isLoading,
-    isSaving,
-    currentHoleData
+    holeCount
   });
   
   // Ensure we have valid hole data that matches the current hole
@@ -78,6 +77,17 @@ export const HoleScoreView = ({
     return <HoleScoreViewSkeleton />;
   }
   
+  // Navigation handlers with additional logging
+  const handleNextWrapped = () => {
+    console.log("Next clicked in HoleScoreView, calling parent handler");
+    handleNext();
+  };
+  
+  const handlePreviousWrapped = () => {
+    console.log("Previous clicked in HoleScoreView, calling parent handler");
+    handlePrevious();
+  };
+  
   return (
     <>
       {holeScores.length > 0 && (
@@ -87,8 +97,8 @@ export const HoleScoreView = ({
       <HoleScoreCard
         holeData={validatedHoleData}
         onUpdate={handleHoleUpdate}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
+        onNext={handleNextWrapped}
+        onPrevious={handlePreviousWrapped}
         isFirst={currentHole === 1}
         isLast={currentHole === holeCount}
         teeColor={teeColor}

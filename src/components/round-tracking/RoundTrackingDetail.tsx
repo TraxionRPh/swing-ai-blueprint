@@ -43,14 +43,9 @@ export const RoundTrackingDetail = ({
     if (currentRoundId && roundTracking.setCurrentRoundId) {
       roundTracking.setCurrentRoundId(currentRoundId);
       
-      // Start a timer to force exit from loading after a reasonable time
-      const timer = setTimeout(() => {
-        console.log("Forcing exit from loading state after timeout");
-        setLocalLoading(false);
-        if (setDetailLoading) setDetailLoading(false);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
+      // Exit loading state once ID is set
+      setLocalLoading(false);
+      if (setDetailLoading) setDetailLoading(false);
     } else {
       // No round ID, exit loading immediately
       setLocalLoading(false);
@@ -75,7 +70,7 @@ export const RoundTrackingDetail = ({
     holeCount,
     handleHoleUpdate,
     handleNext: handleNextBase,
-    handlePrevious,
+    handlePrevious: handlePreviousBase,
     currentTeeColor,
     currentHoleData,
     isSaving,
@@ -107,6 +102,34 @@ export const RoundTrackingDetail = ({
     sessionStorage.removeItem('force-resume');
   }, [localLoading, holeCount, setCurrentHole, toast]);
 
+  // Enhanced navigation handlers with better logging
+  const handleNext = () => {
+    console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
+    
+    if (handleNextBase) {
+      if (currentHole === holeCount) {
+        console.log("Showing final score view");
+        setShowFinalScore(true);
+      } else {
+        console.log("Moving to next hole via base handler");
+        handleNextBase();
+      }
+    } else {
+      console.error("Next handler is not defined!");
+    }
+  };
+  
+  const handlePrevious = () => {
+    console.log("Previous button pressed in RoundTrackingDetail, current hole:", currentHole);
+    
+    if (handlePreviousBase) {
+      console.log("Moving to previous hole via base handler");
+      handlePreviousBase();
+    } else {
+      console.error("Previous handler is not defined!");
+    }
+  };
+
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
     console.log("Back navigation triggered in RoundTrackingDetail");
@@ -120,18 +143,6 @@ export const RoundTrackingDetail = ({
   // Check if we have the data we need to render
   const isDataReady = !localLoading && holeScores?.length > 0 && !!currentHoleData;
   console.log("Data ready check:", { isDataReady, localLoading, holeScoresLength: holeScores?.length });
-
-  // Handle next button with final score
-  const handleNext = () => {
-    console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
-    if (currentHole === holeCount) {
-      console.log("Showing final score view");
-      setShowFinalScore(true);
-    } else if (handleNextBase) {
-      console.log("Moving to next hole");
-      handleNextBase();
-    }
-  };
 
   // If data is still loading, show a loading indicator
   if (!isDataReady) {

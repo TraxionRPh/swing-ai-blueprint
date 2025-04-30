@@ -40,8 +40,19 @@ export const HoleScoreCard = ({
     setData(holeData);
   }, [holeData.holeNumber]);
 
-  const handleNext = () => {
-    if (onNext) onNext();
+  // Simplified navigation functions
+  const handleNextHole = () => {
+    console.log("Next hole button clicked in HoleScoreCard");
+    if (onNext) {
+      onNext();
+    }
+  };
+  
+  const handlePreviousHole = () => {
+    console.log("Previous hole button clicked in HoleScoreCard");
+    if (onPrevious) {
+      onPrevious();
+    }
   };
   
   const saveCourseHoleData = async (field: 'par' | 'distance', value: number) => {
@@ -92,8 +103,8 @@ export const HoleScoreCard = ({
           <HoleHeader holeNumber={data.holeNumber} />
           <HoleScoreForm data={data} onDataChange={handleChange} />
           <HoleNavigation 
-            onNext={handleNext}
-            onPrevious={onPrevious}
+            onNext={handleNextHole}
+            onPrevious={handlePreviousHole}
             isFirst={isFirst}
             isLast={isLast}
           />
