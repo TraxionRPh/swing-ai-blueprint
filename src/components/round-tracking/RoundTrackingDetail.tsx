@@ -4,16 +4,14 @@ import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTra
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
-import { HoleSavingIndicator } from "@/components/round-tracking/hole-score/HoleSavingIndicator";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Loading } from "@/components/ui/loading";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
   currentRoundId: string | null;
-  isLoading: boolean;
+  isLoading?: boolean;
   loadingStage?: string;
   retryLoading: () => void;
   setDetailLoading?: (loading: boolean) => void;
@@ -33,24 +31,25 @@ export const RoundTrackingDetail = ({
   const [localLoading, setLocalLoading] = useState(true);
   const { toast } = useToast();
   
-  // Use our own instance of roundTracking to ensure we have what we need
+  // Use round tracking hook
   const roundTracking = useRoundTracking();
   
-  // Set the current round ID to match what was passed in
+  // Set the current round ID when the component mounts
   useEffect(() => {
     console.log("RoundTrackingDetail - Setting current round ID:", currentRoundId);
     if (currentRoundId && roundTracking.setCurrentRoundId) {
       roundTracking.setCurrentRoundId(currentRoundId);
     }
-  }, [currentRoundId, roundTracking]);
+  }, [currentRoundId, roundTracking.setCurrentRoundId]);
   
-  // Set a short timeout to exit loading state
+  // Exit loading state after a short delay
   useEffect(() => {
+    console.log("Setting up loading exit timer");
     const timer = setTimeout(() => {
       setLocalLoading(false);
       if (setDetailLoading) setDetailLoading(false);
       console.log("RoundTrackingDetail - Exiting loading state");
-    }, 1000);
+    }, 1500);
     
     return () => clearTimeout(timer);
   }, [setDetailLoading]);
@@ -112,8 +111,8 @@ export const RoundTrackingDetail = ({
     onBack();
   };
 
-  // Track if we have the data we need
-  const isDataReady = !localLoading && !externalLoading && holeScores && currentHoleData;
+  // Check if we have the data we need to render
+  const isDataReady = !localLoading && holeScores?.length > 0 && !!currentHoleData;
 
   // Handle next button with final score
   const handleNext = () => {
@@ -132,7 +131,7 @@ export const RoundTrackingDetail = ({
         
         <Card>
           <CardContent className="py-6 flex justify-center">
-            <Loading message="Loading round data..." minHeight={200} />
+            <Loading message={`Loading round data for ${currentRoundId?.substring(0, 8)}...`} minHeight={200} />
           </CardContent>
         </Card>
       </div>
@@ -152,20 +151,18 @@ export const RoundTrackingDetail = ({
           onBack={onBack}
         />
       ) : (
-        <>
-          <HoleScoreView 
-            currentHoleData={currentHoleData}
-            handleHoleUpdate={handleHoleUpdate}
-            handleNext={handleNext}
-            handlePrevious={handlePrevious}
-            currentHole={currentHole}
-            holeCount={holeCount || 18}
-            teeColor={currentTeeColor}
-            courseId={selectedCourse?.id}
-            isSaving={isSaving}
-            holeScores={holeScores}
-          />
-        </>
+        <HoleScoreView 
+          currentHoleData={currentHoleData}
+          handleHoleUpdate={handleHoleUpdate}
+          handleNext={handleNext}
+          handlePrevious={handlePrevious}
+          currentHole={currentHole}
+          holeCount={holeCount || 18}
+          teeColor={currentTeeColor}
+          courseId={selectedCourse?.id}
+          isSaving={isSaving}
+          holeScores={holeScores}
+        />
       )}
     </div>
   );

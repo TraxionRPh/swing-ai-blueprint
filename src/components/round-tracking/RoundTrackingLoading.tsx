@@ -18,16 +18,18 @@ export const RoundTrackingLoading = ({
   retryLoading,
   error
 }: RoundTrackingLoadingProps) => {
+  // Simplified loading message based on whether we have a roundId
+  const loadingMessage = roundId 
+    ? `Loading round data${roundId ? ` (${roundId.substring(0, 8)}...)` : ''}`
+    : "Loading round data...";
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
       <Card>
         <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[200px]">
-          <Loading message={roundId 
-            ? `Loading round data${roundId ? ` (${roundId.substring(0, 8)}...)` : ''}`
-            : "Preparing round data..."} 
-          />
+          <Loading message={loadingMessage} minHeight={150} />
           
           {error && (
             <div className="mt-8 text-center">

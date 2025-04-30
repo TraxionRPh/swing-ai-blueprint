@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain";
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
@@ -19,6 +19,19 @@ const RoundTracking = () => {
   const isDetailPage = pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? pathname.split('/').pop() : null;
   
+  // Add a simple timeout to exit loading state after a reasonable time
+  useEffect(() => {
+    console.log("RoundTracking mounted, initializing with loading:", loading);
+    console.log("Current path:", pathname, "isMainPage:", isMainPage, "roundId:", roundId);
+    
+    const timer = setTimeout(() => {
+      setLoading(false);
+      console.log("Automatic loading timeout elapsed, forcing loading to complete");
+    }, 2000); // Short timeout for better UX
+    
+    return () => clearTimeout(timer);
+  }, [pathname]);
+  
   // Handle back navigation
   const handleBack = () => {
     // Clear any resume data in session storage to prevent unexpected behavior
@@ -32,7 +45,7 @@ const RoundTracking = () => {
   const retryLoading = () => {
     console.log("Retrying loading...");
     setError(null);
-    setLoading(false);
+    setLoading(true);
     
     // Short timeout to ensure state updates before reloading
     setTimeout(() => {
@@ -55,7 +68,6 @@ const RoundTracking = () => {
         // Show main rounds listing page
         <RoundTrackingMain 
           onBack={handleBack}
-          pageLoading={false}
           setMainLoading={setLoading}
           setMainError={setError}
         />
@@ -64,9 +76,7 @@ const RoundTracking = () => {
         <RoundTrackingDetail
           onBack={handleBack}
           currentRoundId={roundId}
-          isLoading={false}
-          loadingStage="ready"
-          retryLoading={() => setLoading(false)}
+          retryLoading={retryLoading}
           setDetailLoading={setLoading}
           setDetailError={setError}
         />

@@ -15,7 +15,7 @@ export function Loading({
   message = "Loading...", 
   fixed = false,
   size = 'md',
-  minHeight = "400px"
+  minHeight = "200px"
 }: LoadingProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
@@ -23,7 +23,6 @@ export function Loading({
     lg: "h-12 w-12"
   };
 
-  // Fix minHeight prop handling - directly use the value rather than trying to interpolate it
   const minHeightStyle = {
     minHeight: typeof minHeight === 'string' ? minHeight : `${minHeight}px`
   };

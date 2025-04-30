@@ -6,7 +6,6 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
-import { useRoundTracking } from "@/hooks/useRoundTracking";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
@@ -27,11 +26,11 @@ export const RoundTrackingMain = ({
   const [holeCount, setHoleCount] = useState(18);
   const navigate = useNavigate();
   
-  // Initialize component
+  // Initialize component - simple approach
   useEffect(() => {
     console.log("RoundTrackingMain mounted");
     
-    // Set parent loading state to false after short timeout
+    // Short timeout to exit loading state
     const timer = setTimeout(() => {
       if (setMainLoading) setMainLoading(false);
       setLocalLoading(false);

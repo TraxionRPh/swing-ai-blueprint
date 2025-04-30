@@ -1,8 +1,7 @@
-
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface HoleScoreViewProps {
@@ -32,18 +31,22 @@ export const HoleScoreView = ({
   holeScores,
   isLoading = false
 }: HoleScoreViewProps) => {
-  // Make sure we have a valid hole data object that matches the current hole
+  // Ensure we have valid hole data that matches the current hole
   const validatedHoleData = useMemo(() => {
+    if (isLoading) return null;
+    
+    // If the currentHoleData matches the current hole, use it
     if (currentHoleData && currentHoleData.holeNumber === currentHole) {
       return currentHoleData;
     }
     
+    // Otherwise, try to find the hole in the scores array
     const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
     if (matchingHole) {
       return matchingHole;
     }
     
-    // Default hole data if nothing matches
+    // If all else fails, create a default hole
     return {
       holeNumber: currentHole,
       par: 4,
@@ -53,14 +56,9 @@ export const HoleScoreView = ({
       fairwayHit: false,
       greenInRegulation: false
     };
-  }, [currentHoleData, currentHole, holeScores]);
-  
-  // Log current hole data to help with debugging
-  useEffect(() => {
-    console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
-  }, [currentHole, validatedHoleData]);
+  }, [currentHoleData, currentHole, holeScores, isLoading]);
     
-  if (isLoading) {
+  if (isLoading || !validatedHoleData) {
     return <HoleScoreViewSkeleton />;
   }
   
