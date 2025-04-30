@@ -40,18 +40,24 @@ export const HoleScoreCard = ({
     setData(holeData);
   }, [holeData.holeNumber]);
 
-  // Simplified navigation functions
+  // Enhanced navigation handlers with detailed logging
   const handleNextHole = () => {
-    console.log("Next hole button clicked in HoleScoreCard");
+    console.log(`Next hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
     if (onNext) {
+      console.log("Calling provided onNext function");
       onNext();
+    } else {
+      console.warn("No onNext handler provided");
     }
   };
   
   const handlePreviousHole = () => {
-    console.log("Previous hole button clicked in HoleScoreCard");
+    console.log(`Previous hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
     if (onPrevious) {
+      console.log("Calling provided onPrevious function");
       onPrevious();
+    } else {
+      console.warn("No onPrevious handler provided");
     }
   };
   

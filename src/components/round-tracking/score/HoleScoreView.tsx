@@ -1,4 +1,3 @@
-
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
@@ -77,15 +76,15 @@ export const HoleScoreView = ({
     return <HoleScoreViewSkeleton />;
   }
   
-  // Navigation handlers with additional logging
-  const handleNextWrapped = () => {
-    console.log("Next clicked in HoleScoreView, calling parent handler");
-    handleNext();
+  // Direct pass-through of navigation handlers with consistent function names
+  const handlePreviousWrapped = () => {
+    console.log(`Previous clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
+    handlePrevious();
   };
   
-  const handlePreviousWrapped = () => {
-    console.log("Previous clicked in HoleScoreView, calling parent handler");
-    handlePrevious();
+  const handleNextWrapped = () => {
+    console.log(`Next clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
+    handleNext();
   };
   
   return (

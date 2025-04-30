@@ -15,25 +15,29 @@ export const HoleNavigation = ({
   isFirst,
   isLast
 }: HoleNavigationProps) => {
-  // Simplified handlers that properly call the parent functions
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("Next button clicked in HoleNavigation");
-    if (onNext) {
-      onNext();
-    } else {
-      console.warn("Next handler is not defined");
-    }
-  };
-  
-  // Handle previous button click with logging
+  // Enhanced previous button click handler with more detailed logging
   const handlePrevious = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Previous button clicked in HoleNavigation");
+    console.log("Previous button clicked in HoleNavigation component");
+    
     if (onPrevious) {
+      console.log("Calling onPrevious handler from parent");
       onPrevious();
     } else {
       console.warn("Previous handler is not defined");
+    }
+  };
+  
+  // Enhanced next button handler with better logging
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Next button clicked in HoleNavigation component");
+    
+    if (onNext) {
+      console.log("Calling onNext handler from parent");
+      onNext();
+    } else {
+      console.warn("Next handler is not defined");
     }
   };
 
