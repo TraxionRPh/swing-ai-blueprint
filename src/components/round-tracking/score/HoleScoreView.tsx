@@ -4,7 +4,6 @@ import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
 import { useEffect, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RoundDebugPanel } from "../debug/RoundDebugPanel";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -89,17 +88,6 @@ export const HoleScoreView = ({
         teeColor={teeColor}
         courseId={courseId}
         isSaving={isSaving}
-      />
-      
-      <RoundDebugPanel 
-        currentHole={currentHole}
-        holeCount={holeCount}
-        isLoading={isLoading || isSaving}
-        resumeData={{
-          forceResume: sessionStorage.getItem('force-resume'),
-          sessionHole: sessionStorage.getItem('resume-hole-number'),
-          localHole: localStorage.getItem('resume-hole-number')
-        }}
       />
     </>
   );

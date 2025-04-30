@@ -4,7 +4,7 @@ import { HoleData } from "@/types/round-tracking";
 
 export const useRoundNavigation = (
   handleNextBase: () => void,
-  handlePrevious: () => void,
+  handlePreviousBase: () => void,
   currentHole: number,
   holeCount: number | null,
   isLoading: boolean = false
@@ -36,9 +36,9 @@ export const useRoundNavigation = (
       return;
     } else {
       console.log(`Navigating to previous hole from ${currentHole}`);
-      handlePrevious();
+      handlePreviousBase();
     }
-  }, [handlePrevious, currentHole, isLoading]);
+  }, [handlePreviousBase, currentHole, isLoading]);
 
   return { handleNext, handlePrevious: handlePrev };
 };
