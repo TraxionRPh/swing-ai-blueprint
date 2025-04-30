@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface HoleStatsProps {
   data: HoleData;
@@ -13,13 +13,17 @@ interface HoleStatsProps {
 export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const [localPar, setLocalPar] = useState<number>(data.par);
   const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
+  const [localScore, setLocalScore] = useState<number | string>(data.score || '');
+  const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
 
   // This effect ensures local state is updated when the hole data changes
   useEffect(() => {
     console.log("HoleStats: Data changed", data);
     setLocalPar(data.par);
     setLocalDistance(data.distance || '');
-  }, [data.holeNumber, data.par, data.distance]);
+    setLocalScore(data.score || '');
+    setLocalPutts(data.putts || '');
+  }, [data.holeNumber, data.par, data.distance, data.score, data.putts]);
 
   const handleParChange = (value: string) => {
     const parsedValue = parseInt(value) || 3;
@@ -33,6 +37,18 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     setLocalDistance(value);
     onDataChange('distance', parseInt(value) || 0);
   };
+
+  const handleScoreChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalScore(value);
+    onDataChange('score', parseInt(value) || 0);
+  }, [onDataChange]);
+
+  const handlePuttsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalPutts(value);
+    onDataChange('putts', parseInt(value) || 0);
+  }, [onDataChange]);
 
   return (
     <div className="space-y-4">
@@ -70,8 +86,8 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
           id="score" 
           type="number" 
           placeholder="Enter score" 
-          value={data.score || ''} 
-          onChange={e => onDataChange('score', parseInt(e.target.value) || 0)} 
+          value={localScore} 
+          onChange={handleScoreChange} 
           min={1} 
         />
       </div>
@@ -82,8 +98,8 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
           id="putts" 
           type="number" 
           placeholder="Enter putts" 
-          value={data.putts || ''} 
-          onChange={e => onDataChange('putts', parseInt(e.target.value) || 0)} 
+          value={localPutts} 
+          onChange={handlePuttsChange} 
           min={0} 
         />
       </div>

@@ -95,11 +95,6 @@ export const RoundTrackingDetail = ({
       if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= (holeCount || 18)) {
         console.log(`Resuming at hole ${holeNum}`);
         setCurrentHole(holeNum);
-        
-        toast({
-          title: "Resuming round",
-          description: `Continuing from hole ${holeNum}`
-        });
       }
     }
     
@@ -138,12 +133,6 @@ export const RoundTrackingDetail = ({
       
       // Also call the base handler for any additional logic
       handleNextBase();
-      
-      // Show toast to provide feedback
-      toast({
-        title: "Navigation",
-        description: `Moving to hole ${currentHole + 1}`
-      });
     }
   }, [handleNextBase, currentHole, holeCount, toast, setCurrentHole]);
   
@@ -173,12 +162,6 @@ export const RoundTrackingDetail = ({
     
     // Also call the base handler for any additional logic
     handlePreviousBase();
-    
-    // Show toast to provide feedback
-    toast({
-      title: "Navigation",
-      description: `Moving to hole ${currentHole - 1}`
-    });
   }, [handlePreviousBase, currentHole, toast, setCurrentHole]);
 
   // Handle back navigation with cleanup
