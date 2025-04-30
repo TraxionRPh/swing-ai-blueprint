@@ -61,9 +61,9 @@ export const useScoreTracking = (
     };
   }, [holeScores, currentHole, lastUpdated]);
 
-  // Handle updating a hole's score data with debouncing
+  // Handle updating a hole's score data without saving to database
   const handleHoleUpdate = useCallback((data: HoleData) => {
-    console.log('Updating hole data:', data);
+    console.log('Updating hole data in local state:', data);
     
     // Update the hole scores array
     const updatedScores = [...holeScores];
@@ -80,14 +80,35 @@ export const useScoreTracking = (
     // Set the updated scores array directly
     setHoleScores(updatedScores);
     setLastUpdated(Date.now()); // Force re-render with new timestamp
+  }, [setHoleScores, holeScores]);
+  
+  // Save current hole data and navigate to next hole
+  const saveAndNavigateNext = useCallback(() => {
+    const currentData = currentHoleData;
     
-    // Save to database if we have a valid round ID
-    if (roundId) {
-      saveHoleScore(data).catch(error => {
-        console.error('Failed to save hole score:', error);
+    if (roundId && currentData) {
+      console.log("Saving hole data before navigating to next hole", currentData);
+      saveHoleScore(currentData).then(() => {
+        handleNext();
       });
+    } else {
+      handleNext();
     }
-  }, [roundId, saveHoleScore, setHoleScores, holeScores]);
+  }, [currentHoleData, roundId, saveHoleScore, handleNext]);
+  
+  // Save current hole data and navigate to previous hole
+  const saveAndNavigatePrevious = useCallback(() => {
+    const currentData = currentHoleData;
+    
+    if (roundId && currentData) {
+      console.log("Saving hole data before navigating to previous hole", currentData);
+      saveHoleScore(currentData).then(() => {
+        handlePrevious();
+      });
+    } else {
+      handlePrevious();
+    }
+  }, [currentHoleData, roundId, saveHoleScore, handlePrevious]);
 
   // Clear any resume data
   const clearResumeData = useCallback(() => {
@@ -101,9 +122,9 @@ export const useScoreTracking = (
     currentHole,
     setCurrentHole,
     handleHoleUpdate,
-    handleNext,
-    handlePrevious,
-    isSaving: isSaving || isLoading,
+    handleNext: saveAndNavigateNext,
+    handlePrevious: saveAndNavigatePrevious,
+    isSaving,
     currentHoleData,
     clearResumeData
   };

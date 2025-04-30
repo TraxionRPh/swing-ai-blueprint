@@ -48,9 +48,6 @@ export const HoleScoreCard = ({
   const handleNextHole = () => {
     console.log(`Next hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
     
-    // Save current hole data before navigating
-    onUpdate(data);
-    
     // Check if the handler exists and is a function
     if (typeof onNext === 'function') {
       console.log("Calling provided onNext function from HoleScoreCard");
@@ -64,9 +61,6 @@ export const HoleScoreCard = ({
   
   const handlePreviousHole = () => {
     console.log(`Previous hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
-    
-    // Save current hole data before navigating
-    onUpdate(data);
     
     // Check if the handler exists and is a function
     if (typeof onPrevious === 'function') {

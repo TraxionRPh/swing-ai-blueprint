@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { HoleData } from "@/types/round-tracking";
-import { updateRoundSummary } from "./use-round-summary";
 
 export const useHolePersistence = (roundId: string | null) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -55,3 +54,37 @@ export const useHolePersistence = (roundId: string | null) => {
     isSaving
   };
 };
+
+// Helper function to update the round summary
+async function updateRoundSummary(roundId: string, holeData: HoleData) {
+  try {
+    const { data: roundData } = await supabase
+      .from('hole_scores')
+      .select('*')
+      .eq('round_id', roundId);
+      
+    if (!roundData) return;
+
+    // Calculate totals from all holes
+    const totals = roundData.reduce((acc, hole) => ({
+      score: acc.score + (hole.score || 0),
+      putts: acc.putts + (hole.putts || 0),
+      fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
+      greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
+    }), { score: 0, putts: 0, fairways: 0, greens: 0 });
+    
+    await supabase
+      .from('rounds')
+      .update({
+        total_score: null, // Keep it null until round is finished
+        total_putts: null,
+        fairways_hit: totals.fairways,
+        greens_in_regulation: totals.greens,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', roundId);
+      
+  } catch (error) {
+    console.error('Error updating round summary:', error);
+  }
+}

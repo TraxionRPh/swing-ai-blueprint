@@ -7,7 +7,7 @@ interface HoleSavingIndicatorProps {
   message?: string;
 }
 
-export const HoleSavingIndicator = ({ isSaving, message = "Auto-saving..." }: HoleSavingIndicatorProps) => {
+export const HoleSavingIndicator = ({ isSaving, message = "Saving..." }: HoleSavingIndicatorProps) => {
   if (!isSaving) return null;
   
   return (
