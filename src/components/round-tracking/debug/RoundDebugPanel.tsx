@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,10 +27,8 @@ export const RoundDebugPanel = ({
 }: RoundDebugPanelProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Only show in development mode AND when explicitly enabled
-  // Adding additional check to disable the panel entirely
-  const debugEnabled = false;
-  if (!debugEnabled || import.meta.env.MODE !== 'development') {
+  // Only show in development mode
+  if (import.meta.env.MODE !== 'development') {
     return null;
   }
 
