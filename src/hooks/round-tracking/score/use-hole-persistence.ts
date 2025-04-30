@@ -11,7 +11,9 @@ export const useHolePersistence = (roundId: string | null) => {
 
   const saveHoleScore = async (holeData: HoleData) => {
     if (!roundId) return;
+    if (!holeData.score && holeData.score !== 0) return; // Don't save if no score
     
+    console.log(`Saving hole ${holeData.holeNumber} data:`, JSON.stringify(holeData));
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -29,7 +31,9 @@ export const useHolePersistence = (roundId: string | null) => {
 
       if (error) throw error;
       
+      // Only update round summary after successful save of hole data
       await updateRoundSummary(roundId, holeData);
+      console.log(`Successfully saved hole ${holeData.holeNumber} data`);
       
     } catch (error: any) {
       console.error('Error saving hole score:', error);
@@ -39,7 +43,10 @@ export const useHolePersistence = (roundId: string | null) => {
         variant: "destructive"
       });
     } finally {
-      setIsSaving(false);
+      // Add a slight delay before removing the saving indicator
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 500);
     }
   };
 

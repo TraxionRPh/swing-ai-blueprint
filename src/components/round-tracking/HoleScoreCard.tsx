@@ -36,14 +36,20 @@ export const HoleScoreCard = ({
   const [localIsSaving, setLocalIsSaving] = useState(false);
   const { toast } = useToast();
   
+  // Only update local state when the hole number changes
   useEffect(() => {
-    console.log("HoleScoreCard: Updating hole data for hole", holeData.holeNumber);
-    setData(holeData);
-  }, [holeData]);
+    if (data.holeNumber !== holeData.holeNumber) {
+      console.log("HoleScoreCard: Updating hole data for hole", holeData.holeNumber);
+      setData(holeData);
+    }
+  }, [holeData.holeNumber, holeData]);
 
   // Improved navigation handlers with direct forwarding and thorough logging
   const handleNextHole = () => {
     console.log(`Next hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
+    
+    // Save current hole data before navigating
+    onUpdate(data);
     
     // Check if the handler exists and is a function
     if (typeof onNext === 'function') {
@@ -58,6 +64,9 @@ export const HoleScoreCard = ({
   
   const handlePreviousHole = () => {
     console.log(`Previous hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
+    
+    // Save current hole data before navigating
+    onUpdate(data);
     
     // Check if the handler exists and is a function
     if (typeof onPrevious === 'function') {
@@ -102,6 +111,7 @@ export const HoleScoreCard = ({
   };
 
   const handleChange = (field: keyof HoleData, value: any) => {
+    console.log(`HoleScoreCard: Updating field ${field} to value ${value} for hole ${data.holeNumber}`);
     const newData = { ...data, [field]: value };
     setData(newData);
     onUpdate(newData);

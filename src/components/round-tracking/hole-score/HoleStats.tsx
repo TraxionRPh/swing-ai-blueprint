@@ -16,14 +16,15 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const [localScore, setLocalScore] = useState<number | string>(data.score || '');
   const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
 
-  // This effect ensures local state is updated when the hole data changes
+  // This effect ensures local state is updated only when the hole number changes
+  // This prevents overwriting user input when parent state changes for the same hole
   useEffect(() => {
-    console.log("HoleStats: Data changed", data);
+    console.log("HoleStats: Hole number changed to", data.holeNumber);
     setLocalPar(data.par);
     setLocalDistance(data.distance || '');
     setLocalScore(data.score || '');
     setLocalPutts(data.putts || '');
-  }, [data.holeNumber, data.par, data.distance, data.score, data.putts]);
+  }, [data.holeNumber]);
 
   const handleParChange = (value: string) => {
     const parsedValue = parseInt(value) || 3;

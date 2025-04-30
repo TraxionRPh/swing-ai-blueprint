@@ -13,6 +13,7 @@ export const useScoreTracking = (
   const { currentHole, setCurrentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number>(0);
   
   // Simple initialization effect
   useEffect(() => {
@@ -42,9 +43,13 @@ export const useScoreTracking = (
   const currentHoleData = useMemo(() => {
     // First try to find the exact hole in the scores array
     const exactHole = holeScores.find(hole => hole.holeNumber === currentHole);
-    if (exactHole) return exactHole;
+    if (exactHole) {
+      console.log("Found exact hole data for hole:", currentHole);
+      return exactHole;
+    }
     
     // If not found, create default data for the current hole
+    console.log("Creating default hole data for hole:", currentHole);
     return {
       holeNumber: currentHole,
       par: 4,
@@ -54,9 +59,9 @@ export const useScoreTracking = (
       fairwayHit: false,
       greenInRegulation: false
     };
-  }, [holeScores, currentHole]);
+  }, [holeScores, currentHole, lastUpdated]);
 
-  // Handle updating a hole's score data
+  // Handle updating a hole's score data with debouncing
   const handleHoleUpdate = useCallback((data: HoleData) => {
     console.log('Updating hole data:', data);
     
@@ -74,6 +79,7 @@ export const useScoreTracking = (
     
     // Set the updated scores array directly
     setHoleScores(updatedScores);
+    setLastUpdated(Date.now()); // Force re-render with new timestamp
     
     // Save to database if we have a valid round ID
     if (roundId) {

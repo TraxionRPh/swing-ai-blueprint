@@ -100,19 +100,14 @@ export const RoundTrackingDetail = ({
     
     // Clear the force-resume flag
     sessionStorage.removeItem('force-resume');
-  }, [localLoading, holeCount, setCurrentHole, toast]);
+  }, [localLoading, holeCount, setCurrentHole]);
 
-  // Enhanced navigation handlers with better logging and explicit state updates
+  // Enhanced navigation handlers without toast notifications
   const handleNext = useCallback(() => {
     console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
     
     if (typeof handleNextBase !== 'function') {
       console.error("Next handler is not defined or not a function!", typeof handleNextBase);
-      toast({
-        title: "Navigation Error",
-        description: "Could not navigate to next hole. Please try again.",
-        variant: "destructive"
-      });
       return;
     }
     
@@ -134,18 +129,13 @@ export const RoundTrackingDetail = ({
       // Also call the base handler for any additional logic
       handleNextBase();
     }
-  }, [handleNextBase, currentHole, holeCount, toast, setCurrentHole]);
+  }, [handleNextBase, currentHole, holeCount, setCurrentHole]);
   
   const handlePrevious = useCallback(() => {
     console.log("Previous button pressed in RoundTrackingDetail, current hole:", currentHole);
     
     if (typeof handlePreviousBase !== 'function') {
       console.error("Previous handler is not defined or not a function!", typeof handlePreviousBase);
-      toast({
-        title: "Navigation Error",
-        description: "Could not navigate to previous hole. Please try again.",
-        variant: "destructive"
-      });
       return;
     }
     
@@ -162,7 +152,7 @@ export const RoundTrackingDetail = ({
     
     // Also call the base handler for any additional logic
     handlePreviousBase();
-  }, [handlePreviousBase, currentHole, toast, setCurrentHole]);
+  }, [handlePreviousBase, currentHole, setCurrentHole]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
