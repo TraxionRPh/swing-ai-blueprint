@@ -87,7 +87,8 @@ export const useRoundTracking = () => {
     handleNext: handleNextBase,
     handlePrevious: handlePreviousBase,
     isSaving,
-    currentHoleData
+    currentHoleData,
+    setCurrentHole
   } = useScoreTracking(currentRoundId, selectedCourse?.id, holeScores, setHoleScores);
 
   // Course selection hook
@@ -241,6 +242,7 @@ export const useRoundTracking = () => {
     selectedCourse,
     selectedTee,
     currentHole,
+    setCurrentHole, // Make sure to expose this
     holeScores,
     handleCourseSelect,
     setSelectedTee,
@@ -259,6 +261,6 @@ export const useRoundTracking = () => {
     courseName,
     isLoading,
     handleHoleCountSelect,
-    roundsById // Add roundsById to the return object
+    roundsById
   };
 };

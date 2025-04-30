@@ -63,6 +63,7 @@ export const RoundTrackingDetail = ({
     currentHoleData,
     isSaving,
     finishRound,
+    setCurrentHole
   } = roundTracking;
 
   useEffect(() => {
@@ -76,8 +77,8 @@ export const RoundTrackingDetail = ({
       if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= (holeCount || 18)) {
         console.log(`Applying forced resume to hole ${holeNum}`);
         // Use the setCurrentHole function from roundTracking
-        if (roundTracking.setCurrentHole) {
-          roundTracking.setCurrentHole(holeNum);
+        if (setCurrentHole) {
+          setCurrentHole(holeNum);
         }
         
         // Clear the force-resume flag once applied
@@ -89,7 +90,7 @@ export const RoundTrackingDetail = ({
         });
       }
     }
-  }, [localLoading, holeCount, roundTracking, toast]);
+  }, [localLoading, holeCount, setCurrentHole, toast]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
