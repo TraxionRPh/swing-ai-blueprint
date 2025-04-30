@@ -36,7 +36,6 @@ export const useHolePersistence = (roundId: string | null) => {
       
       console.log('Saving hole data to database:', dataToSave);
       
-      // Fixed issue: removed 'returning' option which doesn't exist in the current API version
       const { error } = await supabase
         .from('hole_scores')
         .upsert(dataToSave, {

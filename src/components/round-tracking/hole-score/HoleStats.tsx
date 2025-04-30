@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 
 interface HoleStatsProps {
   data: HoleData;
@@ -43,35 +43,31 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     onDataChange('distance', parsedValue);
   };
 
-  const handleScoreChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
     console.log(`Setting local score to ${value}`);
     setLocalScore(value);
     
-    // Store the value in the parent component's state only if it's valid
-    // This will prevent clearing the score when navigating
+    // Simply store the entered value in the parent component's data object
+    // Only parse and save if not empty
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
-      if (parsedValue > 0) {
-        onDataChange('score', parsedValue);
-      }
+      onDataChange('score', parsedValue);
     }
-  }, [onDataChange]);
+  };
 
-  const handlePuttsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
     console.log(`Setting local putts to ${value}`);
     setLocalPutts(value);
     
-    // Store the value in the parent component's state only if it's valid
-    // This will allow for empty values and zero values
+    // Simply store the entered value in the parent component's data object
+    // Only parse and save if not empty
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
       onDataChange('putts', parsedValue);
     }
-  }, [onDataChange]);
+  };
 
   return (
     <div className="space-y-4">

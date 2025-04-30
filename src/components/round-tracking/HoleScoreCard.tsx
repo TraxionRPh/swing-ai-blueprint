@@ -42,7 +42,7 @@ export const HoleScoreCard = ({
     setData(holeData);
   }, [holeData]);
 
-  // Improved navigation handlers with saving
+  // Navigation handlers that save data before navigating
   const handleNextHole = () => {
     console.log(`Next hole handler called for hole ${data.holeNumber}`);
     
@@ -105,12 +105,14 @@ export const HoleScoreCard = ({
     const newData = { ...data, [field]: value };
     setData(newData);
     
-    // Immediately notify the parent of the change
-    onUpdate(newData);
-
+    // Update course hole data for par and distance immediately
+    // These are the only fields that need immediate saving
     if ((field === 'par' || field === 'distance') && courseId) {
       saveCourseHoleData(field, value);
     }
+    
+    // For other fields, just update the local state without notifying parent
+    // Parent only gets updated when navigating between holes
   };
 
   return (
