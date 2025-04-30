@@ -7,12 +7,14 @@ export const useHoleNavigation = () => {
   const { holeNumber } = useParams();
   const didInitialize = useRef(false);
   
-  // Initialize the hole number
+  // Initialize the hole number with improved logging
   useEffect(() => {
     if (didInitialize.current) return;
     
     // Mark as initialized to prevent multiple runs
     didInitialize.current = true;
+    
+    console.log("Initializing hole navigation, URL param:", holeNumber);
     
     // Handle URL param if provided (highest priority)
     if (holeNumber && !isNaN(Number(holeNumber))) {
@@ -21,8 +23,16 @@ export const useHoleNavigation = () => {
       return;
     }
     
+    // Check for resume data in session storage (second priority)
+    const resumeHoleNumber = sessionStorage.getItem('resume-hole-number');
+    if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
+      console.log("Using hole number from session storage:", resumeHoleNumber);
+      setCurrentHole(Number(resumeHoleNumber));
+      return;
+    }
+    
     // Default to hole 1 if no specific instructions
-    console.log("No hole number in URL, defaulting to hole 1");
+    console.log("No hole number in URL or session, defaulting to hole 1");
     setCurrentHole(1);
   }, [holeNumber]);
 

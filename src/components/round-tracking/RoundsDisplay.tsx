@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
@@ -91,18 +92,20 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     }
   }, [toast]);
 
+  // Use a shorter timeout for exiting loading state to improve UI responsiveness
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (loading) {
         setLoading(false);
         console.log("Forced exit from loading state in RoundsDisplay after timeout");
       }
-    }, 8000);
+    }, 3000); // reduced from 8s to 3s for faster response
     
     return () => clearTimeout(loadingTimeout);
   }, [loading]);
 
   useEffect(() => {
+    console.log("RoundsDisplay mounted, fetching rounds");
     const controller = new AbortController();
     
     fetchRounds().catch(err => {
@@ -175,33 +178,19 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
 
   const getLastCompletedHole = (holeScores) => {
     if (!holeScores || holeScores.length === 0) {
-      console.log("No hole scores found");
       return 0;
     }
     
     // Find all holes that have scores
     const scoredHoles = holeScores
       .filter(hole => hole.score && hole.score > 0)
-      .sort((a, b) => a.hole_number - b.hole_number); // Sort by hole number ascending
-    
-    // Log all scored holes for debugging
-    if (scoredHoles.length > 0) {
-      console.log("Scored holes:", scoredHoles.map(h => ({
-        hole: h.hole_number,
-        score: h.score
-      })));
-    } else {
-      console.log("No scored holes found");
-    }
+      .sort((a, b) => a.hole_number - b.hole_number);
     
     if (scoredHoles.length > 0) {
       // Get the last hole with a score
-      const lastScoredHole = scoredHoles[scoredHoles.length - 1].hole_number;
-      console.log("Last completed hole:", lastScoredHole);
-      return lastScoredHole;
+      return scoredHoles[scoredHoles.length - 1].hole_number;
     }
     
-    console.log("No holes with scores found");
     return 0;
   };
 
@@ -210,7 +199,6 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     
     return inProgressRounds.map((round) => {
       const lastCompletedHole = getLastCompletedHole(round.hole_scores);
-      console.log(`Round ${round.id} - Last completed hole:`, lastCompletedHole);
       
       return (
         <InProgressRoundCard

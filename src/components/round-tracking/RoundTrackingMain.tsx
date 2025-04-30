@@ -7,27 +7,47 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
 import { RoundDebugPanel } from "./debug/RoundDebugPanel";
+import { useRoundTracking } from "@/hooks/useRoundTracking";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
-  pageLoading: boolean;
-  roundTracking: any;
+  pageLoading?: boolean;
 }
 
 export const RoundTrackingMain = ({
   onBack,
-  pageLoading,
-  roundTracking
+  pageLoading = false
 }: RoundTrackingMainProps) => {
-  const {
-    selectedCourse,
-    handleCourseSelect,
-    setSelectedTee,
-    setHoleCount,
-    currentRoundId
-  } = roundTracking;
+  const [loading, setLoading] = useState(pageLoading);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedTee, setSelectedTee] = useState(null);
+  const [holeCount, setHoleCount] = useState(18);
+  const [currentRoundId, setCurrentRoundId] = useState(null);
+  
+  // Load basic tracking state
+  useEffect(() => {
+    console.log("RoundTrackingMain mounted");
+    // Set a short timeout to ensure UI is responsive
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleCourseSelection = (course: any, courseHoleCount: number | null) => {
+  // Handle course selection
+  const handleCourseSelect = (course) => {
+    console.log("Course selected:", course.name);
+    setSelectedCourse(course);
+    
+    // Set first tee as default if available
+    if (course.course_tees && course.course_tees.length > 0) {
+      setSelectedTee(course.course_tees[0].id);
+    }
+  };
+
+  // Handle course selection that might include hole count
+  const handleCourseSelection = (course, courseHoleCount) => {
     if (courseHoleCount) {
       setHoleCount(courseHoleCount);
     }
@@ -41,7 +61,7 @@ export const RoundTrackingMain = ({
         subtitle="View your rounds and start tracking new ones"
       />
       
-      {pageLoading ? (
+      {loading ? (
         <Card>
           <CardContent className="pt-6 flex justify-center items-center">
             <Loading message="Loading rounds..." minHeight={150} size="md" />
@@ -55,7 +75,7 @@ export const RoundTrackingMain = ({
           {/* Course selector to start a new round */}
           <CourseSelector
             selectedCourse={selectedCourse}
-            selectedTee={roundTracking.selectedTee}
+            selectedTee={selectedTee}
             onCourseSelect={handleCourseSelect}
             onTeeSelect={setSelectedTee}
           />

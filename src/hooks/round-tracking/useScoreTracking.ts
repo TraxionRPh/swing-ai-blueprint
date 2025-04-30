@@ -3,7 +3,6 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "./score/useHoleNavigation";
 import { useHolePersistence } from "./score/use-hole-persistence";
-import { useResumeSession } from "./useResumeSession";
 
 export const useScoreTracking = (
   roundId: string | null, 
@@ -13,19 +12,31 @@ export const useScoreTracking = (
 ) => {
   const { currentHole, setCurrentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
-  const { getResumeHole, resumeHole, clearResumeData } = useResumeSession({ 
-    currentHole, 
-    holeCount: holeScores.length > 0 ? holeScores.length : 18, 
-    roundId 
-  });
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Apply resume hole if available
+  // Simple initialization effect
   useEffect(() => {
+    console.log("useScoreTracking initialized with:", { roundId, currentHole });
+    
+    // Simple timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    
+    return () => clearTimeout(timeout);
+  }, [roundId, currentHole]);
+  
+  // Apply resume hole from session storage if available
+  useEffect(() => {
+    const resumeHole = sessionStorage.getItem('resume-hole-number');
     if (resumeHole && roundId) {
-      console.log(`Setting current hole to resumed hole: ${resumeHole}`);
-      setCurrentHole(resumeHole);
+      const holeNum = Number(resumeHole);
+      if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= 18) {
+        console.log(`Setting current hole to resumed hole: ${holeNum}`);
+        setCurrentHole(holeNum);
+      }
     }
-  }, [resumeHole, roundId, setCurrentHole]);
+  }, [roundId, setCurrentHole]);
   
   // Create memoized current hole data
   const currentHoleData = useMemo(() => {
@@ -72,13 +83,21 @@ export const useScoreTracking = (
     }
   }, [roundId, saveHoleScore, setHoleScores, holeScores]);
 
+  // Clear any resume data
+  const clearResumeData = useCallback(() => {
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
+    console.log("Resume data cleared");
+  }, []);
+
   return {
     currentHole,
     setCurrentHole,
     handleHoleUpdate,
     handleNext,
     handlePrevious,
-    isSaving,
+    isSaving: isSaving || isLoading,
     currentHoleData,
     clearResumeData
   };

@@ -6,6 +6,9 @@ import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
 import { HoleSavingIndicator } from "@/components/round-tracking/hole-score/HoleSavingIndicator";
+import { useRoundTracking } from "@/hooks/useRoundTracking";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -13,19 +16,40 @@ interface RoundTrackingDetailProps {
   isLoading: boolean;
   loadingStage?: string;
   retryLoading: () => void;
-  roundTracking: any;
+  roundTracking?: any; // Make this optional so we can use our own if needed
 }
 
 export const RoundTrackingDetail = ({
   onBack,
   currentRoundId,
-  isLoading,
+  isLoading: externalLoading,
   loadingStage = "Loading...",
-  retryLoading,
-  roundTracking
+  retryLoading
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Use our own instance of roundTracking to ensure we have what we need
+  const roundTracking = useRoundTracking();
+  
+  // Set the current round ID to match what was passed in
+  useEffect(() => {
+    console.log("RoundTrackingDetail - Setting current round ID:", currentRoundId);
+    if (currentRoundId && roundTracking.setCurrentRoundId) {
+      roundTracking.setCurrentRoundId(currentRoundId);
+    }
+  }, [currentRoundId, roundTracking]);
+  
+  // Set a timeout to exit loading state regardless
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLocalLoading(false);
+      console.log("RoundTrackingDetail - Force exiting loading state after timeout");
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Get the required data from the roundTracking hook
   const {
@@ -41,16 +65,13 @@ export const RoundTrackingDetail = ({
     finishRound,
   } = roundTracking;
 
-  // Get the current round data
-  const currentRoundData = roundTracking.roundsById?.[currentRoundId];
-
   useEffect(() => {
     // Check if there's forced resume data that should be applied
     const forceResume = sessionStorage.getItem('force-resume');
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
                             localStorage.getItem('resume-hole-number');
                             
-    if (forceResume === 'true' && resumeHoleNumber && !isLoading && currentRoundData) {
+    if (forceResume === 'true' && resumeHoleNumber && !localLoading) {
       const holeNum = parseInt(resumeHoleNumber, 10);
       if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= (holeCount || 18)) {
         console.log(`Applying forced resume to hole ${holeNum}`);
@@ -68,7 +89,7 @@ export const RoundTrackingDetail = ({
         });
       }
     }
-  }, [isLoading, currentRoundData, holeCount, roundTracking, toast]);
+  }, [localLoading, holeCount, roundTracking, toast]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
@@ -79,19 +100,8 @@ export const RoundTrackingDetail = ({
     onBack();
   };
 
-  // Log to debug component state
-  console.log("RoundTrackingDetail rendering", { 
-    currentRoundId, 
-    isLoading, 
-    hasRoundData: !!currentRoundData,
-    holeScores: holeScores?.length || 0,
-    currentHole,
-    resumeInfo: {
-      forceResume: sessionStorage.getItem('force-resume'),
-      sessionHole: sessionStorage.getItem('resume-hole-number'),
-      localHole: localStorage.getItem('resume-hole-number')
-    }
-  });
+  // Track if we have the data we need
+  const isDataReady = !localLoading && !externalLoading && holeScores && currentHoleData;
 
   const handleNext = () => {
     if (currentHole === holeCount) {
@@ -101,18 +111,25 @@ export const RoundTrackingDetail = ({
     }
   };
 
-  // If data is still loading or we don't have round data, show the loading state
-  if (isLoading || !currentRoundData) {
+  // If data is still loading, show a simple loading skeleton
+  if (!isDataReady) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBackNavigation} />
         
-        <LoadingState 
-          onBack={handleBackNavigation} 
-          message={`Loading round data... (${loadingStage})`} 
-          retryFn={retryLoading}
-          roundId={currentRoundId || undefined}
-        />
+        <Card>
+          <CardContent className="py-6">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-8 w-1/2" />
+              <div className="flex justify-between gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
