@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,9 @@ export const useHolePersistence = (roundId: string | null) => {
       
       console.log('Saving hole data to database:', dataToSave);
       
+      // Track time for the save operation
+      const startTime = Date.now();
+      
       const { error } = await supabase
         .from('hole_scores')
         .upsert(dataToSave, {
@@ -45,6 +49,9 @@ export const useHolePersistence = (roundId: string | null) => {
         console.error('Error in supabase upsert:', error);
         throw error;
       }
+      
+      const saveTime = Date.now() - startTime;
+      console.log(`Database save completed in ${saveTime}ms`);
       
       // Only update round summary after successful save of hole data
       await updateRoundSummary(roundId);
@@ -57,6 +64,20 @@ export const useHolePersistence = (roundId: string | null) => {
         variant: "default"
       });
       
+      // Verify data was saved by checking the database again
+      const { data: verifyData } = await supabase
+        .from('hole_scores')
+        .select('*')
+        .eq('round_id', roundId)
+        .eq('hole_number', holeData.holeNumber)
+        .single();
+      
+      if (verifyData) {
+        console.log(`Verified data was saved for hole ${holeData.holeNumber}:`, verifyData);
+      } else {
+        console.warn(`Could not verify data was saved for hole ${holeData.holeNumber}`);
+      }
+      
       return true;
       
     } catch (error: any) {
@@ -68,10 +89,10 @@ export const useHolePersistence = (roundId: string | null) => {
       });
       return false;
     } finally {
-      // Add a slight delay before removing the saving indicator
+      // Add a slightly longer delay before removing the saving indicator
       setTimeout(() => {
         setIsSaving(false);
-      }, 300);
+      }, 500);
     }
   };
 

@@ -34,6 +34,7 @@ export const HoleScoreCard = ({
 }: HoleScoreCardProps) => {
   const [data, setData] = useState<HoleData>(holeData);
   const [localIsSaving, setLocalIsSaving] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { toast } = useToast();
   const formRefs = useRef<{ prepareForSave?: () => HoleData }>({});
   
@@ -44,10 +45,25 @@ export const HoleScoreCard = ({
       setData(holeData);
     }
   }, [holeData.holeNumber]);
+  
+  // Also update local state when important hole data changes
+  useEffect(() => {
+    if (!isNavigating) {
+      console.log("HoleScoreCard: Score or putts changed, updating local data");
+      setData(prev => ({
+        ...prev,
+        score: holeData.score,
+        putts: holeData.putts
+      }));
+    }
+  }, [holeData.score, holeData.putts, isNavigating]);
 
   // Navigation handlers that explicitly save data before navigating
   const handleNextHole = () => {
+    if (isNavigating) return;
+    
     console.log(`Next hole handler called for hole ${data.holeNumber}`);
+    setIsNavigating(true);
     
     // First collect any pending form data using the exposed function
     if (typeof formRefs.current.prepareForSave === 'function') {
@@ -65,7 +81,8 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onNext();
           }
-        }, 300); // Increased delay to ensure save completes
+          setIsNavigating(false);
+        }, 500); // Increased delay to ensure save completes
       } catch (err) {
         console.error("Error preparing data for save:", err);
         toast({
@@ -73,17 +90,22 @@ export const HoleScoreCard = ({
           description: "There was a problem saving your score. Please try again.",
           variant: "destructive"
         });
+        setIsNavigating(false);
         // Don't navigate if there was an error
       }
     } else {
       console.warn("No prepareForSave function available");
       // Fall back to direct navigation if no save function is available
       if (typeof onNext === 'function') onNext();
+      setIsNavigating(false);
     }
   };
   
   const handlePreviousHole = () => {
+    if (isNavigating) return;
+    
     console.log(`Previous hole handler called for hole ${data.holeNumber}`);
+    setIsNavigating(true);
     
     // First collect any pending form data using the exposed function
     if (typeof formRefs.current.prepareForSave === 'function') {
@@ -101,7 +123,8 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onPrevious();
           }
-        }, 300); // Increased delay to ensure save completes
+          setIsNavigating(false);
+        }, 500); // Increased delay to ensure save completes
       } catch (err) {
         console.error("Error preparing data for save:", err);
         toast({
@@ -109,12 +132,14 @@ export const HoleScoreCard = ({
           description: "There was a problem saving your score. Please try again.",
           variant: "destructive"
         });
+        setIsNavigating(false);
         // Don't navigate if there was an error
       }
     } else {
       console.warn("No prepareForSave function available");
       // Fall back to direct navigation if no save function is available
       if (typeof onPrevious === 'function') onPrevious();
+      setIsNavigating(false);
     }
   };
   
@@ -171,8 +196,7 @@ export const HoleScoreCard = ({
       saveCourseHoleData(field, value);
     }
     
-    // Pass ALL field updates to parent to ensure they're available for navigation
-    // Exclude the prepareForSave function which is handled differently
+    // Force immediate update to parent for ALL fields to prevent data loss
     onUpdate(newData);
   };
 
@@ -191,7 +215,7 @@ export const HoleScoreCard = ({
         </CardContent>
       </Card>
       
-      <HoleSavingIndicator isSaving={isSaving || localIsSaving} />
+      <HoleSavingIndicator isSaving={isSaving || localIsSaving || isNavigating} />
     </>
   );
 };

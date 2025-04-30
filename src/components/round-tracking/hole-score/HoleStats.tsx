@@ -27,7 +27,7 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     // For score fields, only update if they have actual values
     setLocalScore(data.score > 0 ? data.score : '');
     setLocalPutts(data.putts > 0 ? data.putts : '');
-  }, [data.holeNumber]); // Only dependency is hole number, not entire data object
+  }, [data.holeNumber, data.par, data.distance, data.score, data.putts]); // Added additional dependencies to reflect changes
 
   const handleParChange = (value: string) => {
     if (!value) return;
@@ -56,11 +56,14 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     // Update local state
     setLocalScore(value);
     
-    // IMPORTANT: Update parent immediately with score changes
+    // IMMEDIATE UPDATE: Send score changes to parent right away
     // This ensures the data is available when navigating
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
       onDataChange('score', parsedValue);
+      
+      // Log confirmation of update
+      console.log(`Score updated to ${parsedValue} for hole ${data.holeNumber}`);
     }
   };
 
@@ -71,11 +74,14 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     // Update local state
     setLocalPutts(value);
     
-    // IMPORTANT: Update parent immediately with putts changes
+    // IMMEDIATE UPDATE: Send putts changes to parent right away
     // This ensures the data is available when navigating
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
       onDataChange('putts', parsedValue);
+      
+      // Log confirmation of update
+      console.log(`Putts updated to ${parsedValue} for hole ${data.holeNumber}`);
     }
   };
 
