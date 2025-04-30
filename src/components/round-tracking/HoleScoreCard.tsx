@@ -154,16 +154,15 @@ export const HoleScoreCard = ({
   const handleChange = (field: keyof HoleData, value: any) => {
     console.log(`HoleScoreCard: Updating field ${field} to ${value} for hole ${data.holeNumber}`);
     
-    // Update local state
-    const newData = { ...data, [field]: value };
-    
-    // Attach the form ref handler to allow collecting data before navigation
-    if (field === 'prepareForSave') {
+    // Special handling for the prepareForSave function
+    if (field === 'prepareForSave' as keyof HoleData) {
       console.log("Registering prepareForSave function");
       formRefs.current.prepareForSave = value;
       return;
     }
     
+    // Update local state
+    const newData = { ...data, [field]: value };
     setData(newData);
     
     // Update course hole data for par and distance immediately
@@ -172,12 +171,9 @@ export const HoleScoreCard = ({
       saveCourseHoleData(field, value);
     }
     
-    // For score fields, we only update the local state, not notify parent
-    // Score and putts will be saved only on navigation
-    if (field !== 'prepareForSave') {
-      // Pass ALL field updates to parent to ensure they're available for navigation
-      onUpdate(newData);
-    }
+    // Pass ALL field updates to parent to ensure they're available for navigation
+    // Exclude the prepareForSave function which is handled differently
+    onUpdate(newData);
   };
 
   return (
