@@ -12,12 +12,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
+import { AchievedGoal } from "@/hooks/useGoalAchievement";
 
 interface GoalAchievementModalProps {
-  achievedGoal: {
-    type: 'score' | 'handicap';
-    value: number;
-  } | null;
+  achievedGoal: AchievedGoal;
   onClose: () => void;
   onSetNewGoal: () => void;
 }
