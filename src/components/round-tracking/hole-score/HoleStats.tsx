@@ -16,16 +16,18 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const [localScore, setLocalScore] = useState<number | string>(data.score || '');
   const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
 
-  // This effect ensures local state is updated when the hole number changes
+  // This effect updates local state ONLY when the hole number changes
   useEffect(() => {
-    console.log("HoleStats: Updating from hole data:", data);
+    console.log("HoleStats: New hole detected, updating local state:", data.holeNumber);
+    
+    // Only update local state when hole number changes
     setLocalPar(data.par || 4);
     setLocalDistance(data.distance || '');
     
-    // Only set actual values, not zeros
+    // For score fields, only update if they have actual values
     setLocalScore(data.score > 0 ? data.score : '');
     setLocalPutts(data.putts > 0 ? data.putts : '');
-  }, [data.holeNumber, data]);
+  }, [data.holeNumber]); // Only dependency is hole number, not entire data object
 
   const handleParChange = (value: string) => {
     if (!value) return;
@@ -33,12 +35,16 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     const parsedValue = parseInt(value) || 3;
     console.log(`Changing par to ${parsedValue}`);
     setLocalPar(parsedValue);
+    
+    // Par and distance are course metadata, so they should update immediately
     onDataChange('par', parsedValue);
   };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalDistance(value);
+    
+    // Par and distance are course metadata, so they should update immediately
     const parsedValue = parseInt(value) || 0;
     onDataChange('distance', parsedValue);
   };
@@ -46,28 +52,38 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     console.log(`Setting local score to ${value}`);
-    setLocalScore(value);
     
-    // Simply store the entered value in the parent component's data object
-    // Only parse and save if not empty
-    if (value !== '') {
-      const parsedValue = parseInt(value) || 0;
-      onDataChange('score', parsedValue);
-    }
+    // ONLY update local state, don't notify parent
+    setLocalScore(value);
   };
 
   const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     console.log(`Setting local putts to ${value}`);
-    setLocalPutts(value);
     
-    // Simply store the entered value in the parent component's data object
-    // Only parse and save if not empty
-    if (value !== '') {
-      const parsedValue = parseInt(value) || 0;
-      onDataChange('putts', parsedValue);
-    }
+    // ONLY update local state, don't notify parent
+    setLocalPutts(value);
   };
+
+  // New function to prepare all data for saving
+  // This will be called by the parent when navigation happens
+  const prepareDataForSave = () => {
+    // Get current local values
+    const scoreValue = localScore !== '' ? parseInt(String(localScore)) || 0 : 0;
+    const puttsValue = localPutts !== '' ? parseInt(String(localPutts)) || 0 : 0;
+    
+    console.log(`Preparing data for save: score=${scoreValue}, putts=${puttsValue}`);
+    
+    // Update parent with current local values
+    if (scoreValue > 0) onDataChange('score', scoreValue);
+    if (puttsValue >= 0) onDataChange('putts', puttsValue);
+  };
+
+  // Expose the save function via ref or prop
+  // This makes it accessible to the parent component
+  if (typeof data.prepareForSave === 'function') {
+    data.prepareForSave = prepareDataForSave;
+  }
 
   return (
     <div className="space-y-4">

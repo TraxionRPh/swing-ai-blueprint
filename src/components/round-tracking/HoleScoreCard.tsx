@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,18 +35,26 @@ export const HoleScoreCard = ({
   const [data, setData] = useState<HoleData>(holeData);
   const [localIsSaving, setLocalIsSaving] = useState(false);
   const { toast } = useToast();
+  const formRefs = useRef<{ prepareForSave?: () => void }>({});
   
-  // Update local state when hole data changes
+  // Update local state when hole data changes (only for hole number changes)
   useEffect(() => {
-    console.log("HoleScoreCard: Received new hole data:", holeData);
-    setData(holeData);
-  }, [holeData]);
+    if (data.holeNumber !== holeData.holeNumber) {
+      console.log("HoleScoreCard: Hole number changed:", holeData.holeNumber);
+      setData(holeData);
+    }
+  }, [holeData.holeNumber]);
 
-  // Navigation handlers that save data before navigating
+  // Navigation handlers that ONLY save data before navigating
   const handleNextHole = () => {
     console.log(`Next hole handler called for hole ${data.holeNumber}`);
     
-    // First update the parent component with current data
+    // First collect any pending form data using the exposed function
+    if (typeof formRefs.current.prepareForSave === 'function') {
+      formRefs.current.prepareForSave();
+    }
+    
+    // Then update the parent component with current data
     onUpdate(data);
     
     // Then call the parent's next function
@@ -58,7 +66,12 @@ export const HoleScoreCard = ({
   const handlePreviousHole = () => {
     console.log(`Previous hole handler called for hole ${data.holeNumber}`);
     
-    // First update the parent component with current data
+    // First collect any pending form data using the exposed function
+    if (typeof formRefs.current.prepareForSave === 'function') {
+      formRefs.current.prepareForSave();
+    }
+    
+    // Then update the parent component with current data
     onUpdate(data);
     
     // Then call the parent's previous function
@@ -102,7 +115,16 @@ export const HoleScoreCard = ({
 
   const handleChange = (field: keyof HoleData, value: any) => {
     console.log(`HoleScoreCard: Updating field ${field} to ${value} for hole ${data.holeNumber}`);
+    
+    // Update local state
     const newData = { ...data, [field]: value };
+    
+    // Attach the form ref handler to allow collecting data before navigation
+    if (field === 'prepareForSave') {
+      formRefs.current.prepareForSave = value;
+      return;
+    }
+    
     setData(newData);
     
     // Update course hole data for par and distance immediately
@@ -111,8 +133,8 @@ export const HoleScoreCard = ({
       saveCourseHoleData(field, value);
     }
     
-    // For other fields, just update the local state without notifying parent
-    // Parent only gets updated when navigating between holes
+    // For score fields, we only update the local state, not notify parent
+    // Score and putts will be saved only on navigation
   };
 
   return (
@@ -120,7 +142,7 @@ export const HoleScoreCard = ({
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6 space-y-4">
           <HoleHeader holeNumber={data.holeNumber} />
-          <HoleScoreForm data={data} onDataChange={handleChange} />
+          <HoleScoreForm data={{...data, prepareForSave: () => {}}} onDataChange={handleChange} />
           <HoleNavigation 
             onNext={handleNextHole}
             onPrevious={handlePreviousHole}

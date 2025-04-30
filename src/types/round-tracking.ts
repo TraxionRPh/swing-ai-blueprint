@@ -26,6 +26,8 @@ export interface HoleData {
   putts: number;
   fairwayHit?: boolean;
   greenInRegulation?: boolean;
+  // Add a property to allow forms to prepare data for save
+  prepareForSave?: () => void;
 }
 
 export interface RoundData {
