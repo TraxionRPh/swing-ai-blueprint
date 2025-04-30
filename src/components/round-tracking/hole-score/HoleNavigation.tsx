@@ -15,14 +15,17 @@ export const HoleNavigation = ({
   isFirst,
   isLast
 }: HoleNavigationProps) => {
-  // Simple handlers that call the provided callbacks
+  // Handle next button click with logging
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("Next button clicked in HoleNavigation");
     if (onNext) onNext();
   };
   
+  // Handle previous button click with logging
   const handlePrevious = (e: React.MouseEvent) => {
     e.preventDefault();
+    console.log("Previous button clicked in HoleNavigation");
     if (onPrevious) onPrevious();
   };
 

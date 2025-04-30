@@ -18,22 +18,22 @@ export const RoundTrackingLoading = ({
   retryLoading,
   error
 }: RoundTrackingLoadingProps) => {
-  // Simplified loading message based on whether we have a roundId
+  // Create appropriate loading message
   const loadingMessage = roundId 
-    ? `Loading round data${roundId ? ` (${roundId.substring(0, 8)}...)` : ''}`
-    : "Loading round data...";
+    ? `Loading round ${roundId.substring(0, 8)}...` 
+    : "Loading rounds...";
 
   return (
     <div className="space-y-6">
       <RoundTrackingHeader onBack={onBack} />
       
       <Card>
-        <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[200px]">
-          <Loading message={loadingMessage} minHeight={150} />
+        <CardContent className="py-6 flex flex-col items-center justify-center min-h-[250px]">
+          <Loading message={loadingMessage} minHeight={200} />
           
           {error && (
             <div className="mt-8 text-center">
-              <p className="text-sm text-red-500 mb-4">{error}</p>
+              <p className="text-sm text-destructive mb-4">{error}</p>
               <Button onClick={retryLoading}>
                 <RefreshCcw className="h-4 w-4 mr-2" />
                 Retry

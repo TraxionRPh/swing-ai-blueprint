@@ -31,32 +31,37 @@ export const RoundTrackingDetail = ({
   const [localLoading, setLocalLoading] = useState(true);
   const { toast } = useToast();
   
+  console.log("RoundTrackingDetail rendered with ID:", currentRoundId, "loading:", localLoading);
+  
   // Use round tracking hook
   const roundTracking = useRoundTracking();
   
   // Set the current round ID when the component mounts
   useEffect(() => {
-    console.log("RoundTrackingDetail - Setting current round ID:", currentRoundId);
+    console.log("Setting current round ID:", currentRoundId);
+    
     if (currentRoundId && roundTracking.setCurrentRoundId) {
       roundTracking.setCurrentRoundId(currentRoundId);
-    }
-  }, [currentRoundId, roundTracking.setCurrentRoundId]);
-  
-  // Exit loading state after a short delay
-  useEffect(() => {
-    console.log("Setting up loading exit timer");
-    const timer = setTimeout(() => {
+      
+      // Start a timer to force exit from loading after a reasonable time
+      const timer = setTimeout(() => {
+        console.log("Forcing exit from loading state after timeout");
+        setLocalLoading(false);
+        if (setDetailLoading) setDetailLoading(false);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // No round ID, exit loading immediately
       setLocalLoading(false);
       if (setDetailLoading) setDetailLoading(false);
-      console.log("RoundTrackingDetail - Exiting loading state");
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, [setDetailLoading]);
+    }
+  }, [currentRoundId, roundTracking.setCurrentRoundId, setDetailLoading]);
   
   // Handle errors from the roundTracking hook
   useEffect(() => {
     if (roundTracking.error && setDetailError) {
+      console.error("Round tracking error:", roundTracking.error);
       setDetailError(roundTracking.error);
     }
   }, [roundTracking.error, setDetailError]);
@@ -77,7 +82,7 @@ export const RoundTrackingDetail = ({
     finishRound
   } = roundTracking;
 
-  // Apply resume hole if available - simplified approach
+  // Apply resume hole if available
   useEffect(() => {
     if (localLoading || !setCurrentHole) return;
     
@@ -104,7 +109,8 @@ export const RoundTrackingDetail = ({
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
-    // Clear any resume data to prevent unexpected behavior
+    console.log("Back navigation triggered in RoundTrackingDetail");
+    // Clear any resume data
     sessionStorage.removeItem('resume-hole-number');
     localStorage.removeItem('resume-hole-number');
     sessionStorage.removeItem('force-resume');
@@ -113,12 +119,16 @@ export const RoundTrackingDetail = ({
 
   // Check if we have the data we need to render
   const isDataReady = !localLoading && holeScores?.length > 0 && !!currentHoleData;
+  console.log("Data ready check:", { isDataReady, localLoading, holeScoresLength: holeScores?.length });
 
   // Handle next button with final score
   const handleNext = () => {
+    console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
     if (currentHole === holeCount) {
+      console.log("Showing final score view");
       setShowFinalScore(true);
     } else if (handleNextBase) {
+      console.log("Moving to next hole");
       handleNextBase();
     }
   };

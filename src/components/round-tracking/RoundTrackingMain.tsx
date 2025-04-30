@@ -26,17 +26,13 @@ export const RoundTrackingMain = ({
   const [holeCount, setHoleCount] = useState(18);
   const navigate = useNavigate();
   
-  // Initialize component - simple approach
+  console.log("RoundTrackingMain rendered with localLoading:", localLoading);
+  
+  // Exit loading state right away
   useEffect(() => {
-    console.log("RoundTrackingMain mounted");
-    
-    // Short timeout to exit loading state
-    const timer = setTimeout(() => {
-      if (setMainLoading) setMainLoading(false);
-      setLocalLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    console.log("RoundTrackingMain mounted, setting loading to false");
+    setLocalLoading(false);
+    if (setMainLoading) setMainLoading(false);
   }, [setMainLoading]);
 
   // Handle course selection
@@ -52,6 +48,7 @@ export const RoundTrackingMain = ({
 
   // Handle course selection that might include hole count
   const handleCourseSelection = (course, courseHoleCount) => {
+    console.log("Course selected with hole count:", courseHoleCount);
     if (courseHoleCount) {
       setHoleCount(courseHoleCount);
     }
@@ -77,6 +74,7 @@ export const RoundTrackingMain = ({
           <RoundsDisplay 
             onCourseSelect={handleCourseSelection} 
             onError={(error) => {
+              console.error("Rounds display error:", error);
               if (setMainError) setMainError(error);
             }}
           />

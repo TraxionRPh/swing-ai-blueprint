@@ -8,25 +8,30 @@ export const useRoundNavigation = (
   holeCount: number | null,
   isLoading: boolean = false
 ) => {
-  // Simple next handler with basic validation
+  // Simple next handler with clear logging
   const handleNext = useCallback(() => {
     if (isLoading) {
       console.log("Navigation blocked: loading in progress");
       return;
     }
     
-    console.log(`Navigating from hole ${currentHole}`);
+    console.log(`Next button clicked. Moving from hole ${currentHole}`);
     handleNextBase();
   }, [handleNextBase, currentHole, isLoading]);
   
-  // Simple previous handler with basic validation
+  // Simple previous handler with clear validation
   const handlePrev = useCallback(() => {
-    if (isLoading || currentHole <= 1) {
-      console.log("Navigation blocked: loading or at first hole");
+    if (isLoading) {
+      console.log("Navigation blocked: loading in progress");
       return;
     }
     
-    console.log(`Navigating to previous hole from ${currentHole}`);
+    if (currentHole <= 1) {
+      console.log("Cannot navigate back from first hole");
+      return;
+    }
+    
+    console.log(`Previous button clicked. Moving from hole ${currentHole}`);
     handlePrevious();
   }, [handlePrevious, currentHole, isLoading]);
 

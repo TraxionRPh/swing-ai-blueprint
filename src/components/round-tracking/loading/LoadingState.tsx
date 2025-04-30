@@ -23,9 +23,9 @@ export const LoadingState = ({
   roundId,
   error
 }: LoadingStateProps) => {
-  // Simple display message that includes roundId if available
+  // Create display message with round ID if available
   const displayMessage = roundId 
-    ? `${message} (${roundId.substring(0, 8)}...)`
+    ? `${message} (Round ID: ${roundId.substring(0, 8)}...)` 
     : message;
   
   return (

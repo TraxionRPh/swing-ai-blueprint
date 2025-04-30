@@ -13,28 +13,30 @@ const RoundTracking = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Extract roundId from URL path - simple approach
+  // Extract roundId from URL path
   const pathname = window.location.pathname;
   const isMainPage = pathname === '/rounds';
   const isDetailPage = pathname.match(/\/rounds\/[a-zA-Z0-9-]+$/);
   const roundId = isDetailPage ? pathname.split('/').pop() : null;
   
-  // Add a simple timeout to exit loading state after a reasonable time
+  // Initialize component and exit loading state
   useEffect(() => {
-    console.log("RoundTracking mounted, initializing with loading:", loading);
-    console.log("Current path:", pathname, "isMainPage:", isMainPage, "roundId:", roundId);
+    console.log("RoundTracking mounted with path:", pathname);
+    console.log("isMainPage:", isMainPage, "roundId:", roundId);
     
+    // Exit loading state after initial setup
     const timer = setTimeout(() => {
       setLoading(false);
-      console.log("Automatic loading timeout elapsed, forcing loading to complete");
-    }, 2000); // Short timeout for better UX
+      console.log("Initial loading state complete");
+    }, 500); // Short timeout for better UX
     
     return () => clearTimeout(timer);
   }, [pathname]);
   
   // Handle back navigation
   const handleBack = () => {
-    // Clear any resume data in session storage to prevent unexpected behavior
+    console.log("Back navigation triggered");
+    // Clear any resume data
     sessionStorage.removeItem('resume-hole-number');
     localStorage.removeItem('resume-hole-number');
     sessionStorage.removeItem('force-resume');
@@ -47,10 +49,7 @@ const RoundTracking = () => {
     setError(null);
     setLoading(true);
     
-    // Short timeout to ensure state updates before reloading
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    window.location.reload();
   };
 
   // Simple conditional rendering based on page type

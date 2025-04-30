@@ -1,3 +1,4 @@
+
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
@@ -31,22 +32,36 @@ export const HoleScoreView = ({
   holeScores,
   isLoading = false
 }: HoleScoreViewProps) => {
+  console.log("HoleScoreView rendered:", { 
+    currentHole, 
+    holeCount,
+    isLoading,
+    isSaving,
+    currentHoleData
+  });
+  
   // Ensure we have valid hole data that matches the current hole
   const validatedHoleData = useMemo(() => {
-    if (isLoading) return null;
+    if (isLoading) {
+      console.log("Skipping hole data validation due to loading state");
+      return null;
+    }
     
     // If the currentHoleData matches the current hole, use it
     if (currentHoleData && currentHoleData.holeNumber === currentHole) {
+      console.log("Using provided currentHoleData for hole:", currentHole);
       return currentHoleData;
     }
     
     // Otherwise, try to find the hole in the scores array
     const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
     if (matchingHole) {
+      console.log("Found matching hole in scores for hole:", currentHole);
       return matchingHole;
     }
     
     // If all else fails, create a default hole
+    console.log("Creating default hole data for:", currentHole);
     return {
       holeNumber: currentHole,
       par: 4,
@@ -59,6 +74,7 @@ export const HoleScoreView = ({
   }, [currentHoleData, currentHole, holeScores, isLoading]);
     
   if (isLoading || !validatedHoleData) {
+    console.log("Showing HoleScoreViewSkeleton due to loading or missing data");
     return <HoleScoreViewSkeleton />;
   }
   
