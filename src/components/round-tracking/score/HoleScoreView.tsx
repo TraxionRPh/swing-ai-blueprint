@@ -2,7 +2,7 @@
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface HoleScoreViewProps {
@@ -77,24 +77,34 @@ export const HoleScoreView = ({
     return <HoleScoreViewSkeleton />;
   }
   
-  // Simplified direct pass-through of navigation handlers
-  const handlePreviousHole = () => {
-    console.log(`Previous clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
-    if (handlePrevious) {
-      handlePrevious();
-    } else {
-      console.warn("No previous handler provided to HoleScoreView");
-    }
-  };
-  
-  const handleNextHole = () => {
+  // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
+  const handleNextHole = useCallback(() => {
     console.log(`Next clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
-    if (handleNext) {
-      handleNext();
+    
+    if (typeof handleNext === 'function') {
+      // Use a direct function call with setTimeout to ensure execution after current event loop
+      setTimeout(() => {
+        console.log("Executing next handler from HoleScoreView");
+        handleNext();
+      }, 0);
     } else {
-      console.warn("No next handler provided to HoleScoreView");
+      console.warn("No next handler provided to HoleScoreView", handleNext);
     }
-  };
+  }, [handleNext, currentHole]);
+  
+  const handlePreviousHole = useCallback(() => {
+    console.log(`Previous clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
+    
+    if (typeof handlePrevious === 'function') {
+      // Use a direct function call with setTimeout to ensure execution after current event loop
+      setTimeout(() => {
+        console.log("Executing previous handler from HoleScoreView");
+        handlePrevious();
+      }, 0);
+    } else {
+      console.warn("No previous handler provided to HoleScoreView", handlePrevious);
+    }
+  }, [handlePrevious, currentHole]);
   
   return (
     <>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
@@ -102,11 +102,11 @@ export const RoundTrackingDetail = ({
     sessionStorage.removeItem('force-resume');
   }, [localLoading, holeCount, setCurrentHole, toast]);
 
-  // Enhanced navigation handlers with better logging
-  const handleNext = () => {
+  // Enhanced navigation handlers with better logging and explicit function checks
+  const handleNext = useCallback(() => {
     console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
     
-    if (handleNextBase) {
+    if (typeof handleNextBase === 'function') {
       if (currentHole === holeCount) {
         console.log("Showing final score view");
         setShowFinalScore(true);
@@ -115,20 +115,30 @@ export const RoundTrackingDetail = ({
         handleNextBase();
       }
     } else {
-      console.error("Next handler is not defined!");
+      console.error("Next handler is not defined or not a function!", typeof handleNextBase);
+      toast({
+        title: "Navigation Error",
+        description: "Could not navigate to next hole. Please try again.",
+        variant: "destructive"
+      });
     }
-  };
+  }, [handleNextBase, currentHole, holeCount, toast]);
   
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     console.log("Previous button pressed in RoundTrackingDetail, current hole:", currentHole);
     
-    if (handlePreviousBase) {
+    if (typeof handlePreviousBase === 'function') {
       console.log("Moving to previous hole via base handler");
       handlePreviousBase();
     } else {
-      console.error("Previous handler is not defined!");
+      console.error("Previous handler is not defined or not a function!", typeof handlePreviousBase);
+      toast({
+        title: "Navigation Error",
+        description: "Could not navigate to previous hole. Please try again.",
+        variant: "destructive"
+      });
     }
-  };
+  }, [handlePreviousBase, currentHole, toast]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
