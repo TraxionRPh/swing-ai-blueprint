@@ -40,7 +40,7 @@ export const HoleScoreCard = ({
     setData(holeData);
   }, [holeData.holeNumber]);
 
-  // Enhanced navigation handlers with detailed logging
+  // Simplified direct pass-through navigation handlers
   const handleNextHole = () => {
     console.log(`Next hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
     if (onNext) {

@@ -16,12 +16,10 @@ export const useRoundNavigation = (
     }
     
     console.log(`Next button clicked. Moving from hole ${currentHole} to next hole`);
-    
-    // Ensure the base function is called directly
     handleNextBase();
   }, [handleNextBase, currentHole, isLoading]);
   
-  // Enhanced previous handler with better validation and debugging
+  // Fixed previous handler - directly call the provided function
   const handlePrev = useCallback(() => {
     if (isLoading) {
       console.log("Navigation blocked: loading in progress");
@@ -34,13 +32,11 @@ export const useRoundNavigation = (
     }
     
     console.log(`Previous button clicked. Moving from hole ${currentHole} to previous hole`);
-    
-    // Call the base function directly with additional logging
     console.log("Calling handlePrevious base function");
     handlePrevious();
   }, [handlePrevious, currentHole, isLoading]);
 
-  // Return both functions with consistent naming to avoid confusion
+  // Return both functions with consistent naming
   return { 
     handleNext, 
     handlePrevious: handlePrev 

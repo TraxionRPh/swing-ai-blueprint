@@ -15,9 +15,10 @@ export const HoleNavigation = ({
   isFirst,
   isLast
 }: HoleNavigationProps) => {
-  // Enhanced previous button click handler with more detailed logging
+  // Fixed previous button handler - use direct function call
   const handlePrevious = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
     console.log("Previous button clicked in HoleNavigation component");
     
     if (onPrevious) {
@@ -28,9 +29,10 @@ export const HoleNavigation = ({
     }
   };
   
-  // Enhanced next button handler with better logging
+  // Fixed next button handler - use direct function call
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
     console.log("Next button clicked in HoleNavigation component");
     
     if (onNext) {
@@ -48,13 +50,14 @@ export const HoleNavigation = ({
         onClick={handlePrevious} 
         disabled={isFirst}
         type="button"
+        className="w-[140px]" // Fixed width to prevent jumpy layout
       >
         Previous Hole
       </Button>
       <Button 
         onClick={handleNext} 
         disabled={isLast && !onNext}
-        className={isLast ? "bg-primary hover:bg-primary/90" : ""}
+        className={`${isLast ? "bg-primary hover:bg-primary/90" : ""} w-[140px]`} // Fixed width
         type="button"
       >
         {isLast ? (

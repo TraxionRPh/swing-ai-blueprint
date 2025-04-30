@@ -1,3 +1,4 @@
+
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
@@ -76,15 +77,23 @@ export const HoleScoreView = ({
     return <HoleScoreViewSkeleton />;
   }
   
-  // Direct pass-through of navigation handlers with consistent function names
-  const handlePreviousWrapped = () => {
+  // Simplified direct pass-through of navigation handlers
+  const handlePreviousHole = () => {
     console.log(`Previous clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
-    handlePrevious();
+    if (handlePrevious) {
+      handlePrevious();
+    } else {
+      console.warn("No previous handler provided to HoleScoreView");
+    }
   };
   
-  const handleNextWrapped = () => {
+  const handleNextHole = () => {
     console.log(`Next clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
-    handleNext();
+    if (handleNext) {
+      handleNext();
+    } else {
+      console.warn("No next handler provided to HoleScoreView");
+    }
   };
   
   return (
@@ -96,8 +105,8 @@ export const HoleScoreView = ({
       <HoleScoreCard
         holeData={validatedHoleData}
         onUpdate={handleHoleUpdate}
-        onNext={handleNextWrapped}
-        onPrevious={handlePreviousWrapped}
+        onNext={handleNextHole}
+        onPrevious={handlePreviousHole}
         isFirst={currentHole === 1}
         isLast={currentHole === holeCount}
         teeColor={teeColor}
