@@ -4,7 +4,6 @@ import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
 import { useEffect, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RoundDebugPanel } from "../debug/RoundDebugPanel";
 
 interface HoleScoreViewProps {
   currentHoleData: HoleData;
@@ -34,7 +33,6 @@ export const HoleScoreView = ({
   isLoading = false
 }: HoleScoreViewProps) => {
   // Make sure we have a valid hole data object that matches the current hole
-  // This is crucial for round resumption to work correctly
   const validatedHoleData = useMemo(() => {
     if (currentHoleData && currentHoleData.holeNumber === currentHole) {
       return currentHoleData;
@@ -60,14 +58,7 @@ export const HoleScoreView = ({
   // Log current hole data to help with debugging
   useEffect(() => {
     console.log(`HoleScoreView - Displaying hole ${currentHole}`, validatedHoleData);
-    if (holeScores.length > 0) {
-      console.log("All hole scores available:", 
-        holeScores
-          .slice(0, Math.min(holeCount, holeScores.length))
-          .map(h => `Hole ${h.holeNumber}: score=${h.score}`)
-      );
-    }
-  }, [currentHole, validatedHoleData, holeScores, holeCount]);
+  }, [currentHole, validatedHoleData]);
     
   if (isLoading) {
     return <HoleScoreViewSkeleton />;
@@ -89,17 +80,6 @@ export const HoleScoreView = ({
         teeColor={teeColor}
         courseId={courseId}
         isSaving={isSaving}
-      />
-      
-      <RoundDebugPanel 
-        currentHole={currentHole}
-        holeCount={holeCount}
-        isLoading={isLoading || isSaving}
-        resumeData={{
-          forceResume: sessionStorage.getItem('force-resume'),
-          sessionHole: sessionStorage.getItem('resume-hole-number'),
-          localHole: localStorage.getItem('resume-hole-number')
-        }}
       />
     </>
   );

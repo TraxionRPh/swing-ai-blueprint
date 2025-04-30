@@ -6,34 +6,39 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
-import { RoundDebugPanel } from "./debug/RoundDebugPanel";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
   pageLoading?: boolean;
+  setMainLoading?: (loading: boolean) => void;
+  setMainError?: (error: string | null) => void;
 }
 
 export const RoundTrackingMain = ({
   onBack,
-  pageLoading = false
+  pageLoading = false,
+  setMainLoading,
+  setMainError
 }: RoundTrackingMainProps) => {
-  const [loading, setLoading] = useState(pageLoading);
+  const [localLoading, setLocalLoading] = useState(pageLoading);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedTee, setSelectedTee] = useState(null);
   const [holeCount, setHoleCount] = useState(18);
-  const [currentRoundId, setCurrentRoundId] = useState(null);
+  const navigate = useNavigate();
   
-  // Load basic tracking state
+  // Initialize component
   useEffect(() => {
     console.log("RoundTrackingMain mounted");
-    // Set a short timeout to ensure UI is responsive
+    
+    // Set parent loading state to false after short timeout
     const timer = setTimeout(() => {
-      setLoading(false);
-    }, 300);
+      if (setMainLoading) setMainLoading(false);
+      setLocalLoading(false);
+    }, 500);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [setMainLoading]);
 
   // Handle course selection
   const handleCourseSelect = (course) => {
@@ -61,7 +66,7 @@ export const RoundTrackingMain = ({
         subtitle="View your rounds and start tracking new ones"
       />
       
-      {loading ? (
+      {localLoading ? (
         <Card>
           <CardContent className="pt-6 flex justify-center items-center">
             <Loading message="Loading rounds..." minHeight={150} size="md" />
@@ -70,7 +75,12 @@ export const RoundTrackingMain = ({
       ) : (
         <>
           {/* Rounds display showing in-progress rounds */}
-          <RoundsDisplay onCourseSelect={handleCourseSelection} />
+          <RoundsDisplay 
+            onCourseSelect={handleCourseSelection} 
+            onError={(error) => {
+              if (setMainError) setMainError(error);
+            }}
+          />
           
           {/* Course selector to start a new round */}
           <CourseSelector
@@ -78,16 +88,6 @@ export const RoundTrackingMain = ({
             selectedTee={selectedTee}
             onCourseSelect={handleCourseSelect}
             onTeeSelect={setSelectedTee}
-          />
-          
-          {/* Debug panel (only shown in development) */}
-          <RoundDebugPanel 
-            roundId={currentRoundId}
-            resumeData={{
-              forceResume: sessionStorage.getItem('force-resume'),
-              sessionHole: sessionStorage.getItem('resume-hole-number'),
-              localHole: localStorage.getItem('resume-hole-number')
-            }}
           />
         </>
       )}

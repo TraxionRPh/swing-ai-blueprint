@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
@@ -242,7 +241,7 @@ export const useRoundTracking = () => {
     selectedCourse,
     selectedTee,
     currentHole,
-    setCurrentHole, // Make sure to expose this
+    setCurrentHole, // Ensure this is exposed properly
     holeScores,
     handleCourseSelect,
     setSelectedTee,
@@ -261,6 +260,7 @@ export const useRoundTracking = () => {
     courseName,
     isLoading,
     handleHoleCountSelect,
-    roundsById
+    roundsById,
+    error: loadingStage === 'failed' ? 'Failed to load round data' : null
   };
 };

@@ -15,15 +15,37 @@ export const HoleNavigation = ({
   isFirst,
   isLast
 }: HoleNavigationProps) => {
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Next button clicked");
+    if (onNext) {
+      onNext();
+    }
+  };
+  
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Previous button clicked");
+    if (onPrevious) {
+      onPrevious();
+    }
+  };
+
   return (
     <div className="flex justify-between mt-6">
-      <Button variant="outline" onClick={onPrevious} disabled={isFirst}>
+      <Button 
+        variant="outline" 
+        onClick={handlePrevious} 
+        disabled={isFirst}
+        type="button"
+      >
         Previous Hole
       </Button>
       <Button 
-        onClick={onNext} 
-        disabled={isLast}
+        onClick={handleNext} 
+        disabled={isLast && !onNext}
         className={isLast ? "bg-primary hover:bg-primary/90" : ""}
+        type="button"
       >
         {isLast ? (
           <>
@@ -37,4 +59,3 @@ export const HoleNavigation = ({
     </div>
   );
 };
-

@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { LoadingState } from "@/components/round-tracking/loading/LoadingState";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import { HoleSavingIndicator } from "@/components/round-tracking/hole-score/Hole
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loading } from "@/components/ui/loading";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -16,7 +16,8 @@ interface RoundTrackingDetailProps {
   isLoading: boolean;
   loadingStage?: string;
   retryLoading: () => void;
-  roundTracking?: any; // Make this optional so we can use our own if needed
+  setDetailLoading?: (loading: boolean) => void;
+  setDetailError?: (error: string | null) => void;
 }
 
 export const RoundTrackingDetail = ({
@@ -24,7 +25,9 @@ export const RoundTrackingDetail = ({
   currentRoundId,
   isLoading: externalLoading,
   loadingStage = "Loading...",
-  retryLoading
+  retryLoading,
+  setDetailLoading,
+  setDetailError
 }: RoundTrackingDetailProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
@@ -41,48 +44,53 @@ export const RoundTrackingDetail = ({
     }
   }, [currentRoundId, roundTracking]);
   
-  // Set a timeout to exit loading state regardless
+  // Set a short timeout to exit loading state
   useEffect(() => {
     const timer = setTimeout(() => {
       setLocalLoading(false);
-      console.log("RoundTrackingDetail - Force exiting loading state after timeout");
-    }, 2000);
+      if (setDetailLoading) setDetailLoading(false);
+      console.log("RoundTrackingDetail - Exiting loading state");
+    }, 1000);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [setDetailLoading]);
+  
+  // Handle errors from the roundTracking hook
+  useEffect(() => {
+    if (roundTracking.error && setDetailError) {
+      setDetailError(roundTracking.error);
+    }
+  }, [roundTracking.error, setDetailError]);
   
   // Get the required data from the roundTracking hook
   const {
     selectedCourse,
     currentHole,
+    setCurrentHole,
     holeScores,
     holeCount,
     handleHoleUpdate,
+    handleNext: handleNextBase,
     handlePrevious,
     currentTeeColor,
     currentHoleData,
     isSaving,
-    finishRound,
-    setCurrentHole
+    finishRound
   } = roundTracking;
 
+  // Apply resume hole if available - simplified approach
   useEffect(() => {
-    // Check if there's forced resume data that should be applied
-    const forceResume = sessionStorage.getItem('force-resume');
+    if (localLoading || !setCurrentHole) return;
+    
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
                             localStorage.getItem('resume-hole-number');
-                            
-    if (forceResume === 'true' && resumeHoleNumber && !localLoading) {
+    
+    if (resumeHoleNumber) {
       const holeNum = parseInt(resumeHoleNumber, 10);
+      
       if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= (holeCount || 18)) {
-        console.log(`Applying forced resume to hole ${holeNum}`);
-        // Use the setCurrentHole function from roundTracking
-        if (setCurrentHole) {
-          setCurrentHole(holeNum);
-        }
-        
-        // Clear the force-resume flag once applied
-        sessionStorage.removeItem('force-resume');
+        console.log(`Resuming at hole ${holeNum}`);
+        setCurrentHole(holeNum);
         
         toast({
           title: "Resuming round",
@@ -90,11 +98,14 @@ export const RoundTrackingDetail = ({
         });
       }
     }
+    
+    // Clear the force-resume flag
+    sessionStorage.removeItem('force-resume');
   }, [localLoading, holeCount, setCurrentHole, toast]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
-    // Clear any resume-hole-number in session storage to prevent unexpected behavior
+    // Clear any resume data to prevent unexpected behavior
     sessionStorage.removeItem('resume-hole-number');
     localStorage.removeItem('resume-hole-number');
     sessionStorage.removeItem('force-resume');
@@ -104,31 +115,24 @@ export const RoundTrackingDetail = ({
   // Track if we have the data we need
   const isDataReady = !localLoading && !externalLoading && holeScores && currentHoleData;
 
+  // Handle next button with final score
   const handleNext = () => {
     if (currentHole === holeCount) {
       setShowFinalScore(true);
-    } else {
-      roundTracking.handleNext();
+    } else if (handleNextBase) {
+      handleNextBase();
     }
   };
 
-  // If data is still loading, show a simple loading skeleton
+  // If data is still loading, show a loading indicator
   if (!isDataReady) {
     return (
       <div className="space-y-6">
         <RoundTrackingHeader onBack={handleBackNavigation} />
         
         <Card>
-          <CardContent className="py-6">
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-8 w-1/2" />
-              <div className="flex justify-between gap-2">
-                <Skeleton className="h-10 w-24" />
-                <Skeleton className="h-10 w-24" />
-              </div>
-            </div>
+          <CardContent className="py-6 flex justify-center">
+            <Loading message="Loading round data..." minHeight={200} />
           </CardContent>
         </Card>
       </div>
@@ -161,7 +165,6 @@ export const RoundTrackingDetail = ({
             isSaving={isSaving}
             holeScores={holeScores}
           />
-          <HoleSavingIndicator isSaving={isSaving} />
         </>
       )}
     </div>

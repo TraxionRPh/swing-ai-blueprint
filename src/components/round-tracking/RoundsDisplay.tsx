@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseResult } from "./CourseResult";
@@ -13,6 +12,7 @@ import { RefreshCcw } from "lucide-react";
 
 interface RoundsDisplayProps {
   onCourseSelect: (course: Course, holeCount?: number) => void;
+  onError?: (error: string) => void;
 }
 
 interface RoundWithCourse {
@@ -26,7 +26,7 @@ interface RoundWithCourse {
   golf_courses: Course;
 }
 
-export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
+export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) => {
   const [inProgressRounds, setInProgressRounds] = useState<RoundWithCourse[]>([]);
   const [completedRounds, setCompletedRounds] = useState<RoundWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +81,14 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
       setCompletedRounds(completed as RoundWithCourse[]);
     } catch (error) {
       console.error("Error loading rounds:", error);
-      setError("Failed to load rounds data");
+      const errorMessage = "Failed to load rounds data";
+      setError(errorMessage);
+      
+      // Pass the error to the parent component if callback exists
+      if (onError) {
+        onError(errorMessage);
+      }
+      
       toast({
         title: "Error loading rounds",
         description: "Please try again later",
@@ -90,7 +97,7 @@ export const RoundsDisplay = ({ onCourseSelect }: RoundsDisplayProps) => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, onError]);
 
   // Use a shorter timeout for exiting loading state to improve UI responsiveness
   useEffect(() => {

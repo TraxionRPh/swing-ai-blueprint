@@ -1,6 +1,5 @@
 
 import { useCallback } from "react";
-import { HoleData } from "@/types/round-tracking";
 
 export const useRoundNavigation = (
   handleNextBase: () => void,
@@ -17,8 +16,9 @@ export const useRoundNavigation = (
     }
     
     if (holeCount && currentHole === holeCount) {
-      console.log("Navigation blocked: already at last hole");
-      return;
+      console.log("Navigation: at last hole, showing review");
+      // Don't block navigation at last hole - let the caller handle showing review
+      handleNextBase();
     } else {
       console.log(`Navigating to next hole from ${currentHole}`);
       handleNextBase();
