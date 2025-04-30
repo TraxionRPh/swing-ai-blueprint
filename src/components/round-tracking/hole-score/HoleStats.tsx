@@ -45,24 +45,32 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
 
   const handleScoreChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const parsedValue = parseInt(value) || 0;
     
-    console.log(`Setting score to ${parsedValue}`);
+    console.log(`Setting local score to ${value}`);
     setLocalScore(value);
-    // Only update with actual values
-    if (parsedValue > 0) {
-      onDataChange('score', parsedValue);
+    
+    // Store the value in the parent component's state only if it's valid
+    // This will prevent clearing the score when navigating
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      if (parsedValue > 0) {
+        onDataChange('score', parsedValue);
+      }
     }
   }, [onDataChange]);
 
   const handlePuttsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const parsedValue = parseInt(value) || 0;
     
-    console.log(`Setting putts to ${parsedValue}`);
+    console.log(`Setting local putts to ${value}`);
     setLocalPutts(value);
-    // Only update with actual values, zeros are valid for putts though
-    onDataChange('putts', parsedValue);
+    
+    // Store the value in the parent component's state only if it's valid
+    // This will allow for empty values and zero values
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      onDataChange('putts', parsedValue);
+    }
   }, [onDataChange]);
 
   return (
