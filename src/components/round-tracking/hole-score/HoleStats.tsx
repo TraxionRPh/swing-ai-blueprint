@@ -21,8 +21,10 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     console.log("HoleStats: Updating from hole data:", data);
     setLocalPar(data.par || 4);
     setLocalDistance(data.distance || '');
-    setLocalScore(data.score || 0);
-    setLocalPutts(data.putts || 0);
+    
+    // Only set actual values, not zeros
+    setLocalScore(data.score > 0 ? data.score : '');
+    setLocalPutts(data.putts > 0 ? data.putts : '');
   }, [data.holeNumber, data]);
 
   const handleParChange = (value: string) => {
@@ -47,7 +49,10 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     console.log(`Setting score to ${parsedValue}`);
     setLocalScore(value);
-    onDataChange('score', parsedValue);
+    // Only update with actual values
+    if (parsedValue > 0) {
+      onDataChange('score', parsedValue);
+    }
   }, [onDataChange]);
 
   const handlePuttsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +61,7 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     console.log(`Setting putts to ${parsedValue}`);
     setLocalPutts(value);
+    // Only update with actual values, zeros are valid for putts though
     onDataChange('putts', parsedValue);
   }, [onDataChange]);
 

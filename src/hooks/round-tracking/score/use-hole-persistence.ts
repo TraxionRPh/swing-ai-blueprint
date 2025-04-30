@@ -28,8 +28,8 @@ export const useHolePersistence = (roundId: string | null) => {
       const dataToSave = {
         round_id: roundId,
         hole_number: holeData.holeNumber,
-        score: holeData.score || 0,
-        putts: holeData.putts || 0,
+        score: holeData.score || null,  // Use null instead of 0 for empty values
+        putts: holeData.putts || null,  // Use null instead of 0 for empty values
         fairway_hit: !!holeData.fairwayHit,
         green_in_regulation: !!holeData.greenInRegulation
       };
@@ -95,7 +95,7 @@ async function updateRoundSummary(roundId: string) {
       return;
     }
 
-    // Calculate totals from all holes
+    // Calculate totals from all holes, skipping null values
     const totals = holeScores.reduce((acc, hole) => ({
       score: acc.score + (hole.score || 0),
       putts: acc.putts + (hole.putts || 0),
