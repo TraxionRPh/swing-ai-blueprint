@@ -38,21 +38,27 @@ export const useHoleNavigation = () => {
 
   const handleNext = useCallback(() => {
     if (currentHole < 18) {
-      setCurrentHole(prev => {
-        const nextHole = prev + 1;
-        console.log(`Moving to next hole: ${nextHole}`);
-        return nextHole;
-      });
+      const nextHole = currentHole + 1;
+      console.log(`Moving to next hole: ${nextHole}`);
+      
+      // Update the session storage for resume capability
+      sessionStorage.setItem('resume-hole-number', nextHole.toString());
+      
+      // Update the state with the new hole number
+      setCurrentHole(nextHole);
     }
   }, [currentHole]);
 
   const handlePrevious = useCallback(() => {
     if (currentHole > 1) {
-      setCurrentHole(prev => {
-        const prevHole = prev - 1;
-        console.log(`Moving to previous hole: ${prevHole}`);
-        return prevHole;
-      });
+      const prevHole = currentHole - 1;
+      console.log(`Moving to previous hole: ${prevHole}`);
+      
+      // Update the session storage for resume capability
+      sessionStorage.setItem('resume-hole-number', prevHole.toString());
+      
+      // Update the state with the new hole number
+      setCurrentHole(prevHole);
     }
   }, [currentHole]);
   
@@ -60,6 +66,11 @@ export const useHoleNavigation = () => {
   const setHole = useCallback((holeNumber: number) => {
     if (holeNumber >= 1 && holeNumber <= 18) {
       console.log(`Directly setting hole to: ${holeNumber}`);
+      
+      // Update the session storage for resume capability
+      sessionStorage.setItem('resume-hole-number', holeNumber.toString());
+      
+      // Update the state with the new hole number
       setCurrentHole(holeNumber);
     } else {
       console.warn(`Invalid hole number: ${holeNumber}, must be between 1 and 18`);

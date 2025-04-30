@@ -77,6 +77,11 @@ export const RoundTrackingDetail = ({
     finishRound
   } = roundTracking;
 
+  useEffect(() => {
+    // Force data refresh when currentHole changes
+    console.log(`Current hole in RoundTrackingDetail: ${currentHole}`);
+  }, [currentHole]);
+
   // Apply resume hole if available
   useEffect(() => {
     if (localLoading || !setCurrentHole) return;
@@ -102,43 +107,79 @@ export const RoundTrackingDetail = ({
     sessionStorage.removeItem('force-resume');
   }, [localLoading, holeCount, setCurrentHole, toast]);
 
-  // Enhanced navigation handlers with better logging and explicit function checks
+  // Enhanced navigation handlers with better logging and explicit state updates
   const handleNext = useCallback(() => {
     console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
     
-    if (typeof handleNextBase === 'function') {
-      if (currentHole === holeCount) {
-        console.log("Showing final score view");
-        setShowFinalScore(true);
-      } else {
-        console.log("Moving to next hole via base handler");
-        handleNextBase();
-      }
-    } else {
+    if (typeof handleNextBase !== 'function') {
       console.error("Next handler is not defined or not a function!", typeof handleNextBase);
       toast({
         title: "Navigation Error",
         description: "Could not navigate to next hole. Please try again.",
         variant: "destructive"
       });
+      return;
     }
-  }, [handleNextBase, currentHole, holeCount, toast]);
+    
+    if (currentHole === holeCount) {
+      console.log("Showing final score view");
+      setShowFinalScore(true);
+    } else {
+      console.log("Moving to next hole via base handler");
+      
+      // Force state update with direct assignment if available
+      if (setCurrentHole && typeof setCurrentHole === 'function') {
+        const nextHole = currentHole + 1;
+        if (nextHole <= (holeCount || 18)) {
+          console.log(`Directly setting hole to ${nextHole}`);
+          setCurrentHole(nextHole);
+        }
+      }
+      
+      // Also call the base handler for any additional logic
+      handleNextBase();
+      
+      // Show toast to provide feedback
+      toast({
+        title: "Navigation",
+        description: `Moving to hole ${currentHole + 1}`
+      });
+    }
+  }, [handleNextBase, currentHole, holeCount, toast, setCurrentHole]);
   
   const handlePrevious = useCallback(() => {
     console.log("Previous button pressed in RoundTrackingDetail, current hole:", currentHole);
     
-    if (typeof handlePreviousBase === 'function') {
-      console.log("Moving to previous hole via base handler");
-      handlePreviousBase();
-    } else {
+    if (typeof handlePreviousBase !== 'function') {
       console.error("Previous handler is not defined or not a function!", typeof handlePreviousBase);
       toast({
         title: "Navigation Error",
         description: "Could not navigate to previous hole. Please try again.",
         variant: "destructive"
       });
+      return;
     }
-  }, [handlePreviousBase, currentHole, toast]);
+    
+    console.log("Moving to previous hole via base handler");
+    
+    // Force state update with direct assignment if available
+    if (setCurrentHole && typeof setCurrentHole === 'function') {
+      const prevHole = currentHole - 1;
+      if (prevHole >= 1) {
+        console.log(`Directly setting hole to ${prevHole}`);
+        setCurrentHole(prevHole);
+      }
+    }
+    
+    // Also call the base handler for any additional logic
+    handlePreviousBase();
+    
+    // Show toast to provide feedback
+    toast({
+      title: "Navigation",
+      description: `Moving to hole ${currentHole - 1}`
+    });
+  }, [handlePreviousBase, currentHole, toast, setCurrentHole]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {

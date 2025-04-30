@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -36,8 +37,9 @@ export const HoleScoreCard = ({
   const { toast } = useToast();
   
   useEffect(() => {
+    console.log("HoleScoreCard: Updating hole data for hole", holeData.holeNumber);
     setData(holeData);
-  }, [holeData.holeNumber]);
+  }, [holeData]);
 
   // Improved navigation handlers with direct forwarding and thorough logging
   const handleNextHole = () => {
@@ -45,7 +47,7 @@ export const HoleScoreCard = ({
     
     // Check if the handler exists and is a function
     if (typeof onNext === 'function') {
-      console.log("Calling provided onNext function");
+      console.log("Calling provided onNext function from HoleScoreCard");
       
       // Directly invoke the parent handler
       onNext();
@@ -59,7 +61,7 @@ export const HoleScoreCard = ({
     
     // Check if the handler exists and is a function
     if (typeof onPrevious === 'function') {
-      console.log("Calling provided onPrevious function");
+      console.log("Calling provided onPrevious function from HoleScoreCard");
       
       // Directly invoke the parent handler
       onPrevious();

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface HoleNavigationProps {
   onNext?: () => void;
@@ -19,26 +19,39 @@ export const HoleNavigation = ({
   // Add state to track button clicks and prevent rapid multiple clicks
   const [isClicking, setIsClicking] = useState(false);
   
+  // Clear clicking state if component unmounts while in clicking state
+  useEffect(() => {
+    return () => setIsClicking(false);
+  }, []);
+  
   // Enhanced previous button handler with debounce protection
   const handlePrevious = (e: React.MouseEvent) => {
     // Prevent default browser behavior and stop event propagation
     e.preventDefault();
     e.stopPropagation();
     
-    if (isClicking) return;
-    setIsClicking(true);
+    if (isClicking) {
+      console.log("Click blocked: already processing a click");
+      return;
+    }
     
+    setIsClicking(true);
     console.log("Previous button clicked in HoleNavigation component");
     
     if (typeof onPrevious === 'function') {
       console.log("Calling onPrevious handler from parent");
       
-      // Use setTimeout to ensure the click is processed after the current event loop
-      setTimeout(() => {
+      try {
+        // Call the handler directly to avoid any React event system issues
         onPrevious();
-        // Reset clicking state after a short delay
-        setTimeout(() => setIsClicking(false), 300);
-      }, 0);
+      } catch (err) {
+        console.error("Error in previous button handler:", err);
+      }
+      
+      // Reset clicking state after a short delay to prevent rapid clicks
+      setTimeout(() => {
+        setIsClicking(false);
+      }, 300);
     } else {
       console.warn("Previous handler is not defined or not a function");
       setIsClicking(false);
@@ -51,20 +64,28 @@ export const HoleNavigation = ({
     e.preventDefault();
     e.stopPropagation();
     
-    if (isClicking) return;
-    setIsClicking(true);
+    if (isClicking) {
+      console.log("Click blocked: already processing a click");
+      return;
+    }
     
+    setIsClicking(true);
     console.log("Next button clicked in HoleNavigation component");
     
     if (typeof onNext === 'function') {
       console.log("Calling onNext handler from parent");
       
-      // Use setTimeout to ensure the click is processed after the current event loop
-      setTimeout(() => {
+      try {
+        // Call the handler directly to avoid any React event system issues
         onNext();
-        // Reset clicking state after a short delay
-        setTimeout(() => setIsClicking(false), 300);
-      }, 0);
+      } catch (err) {
+        console.error("Error in next button handler:", err);
+      }
+      
+      // Reset clicking state after a short delay to prevent rapid clicks
+      setTimeout(() => {
+        setIsClicking(false);
+      }, 300);
     } else {
       console.warn("Next handler is not defined or not a function");
       setIsClicking(false);

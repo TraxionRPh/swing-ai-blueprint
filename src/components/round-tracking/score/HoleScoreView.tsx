@@ -1,8 +1,7 @@
-
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface HoleScoreViewProps {
@@ -38,6 +37,11 @@ export const HoleScoreView = ({
     currentHole, 
     holeCount
   });
+  
+  // Log when current hole changes
+  useEffect(() => {
+    console.log("HoleScoreView: Current hole has changed to", currentHole);
+  }, [currentHole]);
   
   // Ensure we have valid hole data that matches the current hole
   const validatedHoleData = useMemo(() => {
@@ -82,11 +86,8 @@ export const HoleScoreView = ({
     console.log(`Next clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
     
     if (typeof handleNext === 'function') {
-      // Use a direct function call with setTimeout to ensure execution after current event loop
-      setTimeout(() => {
-        console.log("Executing next handler from HoleScoreView");
-        handleNext();
-      }, 0);
+      console.log("Executing next handler from HoleScoreView");
+      handleNext();
     } else {
       console.warn("No next handler provided to HoleScoreView", handleNext);
     }
@@ -96,11 +97,8 @@ export const HoleScoreView = ({
     console.log(`Previous clicked in HoleScoreView for hole ${currentHole}, calling parent handler`);
     
     if (typeof handlePrevious === 'function') {
-      // Use a direct function call with setTimeout to ensure execution after current event loop
-      setTimeout(() => {
-        console.log("Executing previous handler from HoleScoreView");
-        handlePrevious();
-      }, 0);
+      console.log("Executing previous handler from HoleScoreView");
+      handlePrevious();
     } else {
       console.warn("No previous handler provided to HoleScoreView", handlePrevious);
     }
