@@ -44,11 +44,38 @@ export const RoundTrackingDetail = ({
   // Get the current round data
   const currentRoundData = roundTracking.roundsById?.[currentRoundId];
 
+  useEffect(() => {
+    // Check if there's forced resume data that should be applied
+    const forceResume = sessionStorage.getItem('force-resume');
+    const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
+                            localStorage.getItem('resume-hole-number');
+                            
+    if (forceResume === 'true' && resumeHoleNumber && !isLoading && currentRoundData) {
+      const holeNum = parseInt(resumeHoleNumber, 10);
+      if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= (holeCount || 18)) {
+        console.log(`Applying forced resume to hole ${holeNum}`);
+        // Use the setCurrentHole function from roundTracking
+        if (roundTracking.setCurrentHole) {
+          roundTracking.setCurrentHole(holeNum);
+        }
+        
+        // Clear the force-resume flag once applied
+        sessionStorage.removeItem('force-resume');
+        
+        toast({
+          title: "Resuming round",
+          description: `Continuing from hole ${holeNum}`
+        });
+      }
+    }
+  }, [isLoading, currentRoundData, holeCount, roundTracking, toast]);
+
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
     // Clear any resume-hole-number in session storage to prevent unexpected behavior
     sessionStorage.removeItem('resume-hole-number');
     localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
     onBack();
   };
 
@@ -58,7 +85,12 @@ export const RoundTrackingDetail = ({
     isLoading, 
     hasRoundData: !!currentRoundData,
     holeScores: holeScores?.length || 0,
-    currentHole
+    currentHole,
+    resumeInfo: {
+      forceResume: sessionStorage.getItem('force-resume'),
+      sessionHole: sessionStorage.getItem('resume-hole-number'),
+      localHole: localStorage.getItem('resume-hole-number')
+    }
   });
 
   const handleNext = () => {

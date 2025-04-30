@@ -20,7 +20,6 @@ const RoundTracking = () => {
   
   // Track whether we're in the initial loading state for the page
   const [pageLoading, setPageLoading] = useState(true);
-  const [loadRetries, setLoadRetries] = useState(0);
   
   // Centralized loading state management
   const {
@@ -64,7 +63,7 @@ const RoundTracking = () => {
       console.log("Setting round ID from URL:", roundId);
       roundTracking.setCurrentRoundId(roundId);
     }
-  }, [isDetailPage, roundId, roundTracking.setCurrentRoundId]);
+  }, [isDetailPage, roundId, roundTracking]);
 
   // Handle back navigation
   const handleBack = () => {
@@ -76,8 +75,7 @@ const RoundTracking = () => {
 
   // Handle retry loading
   const retryLoading = () => {
-    // Reset loading state and increment retry count
-    setLoadRetries(prev => prev + 1);
+    // Reset loading state
     setPageLoading(true);
     resetLoading();
     
@@ -91,23 +89,9 @@ const RoundTracking = () => {
     }
   };
   
-  // Log all loading flags for debugging
-  console.log("Round tracking loading flags:", {
-    isMainPage,
-    isDetailPage,
-    roundId,
-    currentRoundId,
-    pageLoading,
-    roundStateLoading,
-    roundTrackingLoading,
-    hasRoundData: !!currentRoundId,
-    currentRoundDataExists: !!currentRoundData,
-    shouldShowLoading: pageLoading || roundStateLoading || roundTrackingLoading || (isDetailPage && (!currentRoundId || !currentRoundData))
-  });
-  
   // Only show the main content when ALL loading flags are false AND we have actual round data
   const isDataReady = !pageLoading && !roundStateLoading && !roundTrackingLoading && 
-                      (isMainPage || (isDetailPage && currentRoundId === roundId && !!currentRoundData));
+                     (isMainPage || (isDetailPage && currentRoundId === roundId && !!currentRoundData));
   
   return (
     <ErrorBoundary>
@@ -126,7 +110,7 @@ const RoundTracking = () => {
           roundTracking={roundTracking}
         />
       ) : isDetailPage && currentRoundId && currentRoundData ? (
-        // Show detail page when not loading, on detail route, and have a round data
+        // Show detail page when not loading, on detail route, and have round data
         <RoundTrackingDetail
           onBack={handleBack}
           currentRoundId={currentRoundId}

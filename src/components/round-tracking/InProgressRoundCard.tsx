@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -37,31 +36,32 @@ export const InProgressRoundCard = ({
   const { toast } = useToast();
 
   const handleResumeRound = () => {
-    console.log("Resume round clicked for round ID:", roundId);
-    console.log("Last completed hole:", lastHole);
-    
     try {
       setIsLoading(true);
+      console.log("Resume round clicked for round ID:", roundId);
+      console.log("Last completed hole:", lastHole);
       
       toast({
         title: "Loading round",
         description: "Retrieving your round data..."
       });
       
-      // Calculate the next hole to resume play at:
-      // If lastHole is 8, and we've completed scoring that hole, we want to go to hole 9 (lastHole + 1)
-      // Unless that's beyond the hole count
-      // If no holes completed yet (lastHole === 0), start at hole 1
+      // Calculate the next hole to resume play at
+      // If lastHole is 0 (no holes completed), start at hole 1
+      // Otherwise, go to the hole after the last completed one (unless that would exceed hole count)
       const resumeHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
-      
       console.log("Resuming at hole:", resumeHole);
       
-      // Store both in sessionStorage and localStorage to improve reliability
-      // The key name 'resume-hole-number' is what the hooks will look for
+      // Clear any existing resume data first
+      sessionStorage.removeItem('resume-hole-number');
+      localStorage.removeItem('resume-hole-number');
+      
+      // Set the resume data in both storage locations for redundancy
       sessionStorage.setItem('resume-hole-number', resumeHole.toString());
       localStorage.setItem('resume-hole-number', resumeHole.toString());
       
-      // Force a flag to ensure the round is properly resumed
+      // Force resume flag ensures the round is properly resumed even if there are
+      // conflicts with other hole selection mechanisms
       sessionStorage.setItem('force-resume', 'true');
       
       // Add a small delay to let the toast show before navigation

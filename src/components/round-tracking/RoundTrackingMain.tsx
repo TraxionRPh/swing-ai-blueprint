@@ -6,6 +6,7 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
+import { RoundDebugPanel } from "./debug/RoundDebugPanel";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
@@ -22,7 +23,8 @@ export const RoundTrackingMain = ({
     selectedCourse,
     handleCourseSelect,
     setSelectedTee,
-    setHoleCount
+    setHoleCount,
+    currentRoundId
   } = roundTracking;
 
   const handleCourseSelection = (course: any, courseHoleCount: number | null) => {
@@ -56,6 +58,16 @@ export const RoundTrackingMain = ({
             selectedTee={roundTracking.selectedTee}
             onCourseSelect={handleCourseSelect}
             onTeeSelect={setSelectedTee}
+          />
+          
+          {/* Debug panel (only shown in development) */}
+          <RoundDebugPanel 
+            roundId={currentRoundId}
+            resumeData={{
+              forceResume: sessionStorage.getItem('force-resume'),
+              sessionHole: sessionStorage.getItem('resume-hole-number'),
+              localHole: localStorage.getItem('resume-hole-number')
+            }}
           />
         </>
       )}

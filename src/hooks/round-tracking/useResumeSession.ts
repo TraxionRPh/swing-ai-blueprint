@@ -33,7 +33,7 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
       sessionStorage.removeItem('force-resume');
       hasResumed.current = true;
     }
-  }, [roundId]);
+  }, [roundId, toast]);
   
   // Store the current hole for resumption and to prevent losing progress
   useEffect(() => {
@@ -46,19 +46,30 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
       } catch (error) {
         console.error('Error saving resume state:', error);
       }
+    } else if (roundId && currentHole === 1 && !hasInitialized.current) {
+      // First initialization - still store hole 1 as the resume point
+      console.log(`Initializing resume state at hole ${currentHole} in round ${roundId}`);
+      try {
+        sessionStorage.setItem('resume-hole-number', currentHole.toString());
+        localStorage.setItem('resume-hole-number', currentHole.toString());
+      } catch (error) {
+        console.error('Error saving initial resume state:', error);
+      }
     }
-  }, [currentHole, roundId]);
-  
-  // Mark as initialized after first render
-  useEffect(() => {
+    
     if (!hasInitialized.current) {
       hasInitialized.current = true;
     }
-    
-    // Clean up storage on unmount to prevent unexpected behavior when starting a new round
+  }, [currentHole, roundId]);
+  
+  // Clean up storage on unmount
+  useEffect(() => {
     return () => {
+      // Don't clear resume data if we've just resumed a round
+      // This prevents clearing the data when component remounts
       if (roundId && !hasResumed.current) {
         console.log('Cleaning up resume session data');
+        // We only remove from sessionStorage as localStorage serves as a backup
         sessionStorage.removeItem('resume-hole-number');
       }
     };
@@ -66,6 +77,12 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
   
   const getResumeHole = useCallback((): number | null => {
     try {
+      // First check for force-resume flag (highest priority)
+      const forceResume = sessionStorage.getItem('force-resume');
+      if (forceResume === 'true') {
+        console.log("Force resume detected, checking for resume hole");
+      }
+      
       // First try session storage (primary)
       const sessionHole = sessionStorage.getItem('resume-hole-number');
       if (sessionHole && !isNaN(Number(sessionHole))) {
@@ -91,6 +108,19 @@ export const useResumeSession = ({ currentHole, holeCount, roundId }: ResumeSess
     
     return null;
   }, [holeCount]);
+
+  const clearResumeData = useCallback(() => {
+    console.log('Manually clearing resume data');
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
+    hasResumed.current = false;
+  }, []);
   
-  return { getResumeHole, resumeHole };
+  return { 
+    getResumeHole, 
+    resumeHole,
+    clearResumeData,
+    hasResumed: hasResumed.current
+  };
 };

@@ -14,64 +14,15 @@ export const useHoleNavigation = () => {
     // Mark as initialized to prevent multiple runs
     didInitialize.current = true;
     
-    // Check potential sources for hole number in decreasing priority
-    
-    // 1. Check for force-resume flag (highest priority)
-    const forceResume = sessionStorage.getItem('force-resume');
-    if (forceResume === 'true') {
-      console.log("Force resume detected, checking for resume hole");
-      
-      // Look for resume hole number
-      const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
-                              localStorage.getItem('resume-hole-number');
-      
-      if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
-        const holeNum = Number(resumeHoleNumber);
-        if (holeNum >= 1 && holeNum <= 18) {
-          console.log("Force resuming round at hole:", holeNum);
-          // Clear the session storage after retrieval
-          sessionStorage.removeItem('force-resume');
-          setCurrentHole(holeNum);
-          return;
-        }
-      }
-    }
-    
-    // 2. Check session storage (primary storage method)
-    const resumeHoleNumber = sessionStorage.getItem('resume-hole-number');
-    if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
-      const holeNum = Number(resumeHoleNumber);
-      if (holeNum >= 1 && holeNum <= 18) {
-        console.log("Resuming round at hole (from sessionStorage):", holeNum);
-        // Clear the session storage after retrieval
-        sessionStorage.removeItem('resume-hole-number');
-        setCurrentHole(holeNum);
-        return;
-      }
-    }
-    
-    // 3. Check localStorage as fallback
-    const localStorageHoleNumber = localStorage.getItem('resume-hole-number');
-    if (localStorageHoleNumber && !isNaN(Number(localStorageHoleNumber))) {
-      const holeNum = Number(localStorageHoleNumber);
-      if (holeNum >= 1 && holeNum <= 18) {
-        console.log("Resuming round at hole (from localStorage):", holeNum);
-        // Clear the local storage after retrieval
-        localStorage.removeItem('resume-hole-number');
-        setCurrentHole(holeNum);
-        return;
-      }
-    }
-    
-    // 4. If a specific hole is specified in the URL, use that
+    // Handle URL param if provided (highest priority)
     if (holeNumber && !isNaN(Number(holeNumber))) {
       console.log("Using hole number from URL:", holeNumber);
       setCurrentHole(Number(holeNumber));
       return;
     }
     
-    // 5. Default to hole 1 if no specific instructions
-    console.log("No resume instructions found, defaulting to hole 1");
+    // Default to hole 1 if no specific instructions
+    console.log("No hole number in URL, defaulting to hole 1");
     setCurrentHole(1);
   }, [holeNumber]);
 
@@ -100,6 +51,8 @@ export const useHoleNavigation = () => {
     if (holeNumber >= 1 && holeNumber <= 18) {
       console.log(`Directly setting hole to: ${holeNumber}`);
       setCurrentHole(holeNumber);
+    } else {
+      console.warn(`Invalid hole number: ${holeNumber}, must be between 1 and 18`);
     }
   }, []);
 
