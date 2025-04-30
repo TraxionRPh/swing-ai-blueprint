@@ -36,40 +36,34 @@ export const HoleScoreCard = ({
   const [localIsSaving, setLocalIsSaving] = useState(false);
   const { toast } = useToast();
   
-  // Only update local state when the hole number changes
+  // Update local state when hole data changes
   useEffect(() => {
-    if (data.holeNumber !== holeData.holeNumber) {
-      console.log("HoleScoreCard: Updating hole data for hole", holeData.holeNumber);
-      setData(holeData);
-    }
-  }, [holeData.holeNumber, holeData]);
+    console.log("HoleScoreCard: Received new hole data:", holeData);
+    setData(holeData);
+  }, [holeData]);
 
-  // Improved navigation handlers with direct forwarding and thorough logging
+  // Improved navigation handlers with saving
   const handleNextHole = () => {
-    console.log(`Next hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
+    console.log(`Next hole handler called for hole ${data.holeNumber}`);
     
-    // Check if the handler exists and is a function
+    // First update the parent component with current data
+    onUpdate(data);
+    
+    // Then call the parent's next function
     if (typeof onNext === 'function') {
-      console.log("Calling provided onNext function from HoleScoreCard");
-      
-      // Directly invoke the parent handler
       onNext();
-    } else {
-      console.warn("No onNext handler provided to HoleScoreCard");
     }
   };
   
   const handlePreviousHole = () => {
-    console.log(`Previous hole handler called in HoleScoreCard for hole ${holeData.holeNumber}`);
+    console.log(`Previous hole handler called for hole ${data.holeNumber}`);
     
-    // Check if the handler exists and is a function
+    // First update the parent component with current data
+    onUpdate(data);
+    
+    // Then call the parent's previous function
     if (typeof onPrevious === 'function') {
-      console.log("Calling provided onPrevious function from HoleScoreCard");
-      
-      // Directly invoke the parent handler
       onPrevious();
-    } else {
-      console.warn("No onPrevious handler provided to HoleScoreCard");
     }
   };
   
@@ -85,6 +79,8 @@ export const HoleScoreCard = ({
         distance_yards: field === 'distance' ? value : data.distance
       };
 
+      console.log('Saving course hole data:', updateData);
+      
       const { error } = await supabase
         .from('course_holes')
         .upsert(updateData, {
@@ -105,9 +101,11 @@ export const HoleScoreCard = ({
   };
 
   const handleChange = (field: keyof HoleData, value: any) => {
-    console.log(`HoleScoreCard: Updating field ${field} to value ${value} for hole ${data.holeNumber}`);
+    console.log(`HoleScoreCard: Updating field ${field} to ${value} for hole ${data.holeNumber}`);
     const newData = { ...data, [field]: value };
     setData(newData);
+    
+    // Immediately notify the parent of the change
     onUpdate(newData);
 
     if ((field === 'par' || field === 'distance') && courseId) {

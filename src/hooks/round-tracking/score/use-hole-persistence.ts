@@ -9,30 +9,49 @@ export const useHolePersistence = (roundId: string | null) => {
   const { toast } = useToast();
 
   const saveHoleScore = async (holeData: HoleData) => {
-    if (!roundId) return;
-    if (!holeData.score && holeData.score !== 0) return; // Don't save if no score
+    if (!roundId) {
+      console.error('Cannot save hole score: No roundId provided');
+      return false;
+    }
+    
+    // Only save if we have a hole number
+    if (!holeData.holeNumber) {
+      console.error('Cannot save hole score: No hole number provided');
+      return false;
+    }
     
     console.log(`Saving hole ${holeData.holeNumber} data:`, JSON.stringify(holeData));
     setIsSaving(true);
+    
     try {
-      const { error } = await supabase
+      // Ensure we have all the required fields for the database
+      const dataToSave = {
+        round_id: roundId,
+        hole_number: holeData.holeNumber,
+        score: holeData.score || 0,
+        putts: holeData.putts || 0,
+        fairway_hit: !!holeData.fairwayHit,
+        green_in_regulation: !!holeData.greenInRegulation
+      };
+      
+      console.log('Saving hole data to database:', dataToSave);
+      
+      const { error, data } = await supabase
         .from('hole_scores')
-        .upsert({
-          round_id: roundId,
-          hole_number: holeData.holeNumber,
-          score: holeData.score,
-          putts: holeData.putts,
-          fairway_hit: holeData.fairwayHit,
-          green_in_regulation: holeData.greenInRegulation
-        }, {
-          onConflict: 'round_id,hole_number'
+        .upsert(dataToSave, {
+          onConflict: 'round_id,hole_number',
+          returning: 'minimal'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in supabase upsert:', error);
+        throw error;
+      }
       
       // Only update round summary after successful save of hole data
-      await updateRoundSummary(roundId, holeData);
+      await updateRoundSummary(roundId);
       console.log(`Successfully saved hole ${holeData.holeNumber} data`);
+      return true;
       
     } catch (error: any) {
       console.error('Error saving hole score:', error);
@@ -41,11 +60,12 @@ export const useHolePersistence = (roundId: string | null) => {
         description: error.message || "Could not save your progress. Please try again.",
         variant: "destructive"
       });
+      return false;
     } finally {
       // Add a slight delay before removing the saving indicator
       setTimeout(() => {
         setIsSaving(false);
-      }, 500);
+      }, 300);
     }
   };
 
@@ -56,35 +76,51 @@ export const useHolePersistence = (roundId: string | null) => {
 };
 
 // Helper function to update the round summary
-async function updateRoundSummary(roundId: string, holeData: HoleData) {
+async function updateRoundSummary(roundId: string) {
   try {
-    const { data: roundData } = await supabase
+    console.log('Updating round summary for round:', roundId);
+    
+    const { data: holeScores, error: fetchError } = await supabase
       .from('hole_scores')
       .select('*')
       .eq('round_id', roundId);
       
-    if (!roundData) return;
+    if (fetchError) {
+      console.error('Error fetching hole scores for summary:', fetchError);
+      return;
+    }
+      
+    if (!holeScores || holeScores.length === 0) {
+      console.log('No hole scores found for this round');
+      return;
+    }
 
     // Calculate totals from all holes
-    const totals = roundData.reduce((acc, hole) => ({
+    const totals = holeScores.reduce((acc, hole) => ({
       score: acc.score + (hole.score || 0),
       putts: acc.putts + (hole.putts || 0),
       fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
       greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
     }), { score: 0, putts: 0, fairways: 0, greens: 0 });
     
-    await supabase
+    console.log('Calculated round totals:', totals);
+    
+    const { error: updateError } = await supabase
       .from('rounds')
       .update({
-        total_score: null, // Keep it null until round is finished
-        total_putts: null,
         fairways_hit: totals.fairways,
         greens_in_regulation: totals.greens,
         updated_at: new Date().toISOString()
       })
       .eq('id', roundId);
       
+    if (updateError) {
+      console.error('Error updating round summary:', updateError);
+    } else {
+      console.log('Successfully updated round summary');
+    }
+      
   } catch (error) {
-    console.error('Error updating round summary:', error);
+    console.error('Error in updateRoundSummary:', error);
   }
 }

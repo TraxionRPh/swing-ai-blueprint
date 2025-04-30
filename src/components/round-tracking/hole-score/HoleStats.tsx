@@ -11,22 +11,23 @@ interface HoleStatsProps {
 }
 
 export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
-  const [localPar, setLocalPar] = useState<number>(data.par);
+  const [localPar, setLocalPar] = useState<number>(data.par || 4);
   const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
   const [localScore, setLocalScore] = useState<number | string>(data.score || '');
   const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
 
-  // This effect ensures local state is updated only when the hole number changes
-  // This prevents overwriting user input when parent state changes for the same hole
+  // This effect ensures local state is updated when the hole number changes
   useEffect(() => {
-    console.log("HoleStats: Hole number changed to", data.holeNumber);
-    setLocalPar(data.par);
+    console.log("HoleStats: Updating from hole data:", data);
+    setLocalPar(data.par || 4);
     setLocalDistance(data.distance || '');
-    setLocalScore(data.score || '');
-    setLocalPutts(data.putts || '');
-  }, [data.holeNumber]);
+    setLocalScore(data.score || 0);
+    setLocalPutts(data.putts || 0);
+  }, [data.holeNumber, data]);
 
   const handleParChange = (value: string) => {
+    if (!value) return;
+    
     const parsedValue = parseInt(value) || 3;
     console.log(`Changing par to ${parsedValue}`);
     setLocalPar(parsedValue);
@@ -36,19 +37,26 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalDistance(value);
-    onDataChange('distance', parseInt(value) || 0);
+    const parsedValue = parseInt(value) || 0;
+    onDataChange('distance', parsedValue);
   };
 
   const handleScoreChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const parsedValue = parseInt(value) || 0;
+    
+    console.log(`Setting score to ${parsedValue}`);
     setLocalScore(value);
-    onDataChange('score', parseInt(value) || 0);
+    onDataChange('score', parsedValue);
   }, [onDataChange]);
 
   const handlePuttsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const parsedValue = parseInt(value) || 0;
+    
+    console.log(`Setting putts to ${parsedValue}`);
     setLocalPutts(value);
-    onDataChange('putts', parseInt(value) || 0);
+    onDataChange('putts', parsedValue);
   }, [onDataChange]);
 
   return (
