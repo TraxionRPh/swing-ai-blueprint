@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HoleNavigation } from "./HoleNavigation";
 import { HoleHeader } from "./HoleHeader";
@@ -9,7 +9,7 @@ import type { HoleData } from "@/types/round-tracking";
 
 interface HoleScoreCardWrapperProps {
   holeData: HoleData;
-  onUpdate: (data: HoleData) => void;
+  onUpdate: (field: keyof HoleData, value: any) => void;
   onNext?: () => void;
   onPrevious?: () => void;
   isFirst?: boolean;

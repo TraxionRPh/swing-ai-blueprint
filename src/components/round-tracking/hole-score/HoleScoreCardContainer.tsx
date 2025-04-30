@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -199,10 +198,21 @@ export const HoleScoreCardContainer = ({
     }
   };
 
+  // Create a forwarding function to adapt between the two expected function signatures
+  const handleUpdateAdapter = (fieldOrData: keyof HoleData | HoleData, value?: any) => {
+    if (typeof fieldOrData === 'object') {
+      // If it's an object, it's a full HoleData object
+      onUpdate(fieldOrData as HoleData);
+    } else {
+      // Otherwise it's a field update
+      handleChange(fieldOrData as keyof HoleData, value);
+    }
+  };
+
   return (
     <HoleScoreCardWrapper 
       holeData={data}
-      onUpdate={handleChange}
+      onUpdate={handleUpdateAdapter}
       onNext={handleNextHole}
       onPrevious={handlePreviousHole}
       isFirst={isFirst}
