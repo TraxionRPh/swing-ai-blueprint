@@ -65,7 +65,7 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onNext();
           }
-        }, 100);
+        }, 300); // Increased delay to ensure save completes
       } catch (err) {
         console.error("Error preparing data for save:", err);
         toast({
@@ -101,7 +101,7 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onPrevious();
           }
-        }, 100);
+        }, 300); // Increased delay to ensure save completes
       } catch (err) {
         console.error("Error preparing data for save:", err);
         toast({
@@ -155,7 +155,7 @@ export const HoleScoreCard = ({
     console.log(`HoleScoreCard: Updating field ${field} to ${value} for hole ${data.holeNumber}`);
     
     // Special handling for the prepareForSave function
-    if (field === 'prepareForSave' as keyof HoleData) {
+    if (field === 'prepareForSave' as any) {
       console.log("Registering prepareForSave function");
       formRefs.current.prepareForSave = value;
       return;

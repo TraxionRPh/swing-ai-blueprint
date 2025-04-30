@@ -13,11 +13,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   const handleDataChange = (field: keyof HoleData, value: any) => {
     console.log(`HoleScoreForm: Field ${field} changed to ${value} for hole ${data.holeNumber}`);
     
-    // Special handling for the prepareForSave function to ensure it's properly registered
-    if (field === 'prepareForSave') {
-      console.log("Registering prepareForSave function in HoleScoreForm");
-    }
-    
+    // Forward all data changes to parent component, including special functions
     onDataChange(field, value);
   };
   

@@ -53,10 +53,10 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     const value = e.target.value;
     console.log(`Setting local score to ${value}`);
     
-    // ONLY update local state, don't notify parent
+    // Update local state
     setLocalScore(value);
     
-    // IMPORTANT FIX: Update parent immediately with score changes
+    // IMPORTANT: Update parent immediately with score changes
     // This ensures the data is available when navigating
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
@@ -68,10 +68,10 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     const value = e.target.value;
     console.log(`Setting local putts to ${value}`);
     
-    // ONLY update local state, don't notify parent
+    // Update local state
     setLocalPutts(value);
     
-    // IMPORTANT FIX: Update parent immediately with putts changes
+    // IMPORTANT: Update parent immediately with putts changes
     // This ensures the data is available when navigating
     if (value !== '') {
       const parsedValue = parseInt(value) || 0;
