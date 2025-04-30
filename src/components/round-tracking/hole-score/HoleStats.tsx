@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface HoleStatsProps {
   data: HoleData;
@@ -86,8 +86,7 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
   };
 
   // New function to prepare all data for saving
-  // This will be called by the parent when navigation happens
-  const prepareDataForSave = () => {
+  const prepareDataForSave = useCallback(() => {
     // Get current local values
     const scoreValue = localScore !== '' ? parseInt(String(localScore)) || 0 : 0;
     const puttsValue = localPutts !== '' ? parseInt(String(localPutts)) || 0 : 0;
@@ -95,7 +94,7 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     console.log(`Preparing data for save: score=${scoreValue}, putts=${puttsValue}`);
     
     // Create a complete data object for saving
-    const dataToSave = {
+    const dataToSave: HoleData = {
       ...data,
       score: scoreValue,
       putts: puttsValue,
@@ -107,13 +106,15 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     // Return the complete data object
     return dataToSave;
-  };
+  }, [data, localScore, localPutts, localPar, localDistance]);
 
-  // Expose the save function via ref or prop
-  // This makes it accessible to the parent component
-  if (typeof data.prepareForSave === 'function') {
-    data.prepareForSave = prepareDataForSave;
-  }
+  // Register the save function as soon as component mounts
+  useEffect(() => {
+    if (typeof data.prepareForSave === 'function') {
+      console.log("Registering prepareForSave function from HoleStats");
+      onDataChange('prepareForSave' as any, prepareDataForSave);
+    }
+  }, [prepareDataForSave, data.prepareForSave, onDataChange]);
 
   return (
     <div className="space-y-4">

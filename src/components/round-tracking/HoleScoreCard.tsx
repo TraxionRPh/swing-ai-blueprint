@@ -59,87 +59,90 @@ export const HoleScoreCard = ({
   }, [holeData.score, holeData.putts, isNavigating]);
 
   // Navigation handlers that explicitly save data before navigating
-  const handleNextHole = () => {
+  const handleNextHole = async () => {
     if (isNavigating) return;
     
     console.log(`Next hole handler called for hole ${data.holeNumber}`);
     setIsNavigating(true);
+    setLocalIsSaving(true);
     
-    // First collect any pending form data using the exposed function
-    if (typeof formRefs.current.prepareForSave === 'function') {
-      try {
+    try {
+      // First collect any pending form data using the exposed function
+      if (typeof formRefs.current.prepareForSave === 'function') {
         const completeData = formRefs.current.prepareForSave();
         console.log("Complete data prepared for saving:", completeData);
         
         // Then update the parent component with complete data
-        onUpdate(completeData);
+        // This should trigger the saveHoleScore function in the parent
+        await onUpdate(completeData);
         
-        // Add a small delay to ensure the data is saved before navigation
-        setTimeout(() => {
-          // Then call the parent's next function
-          if (typeof onNext === 'function') {
-            console.log("Calling navigation handler after data save");
-            onNext();
-          }
-          setIsNavigating(false);
-        }, 500); // Increased delay to ensure save completes
-      } catch (err) {
-        console.error("Error preparing data for save:", err);
-        toast({
-          title: "Error Saving Data",
-          description: "There was a problem saving your score. Please try again.",
-          variant: "destructive"
-        });
-        setIsNavigating(false);
-        // Don't navigate if there was an error
+        // Add a delay to ensure the data is saved before navigation
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Then call the parent's next function
+        if (typeof onNext === 'function') {
+          console.log("Calling navigation handler after data save");
+          onNext();
+        }
+      } else {
+        console.warn("No prepareForSave function available");
+        // Fall back to direct navigation if no save function is available
+        if (typeof onNext === 'function') onNext();
       }
-    } else {
-      console.warn("No prepareForSave function available");
-      // Fall back to direct navigation if no save function is available
-      if (typeof onNext === 'function') onNext();
+    } catch (err) {
+      console.error("Error preparing data for save:", err);
+      toast({
+        title: "Error Saving Data",
+        description: "There was a problem saving your score. Please try again.",
+        variant: "destructive"
+      });
+      // Don't navigate if there was an error
+    } finally {
       setIsNavigating(false);
+      setLocalIsSaving(false);
     }
   };
   
-  const handlePreviousHole = () => {
+  const handlePreviousHole = async () => {
     if (isNavigating) return;
     
     console.log(`Previous hole handler called for hole ${data.holeNumber}`);
     setIsNavigating(true);
+    setLocalIsSaving(true);
     
-    // First collect any pending form data using the exposed function
-    if (typeof formRefs.current.prepareForSave === 'function') {
-      try {
+    try {
+      // First collect any pending form data using the exposed function
+      if (typeof formRefs.current.prepareForSave === 'function') {
         const completeData = formRefs.current.prepareForSave();
         console.log("Complete data prepared for saving:", completeData);
         
         // Then update the parent component with complete data
-        onUpdate(completeData);
+        await onUpdate(completeData);
         
-        // Add a small delay to ensure the data is saved before navigation
-        setTimeout(() => {
-          // Then call the parent's previous function
-          if (typeof onPrevious === 'function') {
-            console.log("Calling navigation handler after data save");
-            onPrevious();
-          }
-          setIsNavigating(false);
-        }, 500); // Increased delay to ensure save completes
-      } catch (err) {
-        console.error("Error preparing data for save:", err);
-        toast({
-          title: "Error Saving Data",
-          description: "There was a problem saving your score. Please try again.",
-          variant: "destructive"
-        });
-        setIsNavigating(false);
-        // Don't navigate if there was an error
+        // Add a delay to ensure the data is saved before navigation
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Then call the parent's previous function
+        if (typeof onPrevious === 'function') {
+          console.log("Calling navigation handler after data save");
+          onPrevious();
+        }
+      } else {
+        console.warn("No prepareForSave function available");
+        // Fall back to direct navigation if no save function is available
+        if (typeof onPrevious === 'function') onPrevious();
       }
-    } else {
-      console.warn("No prepareForSave function available");
-      // Fall back to direct navigation if no save function is available
-      if (typeof onPrevious === 'function') onPrevious();
+    } catch (err) {
+      console.error("Error preparing data for save:", err);
+      toast({
+        title: "Error Saving Data",
+        description: "There was a problem saving your score. Please try again.",
+        variant: "destructive"
+      });
+      // Don't navigate if there was an error
+    } finally {
       setIsNavigating(false);
+      setLocalIsSaving(false);
     }
   };
   
