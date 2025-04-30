@@ -35,7 +35,7 @@ export const HoleScoreCard = ({
   const [data, setData] = useState<HoleData>(holeData);
   const [localIsSaving, setLocalIsSaving] = useState(false);
   const { toast } = useToast();
-  const formRefs = useRef<{ prepareForSave?: () => void }>({});
+  const formRefs = useRef<{ prepareForSave?: () => HoleData }>({});
   
   // Update local state when hole data changes (only for hole number changes)
   useEffect(() => {
@@ -45,21 +45,36 @@ export const HoleScoreCard = ({
     }
   }, [holeData.holeNumber]);
 
-  // Navigation handlers that ONLY save data before navigating
+  // Navigation handlers that explicitly save data before navigating
   const handleNextHole = () => {
     console.log(`Next hole handler called for hole ${data.holeNumber}`);
     
     // First collect any pending form data using the exposed function
     if (typeof formRefs.current.prepareForSave === 'function') {
-      formRefs.current.prepareForSave();
-    }
-    
-    // Then update the parent component with current data
-    onUpdate(data);
-    
-    // Then call the parent's next function
-    if (typeof onNext === 'function') {
-      onNext();
+      try {
+        const completeData = formRefs.current.prepareForSave();
+        console.log("Complete data prepared for saving:", completeData);
+        
+        // Then update the parent component with complete data
+        onUpdate(completeData);
+        
+        // Add a small delay to ensure the data is saved before navigation
+        setTimeout(() => {
+          // Then call the parent's next function
+          if (typeof onNext === 'function') {
+            console.log("Calling navigation handler after data save");
+            onNext();
+          }
+        }, 50);
+      } catch (err) {
+        console.error("Error preparing data for save:", err);
+        // Still try to navigate even if save fails
+        if (typeof onNext === 'function') onNext();
+      }
+    } else {
+      console.warn("No prepareForSave function available");
+      // No save function available, just navigate
+      if (typeof onNext === 'function') onNext();
     }
   };
   
@@ -68,15 +83,30 @@ export const HoleScoreCard = ({
     
     // First collect any pending form data using the exposed function
     if (typeof formRefs.current.prepareForSave === 'function') {
-      formRefs.current.prepareForSave();
-    }
-    
-    // Then update the parent component with current data
-    onUpdate(data);
-    
-    // Then call the parent's previous function
-    if (typeof onPrevious === 'function') {
-      onPrevious();
+      try {
+        const completeData = formRefs.current.prepareForSave();
+        console.log("Complete data prepared for saving:", completeData);
+        
+        // Then update the parent component with complete data
+        onUpdate(completeData);
+        
+        // Add a small delay to ensure the data is saved before navigation
+        setTimeout(() => {
+          // Then call the parent's previous function
+          if (typeof onPrevious === 'function') {
+            console.log("Calling navigation handler after data save");
+            onPrevious();
+          }
+        }, 50);
+      } catch (err) {
+        console.error("Error preparing data for save:", err);
+        // Still try to navigate even if save fails
+        if (typeof onPrevious === 'function') onPrevious();
+      }
+    } else {
+      console.warn("No prepareForSave function available");
+      // No save function available, just navigate
+      if (typeof onPrevious === 'function') onPrevious();
     }
   };
   
@@ -142,7 +172,7 @@ export const HoleScoreCard = ({
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6 space-y-4">
           <HoleHeader holeNumber={data.holeNumber} />
-          <HoleScoreForm data={{...data, prepareForSave: () => {}}} onDataChange={handleChange} />
+          <HoleScoreForm data={{...data, prepareForSave: () => ({} as HoleData)}} onDataChange={handleChange} />
           <HoleNavigation 
             onNext={handleNextHole}
             onPrevious={handlePreviousHole}

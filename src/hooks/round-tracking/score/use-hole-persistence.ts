@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +49,14 @@ export const useHolePersistence = (roundId: string | null) => {
       // Only update round summary after successful save of hole data
       await updateRoundSummary(roundId);
       console.log(`Successfully saved hole ${holeData.holeNumber} data`);
+      
+      // Show toast to confirm save
+      toast({
+        title: "Score Saved",
+        description: `Hole ${holeData.holeNumber} data saved successfully`,
+        variant: "default"
+      });
+      
       return true;
       
     } catch (error: any) {
@@ -100,17 +107,23 @@ async function updateRoundSummary(roundId: string) {
       putts: acc.putts + (hole.putts || 0),
       fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
       greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
-    }), { score: 0, putts: 0, fairways: 0, greens: 0 });
+      scoreCount: acc.scoreCount + (hole.score ? 1 : 0),
+      puttsCount: acc.puttsCount + (hole.putts ? 1 : 0)
+    }), { score: 0, putts: 0, fairways: 0, greens: 0, scoreCount: 0, puttsCount: 0 });
     
     console.log('Calculated round totals:', totals);
     
+    // Only update total_score and total_putts if we have complete data
+    // Otherwise keep them null until the round is finished
+    const updateData: any = {
+      fairways_hit: totals.fairways,
+      greens_in_regulation: totals.greens,
+      updated_at: new Date().toISOString()
+    };
+    
     const { error: updateError } = await supabase
       .from('rounds')
-      .update({
-        fairways_hit: totals.fairways,
-        greens_in_regulation: totals.greens,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', roundId);
       
     if (updateError) {

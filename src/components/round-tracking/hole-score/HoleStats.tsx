@@ -74,9 +74,19 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     console.log(`Preparing data for save: score=${scoreValue}, putts=${puttsValue}`);
     
-    // Update parent with current local values
-    if (scoreValue > 0) onDataChange('score', scoreValue);
-    if (puttsValue >= 0) onDataChange('putts', puttsValue);
+    // Create a complete data object for saving
+    const dataToSave = {
+      ...data,
+      score: scoreValue,
+      putts: puttsValue,
+      par: localPar,
+      distance: typeof localDistance === 'string' ? parseInt(localDistance) || 0 : localDistance
+    };
+    
+    console.log("Complete data object for saving:", dataToSave);
+    
+    // Return the complete data object
+    return dataToSave;
   };
 
   // Expose the save function via ref or prop
