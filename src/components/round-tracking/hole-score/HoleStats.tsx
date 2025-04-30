@@ -55,6 +55,13 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     // ONLY update local state, don't notify parent
     setLocalScore(value);
+    
+    // IMPORTANT FIX: Update parent immediately with score changes
+    // This ensures the data is available when navigating
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      onDataChange('score', parsedValue);
+    }
   };
 
   const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +70,13 @@ export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
     
     // ONLY update local state, don't notify parent
     setLocalPutts(value);
+    
+    // IMPORTANT FIX: Update parent immediately with putts changes
+    // This ensures the data is available when navigating
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      onDataChange('putts', parsedValue);
+    }
   };
 
   // New function to prepare all data for saving

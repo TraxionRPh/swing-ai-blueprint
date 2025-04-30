@@ -65,15 +65,19 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onNext();
           }
-        }, 50);
+        }, 100);
       } catch (err) {
         console.error("Error preparing data for save:", err);
-        // Still try to navigate even if save fails
-        if (typeof onNext === 'function') onNext();
+        toast({
+          title: "Error Saving Data",
+          description: "There was a problem saving your score. Please try again.",
+          variant: "destructive"
+        });
+        // Don't navigate if there was an error
       }
     } else {
       console.warn("No prepareForSave function available");
-      // No save function available, just navigate
+      // Fall back to direct navigation if no save function is available
       if (typeof onNext === 'function') onNext();
     }
   };
@@ -97,15 +101,19 @@ export const HoleScoreCard = ({
             console.log("Calling navigation handler after data save");
             onPrevious();
           }
-        }, 50);
+        }, 100);
       } catch (err) {
         console.error("Error preparing data for save:", err);
-        // Still try to navigate even if save fails
-        if (typeof onPrevious === 'function') onPrevious();
+        toast({
+          title: "Error Saving Data",
+          description: "There was a problem saving your score. Please try again.",
+          variant: "destructive"
+        });
+        // Don't navigate if there was an error
       }
     } else {
       console.warn("No prepareForSave function available");
-      // No save function available, just navigate
+      // Fall back to direct navigation if no save function is available
       if (typeof onPrevious === 'function') onPrevious();
     }
   };
@@ -151,6 +159,7 @@ export const HoleScoreCard = ({
     
     // Attach the form ref handler to allow collecting data before navigation
     if (field === 'prepareForSave') {
+      console.log("Registering prepareForSave function");
       formRefs.current.prepareForSave = value;
       return;
     }
@@ -165,6 +174,10 @@ export const HoleScoreCard = ({
     
     // For score fields, we only update the local state, not notify parent
     // Score and putts will be saved only on navigation
+    if (field !== 'prepareForSave') {
+      // Pass ALL field updates to parent to ensure they're available for navigation
+      onUpdate(newData);
+    }
   };
 
   return (
