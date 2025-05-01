@@ -1,12 +1,11 @@
 
 import { useNavigate } from "react-router-dom";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { RoundsList } from "@/components/round-tracking/RoundsList";
+import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
-import type { Course } from "@/types/round-tracking";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
@@ -22,8 +21,8 @@ export const RoundTrackingMain = ({
   setMainError
 }: RoundTrackingMainProps) => {
   const [localLoading, setLocalLoading] = useState(pageLoading);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedTee, setSelectedTee] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedTee, setSelectedTee] = useState(null);
   const [holeCount, setHoleCount] = useState(18);
   const navigate = useNavigate();
   
@@ -37,7 +36,7 @@ export const RoundTrackingMain = ({
   }, [setMainLoading]);
 
   // Handle course selection
-  const handleCourseSelect = (course: Course) => {
+  const handleCourseSelect = (course) => {
     console.log("Course selected:", course.name);
     setSelectedCourse(course);
     
@@ -48,18 +47,12 @@ export const RoundTrackingMain = ({
   };
 
   // Handle course selection that might include hole count
-  const handleCourseSelection = (course: Course, courseHoleCount?: number) => {
+  const handleCourseSelection = (course, courseHoleCount) => {
     console.log("Course selected with hole count:", courseHoleCount);
     if (courseHoleCount) {
       setHoleCount(courseHoleCount);
     }
     handleCourseSelect(course);
-  };
-
-  // Handle error handling from child components
-  const handleError = (error: string) => {
-    console.error("Error from child component:", error);
-    if (setMainError) setMainError(error);
   };
 
   return (
@@ -78,24 +71,21 @@ export const RoundTrackingMain = ({
       ) : (
         <>
           {/* Rounds display showing in-progress rounds */}
-          <RoundsList 
-            onCourseSelect={handleCourseSelection}
-            onError={handleError}
+          <RoundsDisplay 
+            onCourseSelect={handleCourseSelection} 
+            onError={(error) => {
+              console.error("Rounds display error:", error);
+              if (setMainError) setMainError(error);
+            }}
           />
           
           {/* Course selector to start a new round */}
-          {selectedCourse ? (
-            <CourseSelector 
-              selectedCourse={selectedCourse}
-              selectedTee={selectedTee}
-              onCourseSelect={handleCourseSelect}
-              onTeeSelect={setSelectedTee}
-            />
-          ) : (
-            <CourseSelector 
-              onCourseSelect={handleCourseSelect}
-            />
-          )}
+          <CourseSelector
+            selectedCourse={selectedCourse}
+            selectedTee={selectedTee}
+            onCourseSelect={handleCourseSelect}
+            onTeeSelect={setSelectedTee}
+          />
         </>
       )}
     </div>
