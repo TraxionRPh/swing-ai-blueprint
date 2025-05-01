@@ -126,14 +126,22 @@ export const useHoleDataFetcher = () => {
       }
       
       const holeInfo = courseHoles || [];
-      console.log(`Found ${holeInfo.length} course holes data (direct)`);
+      const holeCount = holeInfo.length > 0 ? holeInfo.length : 18;
+      
+      console.log(`Found ${holeInfo.length} course holes data for course ${courseId}`);
       
       if (holeInfo.length > 0) {
         console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
+      } else {
+        console.log('No course holes found, will use default values');
       }
 
-      const formattedScores = formatHoleScores([], holeInfo);
-      console.log('Formatted hole scores with course data (direct):', formattedScores.length);
+      const formattedScores = formatHoleScores([], holeInfo, holeCount);
+      console.log('Formatted hole scores with course data:', formattedScores);
+      
+      if (formattedScores.length > 0) {
+        console.log(`First formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+      }
       
       return formattedScores;
     } catch (error) {
@@ -145,15 +153,25 @@ export const useHoleDataFetcher = () => {
 
   // Format hole scores with course data
   const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18, teeId?: string): HoleData[] => {
+    console.log(`Formatting ${scores?.length || 0} scores with ${holeInfo?.length || 0} hole infos for ${holeCount} holes`);
+    
+    if (holeInfo && holeInfo.length > 0) {
+      console.log("First hole info:", JSON.stringify(holeInfo[0], null, 2));
+    }
+    
     return Array.from({ length: holeCount }, (_, i) => {
       const holeNumber = i + 1;
       const existingHole = scores.find(h => h.hole_number === holeNumber);
       const courseHole = holeInfo.find(h => h.hole_number === holeNumber);
       
-      // Always use the main distance_yards field for distance
+      if (courseHole) {
+        console.log(`Found course hole data for hole ${holeNumber}: par ${courseHole.par}, distance ${courseHole.distance_yards}yd`);
+      }
+      
+      // Always use the direct distance_yards field first
       let distance = courseHole?.distance_yards || 0;
       
-      // Only try to use tee-specific distance if explicitly requested and available
+      // Only try to use tee-specific distance if available and explicitly requested
       if (teeId && courseHole?.tee_distances && courseHole.tee_distances[teeId]) {
         console.log(`Using tee-specific distance for hole ${holeNumber}: ${courseHole.tee_distances[teeId]}yd`);
         distance = courseHole.tee_distances[teeId];

@@ -19,5 +19,6 @@ interface HoleScoreCardProps {
 }
 
 export const HoleScoreCard = (props: HoleScoreCardProps) => {
+  console.log("Rendering HoleScoreCard with data:", props.holeData);
   return <HoleScoreCardContainer {...props} />;
 };

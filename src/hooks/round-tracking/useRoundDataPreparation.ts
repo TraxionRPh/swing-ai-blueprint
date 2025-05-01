@@ -41,6 +41,11 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
             const formattedScores = await fetchHoleScoresFromCourse(courseId);
             
             if (isMounted.current) {
+              console.log(`Setting formatted scores with ${formattedScores.length} holes`);
+              if (formattedScores.length > 0) {
+                console.log(`First formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+              }
+              
               setHoleScores(formattedScores);
               setHoleCount(formattedScores.length);
               setLoadingStage('ready');
@@ -91,6 +96,10 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
         
         if (isMounted.current) {
           console.log('Setting formatted hole scores:', formattedScores.length);
+          if (formattedScores.length > 0) {
+            console.log(`Sample formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+          }
+          
           setHoleScores(formattedScores);
           setHoleCount(fetchedHoleCount || 18);
           setLoadingStage('ready');
@@ -107,6 +116,11 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
           const formattedScores = await fetchHoleScoresFromCourse(courseId);
           
           if (isMounted.current) {
+            console.log(`Setting ${formattedScores.length} hole scores from course data`);
+            if (formattedScores.length > 0) {
+              console.log(`Sample formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+            }
+            
             setHoleScores(formattedScores);
             setHoleCount(formattedScores.length);
             setLoadingStage('ready');

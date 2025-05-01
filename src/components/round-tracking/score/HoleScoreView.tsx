@@ -36,7 +36,7 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data:", currentHoleData);
-  console.log("Using tee ID:", teeId);
+  console.log("Using tee ID:", teeId, "with color:", teeColor);
     
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
