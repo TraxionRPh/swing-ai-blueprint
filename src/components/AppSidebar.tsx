@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
 
-const AppSidebar = () => {
+interface AppSidebarProps {
+  pageTitle?: string;
+}
+
+const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -24,6 +28,7 @@ const AppSidebar = () => {
         </div>
       </SidebarHeader>
       <SidebarContent>
+        {/* Main Group */}
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -56,6 +61,7 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
+        {/* Training Group */}
         <SidebarGroup>
           <SidebarGroupLabel>Training</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -80,6 +86,7 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
+        {/* Analysis Group */}
         <SidebarGroup>
           <SidebarGroupLabel>Analysis</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -96,6 +103,7 @@ const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
+        {/* Account Group */}
         <SidebarGroup>
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
