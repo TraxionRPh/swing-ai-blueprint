@@ -13,6 +13,17 @@ interface HoleScoreFormProps {
 
 export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   console.log("HoleScoreForm rendering with data:", data);
+  
+  // Ensure we have valid data
+  const safeData: HoleData = {
+    holeNumber: data?.holeNumber || 1,
+    par: data?.par || 4,
+    distance: data?.distance || 0,
+    score: data?.score || 0,
+    putts: data?.putts || 0,
+    fairwayHit: data?.fairwayHit || false,
+    greenInRegulation: data?.greenInRegulation || false
+  };
 
   const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
@@ -27,9 +38,9 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   return (
     <div className="space-y-4">
       <HoleHeader 
-        holeNumber={data.holeNumber} 
-        par={data.par} 
-        distance={data.distance} 
+        holeNumber={safeData.holeNumber} 
+        par={safeData.par} 
+        distance={safeData.distance} 
       />
       
       <div className="grid grid-cols-2 gap-4">
@@ -40,7 +51,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           <Input
             id="score"
             type="number"
-            value={data.score || ""}
+            value={safeData.score || ""}
             onChange={handleScoreChange}
             min={0}
             className="w-full"
@@ -54,7 +65,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           <Input
             id="putts"
             type="number"
-            value={data.putts || ""}
+            value={safeData.putts || ""}
             onChange={handlePuttsChange}
             min={0}
             className="w-full"
@@ -63,12 +74,12 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       </div>
       
       <PerformanceToggles
-        data={data}
+        data={safeData}
         onDataChange={onDataChange}
       />
       
       <HoleStats
-        data={data}
+        data={safeData}
         onDataChange={onDataChange}
       />
     </div>
