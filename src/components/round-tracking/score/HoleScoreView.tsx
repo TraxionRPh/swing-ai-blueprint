@@ -13,6 +13,8 @@ interface HoleScoreViewProps {
   currentHole: number;
   holeCount: number;
   isSaving: boolean;
+  saveSuccess?: boolean;
+  saveError?: string | null;
   isLoading?: boolean;
   teeColor?: string;
   courseId?: string;
@@ -28,6 +30,8 @@ export const HoleScoreView = ({
   currentHole,
   holeCount,
   isSaving,
+  saveSuccess = false,
+  saveError = null,
   isLoading = false,
   teeColor,
   courseId,
@@ -37,6 +41,7 @@ export const HoleScoreView = ({
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data in HoleScoreView:", currentHoleData);
   console.log("Using course ID:", courseId, "tee ID:", teeId, "with color:", teeColor);
+  console.log("Save status:", { isSaving, saveSuccess, saveError });
     
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
@@ -66,6 +71,8 @@ export const HoleScoreView = ({
         isFirst={currentHole === 1}
         isLast={currentHole === holeCount}
         isSaving={isSaving}
+        saveSuccess={saveSuccess}
+        saveError={saveError}
         currentHole={currentHole}
         holeCount={holeCount}
         teeColor={teeColor}

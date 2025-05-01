@@ -13,7 +13,7 @@ export const useRoundScoreTracker = (
   teeId?: string
 ) => {
   const { currentHole, setCurrentHole, handleNext, handlePrevious } = useHoleNavigation();
-  const { saveHoleScore, isSaving } = useHolePersistence(roundId);
+  const { saveHoleScore, isSaving, saveSuccess, saveError } = useHolePersistence(roundId);
   const { holeScores, setHoleScores } = useHoleScores(roundId);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -219,6 +219,8 @@ export const useRoundScoreTracker = (
     handleNext,
     handlePrevious,
     isSaving,
+    saveSuccess,
+    saveError,
     isLoading,
     currentHoleData,
     clearResumeData,

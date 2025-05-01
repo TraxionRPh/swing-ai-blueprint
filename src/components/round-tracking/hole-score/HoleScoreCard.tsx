@@ -11,6 +11,8 @@ interface HoleScoreCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
+  saveSuccess?: boolean;
+  saveError?: string | null;
   currentHole?: number;
   holeCount?: number;
   teeColor?: string;
@@ -34,6 +36,11 @@ export const HoleScoreCard = (props: HoleScoreCardProps) => {
   console.log("Hole distance:", safeHoleData.distance, "yards");
   console.log("Course ID in HoleScoreCard:", props.courseId);
   console.log("Tee ID in HoleScoreCard:", props.teeId);
+  console.log("Save status in HoleScoreCard:", { 
+    isSaving: props.isSaving,
+    saveSuccess: props.saveSuccess,
+    saveError: props.saveError
+  });
   
   return <HoleScoreCardContainer {...props} holeData={safeHoleData} />;
 };

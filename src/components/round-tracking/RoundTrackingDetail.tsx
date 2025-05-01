@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
@@ -46,6 +45,8 @@ export const RoundTrackingDetail = ({
     handleNext,
     handlePrevious,
     isSaving,
+    saveSuccess,
+    saveError,
     currentHoleData,
     clearResumeData,
     fetchCourseHoles
@@ -205,6 +206,8 @@ export const RoundTrackingDetail = ({
           currentHole={currentHole}
           holeCount={holeCount}
           isSaving={isSaving}
+          saveSuccess={saveSuccess}
+          saveError={saveError}
           teeColor={teeColor}
           courseId={courseId}
           teeId={teeId}

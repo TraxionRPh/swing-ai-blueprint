@@ -14,6 +14,8 @@ interface HoleScoreCardWrapperProps {
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
+  saveSuccess?: boolean;
+  saveError?: string | null;
   currentHole?: number;
   holeCount?: number;
 }
@@ -26,6 +28,8 @@ export const HoleScoreCardWrapper = ({
   isFirst,
   isLast,
   isSaving = false,
+  saveSuccess = false,
+  saveError = null,
   currentHole,
   holeCount
 }: HoleScoreCardWrapperProps) => {
@@ -39,6 +43,8 @@ export const HoleScoreCardWrapper = ({
     fairwayHit: !!holeData?.fairwayHit,
     greenInRegulation: !!holeData?.greenInRegulation
   };
+  
+  console.log("HoleScoreCardWrapper save status:", { isSaving, saveSuccess, saveError });
   
   return (
     <>
@@ -56,7 +62,11 @@ export const HoleScoreCardWrapper = ({
         </CardContent>
       </Card>
       
-      <HoleSavingIndicator isSaving={isSaving} />
+      <HoleSavingIndicator 
+        isSaving={isSaving} 
+        saveSuccess={saveSuccess}
+        saveError={saveError}
+      />
     </>
   );
 };

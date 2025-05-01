@@ -11,6 +11,8 @@ interface HoleScoreCardContainerProps {
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
+  saveSuccess?: boolean;
+  saveError?: string | null;
   currentHole?: number;
   holeCount?: number;
   teeColor?: string;
@@ -26,6 +28,8 @@ export const HoleScoreCardContainer = ({
   isFirst,
   isLast,
   isSaving,
+  saveSuccess,
+  saveError,
   currentHole,
   holeCount,
   teeColor,
@@ -66,6 +70,8 @@ export const HoleScoreCardContainer = ({
       isFirst={isFirst}
       isLast={isLast}
       isSaving={isSaving}
+      saveSuccess={saveSuccess}
+      saveError={saveError}
       currentHole={currentHole}
       holeCount={holeCount}
     />
