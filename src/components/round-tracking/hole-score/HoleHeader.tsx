@@ -10,11 +10,6 @@ interface HoleHeaderProps {
 export const HoleHeader = ({ holeNumber, par, distance }: HoleHeaderProps) => {
   // Add defensive checks to handle undefined values
   const safeHoleNumber = holeNumber || 1;
-  const safePar = par || 0;
-  const safeDistance = distance || 0;
-  
-  // Log values for debugging
-  console.log(`HoleHeader rendering hole ${safeHoleNumber} with par ${safePar} and distance ${safeDistance} yards`);
   
   return (
     <div className="flex justify-between items-center">
@@ -22,12 +17,12 @@ export const HoleHeader = ({ holeNumber, par, distance }: HoleHeaderProps) => {
       <div className="flex items-center space-x-3">
         {par !== undefined && par > 0 && (
           <span className="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-            Par {safePar}
+            Par {par}
           </span>
         )}
         {distance !== undefined && distance > 0 && (
           <span className="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-            {safeDistance} yards
+            {distance} yards
           </span>
         )}
       </div>
