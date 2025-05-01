@@ -13,6 +13,7 @@ export const HoleHeader = ({ holeNumber, par, distance }: HoleHeaderProps) => {
   const safePar = par || 0;
   const safeDistance = distance || 0;
   
+  // Log values for debugging
   console.log(`HoleHeader rendering hole ${safeHoleNumber} with par ${safePar} and distance ${safeDistance} yards`);
   
   return (

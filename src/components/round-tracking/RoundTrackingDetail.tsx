@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
@@ -55,7 +56,11 @@ export const RoundTrackingDetail = ({
   // Fetch round details to get course ID and tee color
   useEffect(() => {
     const fetchRoundDetails = async () => {
-      if (!currentRoundId || currentRoundId === 'new') return;
+      if (!currentRoundId || currentRoundId === 'new') {
+        setLocalLoading(false);
+        if (setDetailLoading) setDetailLoading(false);
+        return;
+      }
       
       try {
         console.log("Fetching round details for:", currentRoundId);

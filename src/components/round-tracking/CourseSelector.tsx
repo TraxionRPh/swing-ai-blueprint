@@ -51,7 +51,6 @@ export const CourseSelector = ({
         console.error("Error fetching course holes:", error);
       } else if (holesData && holesData.length > 0) {
         console.log(`Found ${holesData.length} holes for course ${course.id}`);
-        console.log("First hole data:", holesData[0]);
         
         // Attach the holes data to the course object
         course.course_holes = holesData;
