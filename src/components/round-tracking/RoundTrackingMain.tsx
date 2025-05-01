@@ -4,6 +4,7 @@ import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTra
 import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
 
@@ -54,6 +55,11 @@ export const RoundTrackingMain = ({
     }
     handleCourseSelect(course);
   };
+  
+  // Start a new round
+  const handleStartNewRound = () => {
+    navigate('/rounds/new');
+  };
 
   return (
     <div className="space-y-6">
@@ -70,6 +76,18 @@ export const RoundTrackingMain = ({
         </Card>
       ) : (
         <>
+          {/* Action button to start new round */}
+          <Card>
+            <CardContent className="pt-6 flex justify-center items-center">
+              <Button 
+                onClick={handleStartNewRound}
+                className="w-full py-6 text-lg"
+              >
+                Start New Round
+              </Button>
+            </CardContent>
+          </Card>
+          
           {/* Rounds display showing in-progress rounds */}
           <RoundsDisplay 
             onCourseSelect={handleCourseSelection} 
@@ -77,14 +95,6 @@ export const RoundTrackingMain = ({
               console.error("Rounds display error:", error);
               if (setMainError) setMainError(error);
             }}
-          />
-          
-          {/* Course selector to start a new round */}
-          <CourseSelector
-            selectedCourse={selectedCourse}
-            selectedTee={selectedTee}
-            onCourseSelect={handleCourseSelect}
-            onTeeSelect={setSelectedTee}
           />
         </>
       )}
