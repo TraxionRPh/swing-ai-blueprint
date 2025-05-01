@@ -199,10 +199,13 @@ export const useRoundTracking = () => {
             if (roundData && isMounted) {
               setCurrentRoundId(roundData.roundId);
               
-              // Make sure we handle potentially missing holeScores property
-              if (roundData.holeScores) {
-                setHoleScores(roundData.holeScores);
-              }
+              // Fix: Create local empty hole scores if none exist in roundData
+              // This avoids the TypeScript error by safely accessing the property
+              const emptyHoleScores: HoleData[] = [];
+              
+              // Use type assertion to tell TypeScript that roundData might have holeScores
+              const holeScoresData = (roundData as InProgressRoundData).holeScores || emptyHoleScores;
+              setHoleScores(holeScoresData);
               
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
