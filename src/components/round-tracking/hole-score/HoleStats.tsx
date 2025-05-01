@@ -1,9 +1,12 @@
+
 import { Badge } from "@/components/ui/badge";
+
 interface HoleStatsProps {
   par: number;
   score: number;
   putts: number;
 }
+
 export const HoleStats = ({
   par,
   score,
@@ -31,9 +34,20 @@ export const HoleStats = ({
     if (diff < 0) return "bg-green-100 text-green-800"; // Under par
     return "bg-red-100 text-red-800"; // Over par
   };
-  return <div className="flex flex-wrap gap-2 mt-2">
-      {safeScore > 0}
+
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {safeScore > 0 && (
+        <Badge variant="outline" className={getScoreColorClass()}>
+          {getRelationToPar()} ({safeScore})
+        </Badge>
+      )}
       
-      {safePutts > 0}
-    </div>;
+      {safePutts > 0 && (
+        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+          {safePutts} {safePutts === 1 ? 'Putt' : 'Putts'}
+        </Badge>
+      )}
+    </div>
+  );
 };

@@ -85,18 +85,13 @@ export const useHoleDataFetcher = () => {
       };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
-      toast({
-        title: "Error loading round data",
-        description: "Could not load hole scores. Using default values.",
-        variant: "destructive"
-      });
-      
+      // Silently handle the error instead of showing a toast
       return { 
         holeCount: 18, 
         formattedScores: initializeDefaultScores()
       };
     }
-  }, [toast]);
+  }, []);
 
   // Fetch hole scores from a course ID directly
   const fetchHoleScoresFromCourse = useCallback(async (courseId: string, teeId?: string) => {

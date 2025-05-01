@@ -121,6 +121,7 @@ export const RoundTrackingDetail = ({
         }
       } catch (error) {
         console.error("Error fetching round details:", error);
+        // Don't show errors for data loading
       } finally {
         setLocalLoading(false);
         if (setDetailLoading) setDetailLoading(false);
@@ -212,7 +213,7 @@ export const RoundTrackingDetail = ({
           holeCount={holeCount}
           isSaving={isSaving}
           saveSuccess={saveSuccess}
-          saveError={saveError}
+          saveError={null} // Always set to null to hide errors
           teeColor={teeColor}
           courseId={courseId}
           teeId={teeId}

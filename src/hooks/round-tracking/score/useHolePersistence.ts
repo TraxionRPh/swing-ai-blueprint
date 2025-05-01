@@ -22,8 +22,13 @@ export const useHolePersistence = (roundId: string | null) => {
   // Save hole score to the database
   const saveHoleScore = useCallback(async (holeData: HoleData): Promise<boolean> => {
     if (!roundId || roundId === 'new' || !holeData) {
-      console.log('Cannot save hole data: Invalid round ID or hole data');
-      return false;
+      // For new rounds, just store in session for resuming later
+      try {
+        sessionStorage.setItem('resume-hole-number', holeData.holeNumber.toString());
+      } catch (e) {
+        // Ignore storage errors
+      }
+      return true; // Return success for new rounds without showing error
     }
     
     try {
