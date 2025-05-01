@@ -8,13 +8,17 @@ interface HoleNavigationProps {
   onPrevious?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  currentHole?: number;
+  holeCount?: number;
 }
 
 export const HoleNavigation = ({
   onNext,
   onPrevious,
   isFirst,
-  isLast
+  isLast,
+  currentHole,
+  holeCount
 }: HoleNavigationProps) => {
   // Add state to track button clicks and prevent rapid multiple clicks
   const [isClicking, setIsClicking] = useState(false);
@@ -104,6 +108,13 @@ export const HoleNavigation = ({
       >
         Previous Hole
       </Button>
+      <div className="text-center flex items-center">
+        {currentHole && holeCount && (
+          <span className="text-sm font-medium text-muted-foreground">
+            Hole {currentHole} of {holeCount}
+          </span>
+        )}
+      </div>
       <Button 
         onClick={handleNext} 
         disabled={(isLast && !onNext) || isClicking}

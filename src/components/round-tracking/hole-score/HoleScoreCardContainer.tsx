@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,8 @@ interface HoleScoreCardContainerProps {
   teeColor?: string;
   courseId?: string;
   isSaving?: boolean;
+  currentHole?: number;
+  holeCount?: number;
 }
 
 export const HoleScoreCardContainer = ({
@@ -25,7 +28,9 @@ export const HoleScoreCardContainer = ({
   isLast,
   teeColor,
   courseId,
-  isSaving = false
+  isSaving = false,
+  currentHole,
+  holeCount
 }: HoleScoreCardContainerProps) => {
   const [data, setData] = useState<HoleData>(holeData);
   const [localIsSaving, setLocalIsSaving] = useState(false);
@@ -218,6 +223,8 @@ export const HoleScoreCardContainer = ({
       isFirst={isFirst}
       isLast={isLast}
       isSaving={isSaving || localIsSaving || isNavigating}
+      currentHole={currentHole}
+      holeCount={holeCount}
     />
   );
 };

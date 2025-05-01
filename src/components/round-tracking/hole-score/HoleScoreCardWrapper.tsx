@@ -15,6 +15,8 @@ interface HoleScoreCardWrapperProps {
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
+  currentHole?: number;
+  holeCount?: number;
 }
 
 export const HoleScoreCardWrapper = ({
@@ -24,7 +26,9 @@ export const HoleScoreCardWrapper = ({
   onPrevious,
   isFirst,
   isLast,
-  isSaving = false
+  isSaving = false,
+  currentHole,
+  holeCount
 }: HoleScoreCardWrapperProps) => {
   
   return (
@@ -38,6 +42,8 @@ export const HoleScoreCardWrapper = ({
             onPrevious={onPrevious}
             isFirst={isFirst}
             isLast={isLast}
+            currentHole={currentHole}
+            holeCount={holeCount}
           />
         </CardContent>
       </Card>

@@ -38,7 +38,6 @@ export const HoleScoreView = ({
     if (holeScores.length > 0) {
       console.log(`HoleScoreView has ${holeScores.length} hole scores`);
       const currentHoleData = holeScores.find(h => h.holeNumber === currentHole);
-      console.log('Current hole data:', currentHole, currentHoleData);
       
       if (currentHoleData) {
         console.log(`Hole ${currentHole}: par ${currentHoleData.par}, distance ${currentHoleData.distance}yd`);
@@ -128,6 +127,8 @@ export const HoleScoreView = ({
         teeColor={teeColor}
         courseId={courseId}
         isSaving={isSaving}
+        currentHole={currentHole}
+        holeCount={holeCount}
       />
     </>
   );

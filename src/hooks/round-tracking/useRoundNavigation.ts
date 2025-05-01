@@ -39,7 +39,7 @@ export const useRoundNavigation = (
         // Reset navigation state after a short delay
         setTimeout(() => {
           isNavigatingRef.current = false;
-        }, 100);
+        }, 300);
       }, 0);
     } else {
       console.error("handleNextBase is not a valid function", handleNextBase);
@@ -75,7 +75,7 @@ export const useRoundNavigation = (
         // Reset navigation state after a short delay
         setTimeout(() => {
           isNavigatingRef.current = false;
-        }, 100);
+        }, 300);
       }, 0);
     } else {
       console.error("handlePrevious is not a valid function", handlePrevious);

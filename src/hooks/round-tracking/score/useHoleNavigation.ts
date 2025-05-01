@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 export const useHoleNavigation = () => {
   const [currentHole, setCurrentHole] = useState(1);
-  const { holeNumber } = useParams();
+  const { roundId, holeNumber } = useParams();
+  const navigate = useNavigate();
   const didInitialize = useRef(false);
   
   // Initialize the hole number with improved logging
@@ -44,10 +45,15 @@ export const useHoleNavigation = () => {
       // Update the session storage for resume capability
       sessionStorage.setItem('resume-hole-number', nextHole.toString());
       
-      // Update the state with the new hole number
+      // Update the URL to reflect the new hole number
+      if (roundId) {
+        navigate(`/rounds/${roundId}/${nextHole}`);
+      }
+      
+      // Also update the state to ensure instant UI updates
       setCurrentHole(nextHole);
     }
-  }, [currentHole]);
+  }, [currentHole, navigate, roundId]);
 
   const handlePrevious = useCallback(() => {
     if (currentHole > 1) {
@@ -57,10 +63,15 @@ export const useHoleNavigation = () => {
       // Update the session storage for resume capability
       sessionStorage.setItem('resume-hole-number', prevHole.toString());
       
-      // Update the state with the new hole number
+      // Update the URL to reflect the new hole number
+      if (roundId) {
+        navigate(`/rounds/${roundId}/${prevHole}`);
+      }
+      
+      // Also update the state to ensure instant UI updates
       setCurrentHole(prevHole);
     }
-  }, [currentHole]);
+  }, [currentHole, navigate, roundId]);
   
   // Add ability to set hole directly
   const setHole = useCallback((holeNumber: number) => {
@@ -70,12 +81,17 @@ export const useHoleNavigation = () => {
       // Update the session storage for resume capability
       sessionStorage.setItem('resume-hole-number', holeNumber.toString());
       
+      // Update the URL to reflect the new hole number
+      if (roundId) {
+        navigate(`/rounds/${roundId}/${holeNumber}`);
+      }
+      
       // Update the state with the new hole number
       setCurrentHole(holeNumber);
     } else {
       console.warn(`Invalid hole number: ${holeNumber}, must be between 1 and 18`);
     }
-  }, []);
+  }, [navigate, roundId]);
 
   return {
     currentHole,

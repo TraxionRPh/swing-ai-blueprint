@@ -13,6 +13,8 @@ interface HoleScoreCardProps {
   teeColor?: string;
   courseId?: string;
   isSaving?: boolean;
+  currentHole?: number;
+  holeCount?: number;
 }
 
 export const HoleScoreCard = (props: HoleScoreCardProps) => {

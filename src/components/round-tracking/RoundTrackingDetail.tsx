@@ -7,10 +7,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
+import { useNavigate } from "react-router-dom";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
   currentRoundId: string | null;
+  initialHoleNumber?: number | null;
   isLoading?: boolean;
   loadingStage?: string;
   retryLoading: () => void;
@@ -21,6 +23,7 @@ interface RoundTrackingDetailProps {
 export const RoundTrackingDetail = ({
   onBack,
   currentRoundId,
+  initialHoleNumber,
   isLoading: externalLoading,
   loadingStage = "Loading...",
   retryLoading,
@@ -30,8 +33,9 @@ export const RoundTrackingDetail = ({
   const [showFinalScore, setShowFinalScore] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
-  console.log("RoundTrackingDetail rendered with ID:", currentRoundId, "loading:", localLoading);
+  console.log("RoundTrackingDetail rendered with ID:", currentRoundId, "initial hole:", initialHoleNumber, "loading:", localLoading);
   
   // Use round tracking hook
   const roundTracking = useRoundTracking();
@@ -77,14 +81,28 @@ export const RoundTrackingDetail = ({
     finishRound
   } = roundTracking;
 
+  // Set initial hole number from URL if provided
   useEffect(() => {
-    // Force data refresh when currentHole changes
+    if (localLoading || !setCurrentHole) return;
+    
+    if (initialHoleNumber && initialHoleNumber > 0 && initialHoleNumber <= (holeCount || 18)) {
+      console.log(`Setting initial hole number from URL: ${initialHoleNumber}`);
+      setCurrentHole(initialHoleNumber);
+    } else if (!initialHoleNumber && currentRoundId) {
+      // If no hole number in URL, but we have a round ID, redirect to hole 1
+      console.log('No hole number in URL, redirecting to hole 1');
+      navigate(`/rounds/${currentRoundId}/1`);
+    }
+  }, [localLoading, initialHoleNumber, holeCount, setCurrentHole, currentRoundId, navigate]);
+
+  // Force data refresh when currentHole changes
+  useEffect(() => {
     console.log(`Current hole in RoundTrackingDetail: ${currentHole}`);
   }, [currentHole]);
 
   // Apply resume hole if available
   useEffect(() => {
-    if (localLoading || !setCurrentHole) return;
+    if (localLoading || !setCurrentHole || initialHoleNumber) return;
     
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number') || 
                             localStorage.getItem('resume-hole-number');
@@ -100,9 +118,9 @@ export const RoundTrackingDetail = ({
     
     // Clear the force-resume flag
     sessionStorage.removeItem('force-resume');
-  }, [localLoading, holeCount, setCurrentHole]);
+  }, [localLoading, holeCount, setCurrentHole, initialHoleNumber]);
 
-  // Enhanced navigation handlers without toast notifications
+  // Enhanced navigation handlers that will update URLs
   const handleNext = useCallback(() => {
     console.log("Next button pressed in RoundTrackingDetail, current hole:", currentHole, "holeCount:", holeCount);
     
@@ -117,19 +135,10 @@ export const RoundTrackingDetail = ({
     } else {
       console.log("Moving to next hole via base handler");
       
-      // Force state update with direct assignment if available
-      if (setCurrentHole && typeof setCurrentHole === 'function') {
-        const nextHole = currentHole + 1;
-        if (nextHole <= (holeCount || 18)) {
-          console.log(`Directly setting hole to ${nextHole}`);
-          setCurrentHole(nextHole);
-        }
-      }
-      
-      // Also call the base handler for any additional logic
+      // Call the base handler to handle state update and URL navigation
       handleNextBase();
     }
-  }, [handleNextBase, currentHole, holeCount, setCurrentHole]);
+  }, [handleNextBase, currentHole, holeCount]);
   
   const handlePrevious = useCallback(() => {
     console.log("Previous button pressed in RoundTrackingDetail, current hole:", currentHole);
@@ -141,18 +150,9 @@ export const RoundTrackingDetail = ({
     
     console.log("Moving to previous hole via base handler");
     
-    // Force state update with direct assignment if available
-    if (setCurrentHole && typeof setCurrentHole === 'function') {
-      const prevHole = currentHole - 1;
-      if (prevHole >= 1) {
-        console.log(`Directly setting hole to ${prevHole}`);
-        setCurrentHole(prevHole);
-      }
-    }
-    
-    // Also call the base handler for any additional logic
+    // Call the base handler to handle state update and URL navigation
     handlePreviousBase();
-  }, [handlePreviousBase, currentHole, setCurrentHole]);
+  }, [handlePreviousBase, currentHole]);
 
   // Handle back navigation with cleanup
   const handleBackNavigation = () => {
