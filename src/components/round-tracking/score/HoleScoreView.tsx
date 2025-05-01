@@ -50,7 +50,7 @@ export const HoleScoreView = ({
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Add score summary at the top */}
       <ScoreSummary holeScores={holeScores} />
       

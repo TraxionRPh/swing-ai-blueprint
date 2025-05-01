@@ -16,33 +16,33 @@ export const ScoreSummary = ({ holeScores }: ScoreSummaryProps) => {
   }), { score: 0, putts: 0, fairways: 0, greens: 0, fairwayCount: 0 });
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-primary-foreground/10 rounded-lg p-4">
-        <div className="text-2xl font-bold">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="bg-card rounded-lg p-4 border border-border shadow-sm transition-all hover:shadow-md">
+        <div className="text-2xl font-bold text-foreground">
           {totals.score > 0 ? totals.score : "No Scores"}
         </div>
         <div className="text-sm text-muted-foreground">
           Total Score
         </div>
       </div>
-      <div className="bg-primary-foreground/10 rounded-lg p-4">
-        <div className="text-2xl font-bold">
+      <div className="bg-card rounded-lg p-4 border border-border shadow-sm transition-all hover:shadow-md">
+        <div className="text-2xl font-bold text-foreground">
           {totals.putts > 0 ? totals.putts : "No Putts"}
         </div>
         <div className="text-sm text-muted-foreground">
           Total Putts
         </div>
       </div>
-      <div className="bg-primary-foreground/10 rounded-lg p-4">
-        <div className="text-2xl font-bold">
+      <div className="bg-card rounded-lg p-4 border border-border shadow-sm transition-all hover:shadow-md">
+        <div className="text-2xl font-bold text-foreground">
           {totals.fairways > 0 ? `${totals.fairways}/${totals.fairwayCount}` : "No Fairways"}
         </div>
         <div className="text-sm text-muted-foreground">
           Fairways Hit
         </div>
       </div>
-      <div className="bg-primary-foreground/10 rounded-lg p-4">
-        <div className="text-2xl font-bold">
+      <div className="bg-card rounded-lg p-4 border border-border shadow-sm transition-all hover:shadow-md">
+        <div className="text-2xl font-bold text-foreground">
           {totals.greens > 0 ? `${totals.greens}/${holeScores.length}` : "No Greens"}
         </div>
         <div className="text-sm text-muted-foreground">

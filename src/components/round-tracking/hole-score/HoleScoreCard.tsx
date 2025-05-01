@@ -41,10 +41,10 @@ export const HoleScoreCard = ({
   
   return (
     <>
-      <Card className="w-full max-w-xl mx-auto bg-primary-foreground/10 border-none">
+      <Card className="w-full max-w-xl mx-auto bg-card border border-border shadow-md">
         <CardContent className="pt-6 space-y-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-3xl font-bold">Hole {holeData.holeNumber}</h3>
+            <h3 className="text-3xl font-bold text-foreground">Hole {holeData.holeNumber}</h3>
             {teeColor && (
               <span className="text-sm text-muted-foreground">
                 Tee color: {teeColor}

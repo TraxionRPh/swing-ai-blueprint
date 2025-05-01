@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { HoleData } from "@/types/round-tracking";
 
@@ -47,7 +46,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <Label htmlFor="par" className="text-lg font-medium">Par</Label>
+        <Label htmlFor="par" className="text-lg font-medium text-foreground">Par</Label>
         <div className="flex space-x-2">
           {[3, 4, 5].map(parValue => (
             <Button 
@@ -64,7 +63,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       </div>
       
       <div className="space-y-3">
-        <Label htmlFor="distance" className="text-lg font-medium">Yards</Label>
+        <Label htmlFor="distance" className="text-lg font-medium text-foreground">Yards</Label>
         <Input
           id="distance"
           type="number"
@@ -72,12 +71,12 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           value={formData.distance || ''}
           onChange={(e) => handleInputChange('distance', e.target.value)}
           placeholder="Enter yards"
-          className="bg-primary-foreground text-lg"
+          className="text-lg"
         />
       </div>
       
       <div className="space-y-3">
-        <Label htmlFor="score" className="text-lg font-medium">Score</Label>
+        <Label htmlFor="score" className="text-lg font-medium text-foreground">Score</Label>
         <Input
           id="score"
           type="number"
@@ -85,12 +84,12 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           value={formData.score || ''}
           onChange={(e) => handleInputChange('score', e.target.value)}
           placeholder="Enter score"
-          className="bg-primary-foreground text-lg"
+          className="text-lg"
         />
       </div>
       
       <div className="space-y-3">
-        <Label htmlFor="putts" className="text-lg font-medium">Putts</Label>
+        <Label htmlFor="putts" className="text-lg font-medium text-foreground">Putts</Label>
         <Input
           id="putts"
           type="number"
@@ -98,7 +97,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           value={formData.putts || ''}
           onChange={(e) => handleInputChange('putts', e.target.value)}
           placeholder="Enter putts"
-          className="bg-primary-foreground text-lg"
+          className="text-lg"
         />
       </div>
       

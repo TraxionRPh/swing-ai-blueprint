@@ -88,7 +88,7 @@ export const HoleNavigation = ({
   }, [onNext, isClickingNext, isClickingPrev]);
 
   return (
-    <div className="flex justify-between mt-6">
+    <div className="flex justify-between items-center mt-6">
       <Button 
         variant="outline" 
         onClick={handlePrevious} 
@@ -100,7 +100,7 @@ export const HoleNavigation = ({
         Previous Hole
       </Button>
       
-      <div className="text-center flex items-center">
+      <div className="text-center">
         {currentHole && holeCount && (
           <span className="text-sm font-medium text-muted-foreground">
             Hole {currentHole} of {holeCount}
@@ -111,7 +111,7 @@ export const HoleNavigation = ({
       <Button 
         onClick={handleNext} 
         disabled={(isLast && !onNext) || isClickingNext || isClickingPrev}
-        className={`${isLast ? "bg-primary hover:bg-primary/90" : ""} w-[140px]`}
+        className="w-[140px]"
         type="button"
         data-testid="next-hole-button"
       >
