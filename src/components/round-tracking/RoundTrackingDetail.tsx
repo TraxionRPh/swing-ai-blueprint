@@ -70,10 +70,11 @@ export const RoundTrackingDetail = ({
     onBack();
   };
 
-  // Handle finishing the round
-  const finishRound = useCallback(() => {
+  // Handle finishing the round - Fixed to match the expected type
+  const finishRound = useCallback(async (holeCount: number) => {
     clearResumeData();
     onBack();
+    return true; // Return a Promise<boolean> as expected
   }, [clearResumeData, onBack]);
 
   // If data is still loading, show a loading indicator

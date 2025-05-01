@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -32,14 +31,14 @@ export const useRoundTracking = () => {
     setRoundsById
   } = useRoundDataState();
   
-  // Round management hook
+  // Round management hook - Fix the type by using user?.id (string | undefined) instead of user (User)
   const {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
     finishRound: baseFinishRound,
     deleteRound
-  } = useRoundManagement(user);
+  } = useRoundManagement(user?.id);
 
   // Centralized loading state
   const {
@@ -57,7 +56,7 @@ export const useRoundTracking = () => {
     setHoleCount,
     fetchRoundDetails,
     updateCourseName
-  } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
+  } = useRoundInitialization(user?.id, currentRoundId, setCurrentRoundId);
 
   // Course management hook
   const {
@@ -86,7 +85,8 @@ export const useRoundTracking = () => {
     handlePrevious: handlePreviousBase,
     isSaving,
     currentHoleData,
-    setCurrentHole
+    setCurrentHole,
+    clearResumeData
   } = useScoreTracking(currentRoundId, selectedCourse?.id, holeScores, setHoleScores);
 
   // Course selection hook
@@ -97,14 +97,14 @@ export const useRoundTracking = () => {
     holeCount
   );
 
-  // Round navigation hook
-  const { handleNext, handlePrevious } = useRoundNavigation(
-    handleNextBase,
-    handlePreviousBase,
+  // Round navigation hook - Fix: Only pass required arguments
+  const { handleNext, handlePrevious } = useRoundNavigation({
+    baseHandleNext: handleNextBase,
+    baseHandlePrevious: handlePreviousBase,
     currentHole,
     holeCount,
     isLoading
-  );
+  });
 
   // Session resumption hook
   const { getResumeHole } = useResumeSession({
@@ -190,6 +190,7 @@ export const useRoundTracking = () => {
     isLoading,
     handleHoleCountSelect,
     roundsById,
+    clearResumeData,
     error: loadingStage === 'failed' ? 'Failed to load round data' : null
   };
 };

@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourseManagement } from "./round-tracking/useCourseManagement";
@@ -10,13 +11,22 @@ import { useRoundNavigation } from "./round-tracking/useRoundNavigation";
 import { useRoundFinalization } from "./round-tracking/useRoundFinalization";
 import { useRoundLoadingState } from "./round-tracking/useRoundLoadingState";
 import { useRoundDataPreparation } from "./round-tracking/useRoundDataPreparation";
-import { useScoreTracking } from "./round-tracking/useScoreTracking";
+import { useScoreTracking } from "./round-tracking/score/useScoreTracking";
 import { useResumeSession } from "./round-tracking/useResumeSession";
 import type { HoleData, Course } from "@/types/round-tracking";
 
 // Define an interface for round data by ID
 interface RoundsByIdType {
   [key: string]: any; // Replace 'any' with a more specific type if available
+}
+
+// Define an interface for in-progress round data
+interface InProgressRoundData {
+  roundId: string;
+  holeCount?: number;
+  course?: any;
+  totalScore?: number;
+  holeScores?: HoleData[];
 }
 
 export const useRoundTracking = () => {
@@ -33,14 +43,14 @@ export const useRoundTracking = () => {
   console.log("useRoundTracking init - roundId from URL:", urlRoundId);
   console.log("Current path:", location.pathname);
   
-  // Round management hook
+  // Round management hook - Fix by passing user?.id instead of user
   const {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
     finishRound: baseFinishRound,
     deleteRound
-  } = useRoundManagement(user);
+  } = useRoundManagement(user?.id);
 
   // Centralized loading state
   const {
@@ -58,7 +68,7 @@ export const useRoundTracking = () => {
     setHoleCount,
     fetchRoundDetails,
     updateCourseName
-  } = useRoundInitialization(user, currentRoundId, setCurrentRoundId);
+  } = useRoundInitialization(user?.id, currentRoundId, setCurrentRoundId);
 
   // Course management hook
   const {
@@ -87,7 +97,8 @@ export const useRoundTracking = () => {
     handlePrevious: handlePreviousBase,
     isSaving,
     currentHoleData,
-    setCurrentHole
+    setCurrentHole,
+    clearResumeData
   } = useScoreTracking(currentRoundId, selectedCourse?.id, holeScores, setHoleScores);
 
   // Course selection hook
@@ -98,14 +109,14 @@ export const useRoundTracking = () => {
     holeCount
   );
 
-  // Round navigation hook
-  const { handleNext, handlePrevious } = useRoundNavigation(
-    handleNextBase,
-    handlePreviousBase,
+  // Round navigation hook - Fix: Only pass required arguments as an object
+  const { handleNext, handlePrevious } = useRoundNavigation({
+    baseHandleNext: handleNextBase,
+    baseHandlePrevious: handlePreviousBase,
     currentHole,
     holeCount,
     isLoading
-  );
+  });
 
   // Session resumption hook
   const { getResumeHole } = useResumeSession({
@@ -187,7 +198,12 @@ export const useRoundTracking = () => {
             
             if (roundData && isMounted) {
               setCurrentRoundId(roundData.roundId);
-              setHoleScores(roundData.holeScores);
+              
+              // Make sure we handle potentially missing holeScores property
+              if ('holeScores' in roundData && roundData.holeScores) {
+                setHoleScores(roundData.holeScores);
+              }
+              
               setHoleCount(roundData.holeCount || 18);
               setCourseName(roundData.course?.name || null);
               
@@ -241,7 +257,7 @@ export const useRoundTracking = () => {
     selectedCourse,
     selectedTee,
     currentHole,
-    setCurrentHole, // Ensure this is exposed properly
+    setCurrentHole,
     holeScores,
     handleCourseSelect,
     setSelectedTee,
@@ -261,6 +277,7 @@ export const useRoundTracking = () => {
     isLoading,
     handleHoleCountSelect,
     roundsById,
+    clearResumeData,
     error: loadingStage === 'failed' ? 'Failed to load round data' : null
   };
 };

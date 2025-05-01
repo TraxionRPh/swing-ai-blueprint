@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -191,8 +192,12 @@ export const useRoundData = (roundId: string | null, courseId?: string) => {
         throw roundResponse.error;
       }
 
-      const roundData = roundResponse.data || {};
-      const courseId = roundData?.course_id;
+      const roundData = roundResponse.data || { 
+        course_id: null, 
+        hole_count: 18, 
+        golf_courses: null 
+      };
+      const fetchedCourseId = roundData?.course_id;
       const holeCount = roundData?.hole_count || 18;
       
       // Store the course data for reference
@@ -200,13 +205,13 @@ export const useRoundData = (roundId: string | null, courseId?: string) => {
       
       let holeInfo: any[] = [];
       
-      if (courseId) {
+      if (fetchedCourseId) {
         try {
-          console.log('Fetching course holes for course:', courseId);
+          console.log('Fetching course holes for course:', fetchedCourseId);
           const courseHolesResponse = await supabase
             .from('course_holes')
             .select('*')
-            .eq('course_id', courseId)
+            .eq('course_id', fetchedCourseId)
             .order('hole_number');
             
           if (courseHolesResponse.error) {
@@ -230,7 +235,7 @@ export const useRoundData = (roundId: string | null, courseId?: string) => {
       return { 
         formattedScores,
         holeCount,
-        courseData: roundData?.golf_courses
+        courseData: roundData?.golf_courses || null
       };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
