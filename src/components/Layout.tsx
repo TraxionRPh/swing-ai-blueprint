@@ -1,61 +1,50 @@
 
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import AppSidebar from "./AppSidebar";
-import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useEffect } from "react";
-import { Button } from "./ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Outlet, useLocation } from "react-router-dom";
+import { AppSidebar } from "@/components/AppSidebar";
+import { Toaster } from "@/components/ui/toaster";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
-const LayoutContent = () => {
+export function Layout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { setOpenMobile } = useSidebar();
-
-  // Close mobile sidebar on route change
+  const [pageTitle, setPageTitle] = useState("Home");
+  
+  // Update page title based on the current route
   useEffect(() => {
-    setOpenMobile(false);
-  }, [location, setOpenMobile]);
-
-  // Don't show back button on specific pages where we have custom headers
-  const hideGlobalBackButton = ['/rounds', '/rounds/'].some(path => 
-    location.pathname === path || location.pathname.startsWith('/rounds/')
+    const path = location.pathname;
+    let title = "Home";
+    
+    if (path.startsWith("/drills")) {
+      title = "Drill Library";
+    } else if (path.startsWith("/practice")) {
+      title = "Practice Plans";
+    } else if (path.startsWith("/profile")) {
+      title = "Profile";
+    } else if (path.startsWith("/challenges")) {
+      title = "Challenges";
+    } else if (path.startsWith("/analysis")) {
+      title = "AI Analysis";
+    } else if (path.startsWith("/rounds")) {
+      title = "Round Tracking";
+    }
+    
+    setPageTitle(title);
+  }, [location]);
+  
+  // Adjust styles when in round tracking mode to give more space
+  const isRoundTracking = location.pathname.startsWith("/rounds/");
+  const contentClass = cn(
+    "flex flex-col flex-1 overflow-auto",
+    isRoundTracking ? "p-0 sm:p-2" : "p-4 sm:p-6"
   );
 
   return (
-    <>
-      <AppSidebar />
-      <main className="flex-1 w-full min-h-screen overflow-x-hidden">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8">
-          <div className="flex items-center gap-4 py-4">
-            <SidebarTrigger />
-            {location.pathname !== "/" && !hideGlobalBackButton && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span className="sr-only">Go back</span>
-              </Button>
-            )}
-          </div>
-          <div className="w-full max-w-[1400px] mx-auto">
-            <Outlet />
-          </div>
-        </div>
+    <div className="flex h-screen bg-background">
+      <AppSidebar pageTitle={pageTitle} />
+      <main className={contentClass}>
+        <Outlet />
+        <Toaster />
       </main>
-    </>
+    </div>
   );
-};
-
-const Layout = () => {
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <LayoutContent />
-      </div>
-    </SidebarProvider>
-  );
-};
-
-export default Layout;
+}

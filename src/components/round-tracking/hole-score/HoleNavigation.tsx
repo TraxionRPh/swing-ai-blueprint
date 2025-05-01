@@ -29,11 +29,7 @@ export const HoleNavigation = ({
   }, []);
   
   // Enhanced previous button handler with debounce protection
-  const handlePrevious = (e: React.MouseEvent) => {
-    // Prevent default browser behavior and stop event propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handlePrevious = () => {
     if (isClicking) {
       console.log("Click blocked: already processing a click");
       return;
@@ -55,7 +51,7 @@ export const HoleNavigation = ({
       // Reset clicking state after a short delay to prevent rapid clicks
       setTimeout(() => {
         setIsClicking(false);
-      }, 300);
+      }, 500);
     } else {
       console.warn("Previous handler is not defined or not a function");
       setIsClicking(false);
@@ -63,11 +59,7 @@ export const HoleNavigation = ({
   };
   
   // Enhanced next button handler with debounce protection
-  const handleNext = (e: React.MouseEvent) => {
-    // Prevent default browser behavior and stop event propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleNext = () => {
     if (isClicking) {
       console.log("Click blocked: already processing a click");
       return;
@@ -89,7 +81,7 @@ export const HoleNavigation = ({
       // Reset clicking state after a short delay to prevent rapid clicks
       setTimeout(() => {
         setIsClicking(false);
-      }, 300);
+      }, 500);
     } else {
       console.warn("Next handler is not defined or not a function");
       setIsClicking(false);

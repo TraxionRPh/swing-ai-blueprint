@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,24 +39,10 @@ export const HoleScoreCardContainer = ({
   
   // Update local state when hole data changes (only for hole number changes)
   useEffect(() => {
-    if (data.holeNumber !== holeData.holeNumber) {
-      console.log("HoleScoreCard: Hole number changed:", holeData.holeNumber);
-      setData(holeData);
-    }
-  }, [holeData.holeNumber]);
+    console.log("HoleScoreCard: Updated hole data received:", holeData);
+    setData(holeData);
+  }, [holeData, holeData.holeNumber, holeData.par, holeData.distance]);
   
-  // Also update local state when important hole data changes
-  useEffect(() => {
-    if (!isNavigating) {
-      console.log("HoleScoreCard: Score or putts changed, updating local data");
-      setData(prev => ({
-        ...prev,
-        score: holeData.score,
-        putts: holeData.putts
-      }));
-    }
-  }, [holeData.score, holeData.putts, isNavigating]);
-
   // Navigation handlers that explicitly save data before navigating
   const handleNextHole = async () => {
     if (isNavigating) return;
@@ -77,17 +62,15 @@ export const HoleScoreCardContainer = ({
         await onUpdate(completeData);
         
         // Add a delay to ensure the data is saved before navigation
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Then call the parent's next function
-        if (typeof onNext === 'function') {
-          console.log("Calling navigation handler after data save");
-          onNext();
-        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Then call the parent's next function
+      if (typeof onNext === 'function') {
+        console.log("Calling navigation handler after data save");
+        onNext();
       } else {
-        console.warn("No prepareForSave function available");
-        // Fall back to direct navigation if no save function is available
-        if (typeof onNext === 'function') onNext();
+        console.warn("No next handler provided");
       }
     } catch (err) {
       console.error("Error preparing data for save:", err);
@@ -120,17 +103,15 @@ export const HoleScoreCardContainer = ({
         await onUpdate(completeData);
         
         // Add a delay to ensure the data is saved before navigation
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Then call the parent's previous function
-        if (typeof onPrevious === 'function') {
-          console.log("Calling navigation handler after data save");
-          onPrevious();
-        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Then call the parent's previous function
+      if (typeof onPrevious === 'function') {
+        console.log("Calling navigation handler after data save");
+        onPrevious();
       } else {
-        console.warn("No prepareForSave function available");
-        // Fall back to direct navigation if no save function is available
-        if (typeof onPrevious === 'function') onPrevious();
+        console.warn("No previous handler provided");
       }
     } catch (err) {
       console.error("Error preparing data for save:", err);
