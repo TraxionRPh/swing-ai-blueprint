@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Layout from "./components/Layout";
+import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import RoundTracking from "./pages/RoundTracking";
 import ChallengeLibrary from "./pages/ChallengeLibrary";

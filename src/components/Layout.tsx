@@ -1,6 +1,6 @@
 
 import { Outlet, useLocation } from "react-router-dom";
-import { AppSidebar } from "@/components/AppSidebar";
+import AppSidebar from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
