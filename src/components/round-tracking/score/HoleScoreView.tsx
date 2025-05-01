@@ -37,17 +37,6 @@ export const HoleScoreView = ({
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data in HoleScoreView:", currentHoleData);
   console.log("Using course ID:", courseId, "tee ID:", teeId, "with color:", teeColor);
-  
-  // Ensure we have valid currentHoleData
-  const validHoleData: HoleData = currentHoleData || {
-    holeNumber: currentHole,
-    par: 4,
-    distance: 0,
-    score: 0,
-    putts: 0,
-    fairwayHit: false,
-    greenInRegulation: false
-  };
     
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
@@ -70,7 +59,7 @@ export const HoleScoreView = ({
       <ScoreSummary holeScores={holeScores} />
       
       <HoleScoreCard
-        holeData={validHoleData}
+        holeData={currentHoleData}
         onUpdate={handleHoleUpdate}
         onNext={handleNextHole}
         onPrevious={handlePreviousHole}

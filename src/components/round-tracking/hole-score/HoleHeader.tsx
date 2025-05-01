@@ -14,12 +14,12 @@ export const HoleHeader = ({ holeNumber, par, distance }: HoleHeaderProps) => {
     <div className="flex justify-between items-center">
       <div className="text-2xl font-bold">Hole {holeNumber}</div>
       <div className="flex items-center space-x-3">
-        {typeof par !== 'undefined' && par !== null && (
+        {par && (
           <span className="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
             Par {par}
           </span>
         )}
-        {typeof distance !== 'undefined' && distance !== null && distance > 0 && (
+        {distance && distance > 0 && (
           <span className="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
             {distance} yards
           </span>
