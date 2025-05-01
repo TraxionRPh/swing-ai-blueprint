@@ -1,174 +1,51 @@
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { HoleData } from "@/types/round-tracking";
-import { useEffect, useState, useCallback } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface HoleStatsProps {
-  data: HoleData;
-  onDataChange: (field: keyof HoleData, value: any) => void;
+  par: number;
+  score: number;
+  putts: number;
 }
 
-export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
-  const [localPar, setLocalPar] = useState<number>(data.par || 4);
-  const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
-  const [localScore, setLocalScore] = useState<number | string>(data.score || '');
-  const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
-
-  // This effect updates local state ONLY when the hole number changes
-  useEffect(() => {
-    console.log("HoleStats: New hole detected, updating local state:", data.holeNumber);
+export const HoleStats = ({ par, score, putts }: HoleStatsProps) => {
+  // Safety checks for undefined or null values
+  const safePar = par ?? 0;
+  const safeScore = score ?? 0;
+  const safePutts = putts ?? 0;
+  
+  // Calculate the relation to par (only if we have valid values)
+  const getRelationToPar = () => {
+    if (!safePar || !safeScore) return "Even";
     
-    // Only update local state when hole number changes
-    setLocalPar(data.par || 4);
-    setLocalDistance(data.distance || '');
-    
-    // For score fields, only update if they have actual values
-    setLocalScore(data.score > 0 ? data.score : '');
-    setLocalPutts(data.putts > 0 ? data.putts : '');
-  }, [data.holeNumber, data.par, data.distance, data.score, data.putts]); // Added additional dependencies to reflect changes
-
-  const handleParChange = (value: string) => {
-    if (!value) return;
-    
-    const parsedValue = parseInt(value) || 3;
-    console.log(`Changing par to ${parsedValue}`);
-    setLocalPar(parsedValue);
-    
-    // Par and distance are course metadata, so they should update immediately
-    onDataChange('par', parsedValue);
+    const diff = safeScore - safePar;
+    if (diff === 0) return "Even";
+    if (diff > 0) return `+${diff}`;
+    return diff.toString(); // Already has the minus sign
   };
-
-  const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalDistance(value);
+  
+  // Get color class based on relation to par
+  const getScoreColorClass = () => {
+    if (!safePar || !safeScore) return "bg-gray-200 text-gray-700";
     
-    // Par and distance are course metadata, so they should update immediately
-    const parsedValue = parseInt(value) || 0;
-    onDataChange('distance', parsedValue);
+    const diff = safeScore - safePar;
+    if (diff === 0) return "bg-gray-200 text-gray-700"; // Even
+    if (diff < 0) return "bg-green-100 text-green-800"; // Under par
+    return "bg-red-100 text-red-800"; // Over par
   };
-
-  const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log(`Setting local score to ${value}`);
-    
-    // Update local state
-    setLocalScore(value);
-    
-    // IMMEDIATE UPDATE: Send score changes to parent right away
-    // This ensures the data is available when navigating
-    if (value !== '') {
-      const parsedValue = parseInt(value) || 0;
-      onDataChange('score', parsedValue);
-      
-      // Log confirmation of update
-      console.log(`Score updated to ${parsedValue} for hole ${data.holeNumber}`);
-    }
-  };
-
-  const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log(`Setting local putts to ${value}`);
-    
-    // Update local state
-    setLocalPutts(value);
-    
-    // IMMEDIATE UPDATE: Send putts changes to parent right away
-    // This ensures the data is available when navigating
-    if (value !== '') {
-      const parsedValue = parseInt(value) || 0;
-      onDataChange('putts', parsedValue);
-      
-      // Log confirmation of update
-      console.log(`Putts updated to ${parsedValue} for hole ${data.holeNumber}`);
-    }
-  };
-
-  // New function to prepare all data for saving
-  const prepareDataForSave = useCallback(() => {
-    // Get current local values
-    const scoreValue = localScore !== '' ? parseInt(String(localScore)) || 0 : 0;
-    const puttsValue = localPutts !== '' ? parseInt(String(localPutts)) || 0 : 0;
-    
-    console.log(`Preparing data for save: score=${scoreValue}, putts=${puttsValue}`);
-    
-    // Create a complete data object for saving
-    const dataToSave: HoleData = {
-      ...data,
-      score: scoreValue,
-      putts: puttsValue,
-      par: localPar,
-      distance: typeof localDistance === 'string' ? parseInt(localDistance) || 0 : localDistance
-    };
-    
-    console.log("Complete data object for saving:", dataToSave);
-    
-    // Return the complete data object
-    return dataToSave;
-  }, [data, localScore, localPutts, localPar, localDistance]);
-
-  // Register the save function as soon as component mounts
-  useEffect(() => {
-    if (typeof data.prepareForSave === 'function') {
-      console.log("Registering prepareForSave function from HoleStats");
-      onDataChange('prepareForSave' as any, prepareDataForSave);
-    }
-  }, [prepareDataForSave, data.prepareForSave, onDataChange]);
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Par</Label>
-        <ToggleGroup 
-          type="single" 
-          value={localPar.toString()}
-          onValueChange={handleParChange}
-          className="justify-start"
-        >
-          {[3, 4, 5].map((par) => (
-            <ToggleGroupItem key={par} value={par.toString()}>
-              {par}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="distance">Yards</Label>
-        <Input 
-          id="distance" 
-          type="number" 
-          placeholder="Enter yards" 
-          value={localDistance} 
-          onChange={handleDistanceChange} 
-          min={0}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="score">Score</Label>
-        <Input 
-          id="score" 
-          type="number" 
-          placeholder="Enter score" 
-          value={localScore} 
-          onChange={handleScoreChange} 
-          min={1} 
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="putts">Putts</Label>
-        <Input 
-          id="putts" 
-          type="number" 
-          placeholder="Enter putts" 
-          value={localPutts} 
-          onChange={handlePuttsChange} 
-          min={0} 
-        />
-      </div>
+    <div className="flex flex-wrap gap-2 mt-2">
+      {safeScore > 0 && (
+        <Badge variant="outline" className={getScoreColorClass()}>
+          {getRelationToPar() === "Even" ? "Even Par" : getRelationToPar()}
+        </Badge>
+      )}
+      
+      {safePutts > 0 && (
+        <Badge variant="outline" className="bg-blue-100 text-blue-800">
+          {safePutts} {safePutts === 1 ? "putt" : "putts"}
+        </Badge>
+      )}
     </div>
   );
 };

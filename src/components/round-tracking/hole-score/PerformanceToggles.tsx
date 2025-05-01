@@ -1,36 +1,41 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import type { HoleData } from "@/types/round-tracking";
 import { useCallback, useState, useEffect } from "react";
 
 interface PerformanceTogglesProps {
-  data: HoleData;
-  onDataChange: (field: keyof HoleData, value: boolean) => void;
+  fairwayHit: boolean;
+  greenInRegulation: boolean;
+  onFairwayToggle: (value: boolean) => void;
+  onGirToggle: (value: boolean) => void;
 }
 
-export const PerformanceToggles = ({ data, onDataChange }: PerformanceTogglesProps) => {
-  const [fairwayHit, setFairwayHit] = useState<boolean>(!!data.fairwayHit);
-  const [greenInRegulation, setGreenInRegulation] = useState<boolean>(!!data.greenInRegulation);
+export const PerformanceToggles = ({ 
+  fairwayHit, 
+  greenInRegulation, 
+  onFairwayToggle, 
+  onGirToggle
+}: PerformanceTogglesProps) => {
+  const [fairwayState, setFairwayState] = useState<boolean>(!!fairwayHit);
+  const [girState, setGirState] = useState<boolean>(!!greenInRegulation);
 
-  // Only update local state when the hole number changes
+  // Update local state when props change
   useEffect(() => {
-    console.log("PerformanceToggles: Hole number changed to", data.holeNumber);
-    setFairwayHit(!!data.fairwayHit);
-    setGreenInRegulation(!!data.greenInRegulation);
-  }, [data.holeNumber]);
+    setFairwayState(!!fairwayHit);
+    setGirState(!!greenInRegulation);
+  }, [fairwayHit, greenInRegulation]);
 
   const handleFairwayChange = useCallback((checked: boolean) => {
     console.log(`Setting fairway hit to ${checked}`);
-    setFairwayHit(checked);
-    onDataChange('fairwayHit', checked);
-  }, [onDataChange]);
+    setFairwayState(checked);
+    onFairwayToggle(checked);
+  }, [onFairwayToggle]);
 
   const handleGreenChange = useCallback((checked: boolean) => {
     console.log(`Setting green in regulation to ${checked}`);
-    setGreenInRegulation(checked);
-    onDataChange('greenInRegulation', checked);
-  }, [onDataChange]);
+    setGirState(checked);
+    onGirToggle(checked);
+  }, [onGirToggle]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -38,7 +43,7 @@ export const PerformanceToggles = ({ data, onDataChange }: PerformanceTogglesPro
         <Label htmlFor="fairway">Fairway Hit</Label>
         <Switch 
           id="fairway" 
-          checked={fairwayHit} 
+          checked={fairwayState} 
           onCheckedChange={handleFairwayChange} 
         />
       </div>
@@ -46,7 +51,7 @@ export const PerformanceToggles = ({ data, onDataChange }: PerformanceTogglesPro
         <Label htmlFor="gir">Green in Regulation</Label>
         <Switch 
           id="gir" 
-          checked={greenInRegulation} 
+          checked={girState} 
           onCheckedChange={handleGreenChange} 
         />
       </div>

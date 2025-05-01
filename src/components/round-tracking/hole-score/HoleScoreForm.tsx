@@ -17,6 +17,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   // Ensure data has valid default values if properties are undefined
   const safeData = {
     ...data,
+    holeNumber: data.holeNumber || 1,
     par: data.par ?? 4,
     score: data.score ?? 0,
     putts: data.putts ?? 0,
@@ -33,6 +34,14 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     onDataChange("putts", isNaN(value) ? 0 : value);
+  };
+
+  const handleFairwayToggle = (value: boolean) => {
+    onDataChange("fairwayHit", value);
+  };
+
+  const handleGirToggle = (value: boolean) => {
+    onDataChange("greenInRegulation", value);
   };
 
   return (
@@ -76,8 +85,8 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       <PerformanceToggles
         fairwayHit={safeData.fairwayHit}
         greenInRegulation={safeData.greenInRegulation}
-        onFairwayToggle={(value) => onDataChange("fairwayHit", value)}
-        onGirToggle={(value) => onDataChange("greenInRegulation", value)}
+        onFairwayToggle={handleFairwayToggle}
+        onGirToggle={handleGirToggle}
       />
       
       <HoleStats

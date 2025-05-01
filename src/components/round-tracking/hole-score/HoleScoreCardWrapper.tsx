@@ -2,7 +2,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { HoleNavigation } from "./HoleNavigation";
-import { HoleHeader } from "./HoleHeader";
 import { HoleScoreForm } from "./HoleScoreForm";
 import { HoleSavingIndicator } from "./HoleSavingIndicator";
 import type { HoleData } from "@/types/round-tracking";
@@ -45,7 +44,6 @@ export const HoleScoreCardWrapper = ({
     <>
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6 space-y-4">
-          <HoleHeader holeNumber={safeData.holeNumber} par={safeData.par} distance={safeData.distance} />
           <HoleScoreForm data={safeData} onDataChange={onUpdate} />
           <HoleNavigation 
             onNext={onNext}

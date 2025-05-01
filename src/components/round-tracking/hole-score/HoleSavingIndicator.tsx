@@ -1,21 +1,17 @@
 
-import React from "react";
 import { Loader2 } from "lucide-react";
 
 interface HoleSavingIndicatorProps {
-  isSaving: boolean;
-  message?: string;
+  isSaving?: boolean;
 }
 
-export const HoleSavingIndicator = ({ isSaving, message = "Saving..." }: HoleSavingIndicatorProps) => {
+export const HoleSavingIndicator = ({ isSaving = false }: HoleSavingIndicatorProps) => {
   if (!isSaving) return null;
   
   return (
-    <div className="fixed bottom-4 left-4 z-50 animate-in fade-in">
-      <div className="flex items-center bg-primary/10 text-primary px-4 py-2 rounded-lg shadow-sm border border-primary/20">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        <span className="text-sm font-medium">{message}</span>
-      </div>
+    <div className="flex items-center justify-center p-2 mt-4 bg-amber-50 rounded-md">
+      <Loader2 className="animate-spin h-4 w-4 mr-2 text-amber-600" />
+      <span className="text-sm text-amber-700">Saving your score...</span>
     </div>
   );
 };
