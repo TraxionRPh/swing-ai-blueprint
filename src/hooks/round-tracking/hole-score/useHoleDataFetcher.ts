@@ -2,172 +2,177 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { HoleData } from "@/types/round-tracking";
+import { useToast } from "@/hooks/use-toast";
 
 export const useHoleDataFetcher = () => {
-  
+  const { toast } = useToast();
+
   /**
    * Fetch hole scores from an existing round
    */
   const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
-    if (!roundId || roundId === 'new') {
-      // Return default data for new rounds
-      return {
+    // Special case for new rounds or invalid UUIDs
+    if (roundId === 'new' || !validateUUID(roundId)) {
+      console.log(`Creating default hole scores for ${roundId === 'new' ? 'new' : 'invalid'} round ID`);
+      return { 
         formattedScores: initializeDefaultScores(),
-        holeCount: 18
+        holeCount: 18 
       };
     }
     
     try {
-      console.log(`Fetching hole scores for round ${roundId}`);
+      console.log('Fetching hole scores for round:', roundId);
       
-      // Get hole scores and round details 
-      const { data: roundData, error: roundError } = await supabase
-        .from('rounds')
-        .select(`
-          hole_count,
-          course_id,
-          tee_id,
-          hole_scores(*)
-        `)
-        .eq('id', roundId)
-        .single();
-        
-      if (roundError) {
-        console.error('Error fetching round data:', roundError);
-        return null;
+      // First get the scores for this round
+      const { data: holeScoresData, error: holeScoresError } = await supabase
+        .from('hole_scores')
+        .select('*')
+        .eq('round_id', roundId)
+        .order('hole_number');
+
+      if (holeScoresError) {
+        console.error('Error fetching hole scores:', holeScoresError);
+        throw holeScoresError;
       }
+
+      // Get course info to fetch hole data
+      let roundData = null;
+      let courseId = null;
+      let holeCount = 18;
       
-      if (!roundData) {
-        console.log('No round data found');
-        return null;
-      }
-      
-      const holeCount = roundData.hole_count || 18;
-      const courseId = roundData.course_id;
-      const teeId = roundData.tee_id;
-      const holeScores = roundData.hole_scores || [];
-      
-      if (!courseId) {
-        // No course ID, just format the data we have
-        const formattedScores = Array.from({ length: holeCount }, (_, i) => {
-          const holeNumber = i + 1;
-          const score = holeScores.find((s: any) => s.hole_number === holeNumber);
+      try {
+        const roundResponse = await supabase
+          .from('rounds')
+          .select('course_id, hole_count')
+          .eq('id', roundId)
+          .maybeSingle();
           
-          return {
-            holeNumber,
-            par: 4, // Default
-            distance: 0, // Default
-            score: score?.score || 0,
-            putts: score?.putts || 0,
-            fairwayHit: score?.fairway_hit || false,
-            greenInRegulation: score?.green_in_regulation || false
-          };
-        });
-        
-        return { formattedScores, holeCount, courseId, teeId };
-      }
-      
-      // Fetch course holes to get par and distance information
-      const { data: courseHoles, error: holesError } = await supabase
-        .from('course_holes')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('hole_number');
-        
-      if (holesError) {
-        console.error('Error fetching course holes:', holesError);
-      }
-      
-      // Merge the data
-      const formattedScores = Array.from({ length: holeCount }, (_, i) => {
-        const holeNumber = i + 1;
-        const holeData = courseHoles?.find((h: any) => h.hole_number === holeNumber);
-        const score = holeScores.find((s: any) => s.hole_number === holeNumber);
-        
-        // Get distance based on tee or default
-        let distance = 0;
-        if (holeData) {
-          if (teeId && holeData.tee_distances && holeData.tee_distances[teeId]) {
-            distance = holeData.tee_distances[teeId];
-            console.log(`Hole ${holeNumber}: Using tee-specific distance ${distance}yd`);
-          } else {
-            distance = holeData.distance_yards || 0;
-          }
-        }
-        
-        return {
-          holeNumber,
-          par: holeData?.par || 4,
-          distance: distance,
-          score: score?.score || 0,
-          putts: score?.putts || 0,
-          fairwayHit: score?.fairway_hit || false,
-          greenInRegulation: score?.green_in_regulation || false
-        };
-      });
-      
-      return { formattedScores, holeCount, courseId, teeId };
-      
-    } catch (error) {
-      console.error('Error in fetchHoleScoresFromRound:', error);
-      return null;
-    }
-  }, []);
-
-  /**
-   * Fetch and format hole data from a course
-   */
-  const fetchHoleScoresFromCourse = useCallback(async (courseId: string, teeId?: string) => {
-    if (!courseId) {
-      return initializeDefaultScores();
-    }
-    
-    try {
-      console.log(`Fetching course holes for course ${courseId}`);
-      
-      const { data: courseHoles, error } = await supabase
-        .from('course_holes')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('hole_number');
-        
-      if (error) {
-        throw error;
-      }
-      
-      if (!courseHoles || courseHoles.length === 0) {
-        console.log('No course holes found, using defaults');
-        return initializeDefaultScores();
-      }
-      
-      return courseHoles.map((hole: any): HoleData => {
-        // Get distance based on tee or default
-        let distance = 0;
-        if (teeId && hole.tee_distances && hole.tee_distances[teeId]) {
-          distance = hole.tee_distances[teeId];
+        if (roundResponse.error) {
+          console.error('Error fetching round data:', roundResponse.error);
         } else {
-          distance = hole.distance_yards || 0;
+          roundData = roundResponse.data;
+          courseId = roundData?.course_id;
+          holeCount = roundData?.hole_count || 18;
+          console.log(`Round ${roundId} is for course ${courseId} with ${holeCount} holes`);
         }
-        
-        return {
-          holeNumber: hole.hole_number,
-          par: hole.par || 4,
-          distance: distance,
-          score: 0,
-          putts: 0,
-          fairwayHit: false,
-          greenInRegulation: false
-        };
-      });
+      } catch (roundError) {
+        console.error('Failed to fetch round data:', roundError);
+      }
+      
+      let holeInfo: any[] = [];
+      
+      if (courseId) {
+        try {
+          console.log('Fetching course holes for course (from round):', courseId);
+          const courseHolesResponse = await supabase
+            .from('course_holes')
+            .select('*')
+            .eq('course_id', courseId)
+            .order('hole_number');
+            
+          if (courseHolesResponse.error) {
+            console.error('Error fetching course holes:', courseHolesResponse.error);
+          } else {
+            holeInfo = courseHolesResponse.data || [];
+            console.log(`Found ${holeInfo.length} holes for course ${courseId}`);
+            
+            if (holeInfo.length > 0) {
+              console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
+            }
+          }
+        } catch (courseError) {
+          console.error('Failed to fetch course holes:', courseError);
+        }
+      }
+
+      const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
+      console.log('Formatted hole scores with course data (from round):', formattedScores.length);
+      
+      return { holeCount, formattedScores, courseId };
     } catch (error) {
-      console.error('Error fetching course holes:', error);
-      return initializeDefaultScores();
+      console.error('Error fetching hole scores from round:', error);
+      toast({
+        title: "Error loading round data",
+        description: "Could not load hole scores. Using default values.",
+        variant: "destructive"
+      });
+      
+      return { 
+        holeCount: 18, 
+        formattedScores: formatHoleScores([], [], 18) 
+      };
+    }
+  }, [toast]);
+
+  const fetchHoleScoresFromCourse = useCallback(async (courseId: string, teeId?: string) => {
+    try {
+      if (!courseId) {
+        console.log('No course ID provided, returning default scores');
+        return formatHoleScores([], [], 18);
+      }
+      
+      console.log('Directly fetching course holes for course ID:', courseId);
+      
+      // Get course hole data directly
+      const { data: courseHoles, error: courseHolesError } = await supabase
+        .from('course_holes')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('hole_number');
+        
+      if (courseHolesError) {
+        console.error('Error fetching course holes:', courseHolesError);
+        throw courseHolesError;
+      }
+      
+      const holeInfo = courseHoles || [];
+      console.log(`Found ${holeInfo.length} course holes data (direct)`);
+      
+      if (holeInfo.length > 0) {
+        console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
+      }
+
+      const formattedScores = formatHoleScores([], holeInfo, holeInfo.length || 18, teeId);
+      console.log('Formatted hole scores with course data (direct):', formattedScores.length);
+      
+      return formattedScores;
+    } catch (error) {
+      console.error('Error fetching hole scores from course:', error);
+      // Return default scores instead of throwing
+      return formatHoleScores([], [], 18);
     }
   }, []);
 
-  /**
-   * Initialize default score data
-   */
+  // Format hole scores with course data
+  const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18, teeId?: string): HoleData[] => {
+    return Array.from({ length: holeCount }, (_, i) => {
+      const holeNumber = i + 1;
+      const existingHole = scores.find(h => h.hole_number === holeNumber);
+      const courseHole = holeInfo.find(h => h.hole_number === holeNumber);
+      
+      // Get distance based on tee or default
+      let distance = 0;
+      if (courseHole) {
+        if (teeId && courseHole.tee_distances && courseHole.tee_distances[teeId]) {
+          distance = courseHole.tee_distances[teeId];
+        } else {
+          distance = courseHole.distance_yards || 0;
+        }
+      }
+      
+      return {
+        holeNumber,
+        par: courseHole?.par || 4,
+        distance,
+        score: existingHole?.score || 0,
+        putts: existingHole?.putts || 0,
+        fairwayHit: existingHole?.fairway_hit || false,
+        greenInRegulation: existingHole?.green_in_regulation || false
+      };
+    });
+  };
+
+  // Initialize default scores
   const initializeDefaultScores = (holeCount: number = 18): HoleData[] => {
     return Array.from({ length: holeCount }, (_, i) => ({
       holeNumber: i + 1,
@@ -180,9 +185,16 @@ export const useHoleDataFetcher = () => {
     }));
   };
 
+  // Helper function to validate UUID format
+  const validateUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   return {
     fetchHoleScoresFromRound,
     fetchHoleScoresFromCourse,
-    initializeDefaultScores
+    initializeDefaultScores,
+    formatHoleScores
   };
 };
