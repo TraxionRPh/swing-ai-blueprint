@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
+  const [courseHolesLoaded, setCourseHolesLoaded] = useState(false);
 
   // Hooks
   const { holeNumber } = useParams();
@@ -65,9 +65,19 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
           console.log(`Found ${data.length} hole scores for round ${roundId}`);
           const formattedScores = formatHoleData(data);
           setHoleScores(formattedScores);
+          
+          // Fetch course hole data to merge with scores
+          if (courseId) {
+            fetchCourseHoles();
+          }
         } else {
           console.log("No hole scores found, initializing default");
-          initializeDefaultScores();
+          // Only initialize if we haven't loaded course holes
+          if (!courseHolesLoaded && courseId) {
+            fetchCourseHoles();
+          } else {
+            initializeDefaultScores();
+          }
         }
       } catch (error) {
         console.error("Error fetching hole scores:", error);
@@ -84,42 +94,59 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
   }, [roundId, toast]);
 
   // Fetch course hole data when courseId changes
-  useEffect(() => {
-    if (!courseId || holeScores.length > 0) return;
+  const fetchCourseHoles = useCallback(async () => {
+    if (!courseId) return;
     
-    const fetchCourseHoles = async () => {
-      try {
-        console.log("Fetching hole data for course:", courseId);
-        const { data, error } = await supabase
-          .from('course_holes')
-          .select('*')
-          .eq('course_id', courseId)
-          .order('hole_number');
+    try {
+      console.log("Fetching hole data for course:", courseId);
+      const { data, error } = await supabase
+        .from('course_holes')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('hole_number');
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        console.log(`Found ${data.length} holes for course ${courseId}`);
         
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          console.log(`Found ${data.length} holes for course ${courseId}`);
+        // If we already have hole scores, merge the course hole data with them
+        if (holeScores.length > 0) {
+          const mergedScores = mergeCourseDataWithScores(data, holeScores);
+          setHoleScores(mergedScores);
+        } else {
+          // Otherwise just populate with course data
           const prepopulatedScores = prepopulateFromCourseData(data);
           setHoleScores(prepopulatedScores);
-        } else {
-          console.log("No course holes found, using default values");
+        }
+        
+        setCourseHolesLoaded(true);
+      } else {
+        console.log("No course holes found, using default values");
+        if (holeScores.length === 0) {
           initializeDefaultScores();
         }
-      } catch (error) {
-        console.error("Error fetching course holes:", error);
+      }
+    } catch (error) {
+      console.error("Error fetching course holes:", error);
+      if (holeScores.length === 0) {
         initializeDefaultScores();
       }
-    };
-    
-    fetchCourseHoles();
-  }, [courseId, holeScores.length]);
+    }
+  }, [courseId, holeScores]);
+
+  // Watch for course ID changes
+  useEffect(() => {
+    if (courseId && !courseHolesLoaded) {
+      fetchCourseHoles();
+    }
+  }, [courseId, courseHolesLoaded, fetchCourseHoles]);
 
   // Save hole score data with debounce
   const saveHoleScore = useCallback(async (holeData: HoleData) => {
     if (!roundId || roundId === 'new' || !holeData.holeNumber) {
       console.log("Not saving - invalid round ID or hole number");
-      return;
+      return Promise.resolve(false);
     }
     
     // Cancel any pending save operations
@@ -127,46 +154,81 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
       clearTimeout(saveTimeoutRef.current);
     }
     
-    // Set up a new save operation with 800ms debounce
-    saveTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        console.log(`Saving hole ${holeData.holeNumber} data for round ${roundId}`);
-        
-        const { error } = await supabase
-          .from('hole_scores')
-          .upsert({
-            round_id: roundId,
-            hole_number: holeData.holeNumber,
-            score: holeData.score || null,
-            putts: holeData.putts || null,
-            fairway_hit: Boolean(holeData.fairwayHit),
-            green_in_regulation: Boolean(holeData.greenInRegulation)
-          }, {
-            onConflict: 'round_id,hole_number'
+    // Create a promise that resolves when the save is complete
+    return new Promise<boolean>((resolve) => {
+      // Set up a new save operation with 800ms debounce
+      saveTimeoutRef.current = setTimeout(async () => {
+        setIsSaving(true);
+        try {
+          console.log(`Saving hole ${holeData.holeNumber} data for round ${roundId}`);
+          
+          const { error } = await supabase
+            .from('hole_scores')
+            .upsert({
+              round_id: roundId,
+              hole_number: holeData.holeNumber,
+              score: holeData.score || null,
+              putts: holeData.putts || null,
+              fairway_hit: Boolean(holeData.fairwayHit),
+              green_in_regulation: Boolean(holeData.greenInRegulation)
+            }, {
+              onConflict: 'round_id,hole_number'
+            });
+  
+          if (error) throw error;
+          
+          console.log(`Successfully saved hole ${holeData.holeNumber} data`);
+          resolve(true);
+        } catch (error: any) {
+          console.error('Error saving hole score:', error);
+          toast({
+            title: "Error saving hole score",
+            description: error.message || "Could not save your progress. Please try again.",
+            variant: "destructive"
           });
-
-        if (error) throw error;
-        
-        console.log(`Successfully saved hole ${holeData.holeNumber} data`);
-      } catch (error: any) {
-        console.error('Error saving hole score:', error);
-        toast({
-          title: "Error saving hole score",
-          description: error.message || "Could not save your progress. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    }, 800); // 800ms debounce
-    
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
+          resolve(false);
+        } finally {
+          setIsSaving(false);
+        }
+      }, 800); // 800ms debounce
+    });
   }, [roundId, toast]);
+
+  // Save course hole data (par and distance)
+  const saveCourseHoleData = useCallback(async (holeData: HoleData) => {
+    if (!courseId || !holeData.holeNumber) {
+      console.log("Not saving course hole - invalid course ID or hole number");
+      return Promise.resolve(false);
+    }
+    
+    try {
+      console.log(`Saving course hole ${holeData.holeNumber} data for course ${courseId}`);
+      
+      const { error } = await supabase
+        .from('course_holes')
+        .upsert({
+          course_id: courseId,
+          hole_number: holeData.holeNumber,
+          par: holeData.par || 4,
+          distance_yards: holeData.distance || 0
+        }, {
+          onConflict: 'course_id,hole_number'
+        });
+
+      if (error) throw error;
+      
+      console.log(`Successfully saved course hole ${holeData.holeNumber} data`);
+      return true;
+    } catch (error: any) {
+      console.error('Error saving course hole data:', error);
+      toast({
+        title: "Error saving course data",
+        description: error.message || "Could not save course information. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [courseId, toast]);
 
   // Create memoized current hole data
   const currentHoleData = useMemo(() => {
@@ -212,7 +274,12 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
     if (roundId && roundId !== 'new') {
       saveHoleScore(data);
     }
-  }, [holeScores, roundId, saveHoleScore]);
+    
+    // Save course hole data if updating par or distance
+    if (courseId && (data.par || data.distance)) {
+      saveCourseHoleData(data);
+    }
+  }, [holeScores, roundId, courseId, saveHoleScore, saveCourseHoleData]);
 
   // Navigate to next hole
   const handleNext = useCallback(() => {
@@ -315,6 +382,40 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
     }));
   };
 
+  const mergeCourseDataWithScores = (courseHoles: any[], currentScores: HoleData[]): HoleData[] => {
+    // First create a map of existing scores by hole number
+    const scoresByHole: Record<number, HoleData> = {};
+    currentScores.forEach(score => {
+      scoresByHole[score.holeNumber] = score;
+    });
+    
+    // Then merge course data with existing scores or create new ones
+    return courseHoles.map(hole => {
+      const existingScore = scoresByHole[hole.hole_number];
+      
+      if (existingScore) {
+        // Merge course data with existing score data
+        return {
+          ...existingScore,
+          // Only use course data for par and distance if they're not already set
+          par: existingScore.par || hole.par || 4,
+          distance: existingScore.distance || hole.distance_yards || 0
+        };
+      } else {
+        // Create new score data from course hole
+        return {
+          holeNumber: hole.hole_number,
+          par: hole.par || 4,
+          distance: hole.distance_yards || 0,
+          score: 0,
+          putts: 0,
+          fairwayHit: false,
+          greenInRegulation: false
+        };
+      }
+    });
+  };
+
   const initializeDefaultScores = (holeCount: number = 18) => {
     const defaultScores = Array.from({ length: holeCount }, (_, i) => ({
       holeNumber: i + 1,
@@ -338,6 +439,7 @@ export const useRoundScoreTracker = (roundId: string | null, courseId?: string) 
     handlePrevious,
     isSaving,
     currentHoleData,
-    clearResumeData
+    clearResumeData,
+    fetchCourseHoles
   };
 };

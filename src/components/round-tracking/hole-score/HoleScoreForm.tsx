@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { HoleData } from "@/types/round-tracking";
 
 interface HoleScoreFormProps {
@@ -39,86 +40,87 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       [field]: parsedValue
     }));
     
-    // Notify parent with debounced update
+    // Notify parent with update
     onDataChange(field, parsedValue);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="par">Par</Label>
-          <Input
-            id="par"
-            type="number"
-            min={3}
-            max={6}
-            value={formData.par}
-            onChange={(e) => handleInputChange('par', e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="distance">Distance (yards)</Label>
-          <Input
-            id="distance"
-            type="number"
-            min={0}
-            value={formData.distance}
-            onChange={(e) => handleInputChange('distance', e.target.value)}
-          />
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <Label htmlFor="par" className="text-lg font-medium">Par</Label>
+        <div className="flex space-x-2">
+          {[3, 4, 5].map(parValue => (
+            <Button 
+              key={parValue}
+              type="button"
+              variant={formData.par === parValue ? "default" : "outline"}
+              onClick={() => handleInputChange('par', parValue)}
+              className="flex-1 px-4 py-2 text-lg"
+            >
+              {parValue}
+            </Button>
+          ))}
         </div>
       </div>
       
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="score">Score</Label>
-              <Input
-                id="score"
-                type="number"
-                min={1}
-                value={formData.score || ''}
-                onChange={(e) => handleInputChange('score', e.target.value)}
-                placeholder="Enter score"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="putts">Putts</Label>
-              <Input
-                id="putts"
-                type="number"
-                min={0}
-                value={formData.putts || ''}
-                onChange={(e) => handleInputChange('putts', e.target.value)}
-                placeholder="Enter putts"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="fairwayHit"
-                checked={!!formData.fairwayHit}
-                onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
-              />
-              <Label htmlFor="fairwayHit">Hit Fairway</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="greenInRegulation"
-                checked={!!formData.greenInRegulation}
-                onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
-              />
-              <Label htmlFor="greenInRegulation">Green in Regulation</Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        <Label htmlFor="distance" className="text-lg font-medium">Yards</Label>
+        <Input
+          id="distance"
+          type="number"
+          min={0}
+          value={formData.distance || ''}
+          onChange={(e) => handleInputChange('distance', e.target.value)}
+          placeholder="Enter yards"
+          className="bg-primary-foreground text-lg"
+        />
+      </div>
+      
+      <div className="space-y-3">
+        <Label htmlFor="score" className="text-lg font-medium">Score</Label>
+        <Input
+          id="score"
+          type="number"
+          min={1}
+          value={formData.score || ''}
+          onChange={(e) => handleInputChange('score', e.target.value)}
+          placeholder="Enter score"
+          className="bg-primary-foreground text-lg"
+        />
+      </div>
+      
+      <div className="space-y-3">
+        <Label htmlFor="putts" className="text-lg font-medium">Putts</Label>
+        <Input
+          id="putts"
+          type="number"
+          min={0}
+          value={formData.putts || ''}
+          onChange={(e) => handleInputChange('putts', e.target.value)}
+          placeholder="Enter putts"
+          className="bg-primary-foreground text-lg"
+        />
+      </div>
+      
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox
+            id="fairwayHit"
+            checked={!!formData.fairwayHit}
+            onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
+          />
+          <Label htmlFor="fairwayHit" className="text-lg">Hit Fairway</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2 py-2">
+          <Checkbox
+            id="greenInRegulation"
+            checked={!!formData.greenInRegulation}
+            onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
+          />
+          <Label htmlFor="greenInRegulation" className="text-lg">Green in Regulation</Label>
+        </div>
+      </div>
     </div>
   );
 };

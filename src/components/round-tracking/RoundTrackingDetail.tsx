@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useRoundScoreTracker } from "@/hooks/round-tracking/score/useRoundScoreTracker";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -30,6 +31,7 @@ export const RoundTrackingDetail = ({
   const [localLoading, setLocalLoading] = useState(true);
   const [courseId, setCourseId] = useState<string | undefined>(undefined);
   const [holeCount, setHoleCount] = useState(18);
+  const [teeColor, setTeeColor] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { roundId } = useParams();
@@ -44,8 +46,61 @@ export const RoundTrackingDetail = ({
     handlePrevious,
     isSaving,
     currentHoleData,
-    clearResumeData
+    clearResumeData,
+    fetchCourseHoles
   } = useRoundScoreTracker(currentRoundId, courseId);
+
+  // Fetch round details to get course ID and tee color
+  useEffect(() => {
+    const fetchRoundDetails = async () => {
+      if (!currentRoundId || currentRoundId === 'new') return;
+      
+      try {
+        console.log("Fetching round details for:", currentRoundId);
+        const { data, error } = await supabase
+          .from('rounds')
+          .select(`
+            course_id,
+            hole_count,
+            golf_courses (
+              id,
+              name,
+              total_par
+            )
+          `)
+          .eq('id', currentRoundId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          console.log("Round details:", data);
+          setCourseId(data.course_id);
+          if (data.hole_count) setHoleCount(data.hole_count);
+          
+          // Fetch tee color
+          if (data.course_id) {
+            const { data: teeData, error: teeError } = await supabase
+              .from('course_tees')
+              .select('color')
+              .eq('course_id', data.course_id)
+              .limit(1);
+              
+            if (!teeError && teeData && teeData.length > 0) {
+              setTeeColor(teeData[0].color);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching round details:", error);
+      } finally {
+        setLocalLoading(false);
+        if (setDetailLoading) setDetailLoading(false);
+      }
+    };
+    
+    fetchRoundDetails();
+  }, [currentRoundId, setDetailLoading]);
 
   // Set initial values based on params
   useEffect(() => {
@@ -128,6 +183,9 @@ export const RoundTrackingDetail = ({
           currentHole={currentHole}
           holeCount={holeCount}
           isSaving={isSaving}
+          teeColor={teeColor}
+          courseId={courseId}
+          holeScores={holeScores}
         />
       )}
     </div>

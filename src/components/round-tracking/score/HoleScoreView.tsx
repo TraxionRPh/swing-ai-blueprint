@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/hole-score/HoleScoreCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
 
 interface HoleScoreViewProps {
@@ -29,7 +30,7 @@ export const HoleScoreView = ({
   isLoading = false,
   teeColor,
   courseId,
-  holeScores
+  holeScores = []
 }: HoleScoreViewProps) => {
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
     
@@ -49,19 +50,24 @@ export const HoleScoreView = ({
   }
   
   return (
-    <HoleScoreCard
-      holeData={currentHoleData}
-      onUpdate={handleHoleUpdate}
-      onNext={handleNextHole}
-      onPrevious={handlePreviousHole}
-      isFirst={currentHole === 1}
-      isLast={currentHole === holeCount}
-      isSaving={isSaving}
-      currentHole={currentHole}
-      holeCount={holeCount}
-      teeColor={teeColor}
-      courseId={courseId}
-    />
+    <div className="space-y-6">
+      {/* Add score summary at the top */}
+      <ScoreSummary holeScores={holeScores} />
+      
+      <HoleScoreCard
+        holeData={currentHoleData}
+        onUpdate={handleHoleUpdate}
+        onNext={handleNextHole}
+        onPrevious={handlePreviousHole}
+        isFirst={currentHole === 1}
+        isLast={currentHole === holeCount}
+        isSaving={isSaving}
+        currentHole={currentHole}
+        holeCount={holeCount}
+        teeColor={teeColor}
+        courseId={courseId}
+      />
+    </div>
   );
 };
 
