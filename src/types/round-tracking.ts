@@ -1,31 +1,29 @@
 
-export interface CourseTee {
-  id: string;
-  name: string;
-  color: string;
-  course_rating: number;
-  slope_rating: number;
-}
-
 export interface Course {
   id: string;
   name: string;
   city: string;
   state: string;
-  course_tees: CourseTee[];
-  // Adding the total_par property as optional since it's used but not in the original definition
   total_par?: number;
   is_verified?: boolean;
-  // Add course_holes for direct access to hole data
+  course_tees: CourseTee[];
   course_holes?: CourseHole[];
+}
+
+export interface CourseTee {
+  id: string;
+  name: string;
+  color?: string;
+  course_rating?: number;
+  slope_rating?: number;
+  total_yards?: number;
 }
 
 export interface CourseHole {
   id: string;
-  course_id: string;
   hole_number: number;
   par: number;
-  distance_yards: number;
+  distance_yards?: number;
 }
 
 export interface HoleData {
@@ -34,17 +32,24 @@ export interface HoleData {
   distance: number;
   score: number;
   putts: number;
-  fairwayHit?: boolean;
-  greenInRegulation?: boolean;
-  // Add a property to allow forms to prepare data for save
-  prepareForSave?: () => void;
+  fairwayHit: boolean;
+  greenInRegulation: boolean;
 }
 
-export interface RoundData {
+export interface Round {
   id: string;
-  courseId: string;
-  date: Date;
-  totalScore?: number;
-  holeCount: number;
-  userId: string;
+  user_id: string;
+  course_id: string;
+  tee_id?: string;
+  date: string;
+  hole_count: number;
+  total_score?: number;
+  total_putts?: number;
+  fairways_hit?: number;
+  greens_in_regulation?: number;
+  created_at?: string;
+  updated_at?: string;
+  course?: Course;
 }
+
+export type RoundStatus = 'idle' | 'loading' | 'saving' | 'error' | 'success';
