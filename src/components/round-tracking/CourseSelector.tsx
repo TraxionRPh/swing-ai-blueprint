@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { CourseSelectionCard } from "./course-selection/CourseSelectionCard";
 import { SelectedCourseCard } from "./course-selection/SelectedCourseCard";
+import { supabase } from "@/integrations/supabase/client";
 import type { Course } from "@/types/round-tracking";
 
 interface CourseSelectorProps {
@@ -29,8 +30,31 @@ export const CourseSelector = ({
     }
   }, [selectedCourse]);
 
-  const handleCourseSelect = (course: Course) => {
+  const handleCourseSelect = async (course: Course) => {
     console.log("Selected course:", course);
+    
+    // Fetch course holes data before setting the selected course
+    try {
+      console.log(`Fetching holes data for course: ${course.id}`);
+      const { data: holesData, error } = await supabase
+        .from('course_holes')
+        .select('*')
+        .eq('course_id', course.id)
+        .order('hole_number');
+        
+      if (error) {
+        console.error("Error fetching course holes:", error);
+      } else if (holesData && holesData.length > 0) {
+        console.log(`Found ${holesData.length} holes for course ${course.id}`);
+        // Attach the holes data to the course object
+        course.course_holes = holesData;
+      } else {
+        console.log(`No hole data found for course ${course.id}`);
+      }
+    } catch (e) {
+      console.error("Exception fetching course holes:", e);
+    }
+    
     onCourseSelect(course);
     setShowCourseSearch(false);
 

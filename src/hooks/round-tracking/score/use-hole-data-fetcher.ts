@@ -49,10 +49,10 @@ export const useHoleDataFetcher = () => {
           roundData = roundResponse.data;
           courseId = roundData?.course_id;
           holeCount = roundData?.hole_count || 18;
+          console.log(`Round ${roundId} is for course ${courseId} with ${holeCount} holes`);
         }
       } catch (roundError) {
         console.error('Failed to fetch round data:', roundError);
-        // Continue with default values
       }
       
       let holeInfo: any[] = [];
@@ -70,31 +70,29 @@ export const useHoleDataFetcher = () => {
             console.error('Error fetching course holes:', courseHolesResponse.error);
           } else {
             holeInfo = courseHolesResponse.data || [];
-            console.log('Course holes data (from round):', holeInfo);
+            console.log(`Found ${holeInfo.length} holes for course ${courseId}`);
+            
+            if (holeInfo.length > 0) {
+              console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}`);
+            }
           }
         } catch (courseError) {
           console.error('Failed to fetch course holes:', courseError);
-          // Continue with empty hole info
         }
       }
 
       const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
-      console.log('Formatted hole scores with course data (from round):', formattedScores);
+      console.log('Formatted hole scores with course data (from round):', formattedScores.length);
       
-      // Return an object with holeCount and formatted scores
       return { holeCount, formattedScores };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
-      // Don't show toast on network errors - they're expected in offline scenarios
-      if (!(error instanceof TypeError && error.message === "Failed to fetch")) {
-        toast({
-          title: "Error loading round data",
-          description: "Could not load hole scores. Please try again.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Error loading round data",
+        description: "Could not load hole scores. Please try again.",
+        variant: "destructive"
+      });
       
-      // Return default formatted scores instead of throwing
       return { 
         holeCount: 18, 
         formattedScores: formatHoleScores([], [], 18) 
@@ -119,10 +117,14 @@ export const useHoleDataFetcher = () => {
       }
       
       const holeInfo = courseHoles || [];
-      console.log('Course holes data (direct):', holeInfo);
+      console.log('Course holes data (direct):', holeInfo.length);
+      
+      if (holeInfo.length > 0) {
+        console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}`);
+      }
 
       const formattedScores = formatHoleScores([], holeInfo);
-      console.log('Formatted hole scores with course data (direct):', formattedScores);
+      console.log('Formatted hole scores with course data (direct):', formattedScores.length);
       
       return formattedScores;
     } catch (error) {

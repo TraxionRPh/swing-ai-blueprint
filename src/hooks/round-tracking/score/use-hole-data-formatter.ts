@@ -2,12 +2,19 @@
 import type { HoleData } from "@/types/round-tracking";
 
 export const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18): HoleData[] => {
+  console.log(`Formatting ${scores.length} scores with ${holeInfo.length} hole infos for ${holeCount} holes`);
+  
   return Array.from({ length: holeCount }, (_, i) => {
-    const existingHole = scores.find(h => h.hole_number === i + 1);
-    const courseHole = holeInfo.find(h => h.hole_number === i + 1);
+    const holeNumber = i + 1;
+    const existingHole = scores.find(h => h.hole_number === holeNumber);
+    const courseHole = holeInfo.find(h => h.hole_number === holeNumber);
+    
+    if (courseHole) {
+      console.log(`Found course hole data for hole ${holeNumber}: par ${courseHole.par}, distance ${courseHole.distance_yards}`);
+    }
     
     return {
-      holeNumber: i + 1,
+      holeNumber: holeNumber,
       par: courseHole?.par || 4,
       distance: courseHole?.distance_yards || 0,
       score: existingHole?.score || 0,

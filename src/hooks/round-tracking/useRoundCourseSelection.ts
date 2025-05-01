@@ -13,23 +13,33 @@ export const useRoundCourseSelection = (
 
   const handleCourseSelect = useCallback(async (course: Course) => {
     try {
-      // We always want to use the holeCount that's already been set
-      const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
+      console.log(`Creating round for course ${course.name} with ${course.course_holes?.length || 0} holes data`);
+      
+      // Determine the hole count based on available data or default to 18
+      const actualHoleCount = holeCount || (course.course_holes?.length || 18);
+      console.log(`Using hole count: ${actualHoleCount}`);
+      
+      // Create a new round with the selected course
+      const newRoundId = await handleCourseSelectBase(course, actualHoleCount);
+      
       if (newRoundId) {
         setCurrentRoundId(newRoundId);
         
-        // Create default holes based on the course information if available
-        const defaultHoles = Array.from({ length: holeCount || 18 }, (_, i) => {
-          // Try to find corresponding course hole data if available
-          const courseHoleData = course.course_holes?.find(h => h?.hole_number === i + 1);
+        // Create default holes based on the course information
+        const defaultHoles = Array.from({ length: actualHoleCount }, (_, i) => {
+          // Find corresponding course hole data
+          const holeNumber = i + 1;
+          const courseHoleData = course.course_holes?.find(h => h.hole_number === holeNumber);
+          
+          if (courseHoleData) {
+            console.log(`Using hole data for hole ${holeNumber}: par ${courseHoleData.par}, distance ${courseHoleData.distance_yards}`);
+          }
           
           return {
-            holeNumber: i + 1,
-            // First priority: use course_holes data if available
-            // Second priority: calculate from total_par
-            // Default fallback: use par 4
+            holeNumber: holeNumber,
+            // Use actual course data when available
             par: courseHoleData?.par || 
-                 (course.total_par ? Math.round((course.total_par || 72) / (holeCount || 18)) : 4),
+                (course.total_par ? Math.round(course.total_par / actualHoleCount) : 4),
             distance: courseHoleData?.distance_yards || 0,
             score: 0,
             putts: 0,
@@ -39,13 +49,12 @@ export const useRoundCourseSelection = (
         });
         
         setHoleScores(defaultHoles);
-        
-        // Log successful course selection
-        console.log(`Course selected: ${course.name}, created round ID: ${newRoundId}`);
         console.log(`Created ${defaultHoles.length} holes with course data`);
+        console.log(`Sample hole data - Hole 1: par ${defaultHoles[0]?.par}, distance ${defaultHoles[0]?.distance}`);
       } else {
         console.error("Failed to create new round ID");
       }
+      
       return newRoundId;
     } catch (error) {
       console.error("Error selecting course:", error);

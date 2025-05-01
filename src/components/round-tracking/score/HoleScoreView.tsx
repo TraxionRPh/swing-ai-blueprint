@@ -1,3 +1,4 @@
+
 import { HoleScoreCard } from "@/components/round-tracking/HoleScoreCard";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
@@ -37,6 +38,17 @@ export const HoleScoreView = ({
     currentHole, 
     holeCount
   });
+
+  // Log hole scores data for debugging
+  useEffect(() => {
+    if (holeScores.length > 0) {
+      console.log(`HoleScoreView has ${holeScores.length} hole scores`);
+      console.log('Sample hole data:', {
+        hole1: holeScores[0],
+        currentHole: holeScores.find(h => h.holeNumber === currentHole)
+      });
+    }
+  }, [holeScores, currentHole]);
   
   // Log when current hole changes
   useEffect(() => {
@@ -52,14 +64,14 @@ export const HoleScoreView = ({
     
     // If the currentHoleData matches the current hole, use it
     if (currentHoleData && currentHoleData.holeNumber === currentHole) {
-      console.log("Using provided currentHoleData for hole:", currentHole);
+      console.log(`Using provided currentHoleData for hole: ${currentHole} with par ${currentHoleData.par}, distance ${currentHoleData.distance}`);
       return currentHoleData;
     }
     
     // Otherwise, try to find the hole in the scores array
     const matchingHole = holeScores.find(hole => hole.holeNumber === currentHole);
     if (matchingHole) {
-      console.log("Found matching hole in scores for hole:", currentHole);
+      console.log(`Found matching hole in scores for hole: ${currentHole} with par ${matchingHole.par}, distance ${matchingHole.distance}`);
       return matchingHole;
     }
     
