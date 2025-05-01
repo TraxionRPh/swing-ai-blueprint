@@ -7,7 +7,6 @@ export const useHoleNavigation = () => {
   const { roundId, holeNumber } = useParams();
   const navigate = useNavigate();
   const didInitialize = useRef(false);
-  const lastNavigation = useRef<number>(0);
   
   // Initialize the hole number with improved logging
   useEffect(() => {
@@ -39,14 +38,6 @@ export const useHoleNavigation = () => {
   }, [holeNumber]);
 
   const handleNext = useCallback(() => {
-    // Prevent multiple rapid navigation requests
-    const now = Date.now();
-    if (now - lastNavigation.current < 500) {
-      console.log("Navigation throttled - too soon after last navigation");
-      return;
-    }
-    lastNavigation.current = now;
-    
     if (currentHole < 18) {
       const nextHole = currentHole + 1;
       console.log(`Moving to next hole: ${nextHole}`);
@@ -56,8 +47,7 @@ export const useHoleNavigation = () => {
       
       // Update the URL to reflect the new hole number
       if (roundId) {
-        console.log(`Navigating to /rounds/${roundId}/${nextHole}`);
-        navigate(`/rounds/${roundId}/${nextHole}`, { replace: true });
+        navigate(`/rounds/${roundId}/${nextHole}`);
       }
       
       // Also update the state to ensure instant UI updates
@@ -66,14 +56,6 @@ export const useHoleNavigation = () => {
   }, [currentHole, navigate, roundId]);
 
   const handlePrevious = useCallback(() => {
-    // Prevent multiple rapid navigation requests
-    const now = Date.now();
-    if (now - lastNavigation.current < 500) {
-      console.log("Navigation throttled - too soon after last navigation");
-      return;
-    }
-    lastNavigation.current = now;
-    
     if (currentHole > 1) {
       const prevHole = currentHole - 1;
       console.log(`Moving to previous hole: ${prevHole}`);
@@ -83,8 +65,7 @@ export const useHoleNavigation = () => {
       
       // Update the URL to reflect the new hole number
       if (roundId) {
-        console.log(`Navigating to /rounds/${roundId}/${prevHole}`);
-        navigate(`/rounds/${roundId}/${prevHole}`, { replace: true });
+        navigate(`/rounds/${roundId}/${prevHole}`);
       }
       
       // Also update the state to ensure instant UI updates
@@ -102,7 +83,7 @@ export const useHoleNavigation = () => {
       
       // Update the URL to reflect the new hole number
       if (roundId) {
-        navigate(`/rounds/${roundId}/${holeNumber}`, { replace: true });
+        navigate(`/rounds/${roundId}/${holeNumber}`);
       }
       
       // Update the state with the new hole number

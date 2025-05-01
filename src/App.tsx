@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Layout } from "./components/Layout";
+import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import RoundTracking from "./pages/RoundTracking";
 import ChallengeLibrary from "./pages/ChallengeLibrary";
@@ -19,12 +19,9 @@ import AIAnalysis from "./pages/AIAnalysis";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Welcome from "./pages/Welcome";
-import Subscription from "./pages/Subscription";
 import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SidebarProvider } from "@/components/ui/sidebar/sidebar-provider";
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -34,9 +31,7 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <ProtectedRoute>
-        <SidebarProvider>
-          <Layout />
-        </SidebarProvider>
+        <Layout />
       </ProtectedRoute>
     ),
     children: [
@@ -91,14 +86,6 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      },
-      {
-        path: "subscription",
-        element: <Subscription />,
-      },
-      {
-        path: "welcome",
-        element: <Welcome />,
       },
     ],
     errorElement: <NotFound />,

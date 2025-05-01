@@ -1,9 +1,9 @@
 
-import React, { useRef, useEffect } from "react";
-import type { HoleData } from "@/types/round-tracking";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { HoleData } from "@/types/round-tracking";
+import { useEffect, useState, useCallback } from "react";
 
 interface HoleStatsProps {
   data: HoleData;
@@ -11,125 +11,162 @@ interface HoleStatsProps {
 }
 
 export const HoleStats = ({ data, onDataChange }: HoleStatsProps) => {
-  // References to track form state
-  const scoreRef = useRef<HTMLInputElement>(null);
-  const yardageRef = useRef<HTMLInputElement>(null);
-  const puttsRef = useRef<HTMLInputElement>(null);
-  
-  // Register a function to collect all form data before saving
+  const [localPar, setLocalPar] = useState<number>(data.par || 4);
+  const [localDistance, setLocalDistance] = useState<number | string>(data.distance || '');
+  const [localScore, setLocalScore] = useState<number | string>(data.score || '');
+  const [localPutts, setLocalPutts] = useState<number | string>(data.putts || '');
+
+  // This effect updates local state ONLY when the hole number changes
   useEffect(() => {
-    onDataChange('prepareForSave', () => {
-      // Collect all values from form inputs
-      const updatedData = { ...data };
-      
-      // Get score value
-      if (scoreRef.current) {
-        const scoreVal = parseInt(scoreRef.current.value, 10);
-        if (!isNaN(scoreVal)) {
-          updatedData.score = scoreVal;
-        }
-      }
-      
-      // Get yardage/distance value
-      if (yardageRef.current) {
-        const yardageVal = parseInt(yardageRef.current.value, 10);
-        if (!isNaN(yardageVal)) {
-          updatedData.distance = yardageVal;
-        }
-      }
-      
-      // Get putts value
-      if (puttsRef.current) {
-        const puttsVal = parseInt(puttsRef.current.value, 10);
-        if (!isNaN(puttsVal)) {
-          updatedData.putts = puttsVal;
-        }
-      }
-      
-      console.log("Collected form data:", updatedData);
-      return updatedData;
-    });
-  }, [data, onDataChange]);
+    console.log("HoleStats: New hole detected, updating local state:", data.holeNumber);
+    
+    // Only update local state when hole number changes
+    setLocalPar(data.par || 4);
+    setLocalDistance(data.distance || '');
+    
+    // For score fields, only update if they have actual values
+    setLocalScore(data.score > 0 ? data.score : '');
+    setLocalPutts(data.putts > 0 ? data.putts : '');
+  }, [data.holeNumber, data.par, data.distance, data.score, data.putts]); // Added additional dependencies to reflect changes
 
   const handleParChange = (value: string) => {
-    const par = parseInt(value, 10);
-    if (!isNaN(par)) {
-      console.log(`Par changed to ${par}`);
-      onDataChange("par", par);
-    }
+    if (!value) return;
+    
+    const parsedValue = parseInt(value) || 3;
+    console.log(`Changing par to ${parsedValue}`);
+    setLocalPar(parsedValue);
+    
+    // Par and distance are course metadata, so they should update immediately
+    onDataChange('par', parsedValue);
+  };
+
+  const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocalDistance(value);
+    
+    // Par and distance are course metadata, so they should update immediately
+    const parsedValue = parseInt(value) || 0;
+    onDataChange('distance', parsedValue);
   };
 
   const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const score = parseInt(e.target.value, 10);
-    if (!isNaN(score)) {
-      console.log(`Score changed to ${score}`);
-      onDataChange("score", score);
-    }
-  };
-  
-  const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const putts = parseInt(e.target.value, 10);
-    if (!isNaN(putts)) {
-      console.log(`Putts changed to ${putts}`);
-      onDataChange("putts", putts);
-    }
-  };
-  
-  const handleYardageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const distance = parseInt(e.target.value, 10);
-    if (!isNaN(distance)) {
-      console.log(`Distance changed to ${distance}`);
-      onDataChange("distance", distance);
+    const value = e.target.value;
+    console.log(`Setting local score to ${value}`);
+    
+    // Update local state
+    setLocalScore(value);
+    
+    // IMMEDIATE UPDATE: Send score changes to parent right away
+    // This ensures the data is available when navigating
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      onDataChange('score', parsedValue);
+      
+      // Log confirmation of update
+      console.log(`Score updated to ${parsedValue} for hole ${data.holeNumber}`);
     }
   };
 
+  const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log(`Setting local putts to ${value}`);
+    
+    // Update local state
+    setLocalPutts(value);
+    
+    // IMMEDIATE UPDATE: Send putts changes to parent right away
+    // This ensures the data is available when navigating
+    if (value !== '') {
+      const parsedValue = parseInt(value) || 0;
+      onDataChange('putts', parsedValue);
+      
+      // Log confirmation of update
+      console.log(`Putts updated to ${parsedValue} for hole ${data.holeNumber}`);
+    }
+  };
+
+  // New function to prepare all data for saving
+  const prepareDataForSave = useCallback(() => {
+    // Get current local values
+    const scoreValue = localScore !== '' ? parseInt(String(localScore)) || 0 : 0;
+    const puttsValue = localPutts !== '' ? parseInt(String(localPutts)) || 0 : 0;
+    
+    console.log(`Preparing data for save: score=${scoreValue}, putts=${puttsValue}`);
+    
+    // Create a complete data object for saving
+    const dataToSave: HoleData = {
+      ...data,
+      score: scoreValue,
+      putts: puttsValue,
+      par: localPar,
+      distance: typeof localDistance === 'string' ? parseInt(localDistance) || 0 : localDistance
+    };
+    
+    console.log("Complete data object for saving:", dataToSave);
+    
+    // Return the complete data object
+    return dataToSave;
+  }, [data, localScore, localPutts, localPar, localDistance]);
+
+  // Register the save function as soon as component mounts
+  useEffect(() => {
+    if (typeof data.prepareForSave === 'function') {
+      console.log("Registering prepareForSave function from HoleStats");
+      onDataChange('prepareForSave' as any, prepareDataForSave);
+    }
+  }, [prepareDataForSave, data.prepareForSave, onDataChange]);
+
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="par">Par</Label>
-        <ToggleGroup type="single" value={data.par?.toString()} onValueChange={handleParChange} className="justify-start">
-          <ToggleGroupItem value="3" className="w-12 h-12">3</ToggleGroupItem>
-          <ToggleGroupItem value="4" className="w-12 h-12">4</ToggleGroupItem>
-          <ToggleGroupItem value="5" className="w-12 h-12">5</ToggleGroupItem>
+      <div className="space-y-2">
+        <Label>Par</Label>
+        <ToggleGroup 
+          type="single" 
+          value={localPar.toString()}
+          onValueChange={handleParChange}
+          className="justify-start"
+        >
+          {[3, 4, 5].map((par) => (
+            <ToggleGroupItem key={par} value={par.toString()}>
+              {par}
+            </ToggleGroupItem>
+          ))}
         </ToggleGroup>
       </div>
-      
-      <div>
-        <Label htmlFor="yards">Yards</Label>
+
+      <div className="space-y-2">
+        <Label htmlFor="distance">Yards</Label>
         <Input 
-          ref={yardageRef}
+          id="distance" 
           type="number" 
-          id="yards" 
           placeholder="Enter yards" 
-          value={data.distance || ''} 
-          onChange={handleYardageChange}
-          className="w-full"
+          value={localDistance} 
+          onChange={handleDistanceChange} 
+          min={0}
         />
       </div>
-      
-      <div>
+
+      <div className="space-y-2">
         <Label htmlFor="score">Score</Label>
         <Input 
-          ref={scoreRef}
-          type="number" 
           id="score" 
+          type="number" 
           placeholder="Enter score" 
-          value={data.score || ''} 
-          onChange={handleScoreChange}
-          className="w-full"
+          value={localScore} 
+          onChange={handleScoreChange} 
+          min={1} 
         />
       </div>
-      
-      <div>
+
+      <div className="space-y-2">
         <Label htmlFor="putts">Putts</Label>
         <Input 
-          ref={puttsRef}
-          type="number" 
           id="putts" 
+          type="number" 
           placeholder="Enter putts" 
-          value={data.putts || ''} 
-          onChange={handlePuttsChange}
-          className="w-full"
+          value={localPutts} 
+          onChange={handlePuttsChange} 
+          min={0} 
         />
       </div>
     </div>

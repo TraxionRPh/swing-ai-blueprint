@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCourseManagement } from "./useCourseManagement";
@@ -17,10 +17,9 @@ import { useResumeSession } from "./useResumeSession";
 
 export const useRoundTracking = () => {
   const { user } = useAuth();
-  const { roundId: urlRoundId, holeNumber } = useParams();
+  const { roundId: urlRoundId } = useParams();
   const { toast } = useToast();
   const location = useLocation();
-  const navigate = useNavigate();
   const initRunRef = useRef(false);
   
   // Debug current state
@@ -122,22 +121,8 @@ export const useRoundTracking = () => {
 
   // Update course name when selected course changes
   useEffect(() => {
-    if (selectedCourse) {
-      console.log("Selected course changed:", selectedCourse.name);
-      updateCourseName(selectedCourse);
-    }
+    updateCourseName(selectedCourse);
   }, [selectedCourse, updateCourseName]);
-
-  // Fix to ensure we have the right initial hole number from URL
-  useEffect(() => {
-    if (holeNumber && setCurrentHole) {
-      const holeNum = parseInt(holeNumber, 10);
-      if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= 18) {
-        console.log(`Setting current hole from URL param: ${holeNum}`);
-        setCurrentHole(holeNum);
-      }
-    }
-  }, [holeNumber, setCurrentHole]);
 
   // Initialize the round when the component mounts or round ID changes
   useEffect(() => {
@@ -164,9 +149,7 @@ export const useRoundTracking = () => {
       setLoadingStage,
       setError,
       toast,
-      isMounted,
-      navigate,
-      holeNumber
+      isMounted
     });
     
     return () => {
@@ -174,7 +157,7 @@ export const useRoundTracking = () => {
     };
   }, [urlRoundId, user, setCurrentRoundId, setHoleScores, toast, fetchRoundDetails, 
       setLoadingStage, setError, fetchInProgressRound, currentRoundId, setCourseName, setHoleCount, 
-      setRoundsById, navigate, holeNumber]);
+      setRoundsById]);
 
   // Handle hole count selection and storage
   const handleHoleCountSelect = (count: number) => {
@@ -225,9 +208,7 @@ const useInitializeRoundEffect = async ({
   setLoadingStage,
   setError,
   toast,
-  isMounted,
-  navigate,
-  holeNumber
+  isMounted
 }) => {
   try {
     setLoadingStage('initializing');
@@ -260,12 +241,6 @@ const useInitializeRoundEffect = async ({
           console.log("Set round data for ID:", urlRoundId);
         }
         
-        // If we're on a round page but not on a specific hole, redirect to hole 1
-        if (urlRoundId && !holeNumber && navigate) {
-          console.log("No hole number in URL, redirecting to hole 1");
-          navigate(`/rounds/${urlRoundId}/1`, { replace: true });
-        }
-        
         setLoadingStage('preparing');
       } catch (error) {
         console.error("Error fetching round details:", error);
@@ -296,12 +271,6 @@ const useInitializeRoundEffect = async ({
               [roundData.roundId]: roundData
             }));
             console.log("Set round data for in-progress round:", roundData.roundId);
-            
-            // If we found an in-progress round, navigate to it
-            if (navigate) {
-              const holeToNavigate = roundData.currentHole || 1;
-              navigate(`/rounds/${roundData.roundId}/${holeToNavigate}`, { replace: true });
-            }
           }
           
           console.log("Fetched in-progress round:", roundData.roundId);

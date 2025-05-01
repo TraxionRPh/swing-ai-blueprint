@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoundTracking } from "@/hooks/useRoundTracking";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface RoundTrackingDetailProps {
   onBack: () => void;
@@ -23,6 +23,7 @@ interface RoundTrackingDetailProps {
 export const RoundTrackingDetail = ({
   onBack,
   currentRoundId,
+  initialHoleNumber,
   isLoading: externalLoading,
   loadingStage = "Loading...",
   retryLoading,
@@ -33,8 +34,6 @@ export const RoundTrackingDetail = ({
   const [localLoading, setLocalLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { holeNumber } = useParams();
-  const initialHoleNumber = holeNumber ? parseInt(holeNumber, 10) : null;
   
   console.log("RoundTrackingDetail rendered with ID:", currentRoundId, "initial hole:", initialHoleNumber, "loading:", localLoading);
   
