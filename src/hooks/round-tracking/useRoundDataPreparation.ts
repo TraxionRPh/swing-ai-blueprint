@@ -30,9 +30,9 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
       setLoadingStage('fetching');
       console.log(`fetchHoleData called with roundId: ${roundId}, courseId: ${courseId}`);
       
-      // Special case for new rounds or invalid UUIDs
-      if (roundId === 'new' || (roundId && !validateUUID(roundId))) {
-        console.log(`Creating default hole data for ${roundId === 'new' ? 'new' : 'invalid'} round`);
+      // Handle new round case
+      if (roundId === 'new') {
+        console.log(`Creating default hole data for new round`);
         
         // If we have a courseId, try to fetch course hole data
         if (courseId) {
@@ -58,6 +58,16 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
           setHoleCount(18);
           setLoadingStage('ready');
         }
+        return { holeCount: 18 };
+      }
+      
+      // Handle invalid UUID case
+      if (roundId && !validateUUID(roundId)) {
+        console.log(`Creating default hole data for invalid round ID`);
+        const defaultScores = initializeDefaultScores(18);
+        setHoleScores(defaultScores);
+        setHoleCount(18);
+        setLoadingStage('ready');
         return { holeCount: 18 };
       }
       
@@ -90,6 +100,21 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
           holeCount: fetchedHoleCount || 18, 
           courseId: result.courseId 
         };
+      } else if (courseId) {
+        // Just fetch course hole data directly
+        try {
+          console.log(`Fetching course hole data directly for courseId: ${courseId}`);
+          const formattedScores = await fetchHoleScoresFromCourse(courseId);
+          
+          if (isMounted.current) {
+            setHoleScores(formattedScores);
+            setHoleCount(formattedScores.length);
+            setLoadingStage('ready');
+          }
+          return { holeCount: formattedScores.length, courseId };
+        } catch (error) {
+          console.error('Error fetching course holes directly:', error);
+        }
       }
     } catch (error) {
       console.error('Error in fetchHoleData:', error);

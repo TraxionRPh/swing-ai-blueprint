@@ -132,7 +132,7 @@ export const useHoleDataFetcher = () => {
         console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
       }
 
-      const formattedScores = formatHoleScores([], holeInfo, holeInfo.length || 18, teeId);
+      const formattedScores = formatHoleScores([], holeInfo);
       console.log('Formatted hole scores with course data (direct):', formattedScores.length);
       
       return formattedScores;
@@ -150,14 +150,13 @@ export const useHoleDataFetcher = () => {
       const existingHole = scores.find(h => h.hole_number === holeNumber);
       const courseHole = holeInfo.find(h => h.hole_number === holeNumber);
       
-      // Get distance based on tee or default
-      let distance = 0;
-      if (courseHole) {
-        if (teeId && courseHole.tee_distances && courseHole.tee_distances[teeId]) {
-          distance = courseHole.tee_distances[teeId];
-        } else {
-          distance = courseHole.distance_yards || 0;
-        }
+      // Always use the main distance_yards field for distance
+      let distance = courseHole?.distance_yards || 0;
+      
+      // Only try to use tee-specific distance if explicitly requested and available
+      if (teeId && courseHole?.tee_distances && courseHole.tee_distances[teeId]) {
+        console.log(`Using tee-specific distance for hole ${holeNumber}: ${courseHole.tee_distances[teeId]}yd`);
+        distance = courseHole.tee_distances[teeId];
       }
       
       return {
