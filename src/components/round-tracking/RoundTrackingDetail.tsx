@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
+import { Loading } from "@/components/ui/loading";
 
 interface Props {
   onBack: () => void;
@@ -27,7 +28,7 @@ export const RoundTrackingDetail = ({
   const [holeScores, setHoleScores] = useState([]);
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [holeCount, setHoleCount] = useState(18);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const {
     handleHoleUpdate,
@@ -44,6 +45,7 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
 
+  // Set parent loading state based on local loading state
   useEffect(() => {
     setDetailLoading(isLoading);
     if (!isLoading && !holeScores.length) {
@@ -51,14 +53,21 @@ export const RoundTrackingDetail = ({
     } else {
       setDetailError(null);
     }
-    
-    // Set loading to false after a short delay to ensure UI updates
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
   }, [isLoading, holeScores, setDetailError, setDetailLoading]);
+
+  // Force exit from loading state if it takes too long
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      console.log("Forcing exit from loading state after timeout");
+      setIsLoading(false);
+    }, 1000); // 1 second timeout
+    
+    return () => clearTimeout(loadingTimeout);
+  }, []);
+  
+  if (isLoading) {
+    return <Loading message="Loading hole data..." minHeight={250} />;
+  }
 
   return (
     <HoleScoreView
