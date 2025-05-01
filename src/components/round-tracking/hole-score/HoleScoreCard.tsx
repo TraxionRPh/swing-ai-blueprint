@@ -8,7 +8,7 @@ import type { HoleData } from "@/types/round-tracking";
 
 interface HoleScoreCardProps {
   holeData: HoleData;
-  onUpdate: (field: keyof HoleData, value: any) => void;
+  onUpdate: (data: HoleData) => void;
   onNext?: () => void;
   onPrevious?: () => void;
   isFirst?: boolean;
@@ -33,7 +33,7 @@ export const HoleScoreCard = ({
   teeColor,
   courseId
 }: HoleScoreCardProps) => {
-  // Handle field updates
+  // Handle field updates by creating an adapter function
   const handleFieldUpdate = (field: keyof HoleData, value: any) => {
     const updatedData = { ...holeData, [field]: value };
     onUpdate(updatedData);
