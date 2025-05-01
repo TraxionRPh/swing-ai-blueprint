@@ -36,6 +36,15 @@ export interface HoleData {
   greenInRegulation: boolean;
 }
 
+// Add HoleScore interface to match the data from the database
+export interface HoleScore {
+  hole_number: number;
+  score?: number;
+  putts?: number;
+  fairway_hit?: boolean;
+  green_in_regulation?: boolean;
+}
+
 export interface Round {
   id: string;
   user_id: string;
@@ -50,6 +59,8 @@ export interface Round {
   created_at?: string;
   updated_at?: string;
   course?: Course;
+  // Add hole_scores property
+  hole_scores?: HoleScore[];
 }
 
 export type RoundStatus = 'idle' | 'loading' | 'saving' | 'error' | 'success';

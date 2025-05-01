@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { RoundsDisplay } from "@/components/round-tracking/RoundsDisplay";
+import { RoundsDisplay } from "@/components/round-tracking/RoundsList";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
@@ -81,12 +81,18 @@ export const RoundTrackingMain = ({
           />
           
           {/* Course selector to start a new round */}
-          <CourseSelector 
-            selectedCourse={selectedCourse}
-            selectedTee={selectedTee}
-            onCourseSelect={handleCourseSelect}
-            onTeeSelect={setSelectedTee}
-          />
+          {selectedCourse ? (
+            <CourseSelector 
+              selectedCourse={selectedCourse}
+              selectedTee={selectedTee}
+              onCourseSelect={handleCourseSelect}
+              onTeeSelect={setSelectedTee}
+            />
+          ) : (
+            <CourseSelector 
+              onCourseSelect={handleCourseSelect}
+            />
+          )}
         </>
       )}
     </div>

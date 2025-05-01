@@ -11,23 +11,12 @@ import { Loading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 
-interface RoundsDisplayProps {
-  onCourseSelect: (course: Course, holeCount?: number) => void;
-  onError?: (error: string) => void;
+interface RoundsListProps {
+  onBack?: () => void;
 }
 
-interface RoundWithCourse {
-  id: string;
-  total_score: number | null;
-  hole_count: number;
-  hole_scores?: {
-    hole_number: number;
-    score?: number;
-  }[];
-  golf_courses?: Course;
-}
-
-export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) => {
+// Change RoundsDisplay to RoundsList to match the import in RoundTracking.tsx
+export const RoundsList = ({ onBack }: RoundsListProps) => {
   const [inProgressRounds, setInProgressRounds] = useState<Round[]>([]);
   const [completedRounds, setCompletedRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +73,7 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
 
       // Process data to ensure it matches the Round type interface
       if (rounds && rounds.length > 0) {
+        // Create a properly typed array of Round objects
         const processedRounds: Round[] = rounds.map(round => {
           return {
             id: round.id,
@@ -105,8 +95,12 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
               city: round.golf_courses.city,
               state: round.golf_courses.state,
               is_verified: round.golf_courses.is_verified,
-              course_tees: round.golf_courses.course_tees || []
-            } : undefined
+              course_tees: round.golf_courses.course_tees || [],
+              // Add empty course_holes array to match the Course type
+              course_holes: []
+            } : undefined,
+            // Add hole_scores property to fix TypeScript error
+            hole_scores: round.hole_scores || []
           };
         });
         
@@ -127,11 +121,6 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
       const errorMessage = "Failed to load rounds data";
       setError(errorMessage);
       
-      // Pass the error to the parent component if callback exists
-      if (onError) {
-        onError(errorMessage);
-      }
-      
       toast({
         title: "Error loading rounds",
         description: "Please try again later",
@@ -140,14 +129,14 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
     } finally {
       setLoading(false);
     }
-  }, [toast, onError]);
+  }, [toast]);
 
   // Use a shorter timeout for exiting loading state to improve UI responsiveness
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (loading) {
         setLoading(false);
-        console.log("Forced exit from loading state in RoundsDisplay after timeout");
+        console.log("Forced exit from loading state in RoundsList after timeout");
       }
     }, 3000); // reduced from 8s to 3s for faster response
     
@@ -155,7 +144,7 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
   }, [loading]);
 
   useEffect(() => {
-    console.log("RoundsDisplay mounted, fetching rounds");
+    console.log("RoundsList mounted, fetching rounds");
     const controller = new AbortController();
     
     fetchRounds().catch(err => {
@@ -226,13 +215,14 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
     );
   }
 
-  const getLastCompletedHole = (holeScores: any[] | undefined) => {
-    if (!holeScores || holeScores.length === 0) {
+  // Safe function to check hole scores, checking if hole_scores exists first
+  const getLastCompletedHole = (round: Round) => {
+    if (!round.hole_scores || round.hole_scores.length === 0) {
       return 0;
     }
     
     // Find all holes that have scores
-    const scoredHoles = holeScores
+    const scoredHoles = round.hole_scores
       .filter(hole => hole.score && hole.score > 0)
       .sort((a, b) => a.hole_number - b.hole_number);
     
@@ -248,7 +238,7 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
     if (inProgressRounds.length === 0) return null;
     
     return inProgressRounds.map((round) => {
-      const lastCompletedHole = getLastCompletedHole(round.hole_scores);
+      const lastCompletedHole = getLastCompletedHole(round);
       
       return (
         <InProgressRoundCard
@@ -273,6 +263,10 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
     );
   }
 
+  const handleCourseSelect = (course: Course, holeCount: number = 18) => {
+    navigate(`/rounds/new`, { state: { courseId: course.id, holeCount } });
+  };
+
   const renderRoundsList = (rounds: Round[], title: string, isInProgress: boolean) => {
     if (rounds.length === 0) return null;
 
@@ -291,7 +285,7 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
                 course={round.course}
                 onSelect={isInProgress ? 
                   () => navigate(`/rounds/${round.id}`, { replace: true }) : 
-                  (course) => onCourseSelect(course, round.hole_count || 18)
+                  (course) => handleCourseSelect(course, round.hole_count || 18)
                 }
                 isInProgress={isInProgress}
                 roundId={isInProgress ? round.id : undefined}
@@ -311,3 +305,7 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
     </div>
   );
 };
+
+// Re-export RoundsDisplay for backward compatibility
+export const RoundsDisplay = RoundsList;
+
