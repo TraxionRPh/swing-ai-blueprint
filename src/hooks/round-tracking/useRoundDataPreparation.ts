@@ -22,9 +22,14 @@ export const useRoundDataPreparation = ({
 
   useEffect(() => {
     const fetchHoleData = async () => {
-      if (!courseId) return;
+      if (!courseId) {
+        console.warn("No courseId provided to useRoundDataPreparation.");
+        return;
+      }
 
       setLoadingStage("fetching_hole_data");
+
+      console.log("Fetching course_holes for course:", courseId);
 
       const { data, error } = await supabase
         .from("course_holes")
@@ -33,8 +38,14 @@ export const useRoundDataPreparation = ({
         .order("hole_number", { ascending: true });
 
       if (error) {
-        console.error("Error fetching course holes:", error);
+        console.error("Supabase course_holes error:", error);
         setError("Failed to fetch course hole data.");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn("No course_holes data found for course:", courseId);
+        setError("No hole data found for the selected course.");
         return;
       }
 
@@ -43,6 +54,8 @@ export const useRoundDataPreparation = ({
         par: hole.par || 4,
         distance: hole.distance_yards || 0,
       }));
+
+      console.log("Formatted hole scores:", formattedHoles);
 
       setHoleScores(formattedHoles);
       setLoadingStage("hole_data_ready");
