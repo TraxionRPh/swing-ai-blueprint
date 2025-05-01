@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 interface HoleNavigationProps {
   onNext?: () => void;
@@ -20,94 +20,86 @@ export const HoleNavigation = ({
   currentHole,
   holeCount
 }: HoleNavigationProps) => {
-  // Add state to track button clicks and prevent rapid multiple clicks
-  const [isClicking, setIsClicking] = useState(false);
+  const [isClickingNext, setIsClickingNext] = useState(false);
+  const [isClickingPrev, setIsClickingPrev] = useState(false);
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Clear clicking state if component unmounts while in clicking state
+  // Clear timeout on unmount
   useEffect(() => {
-    return () => setIsClicking(false);
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
   }, []);
   
-  // Enhanced previous button handler with debounce protection
-  const handlePrevious = (e: React.MouseEvent) => {
-    // Prevent default browser behavior and stop event propagation
+  // Enhanced previous button handler with debounce
+  const handlePrevious = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (isClicking) {
-      console.log("Click blocked: already processing a click");
+    if (isClickingPrev || isClickingNext) {
+      console.log("Navigation blocked: already processing a click");
       return;
     }
     
-    setIsClicking(true);
-    console.log("Previous button clicked in HoleNavigation component");
+    setIsClickingPrev(true);
+    console.log("Previous button clicked");
     
     if (typeof onPrevious === 'function') {
-      console.log("Calling onPrevious handler from parent");
+      // Call the handler directly
+      onPrevious();
       
-      try {
-        // Call the handler directly to avoid any React event system issues
-        onPrevious();
-      } catch (err) {
-        console.error("Error in previous button handler:", err);
-      }
-      
-      // Reset clicking state after a short delay to prevent rapid clicks
-      setTimeout(() => {
-        setIsClicking(false);
-      }, 300);
+      // Reset clicking state after a delay
+      clickTimeoutRef.current = setTimeout(() => {
+        setIsClickingPrev(false);
+      }, 500);
     } else {
-      console.warn("Previous handler is not defined or not a function");
-      setIsClicking(false);
+      console.warn("Previous handler is not defined");
+      setIsClickingPrev(false);
     }
-  };
+  }, [onPrevious, isClickingPrev, isClickingNext]);
   
-  // Enhanced next button handler with debounce protection
-  const handleNext = (e: React.MouseEvent) => {
-    // Prevent default browser behavior and stop event propagation
+  // Enhanced next button handler with debounce
+  const handleNext = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (isClicking) {
-      console.log("Click blocked: already processing a click");
+    if (isClickingNext || isClickingPrev) {
+      console.log("Navigation blocked: already processing a click");
       return;
     }
     
-    setIsClicking(true);
-    console.log("Next button clicked in HoleNavigation component");
+    setIsClickingNext(true);
+    console.log("Next button clicked");
     
     if (typeof onNext === 'function') {
-      console.log("Calling onNext handler from parent");
+      // Call the handler directly
+      onNext();
       
-      try {
-        // Call the handler directly to avoid any React event system issues
-        onNext();
-      } catch (err) {
-        console.error("Error in next button handler:", err);
-      }
-      
-      // Reset clicking state after a short delay to prevent rapid clicks
-      setTimeout(() => {
-        setIsClicking(false);
-      }, 300);
+      // Reset clicking state after a delay
+      clickTimeoutRef.current = setTimeout(() => {
+        setIsClickingNext(false);
+      }, 500);
     } else {
-      console.warn("Next handler is not defined or not a function");
-      setIsClicking(false);
+      console.warn("Next handler is not defined");
+      setIsClickingNext(false);
     }
-  };
+  }, [onNext, isClickingNext, isClickingPrev]);
 
   return (
     <div className="flex justify-between mt-6">
       <Button 
         variant="outline" 
         onClick={handlePrevious} 
-        disabled={isFirst || isClicking}
+        disabled={isFirst || isClickingPrev || isClickingNext}
         type="button"
         className="w-[140px]"
         data-testid="previous-hole-button"
       >
         Previous Hole
       </Button>
+      
       <div className="text-center flex items-center">
         {currentHole && holeCount && (
           <span className="text-sm font-medium text-muted-foreground">
@@ -115,9 +107,10 @@ export const HoleNavigation = ({
           </span>
         )}
       </div>
+      
       <Button 
         onClick={handleNext} 
-        disabled={(isLast && !onNext) || isClicking}
+        disabled={(isLast && !onNext) || isClickingNext || isClickingPrev}
         className={`${isLast ? "bg-primary hover:bg-primary/90" : ""} w-[140px]`}
         type="button"
         data-testid="next-hole-button"
