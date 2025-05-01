@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +78,9 @@ export const useRoundTracking = (roundId?: string | null) => {
         state: data.golf_courses.state,
         total_par: data.golf_courses.total_par,
         is_verified: data.golf_courses.is_verified,
+        // Ensure course_tees is always an array
         course_tees: Array.isArray(courseTees) ? courseTees : [],
+        // Ensure course_holes is always an array
         course_holes: Array.isArray(courseHoles) ? courseHoles : []
       };
       
@@ -174,7 +177,7 @@ export const useRoundTracking = (roundId?: string | null) => {
   };
 
   // Save hole score
-  const saveHoleScore = useCallback(async (holeData: HoleData) => {
+  const saveHoleScore = useCallback(async (holeData: HoleData): Promise<boolean> => {
     if (!round?.id) {
       console.error('Cannot save hole score: No round ID');
       return false;
@@ -279,7 +282,7 @@ export const useRoundTracking = (roundId?: string | null) => {
   }, [currentHole, round, navigate]);
 
   // Select course and tee for a new round
-  const selectCourseAndTee = useCallback(async (courseId: string, teeId: string | null, holeCount: number = 18) => {
+  const selectCourseAndTee = useCallback(async (courseId: string, teeId: string | null, holeCount: number = 18): Promise<string | null> => {
     try {
       setStatus("loading");
       
@@ -399,9 +402,6 @@ export const useRoundTracking = (roundId?: string | null) => {
         description: `New round at ${fullCourse.name} created`
       });
       
-      // Navigate to the new round
-      navigate(`/rounds/${newRound.id}/1`);
-      
       return newRound.id;
     } catch (err) {
       console.error("Exception in selectCourseAndTee:", err);
@@ -409,7 +409,7 @@ export const useRoundTracking = (roundId?: string | null) => {
       setError(err instanceof Error ? err.message : "Unknown error");
       return null;
     }
-  }, [navigate, toast]);
+  }, [toast]);
 
   // Fetch recent courses for selection
   const fetchRecentCourses = useCallback(async () => {
@@ -496,7 +496,7 @@ export const useRoundTracking = (roundId?: string | null) => {
   }, []);
 
   // Finish round
-  const finishRound = useCallback(async () => {
+  const finishRound = useCallback(async (): Promise<boolean> => {
     if (!round?.id) return false;
     
     try {
@@ -589,14 +589,14 @@ export const useRoundTracking = (roundId?: string | null) => {
     
     // Actions
     fetchRound,
-    updateHoleScore: () => {}, // Add stub implementation
-    saveHoleScore: async () => false, // Add stub implementation
-    nextHole: () => {}, // Add stub implementation
-    previousHole: () => {}, // Add stub implementation
-    selectCourseAndTee: async () => null, // Add stub implementation
+    updateHoleScore,
+    saveHoleScore,
+    nextHole,
+    previousHole,
+    selectCourseAndTee,
     fetchRecentCourses,
     searchCourses,
-    finishRound: async () => false, // Add stub implementation
+    finishRound,
     
     // Current hole data for convenient access
     currentHoleData: holeScores.find(h => h.holeNumber === currentHole) || {

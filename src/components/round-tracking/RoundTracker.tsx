@@ -129,12 +129,16 @@ export const RoundTracker = () => {
   const handleSave = async () => {
     if (!localHoleData) return;
     
-    const saved = await saveHoleScore(localHoleData);
-    if (saved) {
-      toast({
-        title: "Score saved",
-        description: `Hole ${localHoleData.holeNumber} score saved successfully`
-      });
+    try {
+      const saved = await saveHoleScore(localHoleData);
+      if (saved) {
+        toast({
+          title: "Score saved",
+          description: `Hole ${localHoleData.holeNumber} score saved successfully`
+        });
+      }
+    } catch (err) {
+      console.error("Error saving hole score:", err);
     }
   };
   

@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { RoundTrackingHeader } from "@/components/round-tracking/header/RoundTrackingHeader";
-import { RoundsDisplay } from "@/components/round-tracking/RoundsList";
+import { RoundsList } from "@/components/round-tracking/RoundsList";
 import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
@@ -56,6 +56,12 @@ export const RoundTrackingMain = ({
     handleCourseSelect(course);
   };
 
+  // Handle error handling from child components
+  const handleError = (error: string) => {
+    console.error("Error from child component:", error);
+    if (setMainError) setMainError(error);
+  };
+
   return (
     <div className="space-y-6">
       <RoundTrackingHeader 
@@ -72,12 +78,9 @@ export const RoundTrackingMain = ({
       ) : (
         <>
           {/* Rounds display showing in-progress rounds */}
-          <RoundsDisplay 
-            onCourseSelect={handleCourseSelection} 
-            onError={(error) => {
-              console.error("Rounds display error:", error);
-              if (setMainError) setMainError(error);
-            }}
+          <RoundsList 
+            onCourseSelect={handleCourseSelection}
+            onError={handleError}
           />
           
           {/* Course selector to start a new round */}

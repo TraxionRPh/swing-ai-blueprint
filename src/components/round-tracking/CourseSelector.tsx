@@ -105,14 +105,13 @@ export const CourseSelector = ({ selectedCourse: propSelectedCourse, selectedTee
     if (!selectedCourse) return;
     
     // Create the round
-    const roundId = await selectCourseAndTee(
-      selectedCourse.id, 
-      selectedTee, 
-      holeCount
-    );
-    
-    if (roundId) {
-      navigate(`/rounds/${roundId}/1`);
+    try {
+      const roundId = await selectCourseAndTee(selectedCourse.id, selectedTee, holeCount);
+      if (roundId) {
+        navigate(`/rounds/${roundId}/1`);
+      }
+    } catch (error) {
+      console.error("Error starting round:", error);
     }
   };
   

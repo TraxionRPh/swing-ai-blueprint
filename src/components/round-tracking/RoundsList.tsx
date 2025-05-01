@@ -13,10 +13,12 @@ import { RefreshCcw } from "lucide-react";
 
 interface RoundsListProps {
   onBack?: () => void;
+  onCourseSelect?: (course: Course, holeCount?: number) => void;
+  onError?: (error: string) => void;
 }
 
 // Change RoundsDisplay to RoundsList to match the import in RoundTracking.tsx
-export const RoundsList = ({ onBack }: RoundsListProps) => {
+export const RoundsList = ({ onBack, onCourseSelect, onError }: RoundsListProps) => {
   const [inProgressRounds, setInProgressRounds] = useState<Round[]>([]);
   const [completedRounds, setCompletedRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,18 +36,17 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
         .from('rounds')
         .select(`
           id,
-          total_score,
-          hole_count,
+          user_id,
           course_id,
+          tee_id,
           date,
-          created_at,
-          updated_at,
+          hole_count,
+          total_score,
+          total_putts,
           fairways_hit,
           greens_in_regulation,
-          total_putts,
-          notes,
-          user_id,
-          tee_id,
+          created_at,
+          updated_at,
           hole_scores (
             hole_number,
             score
@@ -95,7 +96,7 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
               city: round.golf_courses.city,
               state: round.golf_courses.state,
               is_verified: round.golf_courses.is_verified,
-              course_tees: round.golf_courses.course_tees || [],
+              course_tees: Array.isArray(round.golf_courses.course_tees) ? round.golf_courses.course_tees : [],
               // Add empty course_holes array to match the Course type
               course_holes: []
             } : undefined,
@@ -116,10 +117,15 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
         setInProgressRounds([]);
         setCompletedRounds([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading rounds:", error);
       const errorMessage = "Failed to load rounds data";
       setError(errorMessage);
+      
+      // Pass the error to the parent component if callback exists
+      if (onError) {
+        onError(errorMessage);
+      }
       
       toast({
         title: "Error loading rounds",
@@ -129,7 +135,7 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, onError]);
 
   // Use a shorter timeout for exiting loading state to improve UI responsiveness
   useEffect(() => {
@@ -264,7 +270,11 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
   }
 
   const handleCourseSelect = (course: Course, holeCount: number = 18) => {
-    navigate(`/rounds/new`, { state: { courseId: course.id, holeCount } });
+    if (onCourseSelect) {
+      onCourseSelect(course, holeCount);
+    } else {
+      navigate(`/rounds/new`, { state: { courseId: course.id, holeCount } });
+    }
   };
 
   const renderRoundsList = (rounds: Round[], title: string, isInProgress: boolean) => {
@@ -308,4 +318,3 @@ export const RoundsList = ({ onBack }: RoundsListProps) => {
 
 // Re-export RoundsDisplay for backward compatibility
 export const RoundsDisplay = RoundsList;
-
