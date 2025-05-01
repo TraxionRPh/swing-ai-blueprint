@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useRoundScoreTracker } from "@/hooks/useRoundScoreTracker";
+import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 
 interface Props {
@@ -24,27 +24,25 @@ export const RoundTrackingDetail = ({
   courseId,
   teeId,
 }: Props) => {
+  const [holeScores, setHoleScores] = useState([]);
+  const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
+  const [holeCount, setHoleCount] = useState(18);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const {
-    currentHole,
-    setCurrentHole,
-    holeScores,
-    setHoleScores,
     handleHoleUpdate,
     handleNext,
     handlePrevious,
     isSaving,
-    saveSuccess,
-    saveError,
-    isLoading,
     currentHoleData,
     clearResumeData,
-  } = useRoundScoreTracker(currentRoundId, courseId || undefined, teeId || undefined);
+  } = useScoreTracking(currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
   useEffect(() => {
     if (initialHoleNumber) {
       setCurrentHole(initialHoleNumber);
     }
-  }, [initialHoleNumber, setCurrentHole]);
+  }, [initialHoleNumber]);
 
   useEffect(() => {
     setDetailLoading(isLoading);
@@ -53,23 +51,29 @@ export const RoundTrackingDetail = ({
     } else {
       setDetailError(null);
     }
+    
+    // Set loading to false after a short delay to ensure UI updates
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [isLoading, holeScores, setDetailError, setDetailLoading]);
 
   return (
     <HoleScoreView
-      onBack={onBack}
-      currentHole={currentHole}
-      setCurrentHole={setCurrentHole}
-      holeScores={holeScores}
+      currentHoleData={currentHoleData}
       handleHoleUpdate={handleHoleUpdate}
       handleNext={handleNext}
       handlePrevious={handlePrevious}
+      currentHole={currentHole}
+      holeCount={holeCount}
       isSaving={isSaving}
-      saveSuccess={saveSuccess}
-      saveError={saveError}
-      currentHoleData={currentHoleData}
       isLoading={isLoading}
-      clearResumeData={clearResumeData}
+      holeScores={holeScores}
+      teeColor={teeId ? "blue" : undefined}
+      courseId={courseId || undefined}
+      teeId={teeId || undefined}
     />
   );
 };

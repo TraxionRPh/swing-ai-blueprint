@@ -1,11 +1,16 @@
+
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useRoundLoadingState } from "./useRoundLoadingState";
 
 interface HoleData {
   holeNumber: number;
   par: number;
   distance: number;
+  score: number;
+  putts: number;
+  fairwayHit?: boolean;
+  greenInRegulation?: boolean;
 }
 
 export const useRoundDataPreparation = ({
@@ -53,6 +58,8 @@ export const useRoundDataPreparation = ({
         holeNumber: hole.hole_number,
         par: hole.par || 4,
         distance: hole.distance_yards || 0,
+        score: 0, // Default values for required fields
+        putts: 0
       }));
 
       console.log("Formatted hole scores:", formattedHoles);

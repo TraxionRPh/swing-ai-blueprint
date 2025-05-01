@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
 import type { HoleData } from "@/types/round-tracking";
 
-interface HoleScoreViewProps {
+export interface HoleScoreViewProps {
   currentHoleData: HoleData;
   handleHoleUpdate: (data: HoleData) => void;
   handleNext: () => void;
