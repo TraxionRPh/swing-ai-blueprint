@@ -27,10 +27,9 @@ export const useRoundTracking = (roundId?: string | null) => {
         .select(`
           *,
           golf_courses:course_id (
-            id, name, city, state, total_par, is_verified,
-            course_tees (*),
-            course_holes (*)
-          )
+            id, name, city, state, total_par, is_verified
+          ),
+          course_tees:tee_id (*)
         `)
         .eq("id", id)
         .single();
@@ -49,11 +48,46 @@ export const useRoundTracking = (roundId?: string | null) => {
       }
 
       console.log("Round data:", data);
+      
+      // Get course tees separately to avoid relationship issues
+      const { data: courseTees, error: teesError } = await supabase
+        .from("course_tees")
+        .select("*")
+        .eq("course_id", data.course_id);
+        
+      if (teesError) {
+        console.error("Error fetching course tees:", teesError);
+      }
+      
+      // Get course holes separately
+      const { data: courseHoles, error: holesError } = await supabase
+        .from("course_holes")
+        .select("*")
+        .eq("course_id", data.course_id)
+        .order("hole_number");
+        
+      if (holesError) {
+        console.error("Error fetching course holes:", holesError);
+      }
+        
+      // Construct the full course object with all relationships
+      const fullCourse: Course = {
+        id: data.golf_courses.id,
+        name: data.golf_courses.name,
+        city: data.golf_courses.city,
+        state: data.golf_courses.state,
+        total_par: data.golf_courses.total_par,
+        is_verified: data.golf_courses.is_verified,
+        course_tees: courseTees || [],
+        course_holes: courseHoles || []
+      };
+      
       setRound({
         ...data,
-        course: data.golf_courses
+        course: fullCourse
       });
-      setCourse(data.golf_courses);
+      
+      setCourse(fullCourse);
       setSelectedTeeId(data.tee_id || null);
       setStatus("success");
 
@@ -84,33 +118,25 @@ export const useRoundTracking = (roundId?: string | null) => {
 
       console.log(`Found ${data?.length || 0} hole scores`);
       
-      // Create or merge hole scores with course hole data
-      if (round && round.course && round.course.course_holes) {
-        const holeCount = round.hole_count || 18;
-        const formattedScores = formatHoleScores(data, round.course.course_holes, holeCount);
-        setHoleScores(formattedScores);
-      } else {
-        // Initialize with default values if no course holes data
-        const defaultScores = initializeDefaultScores(round?.hole_count || 18);
-        
-        // Merge with any existing scores
-        if (data && data.length > 0) {
-          data.forEach((holeScore) => {
-            const index = holeScore.hole_number - 1;
-            if (index >= 0 && index < defaultScores.length) {
-              defaultScores[index] = {
-                ...defaultScores[index],
-                score: holeScore.score || 0,
-                putts: holeScore.putts || 0,
-                fairwayHit: !!holeScore.fairway_hit,
-                greenInRegulation: !!holeScore.green_in_regulation
-              };
-            }
-          });
+      // Get course hole data separately if needed
+      let courseHoles: any[] = [];
+      if (round?.course_id) {
+        const { data: holes } = await supabase
+          .from("course_holes")
+          .select("*")
+          .eq("course_id", round.course_id)
+          .order("hole_number");
+          
+        if (holes) {
+          courseHoles = holes;
         }
-        
-        setHoleScores(defaultScores);
       }
+      
+      // Create or merge hole scores with course hole data
+      const holeCount = round?.hole_count || 18;
+      const formattedScores = formatHoleScores(data || [], courseHoles, holeCount);
+      setHoleScores(formattedScores);
+      
     } catch (err) {
       console.error("Exception in fetchHoleScores:", err);
     }
@@ -258,13 +284,11 @@ export const useRoundTracking = (roundId?: string | null) => {
     try {
       setStatus("loading");
       
-      // Fetch the course data
+      // Fetch the course data with proper relationships
       const { data: courseData, error: courseError } = await supabase
         .from("golf_courses")
         .select(`
-          *,
-          course_tees (*),
-          course_holes (*)
+          id, name, city, state, total_par, is_verified
         `)
         .eq("id", courseId)
         .single();
@@ -276,7 +300,35 @@ export const useRoundTracking = (roundId?: string | null) => {
         return null;
       }
       
-      setCourse(courseData);
+      // Fetch course tees separately
+      const { data: courseTees, error: teesError } = await supabase
+        .from("course_tees")
+        .select("*")
+        .eq("course_id", courseId);
+        
+      if (teesError) {
+        console.error("Error fetching course tees:", teesError);
+      }
+      
+      // Fetch course holes separately  
+      const { data: courseHoles, error: holesError } = await supabase
+        .from("course_holes")
+        .select("*")
+        .eq("course_id", courseId)
+        .order("hole_number");
+        
+      if (holesError) {
+        console.error("Error fetching course holes:", holesError);
+      }
+      
+      // Create the complete course object
+      const fullCourse: Course = {
+        ...courseData,
+        course_tees: courseTees || [],
+        course_holes: courseHoles || []
+      };
+      
+      setCourse(fullCourse);
       setSelectedTeeId(teeId);
       
       // Get the current user
@@ -321,13 +373,13 @@ export const useRoundTracking = (roundId?: string | null) => {
       console.log("Created new round:", newRound);
       setRound({
         ...newRound,
-        course: courseData
+        course: fullCourse
       });
       
       // Initialize hole scores
       const initialScores = initializeDefaultScores(holeCount);
-      if (courseData.course_holes && courseData.course_holes.length > 0) {
-        courseData.course_holes.forEach(hole => {
+      if (fullCourse.course_holes && fullCourse.course_holes.length > 0) {
+        fullCourse.course_holes.forEach(hole => {
           const index = hole.hole_number - 1;
           if (index >= 0 && index < initialScores.length) {
             initialScores[index] = {
@@ -345,7 +397,7 @@ export const useRoundTracking = (roundId?: string | null) => {
       
       toast({
         title: "Round started",
-        description: `New round at ${courseData.name} created`
+        description: `New round at ${fullCourse.name} created`
       });
       
       // Navigate to the new round
@@ -364,15 +416,11 @@ export const useRoundTracking = (roundId?: string | null) => {
   const fetchRecentCourses = useCallback(async () => {
     try {
       setStatus("loading");
-      const { data, error } = await supabase
-        .from("rounds")
+      const { data: courseData, error } = await supabase
+        .from("golf_courses")
         .select(`
-          course_id,
-          hole_count,
-          golf_courses!inner (
-            id, name, city, state, is_verified,
-            course_tees (*)
-          )
+          id, name, city, state, is_verified, total_par,
+          course_tees (*)
         `)
         .order("created_at", { ascending: false })
         .limit(5);
@@ -382,18 +430,19 @@ export const useRoundTracking = (roundId?: string | null) => {
         return [];
       }
       
-      // Filter unique courses
-      const uniqueCourses = data
-        ?.map(round => ({
-          ...round.golf_courses,
-          hole_count: round.hole_count || 18
-        }))
-        .filter((course, index, self) => 
-          course && self.findIndex(c => c?.id === course.id) === index
-        );
+      // Transform data to match Course type
+      const courses: Course[] = courseData.map(c => ({
+        id: c.id,
+        name: c.name,
+        city: c.city,
+        state: c.state,
+        total_par: c.total_par,
+        is_verified: c.is_verified,
+        course_tees: c.course_tees || []
+      }));
         
       setStatus("success");
-      return uniqueCourses || [];
+      return courses || [];
     } catch (err) {
       console.error("Exception in fetchRecentCourses:", err);
       return [];
@@ -406,10 +455,10 @@ export const useRoundTracking = (roundId?: string | null) => {
     
     try {
       setStatus("loading");
-      const { data, error } = await supabase
+      const { data: courseData, error } = await supabase
         .from("golf_courses")
         .select(`
-          *,
+          id, name, city, state, is_verified, total_par,
           course_tees (*)
         `)
         .or(
@@ -422,8 +471,19 @@ export const useRoundTracking = (roundId?: string | null) => {
         return [];
       }
       
+      // Transform data to match Course type
+      const courses: Course[] = courseData.map(c => ({
+        id: c.id,
+        name: c.name,
+        city: c.city,
+        state: c.state,
+        total_par: c.total_par,
+        is_verified: c.is_verified,
+        course_tees: c.course_tees || []
+      }));
+      
       setStatus("success");
-      return data || [];
+      return courses || [];
     } catch (err) {
       console.error("Exception in searchCourses:", err);
       return [];
@@ -511,7 +571,7 @@ export const useRoundTracking = (roundId?: string | null) => {
         setCurrentHole(holeNum);
       }
     }
-  }, [round, window.location.pathname]);
+  }, [round]);
 
   return {
     status,

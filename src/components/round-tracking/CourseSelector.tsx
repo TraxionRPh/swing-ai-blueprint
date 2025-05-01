@@ -9,7 +9,14 @@ import { Search, Plus, X } from 'lucide-react';
 import type { Course } from '@/types/round-tracking';
 import { CourseCard } from './CourseCard';
 
-export const CourseSelector = () => {
+interface CourseSelectorProps {
+  selectedCourse?: Course | null;
+  selectedTee?: string | null;
+  onCourseSelect?: (course: Course) => void;
+  onTeeSelect?: (teeId: string | null) => void;
+}
+
+export const CourseSelector = ({ selectedCourse: propSelectedCourse, selectedTee: propSelectedTee, onCourseSelect, onTeeSelect }: CourseSelectorProps = {}) => {
   const navigate = useNavigate();
   const { fetchRecentCourses, searchCourses, selectCourseAndTee } = useRoundTracking();
   
@@ -17,9 +24,19 @@ export const CourseSelector = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [recentCourses, setRecentCourses] = useState<Course[]>([]);
   const [searchResults, setSearchResults] = useState<Course[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedTee, setSelectedTee] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(propSelectedCourse || null);
+  const [selectedTee, setSelectedTee] = useState<string | null>(propSelectedTee || null);
   const [holeCount, setHoleCount] = useState<number>(18);
+  
+  // Update local state when props change
+  useEffect(() => {
+    if (propSelectedCourse) {
+      setSelectedCourse(propSelectedCourse);
+    }
+    if (propSelectedTee !== undefined) {
+      setSelectedTee(propSelectedTee);
+    }
+  }, [propSelectedCourse, propSelectedTee]);
   
   // Fetch recent courses on initial load
   useEffect(() => {
@@ -55,11 +72,32 @@ export const CourseSelector = () => {
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
     
+    // Call parent handler if provided
+    if (onCourseSelect) {
+      onCourseSelect(course);
+    }
+    
     // Set default tee if available
     if (course.course_tees && course.course_tees.length > 0) {
-      setSelectedTee(course.course_tees[0].id);
+      const defaultTee = course.course_tees[0].id;
+      setSelectedTee(defaultTee);
+      
+      // Call parent handler if provided
+      if (onTeeSelect) {
+        onTeeSelect(defaultTee);
+      }
     } else {
       setSelectedTee(null);
+      if (onTeeSelect) {
+        onTeeSelect(null);
+      }
+    }
+  };
+
+  const handleTeeSelect = (teeId: string | null) => {
+    setSelectedTee(teeId);
+    if (onTeeSelect) {
+      onTeeSelect(teeId);
     }
   };
   
@@ -176,7 +214,7 @@ export const CourseSelector = () => {
                         <Button 
                           key={tee.id} 
                           variant={selectedTee === tee.id ? "default" : "outline"} 
-                          onClick={() => setSelectedTee(tee.id)}
+                          onClick={() => handleTeeSelect(tee.id)}
                           style={{
                             backgroundColor: selectedTee === tee.id ? undefined : tee.color || undefined,
                             color: selectedTee === tee.id ? undefined : 

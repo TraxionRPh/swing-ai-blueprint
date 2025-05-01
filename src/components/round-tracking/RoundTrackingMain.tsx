@@ -6,6 +6,7 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
+import type { Course } from "@/types/round-tracking";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
@@ -21,8 +22,8 @@ export const RoundTrackingMain = ({
   setMainError
 }: RoundTrackingMainProps) => {
   const [localLoading, setLocalLoading] = useState(pageLoading);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [selectedTee, setSelectedTee] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const [holeCount, setHoleCount] = useState(18);
   const navigate = useNavigate();
   
@@ -36,7 +37,7 @@ export const RoundTrackingMain = ({
   }, [setMainLoading]);
 
   // Handle course selection
-  const handleCourseSelect = (course) => {
+  const handleCourseSelect = (course: Course) => {
     console.log("Course selected:", course.name);
     setSelectedCourse(course);
     
@@ -47,7 +48,7 @@ export const RoundTrackingMain = ({
   };
 
   // Handle course selection that might include hole count
-  const handleCourseSelection = (course, courseHoleCount) => {
+  const handleCourseSelection = (course: Course, courseHoleCount?: number) => {
     console.log("Course selected with hole count:", courseHoleCount);
     if (courseHoleCount) {
       setHoleCount(courseHoleCount);
@@ -80,7 +81,7 @@ export const RoundTrackingMain = ({
           />
           
           {/* Course selector to start a new round */}
-          <CourseSelector
+          <CourseSelector 
             selectedCourse={selectedCourse}
             selectedTee={selectedTee}
             onCourseSelect={handleCourseSelect}
