@@ -82,9 +82,7 @@ export const HoleNavigation = ({
         Previous Hole
       </Button>
       
-      <div className="text-center">
-        {currentHole && holeCount}
-      </div>
+      
       
       <Button onClick={handleNext} disabled={isLast && !onNext || isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
         {isLast ? <>
