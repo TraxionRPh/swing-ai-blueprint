@@ -1,91 +1,100 @@
 
-import { useCallback, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-export const useRoundNavigation = (
-  handleNextBase: () => void,
-  handlePrevious: () => void,
-  currentHole: number,
-  holeCount: number | null,
-  isLoading: boolean = false
-) => {
-  // Add a click tracking ref to prevent double-clicks
-  const isNavigatingRef = useRef(false);
+interface HoleNavigationProps {
+  holeCount?: number;
+  initialHole?: number;
+  onHoleChange?: (holeNumber: number) => void;
+}
+
+export const useRoundNavigation = ({
+  holeCount = 18,
+  initialHole = 1,
+  onHoleChange
+}: HoleNavigationProps = {}) => {
+  const [currentHole, setCurrentHole] = useState(initialHole);
+  const [isNavigating, setIsNavigating] = useState(false);
   
-  // Enhanced next handler with improved validation and direct function calling
+  // Initialize with stored hole number if available
+  useEffect(() => {
+    const resumeHole = sessionStorage.getItem('resume-hole-number');
+    if (resumeHole) {
+      const holeNum = Number(resumeHole);
+      if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= holeCount) {
+        console.log(`Resuming at hole ${holeNum}`);
+        setCurrentHole(holeNum);
+      }
+    }
+  }, [holeCount]);
+  
+  // Update session storage when current hole changes
+  useEffect(() => {
+    if (currentHole >= 1 && currentHole <= holeCount) {
+      sessionStorage.setItem('resume-hole-number', currentHole.toString());
+      
+      if (onHoleChange) {
+        onHoleChange(currentHole);
+      }
+    }
+  }, [currentHole, holeCount, onHoleChange]);
+  
+  // Handle navigation to the next hole
   const handleNext = useCallback(() => {
-    if (isNavigatingRef.current || isLoading) {
-      console.log("Navigation blocked: already navigating or loading in progress");
-      return;
-    }
-
-    // Set navigating state
-    isNavigatingRef.current = true;
+    if (isNavigating || currentHole >= holeCount) return;
     
-    // Add boundary validation
-    if (currentHole >= (holeCount || 18)) {
-      console.log(`Cannot navigate beyond last hole ${holeCount || 18}`);
-      isNavigatingRef.current = false;
-      return;
-    }
+    setIsNavigating(true);
+    console.log(`Navigating from hole ${currentHole} to ${currentHole + 1}`);
     
-    console.log(`Next button clicked. Moving from hole ${currentHole} to next hole (${currentHole + 1})`);
+    setCurrentHole(prev => {
+      const nextHole = prev + 1;
+      return nextHole <= holeCount ? nextHole : prev;
+    });
     
-    // Call the next function directly with timeout to ensure UI updates
-    if (typeof handleNextBase === 'function') {
-      console.log("Calling handleNextBase function");
-      // Use setTimeout to break the call stack and ensure React state updates
-      setTimeout(() => {
-        handleNextBase();
-        // Reset navigation state after a short delay
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 100);
-      }, 0);
-    } else {
-      console.error("handleNextBase is not a valid function", handleNextBase);
-      isNavigatingRef.current = false;
-    }
-  }, [handleNextBase, currentHole, holeCount, isLoading]);
+    setTimeout(() => setIsNavigating(false), 300);
+  }, [currentHole, holeCount, isNavigating]);
   
-  // Enhanced previous handler with improved validation and direct function calling
-  const handlePrev = useCallback(() => {
-    if (isNavigatingRef.current || isLoading) {
-      console.log("Navigation blocked: already navigating or loading in progress");
-      return;
-    }
+  // Handle navigation to the previous hole
+  const handlePrevious = useCallback(() => {
+    if (isNavigating || currentHole <= 1) return;
     
-    // Set navigating state
-    isNavigatingRef.current = true;
+    setIsNavigating(true);
+    console.log(`Navigating from hole ${currentHole} to ${currentHole - 1}`);
     
-    // Add boundary validation
-    if (currentHole <= 1) {
-      console.log("Cannot navigate back from first hole");
-      isNavigatingRef.current = false;
-      return;
-    }
+    setCurrentHole(prev => {
+      const prevHole = prev - 1;
+      return prevHole >= 1 ? prevHole : prev;
+    });
     
-    console.log(`Previous button clicked. Moving from hole ${currentHole} to previous hole (${currentHole - 1})`);
+    setTimeout(() => setIsNavigating(false), 300);
+  }, [currentHole, isNavigating]);
+  
+  // Handle direct navigation to a specific hole
+  const navigateToHole = useCallback((holeNumber: number) => {
+    if (isNavigating || holeNumber < 1 || holeNumber > holeCount) return;
     
-    // Call the previous function directly with additional verification
-    if (typeof handlePrevious === 'function') {
-      console.log("Calling handlePrevious base function");
-      // Use setTimeout to break the call stack and ensure React state updates
-      setTimeout(() => {
-        handlePrevious();
-        // Reset navigation state after a short delay
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 100);
-      }, 0);
-    } else {
-      console.error("handlePrevious is not a valid function", handlePrevious);
-      isNavigatingRef.current = false;
-    }
-  }, [handlePrevious, currentHole, isLoading]);
-
-  // Return both functions with consistent naming
-  return { 
-    handleNext, 
-    handlePrevious: handlePrev 
+    setIsNavigating(true);
+    console.log(`Directly navigating to hole ${holeNumber}`);
+    
+    setCurrentHole(holeNumber);
+    
+    setTimeout(() => setIsNavigating(false), 300);
+  }, [holeCount, isNavigating]);
+  
+  // Clear any resume data
+  const clearResumeData = useCallback(() => {
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
+    console.log("Resume data cleared");
+  }, []);
+  
+  return {
+    currentHole,
+    setCurrentHole: navigateToHole,
+    handleNext,
+    handlePrevious,
+    navigateToHole,
+    isNavigating,
+    clearResumeData
   };
 };

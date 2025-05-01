@@ -1,214 +1,230 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Course, HoleData } from "@/types/round-tracking";
+import type { HoleData } from "@/types/round-tracking";
 
-export const useRoundManagement = (user: any) => {
+export const useRoundManagement = (userId: string | undefined) => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchInProgressRound = async () => {
-    if (!user) return null;
-
+  
+  // Fetch any in-progress round
+  const fetchInProgressRound = useCallback(async () => {
+    if (!userId) return null;
+    
     try {
-      console.log("Fetching in-progress round for user:", user.id);
+      console.log('Fetching in-progress round for user:', userId);
+      
+      // Look for the most recent round from today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
       const { data, error } = await supabase
         .from('rounds')
         .select(`
           id,
           hole_count,
+          date,
           course_id,
-          golf_courses:course_id (
+          total_score,
+          golf_courses (
             id,
             name,
             city,
             state,
-            total_par
-          ),
-          hole_scores (*)
+            total_par,
+            course_tees (*)
+          )
         `)
-        .eq('user_id', user.id)
-        .is('total_score', null)
-        .maybeSingle();
-
+        .eq('user_id', userId)
+        .gte('date', today.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
       if (error) {
         console.error('Error fetching in-progress round:', error);
-        return null;
+        throw error;
       }
-
-      console.log("In-progress round data:", data);
-
-      if (data) {
-        // Get tees for the course
-        let courseTeesData = [];
-        try {
-          if (data.course_id) {
-            const courseTeesResponse = await supabase
-              .from('course_tees')
-              .select('*')
-              .eq('course_id', data.course_id);
-              
-            if (courseTeesResponse.error) {
-              console.error('Error fetching course tees:', courseTeesResponse.error);
-            } else {
-              courseTeesData = courseTeesResponse.data || [];
-            }
-          }
-        } catch (teesError) {
-          console.error('Failed to fetch course tees:', teesError);
-          // Continue with what we have
-        }
+      
+      if (data && data.length > 0) {
+        const round = data[0];
         
-        // Get hole information including distance
-        let holeInfo = [];
-        try {
-          if (data.course_id) {
-            const holeInfoResponse = await supabase
-              .from('course_holes')
-              .select('*')
-              .eq('course_id', data.course_id);
-              
-            if (holeInfoResponse.error) {
-              console.error('Error fetching hole info:', holeInfoResponse.error);
-            } else {
-              holeInfo = holeInfoResponse.data || [];
-            }
-          }
-        } catch (holeError) {
-          console.error('Failed to fetch hole info:', holeError);
-          // Continue with what we have
-        }
+        // Set the current round ID
+        setCurrentRoundId(round.id);
         
         return {
-          roundId: data.id,
-          holeCount: data.hole_count || 18,
-          course: data.golf_courses ? {
-            ...data.golf_courses,
-            course_tees: courseTeesData
-          } : null,
-          holeScores: (data.hole_scores || []).map((hole: any) => {
-            // Find corresponding hole info to get distance
-            const courseHole = holeInfo.find((h: any) => h.hole_number === hole.hole_number);
-            
-            return {
-              holeNumber: hole.hole_number,
-              par: courseHole?.par || 4,
-              distance: courseHole?.distance_yards || 0,
-              score: hole.score,
-              putts: hole.putts,
-              fairwayHit: hole.fairway_hit,
-              greenInRegulation: hole.green_in_regulation
-            };
-          }) || []
+          roundId: round.id,
+          holeCount: round.hole_count,
+          course: round.golf_courses,
+          totalScore: round.total_score
         };
       }
+      
       return null;
     } catch (error) {
-      console.error('Error fetching in-progress round:', error);
+      console.error('Error in fetchInProgressRound:', error);
       toast({
-        title: "Error loading round",
-        description: "Could not load round data. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to load in-progress round data',
+        variant: 'destructive'
       });
       return null;
     }
-  };
-
-  const finishRound = async (holeScores: HoleData[], holeCount: number) => {
-    if (!currentRoundId) return false;
-
+  }, [userId, toast]);
+  
+  // Create a new round
+  const createNewRound = useCallback(async (courseId: string, holeCount: number = 18) => {
+    if (!userId) return null;
+    
     try {
-      console.log("Finishing round with ID:", currentRoundId);
-      console.log("Hole scores:", holeScores.slice(0, holeCount));
-      console.log("Hole count:", holeCount);
+      const { data, error } = await supabase
+        .from('rounds')
+        .insert({
+          user_id: userId,
+          course_id: courseId,
+          date: new Date().toISOString(),
+          hole_count: holeCount
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating new round:', error);
+        throw error;
+      }
       
-      // Only consider holes up to the hole count limit
+      console.log('Created new round:', data.id);
+      setCurrentRoundId(data.id);
+      return data.id;
+    } catch (error) {
+      console.error('Error in createNewRound:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create new round',
+        variant: 'destructive'
+      });
+      return null;
+    }
+  }, [userId, toast]);
+  
+  // Finish round and update statistics
+  const finishRound = useCallback(async (holeScores: HoleData[], holeCount: number) => {
+    if (!currentRoundId) return false;
+    
+    try {
+      console.log('Finishing round:', currentRoundId);
+      
+      // Calculate totals from hole scores
       const relevantScores = holeScores.slice(0, holeCount);
-      
       const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
       const totalPutts = relevantScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
       const fairwaysHit = relevantScores.filter(hole => hole.fairwayHit).length;
       const greensInRegulation = relevantScores.filter(hole => hole.greenInRegulation).length;
       
-      const updateResult = await supabase
+      // Update the round with the final totals
+      const { error } = await supabase
         .from('rounds')
-        .update({ 
+        .update({
           total_score: totalScore,
           total_putts: totalPutts,
           fairways_hit: fairwaysHit,
           greens_in_regulation: greensInRegulation,
-          hole_count: holeCount
+          updated_at: new Date().toISOString()
         })
         .eq('id', currentRoundId);
         
-      if (updateResult.error) {
-        console.error('Error updating round:', updateResult.error);
-        throw updateResult.error;
+      if (error) {
+        console.error('Error finishing round:', error);
+        throw error;
       }
       
-      console.log("Round successfully updated with final scores:", updateResult);
-
-      toast({
-        title: "Round Completed",
-        description: "Your round has been saved successfully!"
+      console.log('Round finished successfully:', {
+        totalScore,
+        totalPutts,
+        fairwaysHit,
+        greensInRegulation
       });
-
+      
+      // Clear the current round ID
       setCurrentRoundId(null);
+      
+      // Show success message
+      toast({
+        title: 'Round Completed',
+        description: `Your final score: ${totalScore}`,
+        variant: 'default'
+      });
+      
       return true;
     } catch (error) {
-      console.error('Error finishing round:', error);
+      console.error('Error in finishRound:', error);
       toast({
-        title: "Error finishing round",
-        description: "Could not save round details. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to complete round',
+        variant: 'destructive'
       });
       return false;
     }
-  };
-
-  const deleteRound = async (roundId: string) => {
+  }, [currentRoundId, toast]);
+  
+  // Delete a round
+  const deleteRound = useCallback(async (roundId: string) => {
     try {
-      // Delete hole scores first due to foreign key constraints
+      console.log('Deleting round:', roundId);
+      
+      // First delete all hole scores for this round
       const { error: holeScoresError } = await supabase
         .from('hole_scores')
         .delete()
         .eq('round_id', roundId);
-
-      if (holeScoresError) throw holeScoresError;
-
-      // Then delete the round
-      const { error: roundError } = await supabase
+        
+      if (holeScoresError) {
+        console.error('Error deleting hole scores:', holeScoresError);
+        throw holeScoresError;
+      }
+      
+      // Then delete the round itself
+      const { error } = await supabase
         .from('rounds')
         .delete()
         .eq('id', roundId);
-
-      if (roundError) throw roundError;
-
-      setCurrentRoundId(null);
+        
+      if (error) {
+        console.error('Error deleting round:', error);
+        throw error;
+      }
       
+      console.log('Round deleted successfully');
+      
+      // Clear current round ID if it matches the deleted round
+      if (currentRoundId === roundId) {
+        setCurrentRoundId(null);
+      }
+      
+      // Show success message
       toast({
-        title: "Round Deleted",
-        description: "The round has been successfully deleted",
+        title: 'Round Deleted',
+        description: 'Round has been deleted successfully',
+        variant: 'default'
       });
       
       return true;
     } catch (error) {
-      console.error('Error deleting round:', error);
+      console.error('Error in deleteRound:', error);
       toast({
-        title: "Error deleting round",
-        description: "Could not delete the round. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to delete round',
+        variant: 'destructive'
       });
       return false;
     }
-  };
-
+  }, [currentRoundId, toast]);
+  
   return {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
+    createNewRound,
     finishRound,
     deleteRound
   };
