@@ -30,13 +30,23 @@ export const HoleScoreCardWrapper = ({
   currentHole,
   holeCount
 }: HoleScoreCardWrapperProps) => {
+  // Final safety check to ensure holeData is valid
+  const safeData: HoleData = {
+    holeNumber: holeData?.holeNumber || 1,
+    par: holeData?.par ?? 4,
+    distance: holeData?.distance ?? 0,
+    score: holeData?.score ?? 0,
+    putts: holeData?.putts ?? 0,
+    fairwayHit: !!holeData?.fairwayHit,
+    greenInRegulation: !!holeData?.greenInRegulation
+  };
   
   return (
     <>
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="pt-6 space-y-4">
-          <HoleHeader holeNumber={holeData.holeNumber} />
-          <HoleScoreForm data={holeData} onDataChange={onUpdate} />
+          <HoleHeader holeNumber={safeData.holeNumber} par={safeData.par} distance={safeData.distance} />
+          <HoleScoreForm data={safeData} onDataChange={onUpdate} />
           <HoleNavigation 
             onNext={onNext}
             onPrevious={onPrevious}

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { HoleScoreCardWrapper } from "./HoleScoreCardWrapper";
 import type { HoleData } from "@/types/round-tracking";
 
@@ -33,22 +33,33 @@ export const HoleScoreCardContainer = ({
   teeId
 }: HoleScoreCardContainerProps) => {
   console.log("HoleScoreCardContainer rendering with:", {
-    holeNumber: holeData.holeNumber,
-    par: holeData.par,
-    distance: holeData.distance,
+    holeNumber: holeData?.holeNumber,
+    par: holeData?.par,
+    distance: holeData?.distance,
     teeColor,
     courseId,
     teeId
   });
 
+  // Ensure we have valid hole data
+  const safeHoleData: HoleData = {
+    holeNumber: holeData?.holeNumber || 1,
+    par: holeData?.par ?? 4,
+    distance: holeData?.distance ?? 0,
+    score: holeData?.score ?? 0,
+    putts: holeData?.putts ?? 0,
+    fairwayHit: !!holeData?.fairwayHit,
+    greenInRegulation: !!holeData?.greenInRegulation
+  };
+
   const handleFieldUpdate = (field: keyof HoleData, value: any) => {
-    const updatedData = { ...holeData, [field]: value };
+    const updatedData = { ...safeHoleData, [field]: value };
     onUpdate(updatedData);
   };
 
   return (
     <HoleScoreCardWrapper
-      holeData={holeData}
+      holeData={safeHoleData}
       onUpdate={handleFieldUpdate}
       onNext={onNext}
       onPrevious={onPrevious}

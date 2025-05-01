@@ -19,9 +19,21 @@ interface HoleScoreCardProps {
 }
 
 export const HoleScoreCard = (props: HoleScoreCardProps) => {
-  console.log("Rendering HoleScoreCard with data:", props.holeData);
-  console.log("Hole distance:", props.holeData.distance, "yards");
+  // Ensure holeData is always defined with valid defaults
+  const safeHoleData: HoleData = {
+    holeNumber: props.holeData?.holeNumber || 1,
+    par: props.holeData?.par ?? 4,
+    distance: props.holeData?.distance ?? 0,
+    score: props.holeData?.score ?? 0,
+    putts: props.holeData?.putts ?? 0,
+    fairwayHit: !!props.holeData?.fairwayHit,
+    greenInRegulation: !!props.holeData?.greenInRegulation
+  };
+  
+  console.log("Rendering HoleScoreCard with data:", safeHoleData);
+  console.log("Hole distance:", safeHoleData.distance, "yards");
   console.log("Course ID in HoleScoreCard:", props.courseId);
   console.log("Tee ID in HoleScoreCard:", props.teeId);
-  return <HoleScoreCardContainer {...props} />;
+  
+  return <HoleScoreCardContainer {...props} holeData={safeHoleData} />;
 };
