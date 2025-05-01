@@ -16,16 +16,24 @@ export function Layout() {
     
     if (path.startsWith("/drills")) {
       title = "Drill Library";
-    } else if (path.startsWith("/practice")) {
+    } else if (path.startsWith("/practice-plans")) {
       title = "Practice Plans";
+    } else if (path.startsWith("/my-practice-plans")) {
+      title = "My Practice Plans";
     } else if (path.startsWith("/profile")) {
       title = "Profile";
     } else if (path.startsWith("/challenges")) {
       title = "Challenges";
-    } else if (path.startsWith("/analysis")) {
+    } else if (path.startsWith("/ai-analysis")) {
       title = "AI Analysis";
     } else if (path.startsWith("/rounds")) {
       title = "Round Tracking";
+    } else if (path.startsWith("/dashboard")) {
+      title = "Dashboard";
+    } else if (path.startsWith("/subscription")) {
+      title = "Subscription";
+    } else if (path.startsWith("/welcome")) {
+      title = "Welcome";
     }
     
     setPageTitle(title);
