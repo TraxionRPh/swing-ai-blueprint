@@ -43,18 +43,25 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
     onDataChange(field, parsedValue);
   };
 
+  // Determine the range of par options based on pre-populated data or defaults
+  const parOptions = [3, 4, 5];
+  if (data.par && ![3, 4, 5].includes(data.par)) {
+    parOptions.push(data.par);
+    parOptions.sort((a, b) => a - b);
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
         <Label htmlFor="par" className="text-lg font-medium text-foreground">Par</Label>
-        <div className="flex space-x-2">
-          {[3, 4, 5].map(parValue => (
+        <div className="flex flex-wrap gap-2">
+          {parOptions.map(parValue => (
             <Button 
               key={parValue}
               type="button"
               variant={formData.par === parValue ? "default" : "outline"}
               onClick={() => handleInputChange('par', parValue)}
-              className="flex-1 px-4 py-2 text-lg"
+              className="flex-1 px-4 py-2 text-lg min-w-[60px]"
             >
               {parValue}
             </Button>

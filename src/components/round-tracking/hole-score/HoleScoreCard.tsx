@@ -41,15 +41,25 @@ export const HoleScoreCard = ({
   
   return (
     <>
-      <Card className="w-full max-w-xl mx-auto bg-card border border-border shadow-md">
+      <Card className="w-full max-w-xl mx-auto bg-card border border-border shadow-md animate-in fade-in duration-300">
         <CardContent className="pt-6 space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-3xl font-bold text-foreground">Hole {holeData.holeNumber}</h3>
-            {teeColor && (
-              <span className="text-sm text-muted-foreground">
-                Tee color: {teeColor}
-              </span>
-            )}
+            <div className="flex flex-col items-end">
+              {teeColor && (
+                <span className="text-sm text-muted-foreground">
+                  Tee color: <span className="font-medium">{teeColor}</span>
+                </span>
+              )}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Par: <span className="text-foreground">{holeData.par || 4}</span>
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  • <span className="text-foreground">{holeData.distance || 0}</span> yards
+                </span>
+              </div>
+            </div>
           </div>
           
           <HoleScoreForm 
