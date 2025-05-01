@@ -4,6 +4,7 @@ import AppSidebar from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function Layout() {
   const location = useLocation();
@@ -50,6 +51,10 @@ export function Layout() {
     <div className="flex h-screen bg-background">
       <AppSidebar pageTitle={pageTitle} />
       <main className={contentClass}>
+        <div className="flex items-center mb-4 md:hidden">
+          <SidebarTrigger className="mr-2" />
+          <h1 className="text-2xl font-bold">{pageTitle}</h1>
+        </div>
         <Outlet />
         <Toaster />
       </main>

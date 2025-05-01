@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   Sidebar, 
   SidebarContent,
@@ -19,6 +19,9 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
+  const location = useLocation();
+  const path = location.pathname;
+  
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -34,7 +37,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/dashboard")}>
                   <Link to="/dashboard">
                     <Home className="h-5 w-5" />
                     <span>Dashboard</span>
@@ -42,7 +45,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/drills")}>
                   <Link to="/drills">
                     <Dumbbell className="h-5 w-5" />
                     <span>Drill Library</span>
@@ -50,7 +53,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/challenges")}>
                   <Link to="/challenges">
                     <Award className="h-5 w-5" />
                     <span>Challenge Library</span>
@@ -67,7 +70,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/practice-plans")}>
                   <Link to="/practice-plans">
                     <Calendar className="h-5 w-5" />
                     <span>Practice Plans</span>
@@ -75,7 +78,15 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/my-practice-plans")}>
+                  <Link to="/my-practice-plans">
+                    <Clock className="h-5 w-5" />
+                    <span>My Practice Plans</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={path.startsWith("/rounds")}>
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
                     <span>Round Tracking</span>
@@ -92,7 +103,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/ai-analysis")}>
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
@@ -109,7 +120,7 @@ const AppSidebar = ({ pageTitle }: AppSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={path.startsWith("/profile")}>
                   <Link to="/profile">
                     <User className="h-5 w-5" />
                     <span>Profile</span>
