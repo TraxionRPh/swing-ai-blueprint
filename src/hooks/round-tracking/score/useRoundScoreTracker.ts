@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useHoleNavigation } from "./useHoleNavigation";
 import { useHolePersistence } from "./useHolePersistence";
@@ -20,49 +19,53 @@ export const useRoundScoreTracker = (
   const { toast } = useToast();
   const { fetchHoleScoresFromRound, fetchHoleScoresFromCourse, fetchCourseHolesData } = useHoleDataFetcher();
 
-  // Fetch hole data when the component mounts or when roundId/courseId/teeId changes
   useEffect(() => {
-    if (!roundId && !courseId) {
-      setIsLoading(false);
-      return;
-    }
-
     const fetchData = async () => {
       setIsLoading(true);
+
       try {
-        console.log(`Fetching hole data for round ${roundId} or course ${courseId}`);
-        console.log(`Using tee ID: ${teeId || 'none'}`);
+        console.log(`🔍 Fetching hole data: roundId=${roundId}, courseId=${courseId}, teeId=${teeId}`);
         
-        // Skip database fetching for "new" rounds with course ID
-        if (roundId === 'new' && courseId) {
-          console.log('Creating hole data for new round with course data');
-          const courseHoles = await fetchCourseHolesData(courseId);
+        if (roundId === "new") {
+          if (!courseId) {
+            console.warn("❌ New round started but no courseId was provided.");
+            toast({
+              title: "Missing Course",
+              description: "Please select a course to begin the round.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          console.log("🟢 New round - loading course hole data...");
           const holeData = await fetchHoleScoresFromCourse(courseId, teeId || undefined);
           setHoleScores(holeData);
           setIsLoading(false);
           return;
         }
-        
-        // If we have a valid round ID, fetch hole scores for that round
-        if (roundId && roundId !== 'new') {
-          console.log(`Fetching hole data for existing round: ${roundId}`);
+
+        if (roundId && roundId !== "new") {
+          console.log("📥 Fetching existing round data...");
           const result = await fetchHoleScoresFromRound(roundId);
           if (result?.formattedScores) {
             setHoleScores(result.formattedScores);
+          } else {
+            console.warn("⚠️ No scores returned for round:", roundId);
           }
-        } 
-        // If no round ID but we have a course ID, just fetch course holes
-        else if (courseId) {
-          console.log(`Fetching hole data for course: ${courseId} with tee: ${teeId || 'none'}`);
+        } else if (courseId) {
+          console.log("🟡 No roundId, but courseId present — fallback to course hole data");
           const holeData = await fetchHoleScoresFromCourse(courseId, teeId || undefined);
           setHoleScores(holeData);
+        } else {
+          console.warn("❌ No valid roundId or courseId provided. Showing default empty holes.");
         }
       } catch (error) {
-        console.error('Error fetching hole data:', error);
+        console.error("❌ Error fetching hole data:", error);
         toast({
           title: "Error loading hole data",
           description: "Could not load hole scores. Using default values.",
-          variant: "destructive"
+          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
@@ -72,7 +75,6 @@ export const useRoundScoreTracker = (
     fetchData();
   }, [roundId, courseId, teeId, fetchHoleScoresFromRound, fetchHoleScoresFromCourse, fetchCourseHolesData, setHoleScores, toast]);
 
-  // Get the current hole data
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
     holeNumber: currentHole,
     par: 4,
@@ -83,7 +85,6 @@ export const useRoundScoreTracker = (
     greenInRegulation: false
   };
 
-  // Handle updating a hole's score data
   const handleHoleUpdate = useCallback((data: HoleData) => {
     const updatedScores = [...holeScores];
     const holeIndex = updatedScores.findIndex(hole => hole.holeNumber === data.holeNumber);
@@ -95,8 +96,7 @@ export const useRoundScoreTracker = (
     }
     
     setHoleScores(updatedScores);
-    
-    // Save to database if we have a roundId
+
     if (roundId && roundId !== 'new') {
       saveHoleScore(data);
     }
@@ -122,6 +122,6 @@ export const useRoundScoreTracker = (
     isLoading,
     currentHoleData,
     clearResumeData,
-    fetchCourseHoles: fetchCourseHolesData
+    fetchCourseHoles: fetchCourseHolesData,
   };
 };
