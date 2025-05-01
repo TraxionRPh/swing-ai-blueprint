@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { useRoundScoreTracker } from "@/hooks/useRoundScoreTracker";
-import { HoleScoreView } from "@/components/round-tracking/HoleScoreView";
+import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 
 interface Props {
   onBack: () => void;
