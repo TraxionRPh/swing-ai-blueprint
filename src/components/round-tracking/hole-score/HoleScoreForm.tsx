@@ -36,6 +36,10 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
     onDataChange("putts", isNaN(value) ? 0 : value);
   };
 
+  const handleParChange = (value: number) => {
+    onDataChange("par", value);
+  };
+
   const handleFairwayToggle = (value: boolean) => {
     onDataChange("fairwayHit", value);
   };
@@ -49,7 +53,8 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       <HoleHeader 
         holeNumber={safeData.holeNumber} 
         par={safeData.par} 
-        distance={safeData.distance} 
+        distance={safeData.distance}
+        onParChange={handleParChange}
       />
       
       <div className="grid grid-cols-2 gap-4">

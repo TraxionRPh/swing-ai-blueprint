@@ -1,3 +1,4 @@
+
 import type { HoleData } from "@/types/round-tracking";
 
 export const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18, teeId?: string | null): HoleData[] => {
@@ -13,6 +14,8 @@ export const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: numb
     const courseHole = holeInfo?.find(h => h.hole_number === holeNumber);
     
     let distance = 0;
+    // Default to par 4 if no par value is available
+    let par = 4;
     
     // Try to get tee-specific distance if available
     if (courseHole) {
@@ -23,15 +26,25 @@ export const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: numb
         distance = courseHole.distance_yards;
         console.log(`Using default distance for hole ${holeNumber}: ${distance}yd`);
       }
+      
+      // Use course hole par if available
+      if (courseHole.par) {
+        par = courseHole.par;
+      }
+    }
+    
+    // Use existing hole par if available (user might have customized it)
+    if (existingHole && existingHole.par) {
+      par = existingHole.par;
     }
     
     if (courseHole) {
-      console.log(`Found course hole data for hole ${holeNumber}: par ${courseHole.par}, distance ${distance}yd`);
+      console.log(`Found course hole data for hole ${holeNumber}: par ${par}, distance ${distance}yd`);
     }
     
     return {
       holeNumber: holeNumber,
-      par: courseHole?.par || 4,
+      par: existingHole?.par || par,
       distance: distance,
       score: existingHole?.score || 0,
       putts: existingHole?.putts || 0,

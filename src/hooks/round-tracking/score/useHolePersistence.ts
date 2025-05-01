@@ -32,6 +32,7 @@ export const useHolePersistence = (roundId: string | null) => {
       setSaveError(null);
       
       console.log(`Saving hole ${holeData.holeNumber} data for round ${roundId}`);
+      console.log('Hole data to save:', holeData);
       
       const { error } = await supabase
         .from('hole_scores')
@@ -41,7 +42,8 @@ export const useHolePersistence = (roundId: string | null) => {
           score: holeData.score || 0,
           putts: holeData.putts || 0,
           fairway_hit: holeData.fairwayHit,
-          green_in_regulation: holeData.greenInRegulation
+          green_in_regulation: holeData.greenInRegulation,
+          par: holeData.par || 4 // Save the par value
         }, {
           onConflict: 'round_id,hole_number'
         });
