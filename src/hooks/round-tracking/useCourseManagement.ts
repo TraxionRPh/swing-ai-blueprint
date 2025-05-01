@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,46 +8,74 @@ export const useCourseManagement = (currentRoundId: string | null) => {
   const [selectedTee, setSelectedTee] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleCourseSelect = async (course: Course, holeCount?: number) => {
-    setSelectedCourse(course);
-    const holes = await fetchCourseHoles(course.id);
-    
-    if (!currentRoundId) {
-      // Get the current user before creating the round
-      const { data: { user } } = await supabase.auth.getUser();
+  const handleCourseSelect = async (course: Course, holeCount: number = 18) => {
+    try {
+      console.log(`Creating new round for course: ${course.name}, hole count: ${holeCount}`);
       
-      if (!user?.id) {
-        toast({
-          title: "Authentication error",
-          description: "You need to be logged in to start a round.",
-          variant: "destructive"
-        });
-        return null;
+      // First, try to fetch course hole data to attach to the course object
+      try {
+        const { data: holeData, error } = await supabase
+          .from('course_holes')
+          .select('*')
+          .eq('course_id', course.id)
+          .order('hole_number');
+          
+        if (!error && holeData && holeData.length > 0) {
+          course.course_holes = holeData;
+          console.log(`Loaded ${holeData.length} holes for course ${course.id}`);
+        }
+      } catch (holeError) {
+        console.error("Error loading course holes:", holeError);
+        // Continue without holes data
       }
       
-      const { data, error } = await supabase
-        .from('rounds')
-        .insert({
-          course_id: course.id,
-          user_id: user.id,
-          date: new Date().toISOString(),
-          hole_count: holeCount || 18 // Store the hole count with the round
-        })
-        .select()
-        .single();
+      setSelectedCourse(course);
+      const holes = await fetchCourseHoles(course.id);
+      
+      if (!currentRoundId) {
+        // Get the current user before creating the round
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user?.id) {
+          toast({
+            title: "Authentication error",
+            description: "You need to be logged in to start a round.",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        const { data, error } = await supabase
+          .from('rounds')
+          .insert({
+            course_id: course.id,
+            user_id: user.id,
+            date: new Date().toISOString(),
+            hole_count: holeCount || 18 // Store the hole count with the round
+          })
+          .select()
+          .single();
 
-      if (error) {
-        toast({
-          title: "Error starting round",
-          description: "Could not start a new round. Please try again.",
-          variant: "destructive"
-        });
-        return null;
+        if (error) {
+          toast({
+            title: "Error starting round",
+            description: "Could not start a new round. Please try again.",
+            variant: "destructive"
+          });
+          return null;
+        }
+
+        return data.id;
       }
-
-      return data.id;
+      return null;
+    } catch (error) {
+      toast({
+        title: "Error starting round",
+        description: "Could not start a new round. Please try again.",
+        variant: "destructive"
+      });
+      return null;
     }
-    return null;
   };
 
   const fetchCourseHoles = async (courseId: string) => {

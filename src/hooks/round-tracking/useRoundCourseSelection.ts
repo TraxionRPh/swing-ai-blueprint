@@ -19,20 +19,30 @@ export const useRoundCourseSelection = (
         setCurrentRoundId(newRoundId);
         
         // Create default holes based on the course information if available
-        const defaultHoles = Array.from({ length: holeCount || 18 }, (_, i) => ({
-          holeNumber: i + 1,
-          par: course.total_par ? Math.round((course.total_par || 72) / 18) : 4, // Use course par if available
-          distance: 0, // Will be populated from course data later
-          score: 0,
-          putts: 0,
-          fairwayHit: false,
-          greenInRegulation: false
-        }));
+        const defaultHoles = Array.from({ length: holeCount || 18 }, (_, i) => {
+          // Try to find corresponding course hole data if available
+          const courseHoleData = course.course_holes?.find(h => h?.hole_number === i + 1);
+          
+          return {
+            holeNumber: i + 1,
+            // First priority: use course_holes data if available
+            // Second priority: calculate from total_par
+            // Default fallback: use par 4
+            par: courseHoleData?.par || 
+                 (course.total_par ? Math.round((course.total_par || 72) / (holeCount || 18)) : 4),
+            distance: courseHoleData?.distance_yards || 0,
+            score: 0,
+            putts: 0,
+            fairwayHit: false,
+            greenInRegulation: false
+          };
+        });
         
         setHoleScores(defaultHoles);
         
         // Log successful course selection
         console.log(`Course selected: ${course.name}, created round ID: ${newRoundId}`);
+        console.log(`Created ${defaultHoles.length} holes with course data`);
       } else {
         console.error("Failed to create new round ID");
       }

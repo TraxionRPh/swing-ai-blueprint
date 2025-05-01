@@ -16,6 +16,16 @@ export interface Course {
   // Adding the total_par property as optional since it's used but not in the original definition
   total_par?: number;
   is_verified?: boolean;
+  // Add course_holes for direct access to hole data
+  course_holes?: CourseHole[];
+}
+
+export interface CourseHole {
+  id: string;
+  course_id: string;
+  hole_number: number;
+  par: number;
+  distance_yards: number;
 }
 
 export interface HoleData {

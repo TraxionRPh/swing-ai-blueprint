@@ -25,6 +25,7 @@ export const CourseSelector = ({
       console.log("Course selected:", selectedCourse.name);
       console.log("Course has par data:", selectedCourse.total_par);
       console.log("Course has tees:", selectedCourse.course_tees?.length);
+      console.log("Course has holes data:", selectedCourse.course_holes?.length || 0);
     }
   }, [selectedCourse]);
 

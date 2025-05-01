@@ -20,13 +20,57 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
   
   // Prepare and fetch hole data
   const fetchHoleData = useCallback(async () => {
-    if (!roundId) {
+    if (!roundId && !courseId) {
       setLoadingStage('ready'); // Nothing to load
       return;
     }
     
     try {
       setLoadingStage('fetching');
+      
+      // Special case for new rounds or invalid UUIDs
+      if (roundId === 'new' || (roundId && !validateUUID(roundId))) {
+        console.log(`Creating default hole data for new round or non-UUID roundId: ${roundId}`);
+        
+        // If we have a courseId, try to fetch course hole data
+        if (courseId) {
+          try {
+            console.log(`Fetching course hole data for courseId: ${courseId}`);
+            const { data: holeInfo, error } = await supabase
+              .from('course_holes')
+              .select('*')
+              .eq('course_id', courseId)
+              .order('hole_number');
+              
+            if (error) {
+              console.error('Error fetching course hole data:', error);
+            } else if (holeInfo && holeInfo.length > 0) {
+              console.log(`Found ${holeInfo.length} holes for course ${courseId}`);
+              
+              // Format hole scores with course data
+              const formattedScores = formatHoleScores([], holeInfo, holeInfo.length);
+              
+              if (isMounted.current) {
+                setHoleScores(formattedScores);
+                setHoleCount(holeInfo.length);
+                setLoadingStage('ready');
+              }
+              
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching course holes:', error);
+          }
+        }
+        
+        // Fallback to default data
+        if (isMounted.current) {
+          setHoleScores(initializeDefaultScores(18));
+          setLoadingStage('ready');
+        }
+        return;
+      }
+      
       console.log(`Fetching hole data for round ${roundId} (attempt ${fetchAttemptRef.current + 1})`);
       
       // Get round data including course, hole count and any existing scores
@@ -107,28 +151,22 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
       }
       return null;
     }
-  }, [roundId, setLoadingStage, toast]);
+  }, [roundId, courseId, setLoadingStage, toast]);
   
   // Initialize the data loading process
   useEffect(() => {
     isMounted.current = true;
     fetchAttemptRef.current = 0;
     
-    if (roundId) {
-      fetchHoleData();
-    } else if (courseId) {
-      // Just initialize with default scores for a new round
-      setHoleScores(initializeDefaultScores(18));
-      setLoadingStage('ready');
-    }
+    fetchHoleData();
     
     return () => {
       isMounted.current = false;
     };
-  }, [roundId, courseId, fetchHoleData, setLoadingStage]);
+  }, [roundId, courseId, fetchHoleData]);
   
   // Helper functions
-  const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number): HoleData[] => {
+  const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18): HoleData[] => {
     return Array.from({ length: holeCount }, (_, i) => {
       const existingHole = scores.find(h => h.hole_number === i + 1);
       const courseHole = holeInfo.find(h => h.hole_number === i + 1);
@@ -155,6 +193,12 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
       fairwayHit: false,
       greenInRegulation: false
     }));
+  };
+  
+  // Helper function to validate UUID format
+  const validateUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   };
   
   return {
