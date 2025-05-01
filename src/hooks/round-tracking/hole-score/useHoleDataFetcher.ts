@@ -9,7 +9,13 @@ export const useHoleDataFetcher = () => {
    * Fetch hole scores from an existing round
    */
   const fetchHoleScoresFromRound = useCallback(async (roundId: string) => {
-    if (!roundId) return null;
+    if (!roundId || roundId === 'new') {
+      // Return default data for new rounds
+      return {
+        formattedScores: initializeDefaultScores(),
+        holeCount: 18
+      };
+    }
     
     try {
       console.log(`Fetching hole scores for round ${roundId}`);

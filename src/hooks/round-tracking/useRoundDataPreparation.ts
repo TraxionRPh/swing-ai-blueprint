@@ -30,8 +30,8 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
       setLoadingStage('fetching');
       
       // Special case for new rounds or invalid UUIDs
-      if (roundId === 'new' || (roundId && !validateUUID(roundId))) {
-        console.log(`Creating default hole data for new round or non-UUID roundId: ${roundId}`);
+      if (roundId === 'new') {
+        console.log(`Creating default hole data for new round`);
         
         // If we have a courseId, try to fetch course hole data
         if (courseId) {
@@ -58,12 +58,9 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
         return;
       }
       
-      console.log(`Fetching hole data for round ${roundId}`);
-      
-      // Use our enhanced hole data fetcher
-      const result = await fetchHoleScoresFromRound(roundId);
-      
-      if (!result) {
+      // Special case for invalid UUIDs - use default data
+      if (roundId && !validateUUID(roundId)) {
+        console.log(`Using default data for non-UUID roundId: ${roundId}`);
         if (isMounted.current) {
           setHoleScores(initializeDefaultScores(18));
           setLoadingStage('ready');
@@ -71,16 +68,31 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
         return;
       }
       
-      const { formattedScores, holeCount: fetchedHoleCount } = result;
-      
-      if (isMounted.current) {
-        console.log('Setting formatted hole scores:', formattedScores.length);
-        setHoleScores(formattedScores);
-        setHoleCount(fetchedHoleCount || 18);
-        setLoadingStage('ready');
+      if (roundId && roundId !== 'new') {
+        console.log(`Fetching hole data for round ${roundId}`);
+        
+        // Use our enhanced hole data fetcher
+        const result = await fetchHoleScoresFromRound(roundId);
+        
+        if (!result) {
+          if (isMounted.current) {
+            setHoleScores(initializeDefaultScores(18));
+            setLoadingStage('ready');
+          }
+          return;
+        }
+        
+        const { formattedScores, holeCount: fetchedHoleCount } = result;
+        
+        if (isMounted.current) {
+          console.log('Setting formatted hole scores:', formattedScores.length);
+          setHoleScores(formattedScores);
+          setHoleCount(fetchedHoleCount || 18);
+          setLoadingStage('ready');
+        }
+        
+        return { holeCount: fetchedHoleCount || 18, courseId: result.courseId };
       }
-      
-      return { holeCount: fetchedHoleCount || 18, courseId: result.courseId };
     } catch (error) {
       console.error('Error in fetchHoleData:', error);
       

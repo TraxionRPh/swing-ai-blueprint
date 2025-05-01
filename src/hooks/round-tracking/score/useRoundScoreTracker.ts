@@ -31,7 +31,16 @@ export const useRoundScoreTracker = (
         console.log(`Fetching hole data for round ${roundId} or course ${courseId}`);
         console.log(`Using tee ID: ${teeId}`);
         
-        // If we have a round ID, fetch hole scores for that round
+        // Skip database fetching for "new" rounds
+        if (roundId === 'new') {
+          console.log('Creating default hole data for new round');
+          const defaultScores = initializeDefaultScores();
+          setHoleScores(defaultScores);
+          setIsLoading(false);
+          return;
+        }
+        
+        // If we have a valid round ID, fetch hole scores for that round
         if (roundId && roundId !== 'new') {
           const { data: scores, error } = await supabase
             .from('hole_scores')
@@ -76,16 +85,7 @@ export const useRoundScoreTracker = (
         });
         
         // Create default hole data if fetch fails
-        const defaultScores = Array.from({ length: 18 }, (_, i) => ({
-          holeNumber: i + 1,
-          par: 4,
-          distance: 0,
-          score: 0,
-          putts: 0,
-          fairwayHit: false,
-          greenInRegulation: false
-        }));
-        
+        const defaultScores = initializeDefaultScores();
         setHoleScores(defaultScores);
       } finally {
         setIsLoading(false);
@@ -160,6 +160,19 @@ export const useRoundScoreTracker = (
       return [];
     }
   }, [setHoleScores]);
+
+  // Helper function to create default hole data
+  const initializeDefaultScores = (holeCount: number = 18): HoleData[] => {
+    return Array.from({ length: holeCount }, (_, i) => ({
+      holeNumber: i + 1,
+      par: 4,
+      distance: 0,
+      score: 0,
+      putts: 0,
+      fairwayHit: false,
+      greenInRegulation: false
+    }));
+  };
 
   // Get the current hole data
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
