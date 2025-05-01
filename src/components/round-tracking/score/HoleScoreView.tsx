@@ -16,6 +16,7 @@ interface HoleScoreViewProps {
   isLoading?: boolean;
   teeColor?: string;
   courseId?: string;
+  teeId?: string;
   holeScores?: HoleData[];
 }
 
@@ -30,10 +31,12 @@ export const HoleScoreView = ({
   isLoading = false,
   teeColor,
   courseId,
+  teeId,
   holeScores = []
 }: HoleScoreViewProps) => {
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data:", currentHoleData);
+  console.log("Using tee ID:", teeId);
     
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
@@ -67,6 +70,7 @@ export const HoleScoreView = ({
         holeCount={holeCount}
         teeColor={teeColor}
         courseId={courseId}
+        teeId={teeId}
       />
     </div>
   );

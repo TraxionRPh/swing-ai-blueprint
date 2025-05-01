@@ -32,6 +32,7 @@ export const RoundTrackingDetail = ({
   const [courseId, setCourseId] = useState<string | undefined>(undefined);
   const [holeCount, setHoleCount] = useState(18);
   const [teeColor, setTeeColor] = useState<string | undefined>(undefined);
+  const [teeId, setTeeId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { roundId } = useParams();
@@ -48,7 +49,7 @@ export const RoundTrackingDetail = ({
     currentHoleData,
     clearResumeData,
     fetchCourseHoles
-  } = useRoundScoreTracker(currentRoundId, courseId);
+  } = useRoundScoreTracker(currentRoundId, courseId, teeId);
 
   // Fetch round details to get course ID and tee color
   useEffect(() => {
@@ -62,6 +63,7 @@ export const RoundTrackingDetail = ({
           .select(`
             course_id,
             hole_count,
+            tee_id,
             golf_courses (
               id,
               name,
@@ -77,17 +79,37 @@ export const RoundTrackingDetail = ({
           console.log("Round details:", data);
           setCourseId(data.course_id);
           if (data.hole_count) setHoleCount(data.hole_count);
+          if (data.tee_id) {
+            setTeeId(data.tee_id);
+            console.log("Found tee ID for round:", data.tee_id);
+          }
           
           // Fetch tee color
           if (data.course_id) {
-            const { data: teeData, error: teeError } = await supabase
-              .from('course_tees')
-              .select('color')
-              .eq('course_id', data.course_id)
-              .limit(1);
-              
-            if (!teeError && teeData && teeData.length > 0) {
-              setTeeColor(teeData[0].color);
+            // If we have a tee_id, get that specific tee
+            if (data.tee_id) {
+              const { data: teeData, error: teeError } = await supabase
+                .from('course_tees')
+                .select('color')
+                .eq('id', data.tee_id)
+                .single();
+                
+              if (!teeError && teeData) {
+                setTeeColor(teeData.color);
+                console.log("Set tee color from tee ID:", teeData.color);
+              }
+            } else {
+              // Fallback to first tee if no tee_id
+              const { data: teeData, error: teeError } = await supabase
+                .from('course_tees')
+                .select('color')
+                .eq('course_id', data.course_id)
+                .limit(1);
+                
+              if (!teeError && teeData && teeData.length > 0) {
+                setTeeColor(teeData[0].color);
+                console.log("Set fallback tee color:", teeData[0].color);
+              }
             }
           }
         }
@@ -185,6 +207,7 @@ export const RoundTrackingDetail = ({
           isSaving={isSaving}
           teeColor={teeColor}
           courseId={courseId}
+          teeId={teeId}
           holeScores={holeScores}
         />
       )}

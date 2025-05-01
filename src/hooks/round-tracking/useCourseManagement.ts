@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +12,7 @@ export const useCourseManagement = (currentRoundId: string | null) => {
   const handleCourseSelect = async (course: Course, holeCount: number = 18) => {
     try {
       console.log(`Creating new round for course: ${course.name}, hole count: ${holeCount}`);
+      console.log(`Selected tee ID: ${selectedTee}`);
       
       // First, try to fetch course hole data to attach to the course object
       try {
@@ -51,7 +53,8 @@ export const useCourseManagement = (currentRoundId: string | null) => {
             course_id: course.id,
             user_id: user.id,
             date: new Date().toISOString(),
-            hole_count: holeCount || 18 // Store the hole count with the round
+            hole_count: holeCount || 18, // Store the hole count with the round
+            tee_id: selectedTee // Store the selected tee with the round
           })
           .select()
           .single();

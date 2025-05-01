@@ -564,6 +564,7 @@ export type Database = {
           hole_count: number | null
           id: string
           notes: string | null
+          tee_id: string | null
           total_putts: number | null
           total_score: number | null
           updated_at: string | null
@@ -578,6 +579,7 @@ export type Database = {
           hole_count?: number | null
           id?: string
           notes?: string | null
+          tee_id?: string | null
           total_putts?: number | null
           total_score?: number | null
           updated_at?: string | null
@@ -592,6 +594,7 @@ export type Database = {
           hole_count?: number | null
           id?: string
           notes?: string | null
+          tee_id?: string | null
           total_putts?: number | null
           total_score?: number | null
           updated_at?: string | null
@@ -603,6 +606,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "golf_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rounds_tee_id_fkey"
+            columns: ["tee_id"]
+            isOneToOne: false
+            referencedRelation: "course_tees"
             referencedColumns: ["id"]
           },
         ]
