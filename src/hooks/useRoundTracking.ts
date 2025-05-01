@@ -200,7 +200,7 @@ export const useRoundTracking = () => {
               setCurrentRoundId(roundData.roundId);
               
               // Make sure we handle potentially missing holeScores property
-              if ('holeScores' in roundData && roundData.holeScores) {
+              if (roundData.holeScores) {
                 setHoleScores(roundData.holeScores);
               }
               

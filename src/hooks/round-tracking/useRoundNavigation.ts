@@ -48,8 +48,21 @@ export const useRoundNavigation = ({
     baseHandlePrevious();
   }, [currentHole, isLoading, baseHandlePrevious]);
   
+  // Clear resume data from session/local storage
+  const clearResumeData = useCallback(() => {
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
+    console.log("Resume data cleared");
+  }, []);
+  
+  // Flag to indicate if navigation is in progress (can be used to prevent double clicks)
+  const isNavigating = false;
+  
   return {
     handleNext,
-    handlePrevious
+    handlePrevious,
+    isNavigating,
+    clearResumeData
   };
 };

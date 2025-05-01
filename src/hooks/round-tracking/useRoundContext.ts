@@ -6,6 +6,7 @@ import type { HoleData } from "@/types/round-tracking";
 
 export const useRoundContext = (roundId: string | null, courseId?: string) => {
   const [holeCount, setHoleCount] = useState<number>(18);
+  const [currentHole, setCurrentHole] = useState<number>(1);
   
   // Initialize round data
   const {
@@ -19,22 +20,11 @@ export const useRoundContext = (roundId: string | null, courseId?: string) => {
     fetchHoleScoresFromRound
   } = useRoundData(roundId, courseId);
   
-  // Handle hole navigation with callback for auto-saving
+  // Handle hole change callback
   const handleHoleChange = useCallback((newHole: number) => {
     console.log(`Hole changed to ${newHole}`);
+    setCurrentHole(newHole);
   }, []);
-  
-  const {
-    currentHole,
-    setCurrentHole,
-    handleNext: baseHandleNext,
-    handlePrevious: baseHandlePrevious,
-    isNavigating,
-    clearResumeData
-  } = useRoundNavigation({
-    holeCount,
-    onHoleChange: handleHoleChange
-  });
   
   // Get the current hole data
   const currentHoleData = holeScores.find(hole => hole.holeNumber === currentHole) || {
@@ -47,38 +37,32 @@ export const useRoundContext = (roundId: string | null, courseId?: string) => {
     greenInRegulation: false
   };
   
-  // Enhanced navigation with auto-saving
-  const handleNext = useCallback(async () => {
-    if (isNavigating || isSaving) return;
-    
-    try {
-      // Save the current hole data before navigating
-      if (roundId) {
-        await saveHoleScore(currentHoleData);
-      }
-    } catch (error) {
-      console.error("Failed to save hole data before navigation:", error);
+  // Define base navigation functions
+  const baseHandleNext = useCallback(() => {
+    if (currentHole < holeCount) {
+      setCurrentHole(currentHole + 1);
     }
-    
-    // Navigate to next hole
-    baseHandleNext();
-  }, [roundId, currentHoleData, saveHoleScore, baseHandleNext, isNavigating, isSaving]);
+  }, [currentHole, holeCount]);
   
-  const handlePrevious = useCallback(async () => {
-    if (isNavigating || isSaving) return;
-    
-    try {
-      // Save the current hole data before navigating
-      if (roundId) {
-        await saveHoleScore(currentHoleData);
-      }
-    } catch (error) {
-      console.error("Failed to save hole data before navigation:", error);
+  const baseHandlePrevious = useCallback(() => {
+    if (currentHole > 1) {
+      setCurrentHole(currentHole - 1);
     }
-    
-    // Navigate to previous hole
-    baseHandlePrevious();
-  }, [roundId, currentHoleData, saveHoleScore, baseHandlePrevious, isNavigating, isSaving]);
+  }, [currentHole]);
+  
+  // Use the navigation hook with our base functions
+  const {
+    handleNext,
+    handlePrevious,
+    isNavigating,
+    clearResumeData
+  } = useRoundNavigation({
+    baseHandleNext,
+    baseHandlePrevious,
+    currentHole,
+    holeCount,
+    isLoading: isDataLoading || isSaving
+  });
   
   return {
     currentHole,

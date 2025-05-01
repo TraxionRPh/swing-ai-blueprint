@@ -71,7 +71,7 @@ export const RoundTrackingDetail = ({
   };
 
   // Handle finishing the round - Fixed to match the expected type
-  const finishRound = useCallback(async (holeCount: number) => {
+  const finishRound = useCallback(async (_holeCount: number) => {
     clearResumeData();
     onBack();
     return true; // Return a Promise<boolean> as expected
