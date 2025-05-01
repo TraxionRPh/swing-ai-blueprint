@@ -1,8 +1,8 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { HoleData } from "@/types/round-tracking";
-import { useHoleNavigation } from "./useHoleNavigation";
-import { useHolePersistence } from "./useHolePersistence";
+import { useHoleNavigation } from "../score/useHoleNavigation";
+import { useHolePersistence } from "../score/use-hole-persistence";
 
 export const useScoreTracking = (
   roundId: string | null, 
@@ -61,9 +61,9 @@ export const useScoreTracking = (
     };
   }, [holeScores, currentHole, lastUpdated]);
 
-  // Handle updating a hole's score data without saving to database
-  const handleHoleUpdate = useCallback((data: HoleData) => {
-    console.log('Updating hole data in local state:', data);
+  // Handle updating a hole's score data and save to database
+  const handleHoleUpdate = useCallback(async (data: HoleData) => {
+    console.log('Updating hole data and saving to database:', data);
     
     // Update the hole scores array
     const updatedScores = [...holeScores];
@@ -80,31 +80,53 @@ export const useScoreTracking = (
     // Set the updated scores array directly
     setHoleScores(updatedScores);
     setLastUpdated(Date.now()); // Force re-render with new timestamp
-  }, [setHoleScores, holeScores]);
+    
+    // If we have a roundId and valid score data, save immediately to the database
+    if (roundId && data.holeNumber && (data.score > 0 || data.putts > 0)) {
+      console.log("Saving hole data to database:", data);
+      try {
+        await saveHoleScore(data);
+      } catch (err) {
+        console.error("Error saving hole data:", err);
+      }
+    }
+  }, [roundId, saveHoleScore, setHoleScores, holeScores]);
   
   // Save current hole data and navigate to next hole
-  const saveAndNavigateNext = useCallback(() => {
+  const saveAndNavigateNext = useCallback(async () => {
     const currentData = currentHoleData;
     
     if (roundId && currentData) {
       console.log("Saving hole data before navigating to next hole", currentData);
-      saveHoleScore(currentData).then(() => {
+      try {
+        await saveHoleScore(currentData);
+        console.log("Successfully saved hole data before navigation");
         handleNext();
-      });
+      } catch (err) {
+        console.error("Failed to save hole data:", err);
+        // Still navigate even if save fails
+        handleNext();
+      }
     } else {
       handleNext();
     }
   }, [currentHoleData, roundId, saveHoleScore, handleNext]);
   
   // Save current hole data and navigate to previous hole
-  const saveAndNavigatePrevious = useCallback(() => {
+  const saveAndNavigatePrevious = useCallback(async () => {
     const currentData = currentHoleData;
     
     if (roundId && currentData) {
       console.log("Saving hole data before navigating to previous hole", currentData);
-      saveHoleScore(currentData).then(() => {
+      try {
+        await saveHoleScore(currentData);
+        console.log("Successfully saved hole data before navigation");
         handlePrevious();
-      });
+      } catch (err) {
+        console.error("Failed to save hole data:", err);
+        // Still navigate even if save fails
+        handlePrevious();
+      }
     } else {
       handlePrevious();
     }
