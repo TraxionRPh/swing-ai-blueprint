@@ -9,10 +9,11 @@ import { useHoleDataFetcher } from "./hole-score/useHoleDataFetcher";
 interface RoundDataPreparationProps {
   roundId: string | null;
   courseId?: string;
+  teeId?: string; // Add teeId to props
   setLoadingStage: (stage: LoadingStage) => void;
 }
 
-export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: RoundDataPreparationProps) => {
+export const useRoundDataPreparation = ({ roundId, courseId, teeId, setLoadingStage }: RoundDataPreparationProps) => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [holeCount, setHoleCount] = useState<number | null>(null);
   const { toast } = useToast();
@@ -22,35 +23,36 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
   // Prepare and fetch hole data
   const fetchHoleData = useCallback(async () => {
     if (!roundId && !courseId) {
+      console.log("No roundId or courseId provided, skipping fetch");
       setLoadingStage('ready'); // Nothing to load
       return;
     }
     
     try {
       setLoadingStage('fetching');
-      console.log(`fetchHoleData called with roundId: ${roundId}, courseId: ${courseId}`);
+      console.log(`fetchHoleData called with roundId: ${roundId}, courseId: ${courseId}, teeId: ${teeId}`);
       
       // Handle new round case
       if (roundId === 'new') {
-        console.log(`Creating default hole data for new round`);
+        console.log(`Creating data for new round with courseId: ${courseId}, teeId: ${teeId}`);
         
         // If we have a courseId, try to fetch course hole data
         if (courseId) {
           try {
-            console.log(`Fetching course hole data for courseId: ${courseId}`);
-            const formattedScores = await fetchHoleScoresFromCourse(courseId);
+            console.log(`Fetching course hole data for courseId: ${courseId} with teeId: ${teeId}`);
+            const formattedScores = await fetchHoleScoresFromCourse(courseId, teeId);
             
             if (isMounted.current) {
               console.log(`Setting formatted scores with ${formattedScores.length} holes`);
               if (formattedScores.length > 0) {
-                console.log(`First formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+                console.log(`First formatted hole for new round: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
               }
               
               setHoleScores(formattedScores);
               setHoleCount(formattedScores.length);
               setLoadingStage('ready');
             }
-            return { holeCount: formattedScores.length, courseId };
+            return { holeCount: formattedScores.length, courseId, teeId };
           } catch (error) {
             console.error('Error fetching course holes:', error);
           }
@@ -92,7 +94,7 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
           return { holeCount: 18 };
         }
         
-        const { formattedScores, holeCount: fetchedHoleCount } = result;
+        const { formattedScores, holeCount: fetchedHoleCount, teeId: fetchedTeeId } = result;
         
         if (isMounted.current) {
           console.log('Setting formatted hole scores:', formattedScores.length);
@@ -107,13 +109,14 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
         
         return { 
           holeCount: fetchedHoleCount || 18, 
-          courseId: result.courseId 
+          courseId: result.courseId,
+          teeId: fetchedTeeId
         };
       } else if (courseId) {
         // Just fetch course hole data directly
         try {
-          console.log(`Fetching course hole data directly for courseId: ${courseId}`);
-          const formattedScores = await fetchHoleScoresFromCourse(courseId);
+          console.log(`Fetching course hole data directly for courseId: ${courseId} with teeId: ${teeId}`);
+          const formattedScores = await fetchHoleScoresFromCourse(courseId, teeId);
           
           if (isMounted.current) {
             console.log(`Setting ${formattedScores.length} hole scores from course data`);
@@ -125,7 +128,7 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
             setHoleCount(formattedScores.length);
             setLoadingStage('ready');
           }
-          return { holeCount: formattedScores.length, courseId };
+          return { holeCount: formattedScores.length, courseId, teeId };
         } catch (error) {
           console.error('Error fetching course holes directly:', error);
         }
@@ -149,7 +152,7 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
       
       return { holeCount: 18 };
     }
-  }, [roundId, courseId, setLoadingStage, toast, fetchHoleScoresFromRound, fetchHoleScoresFromCourse, initializeDefaultScores]);
+  }, [roundId, courseId, teeId, setLoadingStage, toast, fetchHoleScoresFromRound, fetchHoleScoresFromCourse, initializeDefaultScores]);
   
   // Initialize the data loading process
   useEffect(() => {
@@ -160,7 +163,7 @@ export const useRoundDataPreparation = ({ roundId, courseId, setLoadingStage }: 
     return () => {
       isMounted.current = false;
     };
-  }, [roundId, courseId, fetchHoleData]);
+  }, [roundId, courseId, teeId, fetchHoleData]);
   
   // Helper function to validate UUID format
   const validateUUID = (uuid: string): boolean => {

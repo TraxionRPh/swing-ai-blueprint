@@ -20,5 +20,8 @@ interface HoleScoreCardProps {
 
 export const HoleScoreCard = (props: HoleScoreCardProps) => {
   console.log("Rendering HoleScoreCard with data:", props.holeData);
+  console.log("Hole distance:", props.holeData.distance, "yards");
+  console.log("Course ID in HoleScoreCard:", props.courseId);
+  console.log("Tee ID in HoleScoreCard:", props.teeId);
   return <HoleScoreCardContainer {...props} />;
 };

@@ -43,7 +43,7 @@ export const useHoleDataFetcher = () => {
       try {
         const roundResponse = await supabase
           .from('rounds')
-          .select('course_id, hole_count')
+          .select('course_id, hole_count, tee_id')
           .eq('id', roundId)
           .maybeSingle();
           
@@ -53,7 +53,8 @@ export const useHoleDataFetcher = () => {
           roundData = roundResponse.data;
           courseId = roundData?.course_id;
           holeCount = roundData?.hole_count || 18;
-          console.log(`Round ${roundId} is for course ${courseId} with ${holeCount} holes`);
+          const teeId = roundData?.tee_id;
+          console.log(`Round ${roundId} is for course ${courseId} with ${holeCount} holes, using tee ${teeId}`);
         }
       } catch (roundError) {
         console.error('Failed to fetch round data:', roundError);
@@ -78,6 +79,7 @@ export const useHoleDataFetcher = () => {
             
             if (holeInfo.length > 0) {
               console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
+              console.log(`All hole data:`, JSON.stringify(holeInfo.slice(0, 3), null, 2));
             }
           }
         } catch (courseError) {
@@ -85,10 +87,19 @@ export const useHoleDataFetcher = () => {
         }
       }
 
-      const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount);
+      const formattedScores = formatHoleScores(holeScoresData || [], holeInfo, holeCount, roundData?.tee_id);
       console.log('Formatted hole scores with course data (from round):', formattedScores.length);
       
-      return { holeCount, formattedScores, courseId };
+      if (formattedScores.length > 0) {
+        console.log(`First formatted hole data:`, JSON.stringify(formattedScores[0], null, 2));
+      }
+      
+      return { 
+        holeCount, 
+        formattedScores, 
+        courseId,
+        teeId: roundData?.tee_id
+      };
     } catch (error) {
       console.error('Error fetching hole scores from round:', error);
       toast({
@@ -111,7 +122,7 @@ export const useHoleDataFetcher = () => {
         return formatHoleScores([], [], 18);
       }
       
-      console.log('Directly fetching course holes for course ID:', courseId);
+      console.log('Directly fetching course holes for course ID:', courseId, teeId ? `with tee ID: ${teeId}` : '');
       
       // Get course hole data directly
       const { data: courseHoles, error: courseHolesError } = await supabase
@@ -132,15 +143,15 @@ export const useHoleDataFetcher = () => {
       
       if (holeInfo.length > 0) {
         console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
+        console.log(`All hole data:`, JSON.stringify(holeInfo.slice(0, 3), null, 2));
       } else {
         console.log('No course holes found, will use default values');
       }
 
-      const formattedScores = formatHoleScores([], holeInfo, holeCount);
-      console.log('Formatted hole scores with course data:', formattedScores);
+      const formattedScores = formatHoleScores([], holeInfo, holeCount, teeId);
       
       if (formattedScores.length > 0) {
-        console.log(`First formatted hole: par ${formattedScores[0].par}, distance ${formattedScores[0].distance}yd`);
+        console.log(`First formatted hole from course data:`, JSON.stringify(formattedScores[0], null, 2));
       }
       
       return formattedScores;
@@ -153,7 +164,7 @@ export const useHoleDataFetcher = () => {
 
   // Format hole scores with course data
   const formatHoleScores = (scores: any[], holeInfo: any[], holeCount: number = 18, teeId?: string): HoleData[] => {
-    console.log(`Formatting ${scores?.length || 0} scores with ${holeInfo?.length || 0} hole infos for ${holeCount} holes`);
+    console.log(`Formatting ${scores?.length || 0} scores with ${holeInfo?.length || 0} hole infos for ${holeCount} holes, teeId: ${teeId || 'none'}`);
     
     if (holeInfo && holeInfo.length > 0) {
       console.log("First hole info:", JSON.stringify(holeInfo[0], null, 2));
@@ -180,7 +191,7 @@ export const useHoleDataFetcher = () => {
       return {
         holeNumber,
         par: courseHole?.par || 4,
-        distance,
+        distance, // Ensure distance is properly assigned
         score: existingHole?.score || 0,
         putts: existingHole?.putts || 0,
         fairwayHit: existingHole?.fairway_hit || false,
@@ -194,7 +205,7 @@ export const useHoleDataFetcher = () => {
     return Array.from({ length: holeCount }, (_, i) => ({
       holeNumber: i + 1,
       par: 4,
-      distance: 0,
+      distance: 0, // Default distance
       score: 0,
       putts: 0,
       fairwayHit: false,
