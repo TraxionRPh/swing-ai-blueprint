@@ -8,7 +8,7 @@ import type { HoleData } from "@/types/round-tracking";
 interface FinalScoreViewProps {
   holeScores: HoleData[];
   holeCount: number;
-  finishRound: (holeCount: number) => Promise<boolean>;
+  finishRound: () => Promise<boolean>;
   onBack: () => void;
 }
 
@@ -33,7 +33,7 @@ export const FinalScoreView = ({
   }, [holeScores, holeCount, checkScoreGoal]);
   
   const handleConfirmRound = async () => {
-    const success = await finishRound(holeCount);
+    const success = await finishRound();
     setShowFinalScore(false);
     
     if (success && !achievedGoal) {

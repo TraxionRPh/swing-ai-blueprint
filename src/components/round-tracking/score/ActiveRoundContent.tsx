@@ -54,9 +54,9 @@ export const ActiveRoundContent = ({
       handlePrevious={onPrevious}
       currentHole={currentHole}
       holeCount={holeCount}
+      isSaving={isSaving}
       teeColor={teeColor}
       courseId={courseId}
-      isSaving={isSaving}
       holeScores={holeScores}
     />
   );

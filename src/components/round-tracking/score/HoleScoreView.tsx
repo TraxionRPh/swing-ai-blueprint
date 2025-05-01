@@ -13,6 +13,9 @@ interface HoleScoreViewProps {
   holeCount: number;
   isSaving: boolean;
   isLoading?: boolean;
+  teeColor?: string;
+  courseId?: string;
+  holeScores?: HoleData[];
 }
 
 export const HoleScoreView = ({
@@ -23,7 +26,10 @@ export const HoleScoreView = ({
   currentHole,
   holeCount,
   isSaving,
-  isLoading = false
+  isLoading = false,
+  teeColor,
+  courseId,
+  holeScores
 }: HoleScoreViewProps) => {
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
     
@@ -53,6 +59,8 @@ export const HoleScoreView = ({
       isSaving={isSaving}
       currentHole={currentHole}
       holeCount={holeCount}
+      teeColor={teeColor}
+      courseId={courseId}
     />
   );
 };

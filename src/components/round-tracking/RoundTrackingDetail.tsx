@@ -107,7 +107,16 @@ export const RoundTrackingDetail = ({
         <FinalScoreView 
           holeScores={holeScores}
           holeCount={holeCount}
-          finishRound={() => navigate('/rounds')}
+          finishRound={() => {
+            // Return a Promise<boolean> here instead of void
+            return new Promise<boolean>((resolve) => {
+              // Navigate after a short delay to allow for UI updates
+              setTimeout(() => {
+                navigate('/rounds');
+                resolve(true);
+              }, 100);
+            });
+          }}
           onBack={onBack}
         />
       ) : (
