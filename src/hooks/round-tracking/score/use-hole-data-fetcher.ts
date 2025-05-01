@@ -8,6 +8,15 @@ export const useHoleDataFetcher = () => {
 
   const fetchHoleScoresFromRound = async (roundId: string) => {
     try {
+      // Check if this is a "new" round or invalid UUID
+      if (roundId === 'new' || !validateUUID(roundId)) {
+        console.log('Creating default hole scores for new round');
+        return { 
+          holeCount: 18, 
+          formattedScores: formatHoleScores([], [], 18) 
+        };
+      }
+
       console.log('Fetching hole scores for round:', roundId);
       
       // First get the scores for this round
@@ -121,6 +130,12 @@ export const useHoleDataFetcher = () => {
       // Return default scores instead of throwing
       return formatHoleScores([], [], 18);
     }
+  };
+
+  // Helper function to validate UUID format
+  const validateUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   };
 
   return {

@@ -17,17 +17,24 @@ export const useRoundCourseSelection = (
       const newRoundId = await handleCourseSelectBase(course, holeCount || 18);
       if (newRoundId) {
         setCurrentRoundId(newRoundId);
-        // Create default holes based on the selected hole count
-        const defaultHoles = Array.from({ length: 18 }, (_, i) => ({
+        
+        // Create default holes based on the course information if available
+        const defaultHoles = Array.from({ length: holeCount || 18 }, (_, i) => ({
           holeNumber: i + 1,
-          par: 4,
-          distance: 0,
+          par: course.total_par ? Math.round((course.total_par || 72) / 18) : 4, // Use course par if available
+          distance: 0, // Will be populated from course data later
           score: 0,
           putts: 0,
           fairwayHit: false,
           greenInRegulation: false
         }));
+        
         setHoleScores(defaultHoles);
+        
+        // Log successful course selection
+        console.log(`Course selected: ${course.name}, created round ID: ${newRoundId}`);
+      } else {
+        console.error("Failed to create new round ID");
       }
       return newRoundId;
     } catch (error) {

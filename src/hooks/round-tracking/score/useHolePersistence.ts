@@ -9,10 +9,16 @@ export const useHolePersistence = (roundId: string | null) => {
   const { toast } = useToast();
 
   const saveHoleScore = async (holeData: HoleData) => {
-    if (!roundId) return;
+    // Don't try to save if we don't have a valid round ID
+    if (!roundId || roundId === 'new' || !validateUUID(roundId)) {
+      console.log(`Not saving hole data - invalid round ID: ${roundId}`);
+      return;
+    }
     
     setIsSaving(true);
     try {
+      console.log(`Saving hole ${holeData.holeNumber} data for round ${roundId}`);
+      
       const { error } = await supabase
         .from('hole_scores')
         .upsert({
@@ -73,6 +79,12 @@ export const useHolePersistence = (roundId: string | null) => {
     } catch (error) {
       console.error('Error updating round summary:', error);
     }
+  };
+
+  // Helper function to validate UUID format
+  const validateUUID = (uuid: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
   };
 
   return {
