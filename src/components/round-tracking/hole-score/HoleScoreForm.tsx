@@ -63,16 +63,13 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
       </div>
       
       <PerformanceToggles
-        fairwayHit={data.fairwayHit}
-        greenInRegulation={data.greenInRegulation}
-        onFairwayToggle={(value) => onDataChange("fairwayHit", value)}
-        onGirToggle={(value) => onDataChange("greenInRegulation", value)}
+        data={data}
+        onDataChange={onDataChange}
       />
       
       <HoleStats
-        par={data.par}
-        score={data.score}
-        putts={data.putts}
+        data={data}
+        onDataChange={onDataChange}
       />
     </div>
   );
