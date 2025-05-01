@@ -24,18 +24,23 @@ export const CourseSelector = ({
   useEffect(() => {
     if (selectedCourse) {
       console.log("Course selected:", selectedCourse.name);
+      console.log("Course ID:", selectedCourse.id);
       console.log("Course has par data:", selectedCourse.total_par);
       console.log("Course has tees:", selectedCourse.course_tees?.length);
       console.log("Course has holes data:", selectedCourse.course_holes?.length || 0);
+      
+      if (selectedCourse.course_holes && selectedCourse.course_holes.length > 0) {
+        console.log("Sample hole data:", selectedCourse.course_holes[0]);
+      }
     }
   }, [selectedCourse]);
 
   const handleCourseSelect = async (course: Course) => {
-    console.log("Selected course:", course);
+    console.log("Selected course:", course.name, "with ID:", course.id);
     
     // Fetch course holes data before setting the selected course
     try {
-      console.log(`Fetching holes data for course: ${course.id}`);
+      console.log(`Fetching holes data for course ID: ${course.id}`);
       const { data: holesData, error } = await supabase
         .from('course_holes')
         .select('*')
@@ -46,8 +51,16 @@ export const CourseSelector = ({
         console.error("Error fetching course holes:", error);
       } else if (holesData && holesData.length > 0) {
         console.log(`Found ${holesData.length} holes for course ${course.id}`);
+        console.log("First hole data:", holesData[0]);
+        
         // Attach the holes data to the course object
         course.course_holes = holesData;
+        
+        // Log sample hole data to verify it's correctly formatted
+        if (holesData.length > 0) {
+          const firstHole = holesData[0];
+          console.log(`Hole ${firstHole.hole_number}: par ${firstHole.par}, distance ${firstHole.distance_yards}yd`);
+        }
       } else {
         console.log(`No hole data found for course ${course.id}`);
       }

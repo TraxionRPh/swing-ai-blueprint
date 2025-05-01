@@ -73,7 +73,7 @@ export const useHoleDataFetcher = () => {
             console.log(`Found ${holeInfo.length} holes for course ${courseId}`);
             
             if (holeInfo.length > 0) {
-              console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}`);
+              console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
             }
           }
         } catch (courseError) {
@@ -102,7 +102,12 @@ export const useHoleDataFetcher = () => {
 
   const fetchHoleScoresFromCourse = async (courseId: string) => {
     try {
-      console.log('Directly fetching course holes for course:', courseId);
+      if (!courseId) {
+        console.log('No course ID provided, returning default scores');
+        return formatHoleScores([], [], 18);
+      }
+      
+      console.log('Directly fetching course holes for course ID:', courseId);
       
       // Get course hole data directly
       const { data: courseHoles, error: courseHolesError } = await supabase
@@ -117,10 +122,10 @@ export const useHoleDataFetcher = () => {
       }
       
       const holeInfo = courseHoles || [];
-      console.log('Course holes data (direct):', holeInfo.length);
+      console.log(`Found ${holeInfo.length} course holes data (direct)`);
       
       if (holeInfo.length > 0) {
-        console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}`);
+        console.log(`Sample hole data - Hole 1: par ${holeInfo[0]?.par}, distance ${holeInfo[0]?.distance_yards}yd`);
       }
 
       const formattedScores = formatHoleScores([], holeInfo);

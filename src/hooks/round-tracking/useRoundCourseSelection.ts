@@ -13,7 +13,7 @@ export const useRoundCourseSelection = (
 
   const handleCourseSelect = useCallback(async (course: Course) => {
     try {
-      console.log(`Creating round for course ${course.name} with ${course.course_holes?.length || 0} holes data`);
+      console.log(`Creating round for course ${course.name} (ID: ${course.id}) with ${course.course_holes?.length || 0} holes data`);
       
       // Determine the hole count based on available data or default to 18
       const actualHoleCount = holeCount || (course.course_holes?.length || 18);
@@ -32,7 +32,7 @@ export const useRoundCourseSelection = (
           const courseHoleData = course.course_holes?.find(h => h.hole_number === holeNumber);
           
           if (courseHoleData) {
-            console.log(`Using hole data for hole ${holeNumber}: par ${courseHoleData.par}, distance ${courseHoleData.distance_yards}`);
+            console.log(`Using hole data for hole ${holeNumber}: par ${courseHoleData.par}, distance ${courseHoleData.distance_yards}yd`);
           }
           
           return {
