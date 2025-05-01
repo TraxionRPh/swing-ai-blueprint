@@ -1,8 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
 import { useState, useCallback, useEffect, useRef } from "react";
-
 interface HoleNavigationProps {
   onNext?: () => void;
   onPrevious?: () => void;
@@ -11,7 +9,6 @@ interface HoleNavigationProps {
   currentHole?: number;
   holeCount?: number;
 }
-
 export const HoleNavigation = ({
   onNext,
   onPrevious,
@@ -23,7 +20,7 @@ export const HoleNavigation = ({
   const [isClickingNext, setIsClickingNext] = useState(false);
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   // Clear timeout on unmount
   useEffect(() => {
     return () => {
@@ -32,24 +29,21 @@ export const HoleNavigation = ({
       }
     };
   }, []);
-  
+
   // Enhanced previous button handler with debounce
   const handlePrevious = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (isClickingPrev || isClickingNext) {
       console.log("Navigation blocked: already processing a click");
       return;
     }
-    
     setIsClickingPrev(true);
     console.log("Previous button clicked");
-    
     if (typeof onPrevious === 'function') {
       // Call the handler directly
       onPrevious();
-      
+
       // Reset clicking state after a delay
       clickTimeoutRef.current = setTimeout(() => {
         setIsClickingPrev(false);
@@ -59,24 +53,21 @@ export const HoleNavigation = ({
       setIsClickingPrev(false);
     }
   }, [onPrevious, isClickingPrev, isClickingNext]);
-  
+
   // Enhanced next button handler with debounce
   const handleNext = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (isClickingNext || isClickingPrev) {
       console.log("Navigation blocked: already processing a click");
       return;
     }
-    
     setIsClickingNext(true);
     console.log("Next button clicked");
-    
     if (typeof onNext === 'function') {
       // Call the handler directly
       onNext();
-      
+
       // Reset clicking state after a delay
       clickTimeoutRef.current = setTimeout(() => {
         setIsClickingNext(false);
@@ -86,44 +77,20 @@ export const HoleNavigation = ({
       setIsClickingNext(false);
     }
   }, [onNext, isClickingNext, isClickingPrev]);
-
-  return (
-    <div className="flex justify-between items-center mt-6">
-      <Button 
-        variant="outline" 
-        onClick={handlePrevious} 
-        disabled={isFirst || isClickingPrev || isClickingNext}
-        type="button"
-        className="w-[140px]"
-        data-testid="previous-hole-button"
-      >
+  return <div className="flex justify-between items-center mt-6">
+      <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
         Previous Hole
       </Button>
       
       <div className="text-center">
-        {currentHole && holeCount && (
-          <span className="text-sm font-medium text-muted-foreground">
-            Hole {currentHole} of {holeCount}
-          </span>
-        )}
+        {currentHole && holeCount}
       </div>
       
-      <Button 
-        onClick={handleNext} 
-        disabled={(isLast && !onNext) || isClickingNext || isClickingPrev}
-        className="w-[140px]"
-        type="button"
-        data-testid="next-hole-button"
-      >
-        {isLast ? (
-          <>
+      <Button onClick={handleNext} disabled={isLast && !onNext || isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
+        {isLast ? <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round
-          </>
-        ) : (
-          "Next Hole"
-        )}
+          </> : "Next Hole"}
       </Button>
-    </div>
-  );
+    </div>;
 };
