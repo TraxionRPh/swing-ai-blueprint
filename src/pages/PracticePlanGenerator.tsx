@@ -23,6 +23,17 @@ const PracticePlanGenerator = () => {
   const [planDuration, setPlanDuration] = useState("1");
   const { generatePlan, isGenerating } = usePracticePlanGeneration();
 
+  // Get problem and focus area from location state if available
+  const focusArea = location.state?.focusArea;
+  const problem = location.state?.problem;
+
+  // If we have a problem from state, show duration dialog automatically
+  useEffect(() => {
+    if (problem) {
+      setShowDurationDialog(true);
+    }
+  }, [problem]);
+
   // Parse drill IDs from the URL query parameters
   const searchParams = new URLSearchParams(location.search);
   const drillIdsParam = searchParams.get('drills');
@@ -117,10 +128,10 @@ const PracticePlanGenerator = () => {
   }, [getDrillCategory]);
 
   const generatePracticeIssue = () => {
-    if (selectedDrills.length === 0) {
+    if (selectedDrills.length === 0 && !problem) {
       toast({
-        title: "No drills selected",
-        description: "Please select at least one drill for your practice plan",
+        title: "No drills or issue selected",
+        description: "Please select at least one drill for your practice plan or use a specific issue",
         variant: "destructive"
       });
       return;
@@ -133,33 +144,52 @@ const PracticePlanGenerator = () => {
     setShowDurationDialog(false);
     
     try {
-      // Extract key information from the selected drills to build an issue description
-      const focus = selectedDrills.flatMap(d => d.focus || []);
-      const categories = [...new Set(selectedDrills.map(d => d.category))];
+      let issue = problem;
       
-      // Determine the dominant category for these drills
-      const dominantCategory = getDominantCategory(selectedDrills);
+      // If no problem was passed from AI Analysis, generate one from selected drills
+      if (!issue && selectedDrills.length > 0) {
+        // Extract key information from the selected drills to build an issue description
+        const focus = selectedDrills.flatMap(d => d.focus || []);
+        const categories = [...new Set(selectedDrills.map(d => d.category))];
+        
+        // Determine the dominant category for these drills
+        const dominantCategory = getDominantCategory(selectedDrills);
+        
+        // Generate an issue based on the selected drills
+        issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} using drills for ${categories.join(' and ')}. Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
+        
+        // Add explicit category instruction based on dominant drill type
+        switch (dominantCategory) {
+          case 'putting':
+            issue = `STRICTLY PUTTING ONLY: ${issue} - THIS IS A PUTTING-ONLY PRACTICE PLAN: ONLY use putting drills with category="putting".`;
+            break;
+          case 'driving':
+            issue = `STRICTLY DRIVING ONLY: ${issue} - THIS IS A DRIVING-ONLY PRACTICE PLAN: ONLY use driving drills related to tee shots and long game.`;
+            break;
+          case 'iron_play':
+            issue = `STRICTLY IRON PLAY ONLY: ${issue} - THIS IS AN IRON PLAY PLAN: ONLY use drills related to iron shots and approach shots.`;
+            break;
+          case 'short_game':
+            issue = `STRICTLY SHORT GAME ONLY: ${issue} - THIS IS A SHORT GAME PLAN: ONLY use chipping and pitching drills.`;
+            break;
+          case 'bunker':
+            issue = `STRICTLY BUNKER PLAY ONLY: ${issue} - THIS IS A BUNKER/SAND PLAN: ONLY use drills for bunker shots and sand play.`;
+            break;
+        }
+      }
       
-      // Generate an issue based on the selected drills
-      let issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} using drills for ${categories.join(' and ')}. Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
-      
-      // Add explicit category instruction based on dominant drill type
-      switch (dominantCategory) {
-        case 'putting':
-          issue = `STRICTLY PUTTING ONLY: ${issue} - THIS IS A PUTTING-ONLY PRACTICE PLAN: ONLY use putting drills with category="putting".`;
-          break;
-        case 'driving':
-          issue = `STRICTLY DRIVING ONLY: ${issue} - THIS IS A DRIVING-ONLY PRACTICE PLAN: ONLY use driving drills related to tee shots and long game.`;
-          break;
-        case 'iron_play':
-          issue = `STRICTLY IRON PLAY ONLY: ${issue} - THIS IS AN IRON PLAY PLAN: ONLY use drills related to iron shots and approach shots.`;
-          break;
-        case 'short_game':
-          issue = `STRICTLY SHORT GAME ONLY: ${issue} - THIS IS A SHORT GAME PLAN: ONLY use chipping and pitching drills.`;
-          break;
-        case 'bunker':
-          issue = `STRICTLY BUNKER PLAY ONLY: ${issue} - THIS IS A BUNKER/SAND PLAN: ONLY use drills for bunker shots and sand play.`;
-          break;
+      // If we have a focus area from AI Analysis, prefix the issue with it
+      if (focusArea && issue && !issue.includes(focusArea)) {
+        issue = `Improve ${focusArea}: ${issue}`;
+      }
+
+      if (!issue) {
+        toast({
+          title: "Missing practice issue",
+          description: "Could not determine what to focus on for your practice plan",
+          variant: "destructive"
+        });
+        return;
       }
 
       const plan = await generatePlan(user?.id, issue, undefined, planDuration);
@@ -185,8 +215,12 @@ const PracticePlanGenerator = () => {
     navigate("/drills");
   };
 
-  if (isLoading) {
+  if (isLoading && drillIds.length > 0) {
     return <Loading message="Loading selected drills..." />;
+  }
+
+  if (isGenerating) {
+    return <Loading message={`Creating practice plan for ${focusArea || 'your golf skills'}...`} />;
   }
 
   return (
@@ -194,11 +228,17 @@ const PracticePlanGenerator = () => {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Practice Plan Generator</h1>
         <p className="text-muted-foreground">
-          Create a personalized practice plan based on these selected drills
+          {problem ? 
+            `Creating a personalized practice plan to address: ${problem}` :
+            "Create a personalized practice plan based on these selected drills"
+          }
         </p>
+        {focusArea && (
+          <p className="text-lg font-medium text-primary">Focus Area: {focusArea}</p>
+        )}
       </div>
 
-      {selectedDrills.length === 0 ? (
+      {!problem && selectedDrills.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>No Drills Selected</CardTitle>
@@ -214,26 +254,49 @@ const PracticePlanGenerator = () => {
         </Card>
       ) : (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Selected Drills</CardTitle>
-              <CardDescription>
-                {selectedDrills.length} drill{selectedDrills.length !== 1 ? 's' : ''} selected for your practice plan
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {selectedDrills.map(drill => (
-                  <DrillCard key={drill.id} drill={drill} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {selectedDrills.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Selected Drills</CardTitle>
+                <CardDescription>
+                  {selectedDrills.length} drill{selectedDrills.length !== 1 ? 's' : ''} selected for your practice plan
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {selectedDrills.map(drill => (
+                    <DrillCard key={drill.id} drill={drill} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {problem && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Issue to Address</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{problem}</p>
+              </CardContent>
+            </Card>
+          )}
           
           <div className="flex justify-between">
-            <Button variant="outline" onClick={goToDrillLibrary}>
-              Select Different Drills
-            </Button>
+            {!problem && (
+              <Button variant="outline" onClick={goToDrillLibrary}>
+                Select Different Drills
+              </Button>
+            )}
+            {problem && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/ai-analysis")}
+              >
+                Back to Analysis
+              </Button>
+            )}
             <Button 
               onClick={generatePracticeIssue} 
               disabled={isGenerating}

@@ -15,6 +15,7 @@ import ChallengeTracking from "./pages/ChallengeTracking";
 import ChallengeHistory from "./pages/ChallengeHistory";
 import AIPracticePlans from "./pages/AIPracticePlans";
 import MyPracticePlans from "./pages/MyPracticePlans";
+import PracticePlanGenerator from "./pages/PracticePlanGenerator";
 import AIAnalysis from "./pages/AIAnalysis";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
       {
         path: "practice-plans",
         element: <AIPracticePlans />,
+      },
+      {
+        path: "practice-plans/new",
+        element: <PracticePlanGenerator />,
       },
       {
         path: "my-practice-plans",
