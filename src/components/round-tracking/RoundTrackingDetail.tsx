@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { Loading } from "@/components/ui/loading";
+import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
 
 interface Props {
   onBack: () => void;
@@ -29,6 +30,7 @@ export const RoundTrackingDetail = ({
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [holeCount, setHoleCount] = useState(18);
   const [isLoading, setIsLoading] = useState(false);
+  const [showFinalScore, setShowFinalScore] = useState(false);
   
   const {
     handleHoleUpdate,
@@ -37,6 +39,7 @@ export const RoundTrackingDetail = ({
     isSaving,
     currentHoleData,
     clearResumeData,
+    finishRound,
   } = useScoreTracking(currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
   useEffect(() => {
@@ -65,10 +68,41 @@ export const RoundTrackingDetail = ({
     return () => clearTimeout(loadingTimeout);
   }, []);
   
+  const handleSubmitRound = async () => {
+    console.log("Submitting final round score");
+    if (typeof finishRound === 'function') {
+      await finishRound();
+    }
+    clearResumeData();
+    onBack();
+  };
+
+  const handleShowReviewCard = () => {
+    console.log("Showing final score card for review");
+    setShowFinalScore(true);
+  };
+
+  const handleCancelReview = () => {
+    console.log("Cancelling review, returning to hole view");
+    setShowFinalScore(false);
+  };
+  
   if (isLoading) {
     return <Loading message="Loading hole data..." minHeight={250} />;
   }
 
+  if (showFinalScore) {
+    return (
+      <FinalScoreCard
+        holeScores={holeScores.slice(0, holeCount)}
+        isOpen={true}
+        onConfirm={handleSubmitRound}
+        onCancel={handleCancelReview}
+        holeCount={holeCount}
+      />
+    );
+  }
+  
   return (
     <HoleScoreView
       currentHoleData={currentHoleData}

@@ -8,6 +8,7 @@ interface HoleScoreCardContainerProps {
   onUpdate: (data: HoleData) => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onReviewRound?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
@@ -25,6 +26,7 @@ export const HoleScoreCardContainer = ({
   onUpdate,
   onNext,
   onPrevious,
+  onReviewRound,
   isFirst,
   isLast,
   isSaving,
@@ -67,6 +69,7 @@ export const HoleScoreCardContainer = ({
       onUpdate={handleFieldUpdate}
       onNext={onNext}
       onPrevious={onPrevious}
+      onReviewRound={onReviewRound}
       isFirst={isFirst}
       isLast={isLast}
       isSaving={isSaving}

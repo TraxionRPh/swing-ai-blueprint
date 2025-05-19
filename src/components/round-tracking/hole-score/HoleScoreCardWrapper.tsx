@@ -11,6 +11,7 @@ interface HoleScoreCardWrapperProps {
   onUpdate: (field: keyof HoleData, value: any) => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onReviewRound?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
@@ -25,6 +26,7 @@ export const HoleScoreCardWrapper = ({
   onUpdate,
   onNext,
   onPrevious,
+  onReviewRound,
   isFirst,
   isLast,
   isSaving = false,
@@ -54,6 +56,7 @@ export const HoleScoreCardWrapper = ({
           <HoleNavigation 
             onNext={onNext}
             onPrevious={onPrevious}
+            onReviewRound={onReviewRound}
             isFirst={isFirst}
             isLast={isLast}
             currentHole={currentHole}

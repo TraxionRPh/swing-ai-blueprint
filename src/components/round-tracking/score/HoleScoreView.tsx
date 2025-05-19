@@ -1,8 +1,9 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/hole-score/HoleScoreCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
+import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
 import type { HoleData } from "@/types/round-tracking";
 
 export interface HoleScoreViewProps {
@@ -38,6 +39,8 @@ export const HoleScoreView = ({
   teeId,
   holeScores = []
 }: HoleScoreViewProps) => {
+  const [showFinalScore, setShowFinalScore] = useState(false);
+  
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data in HoleScoreView:", currentHoleData);
   console.log("Using course ID:", courseId, "tee ID:", teeId, "with color:", teeColor);
@@ -54,8 +57,30 @@ export const HoleScoreView = ({
     handlePrevious();
   }, [handlePrevious, currentHole]);
   
+  const handleReviewRound = useCallback(() => {
+    console.log("Review Round button clicked, showing final scorecard");
+    setShowFinalScore(true);
+  }, []);
+  
+  const handleCancelReview = useCallback(() => {
+    console.log("Cancelling review, returning to hole view");
+    setShowFinalScore(false);
+  }, []);
+  
   if (isLoading) {
     return <HoleScoreViewSkeleton />;
+  }
+  
+  if (showFinalScore) {
+    return (
+      <FinalScoreCard
+        holeScores={holeScores.slice(0, holeCount)}
+        isOpen={true}
+        onConfirm={() => {}} // This will be connected to submit functionality
+        onCancel={handleCancelReview}
+        holeCount={holeCount}
+      />
+    );
   }
   
   return (
@@ -68,6 +93,7 @@ export const HoleScoreView = ({
         onUpdate={handleHoleUpdate}
         onNext={handleNextHole}
         onPrevious={handlePreviousHole}
+        onReviewRound={handleReviewRound}
         isFirst={currentHole === 1}
         isLast={currentHole === holeCount}
         isSaving={isSaving}

@@ -1,17 +1,22 @@
+
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
 import { useState, useCallback, useEffect, useRef } from "react";
+
 interface HoleNavigationProps {
   onNext?: () => void;
   onPrevious?: () => void;
+  onReviewRound?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
   currentHole?: number;
   holeCount?: number;
 }
+
 export const HoleNavigation = ({
   onNext,
   onPrevious,
+  onReviewRound,
   isFirst,
   isLast,
   currentHole,
@@ -64,6 +69,19 @@ export const HoleNavigation = ({
     }
     setIsClickingNext(true);
     console.log("Next button clicked");
+    
+    // Special handling for review round button
+    if (isLast && onReviewRound) {
+      console.log("Showing round review");
+      onReviewRound();
+      
+      // Reset clicking state after a delay
+      clickTimeoutRef.current = setTimeout(() => {
+        setIsClickingNext(false);
+      }, 500);
+      return;
+    }
+    
     if (typeof onNext === 'function') {
       // Call the handler directly
       onNext();
@@ -76,15 +94,14 @@ export const HoleNavigation = ({
       console.warn("Next handler is not defined");
       setIsClickingNext(false);
     }
-  }, [onNext, isClickingNext, isClickingPrev]);
+  }, [onNext, onReviewRound, isLast, isClickingNext, isClickingPrev]);
+
   return <div className="flex justify-between items-center mt-6">
       <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
         Previous Hole
       </Button>
       
-      
-      
-      <Button onClick={handleNext} disabled={isLast && !onNext || isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
+      <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
         {isLast ? <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round

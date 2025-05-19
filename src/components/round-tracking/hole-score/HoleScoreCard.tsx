@@ -8,6 +8,7 @@ interface HoleScoreCardProps {
   onUpdate: (data: HoleData) => void;
   onNext?: () => void;
   onPrevious?: () => void;
+  onReviewRound?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
