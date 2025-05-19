@@ -71,7 +71,7 @@ export const RoundTrackingDetail = ({
   const handleSubmitRound = async () => {
     console.log("Submitting final round score");
     if (typeof finishRound === 'function') {
-      await finishRound();
+      await finishRound(holeCount);
     }
     clearResumeData();
     onBack();

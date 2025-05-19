@@ -11,11 +11,12 @@ export const useRoundFinalization = (
   const { scoreGoal } = useProfile();
   const { toast } = useToast();
   
-  const finishRound = useCallback(async (holeCount: number | null) => {
-    if (!holeCount) return false;
+  const finishRound = useCallback(async (holeCount: number) => {
+    // Validate the hole count
+    const actualHoleCount = holeCount || 18;
     
     // Calculate total score before finishing the round
-    const relevantScores = holeScores.slice(0, holeCount);
+    const relevantScores = holeScores.slice(0, actualHoleCount);
     const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
     
     // Log goal checking and total score for debugging
@@ -26,7 +27,7 @@ export const useRoundFinalization = (
     
     // Save all hole scores before finishing the round
     try {
-      return await baseFinishRound(holeScores.slice(0, holeCount), holeCount);
+      return await baseFinishRound(holeScores.slice(0, actualHoleCount), actualHoleCount);
     } catch (error) {
       console.error("Error finishing round:", error);
       toast({

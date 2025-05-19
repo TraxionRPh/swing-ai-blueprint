@@ -26,6 +26,9 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Determine if the current hole should show the review button
+  const showReviewButton = currentHole === 9 || currentHole === 18 || isLast;
+
   // Clear timeout on unmount
   useEffect(() => {
     return () => {
@@ -71,7 +74,7 @@ export const HoleNavigation = ({
     console.log("Next button clicked");
     
     // Special handling for review round button
-    if (isLast && onReviewRound) {
+    if (showReviewButton && onReviewRound) {
       console.log("Showing round review");
       onReviewRound();
       
@@ -94,7 +97,7 @@ export const HoleNavigation = ({
       console.warn("Next handler is not defined");
       setIsClickingNext(false);
     }
-  }, [onNext, onReviewRound, isLast, isClickingNext, isClickingPrev]);
+  }, [onNext, onReviewRound, showReviewButton, isClickingNext, isClickingPrev]);
 
   return <div className="flex justify-between items-center mt-6">
       <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
@@ -102,7 +105,7 @@ export const HoleNavigation = ({
       </Button>
       
       <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
-        {isLast ? <>
+        {showReviewButton ? <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round
           </> : "Next Hole"}

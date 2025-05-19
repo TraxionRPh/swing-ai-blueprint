@@ -95,7 +95,7 @@ export const HoleScoreView = ({
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
         isFirst={currentHole === 1}
-        isLast={currentHole === holeCount}
+        isLast={currentHole === holeCount || currentHole === 9 || currentHole === 18}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}

@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "../score/useHoleNavigation";
 import { useHolePersistence } from "../score/use-hole-persistence";
+import { useRoundFinalization } from "../useRoundFinalization";
 
 export const useScoreTracking = (
   roundId: string | null, 
@@ -13,6 +14,27 @@ export const useScoreTracking = (
   const { currentHole, setCurrentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
+  
+  // Import the finishRound functionality
+  const baseFinishRound = useCallback(async (holeScores: HoleData[], holeCount: number) => {
+    console.log("Base finish round called with:", { holeScores, holeCount, roundId });
+    
+    if (!roundId || roundId === "new") {
+      console.warn("Cannot finish round: Invalid round ID");
+      return false;
+    }
+    
+    try {
+      // This is a simplified implementation - the actual logic would be handled in the parent component
+      console.log("Would finish round with ID:", roundId);
+      return true;
+    } catch (error) {
+      console.error("Error in baseFinishRound:", error);
+      return false;
+    }
+  }, [roundId]);
+  
+  const { finishRound } = useRoundFinalization(baseFinishRound, holeScores);
   
   // Apply resume hole from session storage if available
   useEffect(() => {
@@ -121,6 +143,7 @@ export const useScoreTracking = (
     handlePrevious: saveAndNavigatePrevious,
     isSaving,
     currentHoleData,
-    clearResumeData
+    clearResumeData,
+    finishRound // Export the finishRound function
   };
 };
