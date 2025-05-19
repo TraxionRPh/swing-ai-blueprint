@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,10 +39,16 @@ const DrillLibrary = () => {
         return data as Drill[];
       } catch (error) {
         console.error('Error fetching drills:', error);
+        toast({
+          title: "Error loading drills",
+          description: "Unable to load the drill library. Please try again later.",
+          variant: "destructive"
+        });
         throw error;
       }
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
   const filterDrills = useCallback((drillsToFilter: Drill[] = []) => {
@@ -49,7 +56,7 @@ const DrillLibrary = () => {
     
     return drillsToFilter.filter(drill => {
       const matchesSearch = !searchQuery || 
-        drill.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        drill.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
         drill.overview?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (Array.isArray(drill.focus) && drill.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
       
@@ -69,6 +76,8 @@ const DrillLibrary = () => {
     setIsAnalyzing(true);
     setSearchQuery(query);
     setSearchError(null);
+    setRecommendedDrills([]);
+    setSearchAnalysis("");
     
     try {
       const canProceed = await checkAPIUsage(user?.id, 'ai_analysis');
@@ -82,7 +91,19 @@ const DrillLibrary = () => {
         body: { query }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Search function error:', error);
+        throw new Error(error.message || "Failed to search drills");
+      }
+      
+      if (!data) {
+        throw new Error("Received empty response from search function");
+      }
+      
+      if (data.error) {
+        console.error('Server reported error:', data.error);
+        throw new Error(data.error);
+      }
       
       if (data.drills && Array.isArray(data.drills)) {
         setRecommendedDrills(data.drills);
@@ -115,7 +136,7 @@ const DrillLibrary = () => {
       setSearchError(error instanceof Error ? error.message : "Failed to search drills");
       toast({
         title: "Search Failed",
-        description: "Failed to find matching drills. Please try again.",
+        description: "Failed to find matching drills. Please try again or browse all drills below.",
         variant: "destructive"
       });
     } finally {

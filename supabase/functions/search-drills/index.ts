@@ -30,7 +30,7 @@ serve(async (req) => {
     // First, get all drills from the database using the REST API
     console.log("Fetching drills from database...");
     
-    const response = await fetch(
+    const drillsResponse = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/rest/v1/drills?select=*`,
       {
         headers: {
@@ -40,11 +40,11 @@ serve(async (req) => {
       }
     );
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch drills: ${response.status} ${response.statusText}`);
+    if (!drillsResponse.ok) {
+      throw new Error(`Failed to fetch drills: ${drillsResponse.status} ${drillsResponse.statusText}`);
     }
     
-    const drills = await response.json() as Drill[];
+    const drills = await drillsResponse.json() as Drill[];
     
     console.log(`Fetched ${drills?.length || 0} drills from database`);
     
@@ -168,14 +168,14 @@ serve(async (req) => {
       }
     }
 
-    const response: SearchResponse = { 
+    const searchResult: SearchResponse = { 
       drills: recommendedDrills,
       analysis: analysisText,
       challenge: selectedChallenge
     };
 
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify(searchResult),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
