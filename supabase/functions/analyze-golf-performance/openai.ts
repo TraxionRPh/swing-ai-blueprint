@@ -15,32 +15,44 @@ export class OpenAI {
 }
 
 export async function generateAnalysis(prompt: string, OPENAI_API_KEY: string) {
-  const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: ALLOWED_MODEL,
-      messages: [
-        { 
-          role: 'system', 
-          content: 'You are a professional golf coach and analyst specialized in providing performance analysis and practice plans. Always format your response as pure JSON without code blocks or markdown formatting.'
-        },
-        { role: 'user', content: prompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    }),
-  });
+  try {
+    console.log("Calling OpenAI API with prompt length:", prompt.length);
+    
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: ALLOWED_MODEL,
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a professional golf coach and analyst specialized in providing performance analysis and practice plans. Always format your response as pure JSON without code blocks or markdown formatting.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      }),
+    });
 
-  if (!openAIResponse.ok) {
-    const errorData = await openAIResponse.json();
-    console.error('OpenAI API error:', errorData);
-    throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.json();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const openAIData = await openAIResponse.json();
+    if (!openAIData.choices || !openAIData.choices[0] || !openAIData.choices[0].message) {
+      console.error('Unexpected OpenAI API response format:', openAIData);
+      throw new Error('Unexpected OpenAI API response format');
+    }
+    
+    return openAIData.choices[0].message.content;
+  } catch (error) {
+    console.error("Error in OpenAI generateAnalysis:", error);
+    throw error;
   }
-
-  const openAIData = await openAIResponse.json();
-  return openAIData.choices[0].message.content;
 }

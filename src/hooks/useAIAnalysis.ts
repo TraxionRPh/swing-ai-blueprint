@@ -7,8 +7,7 @@ import { usePracticePlanGeneration } from './usePracticePlanGeneration';
 import { useAPIUsageCheck } from './useAPIUsageCheck';
 
 export const useAIAnalysis = () => {
-  // Rename the imported function to avoid name collision
-  const { generatePlan: generatePracticePlan, isGenerating } = usePracticePlanGeneration();
+  const { generatePlan: generatePracticePlan, isGenerating: isPlanGenerating } = usePracticePlanGeneration();
   const { checkAPIUsage } = useAPIUsageCheck();
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -22,8 +21,14 @@ export const useAIAnalysis = () => {
     try {
       console.log("Generating practice plan:", { userId, issue, handicapLevel, planDuration });
       setIsAnalyzing(true);
+      
+      // First check if the user has API usage available
+      const canProceed = await checkAPIUsage(userId, 'practice_plan');
+      if (!canProceed) {
+        throw new Error("API usage limit reached");
+      }
 
-      // Use the renamed function
+      // Use the renamed function with error handling
       const plan = await generatePracticePlan(userId, issue, handicapLevel, planDuration);
       console.log("Plan generated successfully:", plan);
       return plan;
@@ -42,6 +47,6 @@ export const useAIAnalysis = () => {
 
   return {
     generatePlan, 
-    isGenerating: isGenerating || isAnalyzing
+    isGenerating: isPlanGenerating || isAnalyzing
   };
 };

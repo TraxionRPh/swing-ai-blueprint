@@ -25,9 +25,20 @@ export const useAPIUsageCheck = () => {
       });
 
       if (error) {
+        console.error('API usage check failed:', error);
         toast({
           title: "API Limit Reached",
           description: "You've reached your daily limit of 5 AI-powered analyses.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Even if there's no error, check the response data
+      if (data && data.limitReached) {
+        toast({
+          title: "API Limit Reached",
+          description: data.message || "You've reached your daily limit of AI-powered analyses.",
           variant: "destructive"
         });
         return false;

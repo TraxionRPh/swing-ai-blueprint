@@ -4,7 +4,7 @@ import { cors } from './_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 import { OpenAI } from './openai.ts';
 import { PlanGenerator } from './planGenerator.ts';
-import { responseHandler } from './_shared/utils.ts';
+import { ResponseHandler } from './responseHandler.ts';
 
 // Import our fallback putting drills if needed
 import { fallbackPuttingDrills } from './utils/puttingDrills.ts';
@@ -40,11 +40,16 @@ serve(async (req) => {
   try {
     // First, check that the content type is JSON
     if (req.headers.get('content-type') !== 'application/json') {
-      return responseHandler.error('Expected "application/json" Content-Type', 400);
+      return cors(req, new Response(
+        JSON.stringify({ error: 'Expected "application/json" Content-Type' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
     }
     
     // Parse the body of the request
     const { userId, roundData, handicapLevel, specificProblem, planDuration, availableDrills, availableChallenges } = await req.json();
+
+    console.log("Request received:", { userId, handicapLevel, specificProblem, planDuration });
 
     // Ensure we have drills to work with
     let drillsToUse = availableDrills || [];
@@ -56,7 +61,7 @@ serve(async (req) => {
     }
 
     // If this is a putting-related problem, make sure we have putting drills
-    if (specificProblem.toLowerCase().includes('putt') && 
+    if (specificProblem?.toLowerCase().includes('putt') && 
         !drillsToUse.some((d: any) => 
           (d.category?.toLowerCase() === 'putting') || 
           (d.title?.toLowerCase()?.includes('putt')))) {
@@ -77,9 +82,9 @@ serve(async (req) => {
     const plan = await planGenerator.generatePlan(availableChallenges || []);
 
     // Return the plan
-    return cors(req, responseHandler.success(plan));
+    return cors(req, ResponseHandler.createSuccessResponse(plan, drillsToUse, planDuration, null, true));
   } catch (error) {
     console.error('Failed to process request', error);
-    return cors(req, responseHandler.error(error.message, 500));
+    return cors(req, ResponseHandler.createErrorResponse(error));
   }
 });
