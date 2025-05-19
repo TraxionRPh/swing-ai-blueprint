@@ -6,7 +6,7 @@ import { CommonProblemCard } from "./CommonProblemCard";
 import { CommonProblem } from "@/types/practice-plan";
 import { Separator } from "@/components/ui/separator";
 import { Brain } from "@/components/icons/CustomIcons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlanDurationDialog } from "./PlanDurationDialog";
 
 interface PracticePlanFormProps {
@@ -34,6 +34,25 @@ export const PracticePlanForm = ({
 }: PracticePlanFormProps) => {
   const [showDurationDialog, setShowDurationDialog] = useState(false);
   const [isAIGeneration, setIsAIGeneration] = useState(false);
+  const [enhancedInput, setEnhancedInput] = useState('');
+
+  // Effect to tag putting-specific queries to improve search relevance
+  useEffect(() => {
+    let processedInput = inputValue;
+    
+    // Check if this is a putting-related query and add explicit tag if needed
+    const isPuttingQuery = inputValue.toLowerCase().includes('putt') || 
+                         inputValue.toLowerCase().includes('green') ||
+                         inputValue.toLowerCase().includes('read') || 
+                         inputValue.toLowerCase().includes('lag');
+                         
+    if (isPuttingQuery && !inputValue.toLowerCase().includes('putting practice plan')) {
+      // Add explicit tag for putting-specific plans if not already present
+      processedInput = `${inputValue} - PUTTING PRACTICE PLAN - focus specifically on putting`;
+    }
+    
+    setEnhancedInput(processedInput);
+  }, [inputValue]);
 
   const handleGenerateClick = (isAI: boolean) => {
     setIsAIGeneration(isAI);
@@ -42,7 +61,24 @@ export const PracticePlanForm = ({
 
   const handleConfirmDuration = () => {
     setShowDurationDialog(false);
-    onSubmit(isAIGeneration);
+    
+    // Replace input with enhanced version before submitting
+    if (isPuttingRelated(inputValue) && inputValue !== enhancedInput) {
+      onInputChange(enhancedInput);
+      setTimeout(() => {
+        onSubmit(isAIGeneration);
+      }, 100);
+    } else {
+      onSubmit(isAIGeneration);
+    }
+  };
+  
+  // Helper function to identify putting-related queries
+  const isPuttingRelated = (text: string): boolean => {
+    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'stroke', 'line', 'speed'];
+    const lowerText = text.toLowerCase();
+    
+    return puttingTerms.some(term => lowerText.includes(term));
   };
 
   return (

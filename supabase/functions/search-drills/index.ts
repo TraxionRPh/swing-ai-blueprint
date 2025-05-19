@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { selectRelevantChallenge } from "./utils/challenge-matcher.ts";
-import { extractDrillIds, getRecommendedDrills, generateAISystemPrompt, generateAnalysisPrompt } from "./utils/drill-analyzer.ts";
+import { extractDrillIds, getRecommendedDrills, generateAISystemPrompt, generateAnalysisPrompt, isPuttingRelated } from "./utils/drill-analyzer.ts";
 import type { Drill, Challenge, SearchResponse } from "./types.ts";
 
 const corsHeaders = {
@@ -70,18 +70,24 @@ serve(async (req) => {
     if (challengeResponse.ok) {
       challenges = await challengeResponse.json() as Challenge[];
       console.log(`Fetched ${challenges?.length || 0} challenges from database`);
-      
-      // Log all challenge titles and content for debugging
-      if (challenges?.length > 0) {
-        console.log("Available challenges:");
-        challenges.forEach((c, i) => {
-          const text = (c.title || '') + (c.description || '') + (c.instruction1 || '') + 
-                      (c.instruction2 || '') + (c.instruction3 || '');
-          console.log(`[${i+1}] ${c.title || 'Untitled'} | Category: ${c.category || 'None'} | Contains 'bunker': ${text.toLowerCase().includes('bunker')}`);
-        });
-      }
     } else {
       console.error("Failed to fetch challenges");
+    }
+
+    // Check if this is a putting-related query
+    const isPuttingQuery = query.toLowerCase().includes('putt') || 
+                         query.toLowerCase().includes('green') ||
+                         query.toLowerCase().includes('hole');
+    
+    // If it's a putting query, filter to only putting drills before sending to AI
+    let drillsToSearch = drills;
+    if (isPuttingQuery) {
+      const puttingDrills = drills.filter(drill => isPuttingRelated(drill));
+      console.log(`Found ${puttingDrills.length} putting-specific drills for putting query`);
+      
+      if (puttingDrills.length > 0) {
+        drillsToSearch = puttingDrills;
+      }
     }
 
     // Use OpenAI with strictly enforced model and improved prompting
@@ -101,7 +107,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `User's golf issue: "${query}"\n\nAvailable drills:\n${JSON.stringify(drills, null, 2)}`
+            content: `User's golf issue: "${query}"\n\nAvailable drills:\n${JSON.stringify(drillsToSearch, null, 2)}`
           }
         ],
         temperature: 0.2,
@@ -123,16 +129,30 @@ serve(async (req) => {
     console.log("Extracted drill IDs:", drillIds);
     
     // Get the recommended drills in order
-    const recommendedDrills = getRecommendedDrills(drills, drillIds);
+    const recommendedDrills = getRecommendedDrills(drillsToSearch, drillIds);
     
     console.log(`Found ${recommendedDrills.length} recommended drills`);
+    
+    // Post-process to ensure relevance - if it's a putting query but we don't have putting drills
+    // in the recommendations, try to add some putting-specific drills
+    let finalRecommendedDrills = recommendedDrills;
+    if (isPuttingQuery && !recommendedDrills.some(drill => isPuttingRelated(drill))) {
+      console.log("Ensuring putting drills are included for putting query");
+      const puttingDrills = drills.filter(drill => isPuttingRelated(drill));
+      if (puttingDrills.length > 0) {
+        // Take up to 3 putting drills to supplement recommendations
+        const additionalPuttingDrills = puttingDrills.slice(0, 3);
+        finalRecommendedDrills = [...additionalPuttingDrills, ...recommendedDrills]
+          .slice(0, Math.max(3, recommendedDrills.length)); // Keep at least 3 drills
+      }
+    }
     
     // Select a relevant challenge based on the query
     const selectedChallenge = selectRelevantChallenge(challenges, query);
 
     // Generate a more detailed analysis with clearer, actionable advice
     let analysisText = "";
-    if (recommendedDrills.length > 0) {
+    if (finalRecommendedDrills.length > 0) {
       const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -148,7 +168,7 @@ serve(async (req) => {
             },
             {
               role: 'user',
-              content: `User's issue: "${query}"\n\nRecommended drills: ${JSON.stringify(recommendedDrills.map(d => ({
+              content: `User's issue: "${query}"\n\nRecommended drills: ${JSON.stringify(finalRecommendedDrills.map(d => ({
                 title: d.title,
                 overview: d.overview,
                 focus: d.focus
@@ -169,7 +189,7 @@ serve(async (req) => {
     }
 
     const searchResult: SearchResponse = { 
-      drills: recommendedDrills,
+      drills: finalRecommendedDrills,
       analysis: analysisText,
       challenge: selectedChallenge
     };

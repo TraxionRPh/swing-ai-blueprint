@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +57,31 @@ const PracticePlanGenerator = () => {
     }
   }, [drills, drillIds]);
 
+  // Function to determine if drills focus on putting
+  const isPuttingRelated = useCallback((drill: Drill) => {
+    if (!drill) return false;
+    
+    // Direct category check
+    if (drill.category?.toLowerCase() === 'putting') {
+      return true;
+    }
+    
+    // Check title
+    if (drill.title?.toLowerCase().includes('putt')) {
+      return true;
+    }
+    
+    // Check focus areas
+    if (Array.isArray(drill.focus) && drill.focus.some(f => 
+      f.toLowerCase().includes('putt') || 
+      f.toLowerCase().includes('green')
+    )) {
+      return true;
+    }
+    
+    return false;
+  }, []);
+
   const generatePracticeIssue = () => {
     if (selectedDrills.length === 0) {
       toast({
@@ -78,10 +103,17 @@ const PracticePlanGenerator = () => {
       const focus = selectedDrills.flatMap(d => d.focus || []);
       const categories = [...new Set(selectedDrills.map(d => d.category))];
       
-      // Generate an issue based on the selected drills
-      const issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} 
-        using drills for ${categories.join(' and ')}. 
-        Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
+      // Check if this is primarily a putting-focused plan
+      const isPuttingFocused = categories.some(c => c?.toLowerCase() === 'putting') || 
+                               selectedDrills.some(isPuttingRelated);
+      
+      // Generate an issue based on the selected drills, ensuring category clarity
+      let issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} using drills for ${categories.join(' and ')}. Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
+      
+      // Add explicit putting instruction if putting-focused
+      if (isPuttingFocused) {
+        issue += ". This is specifically a PUTTING practice plan - only include putting-related drills.";
+      }
 
       const plan = await generatePlan(user?.id, issue, undefined, planDuration);
       

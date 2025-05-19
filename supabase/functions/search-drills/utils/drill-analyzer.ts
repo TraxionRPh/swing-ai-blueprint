@@ -1,3 +1,4 @@
+
 /**
  * Helper module for analyzing and ranking drills in the search-drills function
  */
@@ -124,6 +125,40 @@ export function getRecommendedDrills(allDrills: Drill[], drillIds: string[]): Dr
   }
 
   return Object.values(uniqueDrills);
+}
+
+/**
+ * Check if a drill is putting-related
+ * @param drill The drill to check
+ * @returns Boolean indicating if the drill is putting-related
+ */
+export function isPuttingRelated(drill: Drill): boolean {
+  if (!drill) return false;
+  
+  // Direct category check (strongest indicator)
+  if (drill.category?.toLowerCase() === 'putting') {
+    return true;
+  }
+  
+  // Check title (strong indicator)
+  if (drill.title?.toLowerCase().includes('putt')) {
+    return true;
+  }
+  
+  // Check in focus areas
+  if (Array.isArray(drill.focus) && drill.focus.some(f => 
+    f.toLowerCase().includes('putt') || 
+    f.toLowerCase().includes('green')
+  )) {
+    return true;
+  }
+  
+  // Look in overview
+  if (drill.overview?.toLowerCase().includes('putt')) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
