@@ -17,10 +17,10 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
-// Define limits per type of AI feature
-const DAILY_LIMITS = {
-  ai_analysis: 5,
-  practice_plan: 5
+// Define limits per type of AI feature - now for rolling 24 hour window
+const HOURLY_LIMITS = {
+  ai_analysis: 10,
+  practice_plan: 10
 };
 
 serve(async (req) => {
@@ -38,9 +38,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Get today's date in YYYY-MM-DD format for daily limit tracking
-    const today = new Date().toISOString().split('T')[0];
     
     // Check if user has premium subscription
     const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -57,51 +54,57 @@ serve(async (req) => {
       );
     }
 
-    // Check user's API usage for today
+    // Calculate timestamp for 24 hours ago
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const timestampLowerBound = twentyFourHoursAgo.toISOString();
+    
+    // Get usage from the last 24 hours
     const { data: usageData, error: usageError } = await supabase
       .from('api_usage')
-      .select('count')
+      .select('count, created_at')
       .eq('user_id', user_id)
       .eq('type', type)
-      .eq('date', today)
-      .single();
+      .gte('created_at', timestampLowerBound);
 
-    const currentUsage = usageData?.count || 0;
-    const dailyLimit = DAILY_LIMITS[type as keyof typeof DAILY_LIMITS] || 3;
+    if (usageError) {
+      console.error("Error fetching usage data:", usageError);
+    }
+      
+    // Calculate total usage in the last 24 hours
+    const currentUsage = usageData ? usageData.reduce((total, record) => total + record.count, 0) : 0;
+    const hourlyLimit = HOURLY_LIMITS[type as keyof typeof HOURLY_LIMITS] || 5;
     
-    if (currentUsage >= dailyLimit) {
+    if (currentUsage >= hourlyLimit) {
       // User has reached their limit
       return new Response(
         JSON.stringify({ 
           success: false, 
           limitReached: true,
-          message: `You've reached your daily limit of ${dailyLimit} ${type} requests. Upgrade to premium for unlimited access.`,
+          message: `You've reached your limit of ${hourlyLimit} ${type} requests in a 24-hour period. Upgrade to premium for unlimited access.`,
           currentUsage,
-          dailyLimit
+          dailyLimit: hourlyLimit
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Increment usage count
-    if (usageData) {
-      // Update existing record
-      await supabase
-        .from('api_usage')
-        .update({ count: currentUsage + 1 })
-        .eq('user_id', user_id)
-        .eq('type', type)
-        .eq('date', today);
-    } else {
-      // Create new record
-      await supabase
-        .from('api_usage')
-        .insert([{ 
-          user_id, 
-          type, 
-          date: today, 
-          count: 1 
-        }]);
+    // Insert new usage record
+    const { data: insertData, error: insertError } = await supabase
+      .from('api_usage')
+      .insert([{ 
+        user_id, 
+        type, 
+        count: 1,
+        created_at: new Date().toISOString() // Store the exact timestamp
+      }]);
+      
+    if (insertError) {
+      console.error("Error inserting usage data:", insertError);
+      return new Response(
+        JSON.stringify({ success: false, error: insertError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
@@ -109,7 +112,7 @@ serve(async (req) => {
         success: true, 
         message: "API usage allowed", 
         currentUsage: currentUsage + 1,
-        dailyLimit
+        dailyLimit: hourlyLimit
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

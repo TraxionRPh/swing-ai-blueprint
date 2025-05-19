@@ -51,7 +51,7 @@ export const useAIAnalysis = () => {
       if (!apiData.success || apiData.limitReached) {
         toast({
           title: "API Limit Reached",
-          description: apiData.message || "You've reached your daily limit of AI-powered analyses. Upgrade to premium for unlimited access.",
+          description: apiData.message || "You've reached your limit of AI-powered analyses in the last 24 hours. Upgrade to premium for unlimited access.",
           variant: "destructive"
         });
         throw new Error("API usage limit reached");

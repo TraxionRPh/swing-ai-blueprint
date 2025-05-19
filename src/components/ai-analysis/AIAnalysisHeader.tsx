@@ -29,7 +29,7 @@ export const AIAnalysisHeader = ({
           Personalized insights based on your actual performance data
           {showUsageInfo && (
             <span className="ml-2 text-xs text-muted-foreground">
-              ({apiUsageInfo.currentUsage}/{apiUsageInfo.dailyLimit} uses today)
+              ({apiUsageInfo.currentUsage}/{apiUsageInfo.dailyLimit} uses in 24h)
             </span>
           )}
         </p>
@@ -51,7 +51,7 @@ export const AIAnalysisHeader = ({
             <p>Generate a new AI analysis of your golf performance</p>
             {showUsageInfo && (
               <p className="text-xs mt-1">
-                {apiUsageInfo.currentUsage} of {apiUsageInfo.dailyLimit} daily analyses used
+                {apiUsageInfo.currentUsage} of {apiUsageInfo.dailyLimit} analyses used in the last 24 hours
               </p>
             )}
           </TooltipContent>
