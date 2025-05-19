@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDifficultyBadgeClass } from "@/utils/challengeUtils";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export interface Issue {
   area: string;
@@ -15,6 +17,9 @@ interface IdentifiedIssuesProps {
 }
 
 export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const defaultIssues = [
     {
       area: "Driver Path",
@@ -35,6 +40,12 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
 
   const displayIssues = issues || defaultIssues;
 
+  // Find the highest priority issue 
+  const highestPriorityIssue = [...displayIssues].sort((a, b) => {
+    const priorityRank = { 'High': 0, 'Medium': 1, 'Low': 2 };
+    return priorityRank[a.priority] - priorityRank[b.priority];
+  })[0];
+  
   const getPriorityBadgeClass = (priority: Issue['priority']) => {
     switch (priority) {
       case 'High':
@@ -45,6 +56,32 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
         return getDifficultyBadgeClass("Beginner");
       default:
         return "bg-slate-500 hover:bg-slate-600 text-white border-0";
+    }
+  };
+  
+  const handleGeneratePlan = () => {
+    if (highestPriorityIssue) {
+      // Extract the issue description
+      const issue = highestPriorityIssue.description;
+      
+      // Navigate to the practice plan generator with the issue in the URL state
+      navigate('/practice-plans/new', { 
+        state: { 
+          focusArea: highestPriorityIssue.area,
+          problem: issue
+        } 
+      });
+      
+      toast({
+        title: `Creating plan for ${highestPriorityIssue.area}`,
+        description: "Generating a practice plan to address your highest priority issue.",
+      });
+    } else {
+      toast({
+        title: "No issues found",
+        description: "Could not find any issues to generate a practice plan for.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -80,7 +117,7 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
       <CardFooter>
         <Button 
           className="w-full bg-primary hover:bg-primary/90"
-          onClick={() => window.location.href = '/practice-plans'}
+          onClick={handleGeneratePlan}
         >
           Generate Practice Plan
         </Button>
