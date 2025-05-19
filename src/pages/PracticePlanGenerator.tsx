@@ -57,69 +57,16 @@ const PracticePlanGenerator = () => {
     }
   }, [drills, drillIds]);
 
-  // Function to determine if drills focus on putting - ENHANCED
+  // Function to determine if drills focus on putting - SIMPLIFIED & STRICT
   const isPuttingRelated = useCallback((drill: Drill) => {
     if (!drill) return false;
     
-    // Direct category check - strongest indicator
+    // STRICT CATEGORY CHECK - most reliable indicator
     if (drill.category?.toLowerCase() === 'putting') {
       return true;
     }
     
-    // Check title - strong indicator
-    if (drill.title?.toLowerCase().includes('putt') || 
-        drill.title?.toLowerCase().includes('green') ||
-        drill.title?.toLowerCase().includes('lag') ||
-        drill.title?.toLowerCase().includes('hole')) {
-      return true;
-    }
-    
-    // Check focus areas - good indicators
-    if (Array.isArray(drill.focus) && drill.focus.some(f => 
-      f.toLowerCase().includes('putt') || 
-      f.toLowerCase().includes('green') ||
-      f.toLowerCase().includes('stroke')
-    )) {
-      return true;
-    }
-    
-    // Count putting-related terms across all drill texts
-    const drillText = [
-      drill.title?.toLowerCase() || '',
-      drill.overview?.toLowerCase() || '',
-      drill.category?.toLowerCase() || '',
-      ...(Array.isArray(drill.focus) ? drill.focus.map(f => f.toLowerCase()) : [])
-    ].join(' ');
-    
-    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'lag', 'roll', 'stroke', 'line', 'speed'];
-    let puttingTermCount = 0;
-    
-    for (const term of puttingTerms) {
-      if (drillText.includes(term)) {
-        puttingTermCount++;
-      }
-    }
-    
-    // Check for non-putting terms that suggest this is NOT a putting drill
-    if (puttingTermCount >= 2) {
-      const nonPuttingTerms = ['chip', 'iron', 'driver', 'bunker', 'sand', 'wedge', 'full swing', 'tee'];
-      let nonPuttingCount = 0;
-      
-      for (const term of nonPuttingTerms) {
-        if (drillText.includes(term)) {
-          nonPuttingCount++;
-        }
-      }
-      
-      // If there are more non-putting terms than putting terms, this is likely not a putting drill
-      if (nonPuttingCount >= puttingTermCount) {
-        return false;
-      }
-      
-      return true;
-    }
-    
-    return false;
+    return false; // ONLY use category for determination
   }, []);
 
   const generatePracticeIssue = () => {
@@ -143,16 +90,15 @@ const PracticePlanGenerator = () => {
       const focus = selectedDrills.flatMap(d => d.focus || []);
       const categories = [...new Set(selectedDrills.map(d => d.category))];
       
-      // Check if this is primarily a putting-focused plan
-      const isPuttingFocused = selectedDrills.some(isPuttingRelated) || 
-                               categories.some(c => c?.toLowerCase() === 'putting');
+      // Check if this is primarily a putting-focused plan - STRICT CATEGORY CHECK
+      const isPuttingFocused = categories.some(c => c?.toLowerCase() === 'putting');
       
-      // Generate an issue based on the selected drills, ensuring category clarity
+      // Generate an issue based on the selected drills
       let issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} using drills for ${categories.join(' and ')}. Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
       
-      // Add explicit putting instruction if putting-focused - ENHANCED
+      // Add explicit putting instruction if putting-focused
       if (isPuttingFocused) {
-        issue = `PUTTING PRACTICE PLAN: ${issue} This is SPECIFICALLY a putting practice plan - ONLY include putting-related drills. No iron drills, no chipping drills, ONLY PUTTING drills.`;
+        issue = `PUTTING PRACTICE PLAN: ${issue} THIS IS STRICTLY A PUTTING-ONLY PRACTICE PLAN: ONLY include putting drills. No iron drills, no chipping drills, ONLY PUTTING drills with category="putting".`;
       }
 
       const plan = await generatePlan(user?.id, issue, undefined, planDuration);

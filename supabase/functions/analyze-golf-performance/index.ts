@@ -60,13 +60,26 @@ serve(async (req) => {
       drillsToUse = [];
     }
 
-    // If this is a putting-related problem, make sure we have putting drills
-    if (specificProblem?.toLowerCase().includes('putt') && 
-        !drillsToUse.some((d: any) => 
-          (d.category?.toLowerCase() === 'putting') || 
-          (d.title?.toLowerCase()?.includes('putt')))) {
-      console.log("Adding fallback putting drills for putting problem");
-      drillsToUse = [...drillsToUse, ...fallbackPuttingDrills];
+    // STRICT CATEGORY ENFORCEMENT: If this is a putting-related problem, ONLY use putting drills
+    const isPuttingProblem = specificProblem?.toLowerCase().includes('putt') || 
+                            specificProblem?.toLowerCase().includes('green') ||
+                            specificProblem?.toLowerCase().includes('lag');
+                            
+    if (isPuttingProblem) {
+      console.log("This is a putting-related problem, strictly enforcing putting drills only");
+      
+      // Filter to only include drills with 'putting' category
+      const puttingDrills = drillsToUse.filter((d: any) => 
+        (d.category?.toLowerCase() === 'putting'));
+        
+      // If we don't have enough putting-specific drills, add our fallbacks
+      if (!puttingDrills.length || puttingDrills.length < 3) {
+        console.log("Adding fallback putting drills for putting problem");
+        drillsToUse = [...(puttingDrills || []), ...fallbackPuttingDrills];
+      } else {
+        console.log(`Using ${puttingDrills.length} putting-specific drills only`);
+        drillsToUse = puttingDrills;
+      }
     }
 
     // Create a plan generator with our available data

@@ -37,7 +37,7 @@ export class ChallengeRelevanceCalculator {
       this.challenge.instruction3 || ''
     ].join(' ').toLowerCase();
     
-    // Special handling for putting problems - STRICTER FILTERING
+    // ENHANCED FILTERING: Check if this is a putting problem with strict enforcement
     const isPuttingProblem = this.specificProblem.includes('putt') || 
                            this.specificProblem.includes('green') ||
                            this.specificProblem.includes('speed on the green') ||
@@ -45,7 +45,7 @@ export class ChallengeRelevanceCalculator {
                            this.specificProblem.includes('lag');
                            
     if (isPuttingProblem && !this.isPuttingChallenge(challengeText)) {
-      return -1; // Disqualify non-putting challenges for putting problems
+      return -1; // Completely disqualify non-putting challenges for putting problems
     }
     
     // Special handling for bunker/sand problems

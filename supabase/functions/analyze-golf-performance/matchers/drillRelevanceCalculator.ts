@@ -28,7 +28,7 @@ export class DrillRelevanceCalculator {
   calculateScore(): number {
     let score = 0;
     
-    // Special handling for putting problems - STRICTER FILTERING
+    // STRICT ENFORCEMENT: Check if this is a putting-related problem
     const isPuttingProblem = this.specificProblem.includes('putt') || 
                            this.specificProblem.includes('green') ||
                            this.specificProblem.includes('speed on the green') ||
@@ -36,11 +36,11 @@ export class DrillRelevanceCalculator {
                            this.specificProblem.includes('lag');
     
     if (isPuttingProblem) {
-      // For putting problems, prioritize putting drills and exclude non-putting drills entirely
+      // For putting problems, we ONLY want putting drills
       if (this.isPuttingDrill()) {
         score += 1.0; // Strong boost for putting drills
       } else {
-        return 0.0; // EXCLUDE completely non-putting drills from putting plans
+        return 0.0; // COMPLETELY EXCLUDE non-putting drills from putting plans
       }
     }
     
@@ -99,10 +99,11 @@ export class DrillRelevanceCalculator {
   }
   
   /**
-   * Determine if this is a putting-related drill with STRICTER CRITERIA
+   * STRICT DETERMINATIONS: Is this a putting-related drill
+   * Enhanced with stricter category checking
    */
   private isPuttingDrill(): boolean {
-    // Direct category check - highest priority indicator
+    // STRICT CATEGORY CHECK - highest priority and most reliable indicator
     if (this.drillText.includes('category: putting') || 
         this.drillText.includes('category:"putting"') ||
         this.drillText.includes('category: "putting"') ||
@@ -136,7 +137,7 @@ export class DrillRelevanceCalculator {
       }
     }
     
-    // Exclude drills with strong non-putting indicators
+    // STRICT EXCLUSION: Exclude drills with strong non-putting indicators
     if (this.drillText.includes('iron') || 
         this.drillText.includes('driver') || 
         this.drillText.includes('chip') || 

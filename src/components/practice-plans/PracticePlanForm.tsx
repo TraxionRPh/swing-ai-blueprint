@@ -36,19 +36,19 @@ export const PracticePlanForm = ({
   const [isAIGeneration, setIsAIGeneration] = useState(false);
   const [enhancedInput, setEnhancedInput] = useState('');
 
-  // Effect to tag putting-specific queries to improve search relevance
+  // Effect to explicitly tag putting-related queries
   useEffect(() => {
     let processedInput = inputValue;
     
-    // Check if this is a putting-related query and add explicit tag if needed
+    // STRICT ENFORCEMENT: Check if this is a putting-related query
     const isPuttingQuery = inputValue.toLowerCase().includes('putt') || 
                          inputValue.toLowerCase().includes('green') ||
                          inputValue.toLowerCase().includes('read') || 
                          inputValue.toLowerCase().includes('lag');
                          
-    if (isPuttingQuery && !inputValue.toLowerCase().includes('putting practice plan')) {
-      // Add explicit tag for putting-specific plans if not already present
-      processedInput = `${inputValue} - PUTTING PRACTICE PLAN - focus specifically on putting`;
+    if (isPuttingQuery) {
+      // Add explicit category requirement for putting plans
+      processedInput = `STRICTLY PUTTING ONLY: ${inputValue} - THIS IS A PUTTING-ONLY PLAN: ONLY use drills with category="putting". NO other drill types allowed.`;
     }
     
     setEnhancedInput(processedInput);
@@ -73,12 +73,10 @@ export const PracticePlanForm = ({
     }
   };
   
-  // Helper function to identify putting-related queries
+  // Helper function to identify putting-related queries - SIMPLIFIED
   const isPuttingRelated = (text: string): boolean => {
-    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'stroke', 'line', 'speed'];
     const lowerText = text.toLowerCase();
-    
-    return puttingTerms.some(term => lowerText.includes(term));
+    return lowerText.includes('putt') || lowerText.includes('green');
   };
 
   return (
