@@ -22,18 +22,18 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
   
   const defaultIssues = [
     {
-      area: "Driver Path",
-      description: "Data shows a consistent out-to-in swing path with your driver, leading to slices on 68% of drives.",
+      area: "Driving Accuracy",
+      description: "Your data indicates inconsistent driving accuracy off the tee, particularly with a tendency toward the right side of the fairway.",
       priority: "High" as const
     },
     {
       area: "Bunker Play",
-      description: "Your sand save percentage is currently 22%, which is below average for your handicap range.",
+      description: "Your sand save percentage is below average for your handicap range, indicating an opportunity to improve bunker play.",
       priority: "Medium" as const
     },
     {
       area: "Iron Distance Control",
-      description: "Your approach shots from 150-175 yards show inconsistent distance control, with 65% landing short.",
+      description: "Your approach shots, especially from mid-irons, show inconsistent distance control patterns.",
       priority: "Low" as const
     }
   ];

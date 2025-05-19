@@ -1,3 +1,4 @@
+
 /**
  * Class for generating personalized diagnosis messages for the user
  */
@@ -201,24 +202,24 @@ export class DiagnosisGenerator {
         case 'Driving':
           if (normalizedProblem.includes('slice')) {
             return [
-              "Outside-to-in swing path causing side spin",
-              "Open clubface at impact",
-              "Improper grip position",
-              "Poor alignment at address"
+              "Inconsistent swing path with driver",
+              "Improper clubface position at impact",
+              "Grip and alignment issues off the tee",
+              "Setup position leading to path issues"
             ];
           } else if (normalizedProblem.includes('hook')) {
             return [
-              "Inside-to-out swing path causing side spin",
-              "Closed clubface at impact",
-              "Overly strong grip position",
-              "Early release of the hands"
+              "Inside-to-out swing path issues",
+              "Clubface rotation through impact",
+              "Grip position concerns",
+              "Timing issues in the swing sequence"
             ];
           } else if (normalizedProblem.includes('distance')) {
             return [
-              "Insufficient club head speed",
-              "Poor weight transfer during swing",
-              "Inefficient use of body rotation",
-              "Suboptimal launch conditions"
+              "Limited club head speed",
+              "Inefficient energy transfer in swing",
+              "Restricted body rotation",
+              "Launch angle and spin rate optimization"
             ];
           } else {
             return [
@@ -232,54 +233,54 @@ export class DiagnosisGenerator {
         case 'Iron Play':
           if (normalizedProblem.includes('thin') || normalizedProblem.includes('top')) {
             return [
-              "Low point of swing occurring before the ball",
-              "Rising up during the downswing",
-              "Poor posture at address",
-              "Improper weight distribution"
+              "Low point control issues",
+              "Early extension in downswing",
+              "Posture and balance concerns",
+              "Weight distribution patterns"
             ];
           } else if (normalizedProblem.includes('fat') || normalizedProblem.includes('chunk')) {
             return [
-              "Excessive forward shaft lean at impact",
-              "Early release of the club",
-              "Improper weight shift",
-              "Dipping of the lead shoulder"
+              "Excessive forward shaft lean",
+              "Early release pattern",
+              "Weight shift timing",
+              "Upper body movement issues"
             ];
           } else {
             return [
               "Inconsistent ball positioning",
               "Variable swing tempo",
-              "Poor contact with the ground",
-              "Inconsistent distance control"
+              "Ground interaction patterns",
+              "Distance control variability"
             ];
           }
           
         case 'Short Game':
           if (normalizedProblem.includes('chip')) {
             return [
-              "Excessive wrist action during chipping",
-              "Inconsistent ball position",
-              "Poor club selection around greens",
-              "Deceleration through impact"
+              "Excessive wrist action in short game",
+              "Ball position consistency",
+              "Club selection around greens",
+              "Acceleration issues through impact"
             ];
           } else if (normalizedProblem.includes('pitch')) {
             return [
-              "Inconsistent ball contact with pitch shots",
-              "Improper weight distribution",
-              "Inconsistent follow-through",
-              "Poor distance control"
+              "Inconsistent ball contact",
+              "Weight distribution patterns",
+              "Follow-through consistency",
+              "Distance control variability"
             ];
           } else if (normalizedProblem.includes('bunker') || normalizedProblem.includes('sand')) {
             return [
-              "Hitting too close to the ball in sand",
-              "Insufficient follow-through in bunker shots",
-              "Improper clubface position at address",
+              "Entry point issues in sand",
+              "Follow-through length in bunkers",
+              "Clubface position at address",
               "Tension during bunker shots"
             ];
           } else {
             return [
-              "Inconsistent short game technique",
+              "Short game technique inconsistencies",
               "Shot selection around greens",
-              "Lack of practice with various short game shots",
+              "Practice routine effectiveness",
               "Mental approach to recovery shots"
             ];
           }
@@ -287,41 +288,41 @@ export class DiagnosisGenerator {
         case 'Putting':
           if (normalizedProblem.includes('speed') || normalizedProblem.includes('distance')) {
             return [
-              "Inconsistent putting stroke length",
-              "Variable tempo on longer putts",
-              "Poor distance perception",
-              "Lack of practice with speed control"
+              "Putting stroke length consistency",
+              "Tempo variations on longer putts",
+              "Distance perception issues",
+              "Speed control practice inefficiency"
             ];
           } else if (normalizedProblem.includes('line') || normalizedProblem.includes('direction')) {
             return [
-              "Misaligned putter face at address",
-              "Inconsistent eye position",
-              "Path deviations during stroke",
-              "Difficulty reading subtle breaks"
+              "Face alignment issues at address",
+              "Eye position inconsistency",
+              "Stroke path variations",
+              "Green reading challenges"
             ];
           } else {
             return [
-              "Inconsistent putting fundamentals",
+              "Putting fundamental inconsistencies",
               "Grip pressure variations",
               "Visual alignment challenges",
-              "Mental approach on the greens"
+              "Mental approach on greens"
             ];
           }
           
         default:
           return [
-            "Multiple areas needing improvement",
-            "Inconsistent practice habits",
-            "Lack of structured approach to improvement",
-            "Balance between technical and on-course practice"
+            "Multiple skill areas needing improvement",
+            "Practice routine inefficiency",
+            "Inconsistent performance patterns",
+            "Technical and on-course practice balance"
           ];
       }
     } else {
       return [
-        "Multiple areas needing improvement",
-        "Inconsistent practice habits",
-        "Lack of structured approach to improvement",
-        "Balance between technical and on-course practice"
+        "Multiple skill areas needing improvement",
+        "Practice routine inefficiency",
+        "Inconsistent performance patterns", 
+        "Technical and on-course practice balance"
       ];
     }
   }

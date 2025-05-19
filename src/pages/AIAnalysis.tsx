@@ -80,6 +80,40 @@ const AIAnalysis = () => {
   // Get current confidence
   const currentConfidence = confidenceData[confidenceData.length - 1].confidence;
   
+  // Map raw root causes to more generalized issue format if they exist
+  const mappedIssues = analysisData?.rootCauses?.map((cause: string, i: number) => {
+    // Transform the raw cause descriptions into more generalized issues
+    let area, description;
+    
+    // Map cause to general area based on keywords
+    if (cause.toLowerCase().includes('driv') || cause.toLowerCase().includes('tee shot')) {
+      area = "Driving Accuracy";
+      description = "Your driving performance shows opportunities for improvement in accuracy and consistency.";
+    } else if (cause.toLowerCase().includes('putt')) {
+      area = "Putting";
+      description = "Your putting statistics indicate room for improvement in both speed and direction control.";
+    } else if (cause.toLowerCase().includes('iron') || cause.toLowerCase().includes('approach')) {
+      area = "Iron Play";
+      description = "Your iron shots show patterns that could be improved with focused practice on contact and direction.";
+    } else if (cause.toLowerCase().includes('bunker') || cause.toLowerCase().includes('sand')) {
+      area = "Bunker Play";
+      description = "Your bunker play metrics suggest an opportunity to improve your sand save percentage.";
+    } else if (cause.toLowerCase().includes('short game') || cause.toLowerCase().includes('chip') || cause.toLowerCase().includes('pitch')) {
+      area = "Short Game";
+      description = "Your short game performance around the green indicates room for improvement in up-and-down situations.";
+    } else {
+      // Default fallback for unrecognized categories
+      area = `Golf Skill ${i+1}`;
+      description = cause.replace(/\b\d+%\b/g, ""); // Remove specific percentages
+    }
+  
+    return {
+      area,
+      description,
+      priority: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low'
+    };
+  });
+  
   return (
     <div className="space-y-4 max-w-full overflow-x-hidden">
       <AIAnalysisHeader 
@@ -93,11 +127,7 @@ const AIAnalysis = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <PerformanceRadarChart data={performanceData} />
           <ConfidenceChart confidenceData={confidenceData} currentConfidence={currentConfidence} />
-          <IdentifiedIssues issues={analysisData?.rootCauses?.map((cause: string, i: number) => ({
-            area: `Issue ${i+1}`,
-            description: cause,
-            priority: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low'
-          }))} />
+          <IdentifiedIssues issues={mappedIssues} />
           <PracticeRecommendations 
             recommendations={
               analysisData?.practicePlan?.plan?.[0] ? {
