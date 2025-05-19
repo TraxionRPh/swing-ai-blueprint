@@ -36,19 +36,55 @@ export const PracticePlanForm = ({
   const [isAIGeneration, setIsAIGeneration] = useState(false);
   const [enhancedInput, setEnhancedInput] = useState('');
 
-  // Effect to explicitly tag putting-related queries
+  // Effect to explicitly tag skill-specific queries
   useEffect(() => {
     let processedInput = inputValue;
     
-    // STRICT ENFORCEMENT: Check if this is a putting-related query
+    // PUTTING: Strict enforcement for putting-related queries
     const isPuttingQuery = inputValue.toLowerCase().includes('putt') || 
                          inputValue.toLowerCase().includes('green') ||
                          inputValue.toLowerCase().includes('read') || 
                          inputValue.toLowerCase().includes('lag');
                          
+    // DRIVING: Strict enforcement for driver/tee shot problems
+    const isDrivingQuery = inputValue.toLowerCase().includes('driver') ||
+                         inputValue.toLowerCase().includes('tee shot') ||
+                         inputValue.toLowerCase().includes('off the tee') ||
+                         inputValue.toLowerCase().includes('slice') ||
+                         inputValue.toLowerCase().includes('hook');
+                        
+    // IRON PLAY: Strict enforcement for iron play problems
+    const isIronQuery = inputValue.toLowerCase().includes('iron') ||
+                      inputValue.toLowerCase().includes('approach') ||
+                      inputValue.toLowerCase().includes('ball striking') ||
+                      inputValue.toLowerCase().includes(' mid game') ||
+                      inputValue.toLowerCase().includes('contact');
+                        
+    // SHORT GAME: Strict enforcement for chipping/pitching problems
+    const isChippingQuery = inputValue.toLowerCase().includes('chip') ||
+                          inputValue.toLowerCase().includes('pitch') ||
+                          inputValue.toLowerCase().includes('short game') ||
+                          inputValue.toLowerCase().includes('around the green');
+                          
+    // BUNKER: Strict enforcement for bunker/sand problems
+    const isBunkerQuery = inputValue.toLowerCase().includes('bunker') || 
+                        inputValue.toLowerCase().includes('sand');
+    
+    // Add explicit category requirements based on the problem type
     if (isPuttingQuery) {
-      // Add explicit category requirement for putting plans
       processedInput = `STRICTLY PUTTING ONLY: ${inputValue} - THIS IS A PUTTING-ONLY PLAN: ONLY use drills with category="putting". NO other drill types allowed.`;
+    }
+    else if (isDrivingQuery) {
+      processedInput = `STRICTLY DRIVING ONLY: ${inputValue} - THIS IS A DRIVING-ONLY PLAN: ONLY use drills with categories related to driving, tee shots, or long game. NO other drill types allowed.`;
+    }
+    else if (isIronQuery) {
+      processedInput = `STRICTLY IRON PLAY ONLY: ${inputValue} - THIS IS AN IRON PLAY PLAN: ONLY use drills with categories related to irons, approach shots, or ball striking. NO other drill types allowed.`;
+    }
+    else if (isChippingQuery) {
+      processedInput = `STRICTLY SHORT GAME ONLY: ${inputValue} - THIS IS A SHORT GAME PLAN: ONLY use drills with categories related to chipping, pitching, or short game. NO other drill types allowed.`;
+    }
+    else if (isBunkerQuery) {
+      processedInput = `STRICTLY BUNKER PLAY ONLY: ${inputValue} - THIS IS A BUNKER/SAND PLAN: ONLY use drills with categories related to bunkers or sand shots. NO other drill types allowed.`;
     }
     
     setEnhancedInput(processedInput);
@@ -62,8 +98,8 @@ export const PracticePlanForm = ({
   const handleConfirmDuration = () => {
     setShowDurationDialog(false);
     
-    // Replace input with enhanced version before submitting
-    if (isPuttingRelated(inputValue) && inputValue !== enhancedInput) {
+    // Replace input with enhanced version (category-tagged) before submitting
+    if (needsCategoryEnhancement(inputValue) && inputValue !== enhancedInput) {
       onInputChange(enhancedInput);
       setTimeout(() => {
         onSubmit(isAIGeneration);
@@ -73,10 +109,20 @@ export const PracticePlanForm = ({
     }
   };
   
-  // Helper function to identify putting-related queries - SIMPLIFIED
-  const isPuttingRelated = (text: string): boolean => {
+  // Helper function to check if input needs category enhancement
+  const needsCategoryEnhancement = (text: string): boolean => {
     const lowerText = text.toLowerCase();
-    return lowerText.includes('putt') || lowerText.includes('green');
+    return lowerText.includes('putt') || 
+           lowerText.includes('green') ||
+           lowerText.includes('driver') ||
+           lowerText.includes('slice') ||
+           lowerText.includes('hook') ||
+           lowerText.includes('iron') ||
+           lowerText.includes('approach') ||
+           lowerText.includes('chip') || 
+           lowerText.includes('pitch') ||
+           lowerText.includes('bunker') ||
+           lowerText.includes('sand');
   };
 
   return (

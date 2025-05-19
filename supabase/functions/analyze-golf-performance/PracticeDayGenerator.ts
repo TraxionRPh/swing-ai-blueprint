@@ -30,7 +30,7 @@ export class PracticeDayGenerator {
     const normalizedProblem = this.problem.toLowerCase();
     let focusAreas: string[] = [];
 
-    // Generate focus areas based on problem category
+    // Generate focus areas based on problem category or problem content
     if (this.category) {
       switch (this.category.name) {
         case 'Driving':
@@ -46,14 +46,56 @@ export class PracticeDayGenerator {
           focusAreas = this.getPuttingFocusAreas(normalizedProblem);
           break;
         default:
-          focusAreas = this.getGeneralFocusAreas();
+          focusAreas = this.determineAreasByProblemText(normalizedProblem);
       }
     } else {
-      focusAreas = this.getGeneralFocusAreas();
+      focusAreas = this.determineAreasByProblemText(normalizedProblem);
     }
 
     // Return the focus area for the specific day (cycling through if needed)
     return focusAreas[dayIndex % focusAreas.length];
+  }
+  
+  // Determine focus areas by analyzing problem text directly
+  private determineAreasByProblemText(problem: string): string[] {
+    // Check for putting-related terms
+    if (problem.includes('putt') || 
+        problem.includes('green') || 
+        problem.includes('lag') ||
+        problem.includes('stroke')) {
+      return this.getPuttingFocusAreas(problem);
+    }
+    
+    // Check for driving-related terms
+    if (problem.includes('driver') || 
+        problem.includes('tee shot') || 
+        problem.includes('slice') ||
+        problem.includes('hook')) {
+      return this.getDrivingFocusAreas(problem);
+    }
+    
+    // Check for iron-related terms
+    if (problem.includes('iron') || 
+        problem.includes('approach') || 
+        problem.includes('ball striking') ||
+        problem.includes('contact')) {
+      return this.getIronPlayFocusAreas(problem);
+    }
+    
+    // Check for short game terms
+    if (problem.includes('chip') || 
+        problem.includes('pitch') || 
+        problem.includes('short game')) {
+      return this.getShortGameFocusAreas(problem);
+    }
+    
+    // Check for bunker terms
+    if (problem.includes('bunker') || problem.includes('sand')) {
+      return this.getBunkerFocusAreas(problem);
+    }
+    
+    // Default to general areas if no specific problem is identified
+    return this.getGeneralFocusAreas();
   }
 
   // Helper methods to get focus areas for different categories
@@ -153,6 +195,26 @@ export class PracticeDayGenerator {
         "Short Game Scoring", 
         "Up and Down Practice",
         "Pressure Situation Simulation"
+      ];
+    }
+  }
+
+  private getBunkerFocusAreas(problem: string): string[] {
+    if (problem.includes('fairway')) {
+      return [
+        "Fairway Bunker Setup", 
+        "Clean Contact from Sand",
+        "Club Selection in Fairway Bunkers", 
+        "Distance Control from Sand",
+        "Escape Strategy"
+      ];
+    } else {
+      return [
+        "Greenside Bunker Technique", 
+        "Sand Wedge Fundamentals",
+        "Explosion Shot Control", 
+        "Varied Sand Conditions",
+        "High vs Low Bunker Shots"
       ];
     }
   }

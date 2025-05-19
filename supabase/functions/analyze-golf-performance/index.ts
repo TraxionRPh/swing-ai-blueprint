@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { cors } from './_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
@@ -60,11 +59,36 @@ serve(async (req) => {
       drillsToUse = [];
     }
 
-    // STRICT CATEGORY ENFORCEMENT: If this is a putting-related problem, ONLY use putting drills
+    // CATEGORY-BASED FILTERING: Apply strict category filtering based on problem type
+    
+    // PUTTING: If this is a putting-related problem, ONLY use putting drills
     const isPuttingProblem = specificProblem?.toLowerCase().includes('putt') || 
                             specificProblem?.toLowerCase().includes('green') ||
                             specificProblem?.toLowerCase().includes('lag');
                             
+    // DRIVING: If this is a driving-related problem, ONLY use driving drills
+    const isDrivingProblem = specificProblem?.toLowerCase().includes('driver') ||
+                            specificProblem?.toLowerCase().includes('tee shot') ||
+                            specificProblem?.toLowerCase().includes('slice') ||
+                            specificProblem?.toLowerCase().includes('hook') ||
+                            specificProblem?.toLowerCase().includes('off the tee');
+                           
+    // IRON PLAY: If this is an iron play problem, ONLY use iron drills
+    const isIronPlayProblem = specificProblem?.toLowerCase().includes('iron') ||
+                             specificProblem?.toLowerCase().includes('approach') ||
+                             specificProblem?.toLowerCase().includes('ball striking') ||
+                             specificProblem?.toLowerCase().includes('contact');
+                           
+    // CHIPPING: If this is a chipping/short game problem, ONLY use chipping drills
+    const isChippingProblem = specificProblem?.toLowerCase().includes('chip') ||
+                             specificProblem?.toLowerCase().includes('pitch') ||
+                             specificProblem?.toLowerCase().includes('short game');
+                           
+    // BUNKER: If this is a bunker/sand problem, ONLY use bunker drills
+    const isBunkerProblem = specificProblem?.toLowerCase().includes('bunker') || 
+                           specificProblem?.toLowerCase().includes('sand');
+                           
+    // Apply the appropriate filters based on problem type
     if (isPuttingProblem) {
       console.log("This is a putting-related problem, strictly enforcing putting drills only");
       
@@ -79,6 +103,63 @@ serve(async (req) => {
       } else {
         console.log(`Using ${puttingDrills.length} putting-specific drills only`);
         drillsToUse = puttingDrills;
+      }
+    }
+    else if (isDrivingProblem) {
+      console.log("This is a driving-related problem, strictly enforcing driving drills only");
+      
+      // Filter to only include drills with 'driving' category
+      const drivingDrills = drillsToUse.filter((d: any) => 
+        (d.category?.toLowerCase() === 'driving' || 
+         d.category?.toLowerCase().includes('tee')));
+        
+      if (drivingDrills.length >= 3) {
+        console.log(`Using ${drivingDrills.length} driving-specific drills only`);
+        drillsToUse = drivingDrills;
+      } else {
+        console.log("Not enough driving drills, using broader selection with relevant drills prioritized");
+        // We don't have fallbacks for this, so we keep existing drills but will filter in PlanGenerator
+      }
+    }
+    else if (isIronPlayProblem) {
+      console.log("This is an iron play problem, strictly enforcing iron drills only");
+      
+      // Filter to only include drills with 'iron' or 'approach' category
+      const ironDrills = drillsToUse.filter((d: any) => 
+        (d.category?.toLowerCase().includes('iron') || 
+         d.category?.toLowerCase().includes('approach') ||
+         d.category?.toLowerCase().includes('ball striking')));
+        
+      if (ironDrills.length >= 3) {
+        console.log(`Using ${ironDrills.length} iron-specific drills only`);
+        drillsToUse = ironDrills;
+      }
+    }
+    else if (isChippingProblem) {
+      console.log("This is a chipping/short game problem, strictly enforcing short game drills only");
+      
+      // Filter to only include drills with 'short game', 'chip' or 'pitch' category
+      const chippingDrills = drillsToUse.filter((d: any) => 
+        (d.category?.toLowerCase().includes('chip') || 
+         d.category?.toLowerCase().includes('pitch') ||
+         d.category?.toLowerCase().includes('short game')));
+        
+      if (chippingDrills.length >= 3) {
+        console.log(`Using ${chippingDrills.length} chipping-specific drills only`);
+        drillsToUse = chippingDrills;
+      }
+    }
+    else if (isBunkerProblem) {
+      console.log("This is a bunker problem, strictly enforcing bunker drills only");
+      
+      // Filter to only include drills with 'bunker' or 'sand' category
+      const bunkerDrills = drillsToUse.filter((d: any) => 
+        (d.category?.toLowerCase().includes('bunker') || 
+         d.category?.toLowerCase().includes('sand')));
+        
+      if (bunkerDrills.length >= 3) {
+        console.log(`Using ${bunkerDrills.length} bunker-specific drills only`);
+        drillsToUse = bunkerDrills;
       }
     }
 

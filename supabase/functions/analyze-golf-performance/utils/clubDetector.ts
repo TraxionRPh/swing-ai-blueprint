@@ -10,12 +10,12 @@ export function detectClubType(description: string): string {
   
   // Use a Map for more efficient lookups
   const clubMatches = new Map([
-    ['driver', ['driver', 'tee shot', 'off the tee', '1 wood']],
+    ['driver', ['driver', 'tee shot', 'off the tee', '1 wood', 'slice', 'hook']],
     ['woods', ['wood', '3 wood', '5 wood', 'fairway wood']],
     ['hybrid', ['hybrid', 'rescue']],
-    ['iron', ['iron', '4 iron', '5 iron', '6 iron', '7 iron', '8 iron', '9 iron']],
-    ['wedge', ['wedge', 'pw', 'gw', 'sw', 'lw', 'sand wedge', 'lob wedge', 'gap wedge', 'pitch']],
-    ['putter', ['putt', 'putter', 'green']]
+    ['iron', ['iron', '4 iron', '5 iron', '6 iron', '7 iron', '8 iron', '9 iron', 'approach', 'ball striking']],
+    ['wedge', ['wedge', 'pw', 'gw', 'sw', 'lw', 'sand wedge', 'lob wedge', 'gap wedge', 'pitch', 'chip', 'short game']],
+    ['putter', ['putt', 'putter', 'green', 'lag', 'stroke', 'roll', 'speed']]
   ]);
 
   // Check for specific clubs first

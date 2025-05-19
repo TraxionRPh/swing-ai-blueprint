@@ -37,7 +37,9 @@ export class ChallengeRelevanceCalculator {
       this.challenge.instruction3 || ''
     ].join(' ').toLowerCase();
     
-    // ENHANCED FILTERING: Check if this is a putting problem with strict enforcement
+    // STRICT CATEGORY ENFORCEMENT FOR VARIOUS PROBLEM TYPES
+    
+    // PUTTING: Check if this is a putting problem with strict enforcement
     const isPuttingProblem = this.specificProblem.includes('putt') || 
                            this.specificProblem.includes('green') ||
                            this.specificProblem.includes('speed on the green') ||
@@ -48,7 +50,38 @@ export class ChallengeRelevanceCalculator {
       return -1; // Completely disqualify non-putting challenges for putting problems
     }
     
-    // Special handling for bunker/sand problems
+    // DRIVING: Check for driver-related problems with strict enforcement
+    const isDrivingProblem = this.specificProblem.includes('driver') ||
+                           this.specificProblem.includes('tee shot') ||
+                           this.specificProblem.includes('off the tee') ||
+                           this.specificProblem.includes('slice') ||
+                           this.specificProblem.includes('hook');
+                           
+    if (isDrivingProblem && !this.isDrivingChallenge(challengeText)) {
+      return -1; // Disqualify non-driving challenges for driving problems
+    }
+    
+    // IRON PLAY: Check for iron play problems with strict enforcement
+    const isIronProblem = this.specificProblem.includes('iron') ||
+                        this.specificProblem.includes('approach') ||
+                        this.specificProblem.includes('ball striking') ||
+                        this.specificProblem.includes('contact');
+                        
+    if (isIronProblem && !this.isIronChallenge(challengeText)) {
+      return -1; // Disqualify non-iron challenges for iron problems
+    }
+    
+    // SHORT GAME: Check for chipping/pitching problems with strict enforcement
+    const isChippingProblem = this.specificProblem.includes('chip') ||
+                            this.specificProblem.includes('pitch') ||
+                            this.specificProblem.includes('short game') ||
+                            this.specificProblem.includes('around the green');
+                            
+    if (isChippingProblem && !this.isChippingChallenge(challengeText)) {
+      return -1; // Disqualify non-chipping challenges for short game problems
+    }
+    
+    // BUNKER: Check for bunker/sand problems with strict enforcement
     const isBunkerProblem = this.specificProblem.includes('bunker') || 
                           this.specificProblem.includes('sand');
                           
@@ -118,6 +151,97 @@ export class ChallengeRelevanceCalculator {
     }
     
     return puttingTermCount >= 2; // Need at least 2 putting terms to qualify
+  }
+  
+  private isDrivingChallenge(challengeText: string): boolean {
+    // Check category directly first
+    if (this.challenge.category && 
+        (this.challenge.category.toLowerCase().includes('driv') || 
+         this.challenge.category.toLowerCase().includes('tee'))) {
+      return true;
+    }
+    
+    // Check title for driver references
+    if (this.challenge.title && 
+        (this.challenge.title.toLowerCase().includes('driv') || 
+         this.challenge.title.toLowerCase().includes('tee') ||
+         this.challenge.title.toLowerCase().includes('slice') ||
+         this.challenge.title.toLowerCase().includes('hook'))) {
+      return true;
+    }
+    
+    // Count driving terminology
+    const drivingTerms = ['driver', 'tee shot', 'off the tee', 'slice', 'hook', 'draw', 'fade'];
+    let count = 0;
+    
+    for (const term of drivingTerms) {
+      if (challengeText.includes(term)) {
+        count++;
+      }
+    }
+    
+    return count >= 2; // Need at least 2 driving terms to qualify
+  }
+  
+  private isIronChallenge(challengeText: string): boolean {
+    // Check category directly first
+    if (this.challenge.category && 
+        (this.challenge.category.toLowerCase().includes('iron') || 
+         this.challenge.category.toLowerCase().includes('approach') ||
+         this.challenge.category.toLowerCase().includes('ball striking'))) {
+      return true;
+    }
+    
+    // Check title for iron references
+    if (this.challenge.title && 
+        (this.challenge.title.toLowerCase().includes('iron') || 
+         this.challenge.title.toLowerCase().includes('approach') ||
+         this.challenge.title.toLowerCase().includes('contact') ||
+         this.challenge.title.toLowerCase().includes('ball striking'))) {
+      return true;
+    }
+    
+    // Count iron terminology
+    const ironTerms = ['iron', 'approach', 'fairway', 'ball striking', 'contact', 'compress', 'divot'];
+    let count = 0;
+    
+    for (const term of ironTerms) {
+      if (challengeText.includes(term)) {
+        count++;
+      }
+    }
+    
+    return count >= 2; // Need at least 2 iron terms to qualify
+  }
+  
+  private isChippingChallenge(challengeText: string): boolean {
+    // Check category directly first
+    if (this.challenge.category && 
+        (this.challenge.category.toLowerCase().includes('chip') || 
+         this.challenge.category.toLowerCase().includes('pitch') ||
+         this.challenge.category.toLowerCase().includes('short game'))) {
+      return true;
+    }
+    
+    // Check title for chipping references
+    if (this.challenge.title && 
+        (this.challenge.title.toLowerCase().includes('chip') || 
+         this.challenge.title.toLowerCase().includes('pitch') ||
+         this.challenge.title.toLowerCase().includes('short game'))) {
+      return true;
+    }
+    
+    // Count chipping terminology
+    const chippingTerms = ['chip', 'pitch', 'short game', 'around the green', 'up and down', 'flop', 'lob'];
+    let count = 0;
+    
+    for (const term of chippingTerms) {
+      if (challengeText.includes(term)) {
+        count++;
+      }
+    }
+    
+    return count >= 1; // Just one chipping term is sufficient as they're specific
   }
   
   private isBunkerChallenge(challengeText: string): boolean {

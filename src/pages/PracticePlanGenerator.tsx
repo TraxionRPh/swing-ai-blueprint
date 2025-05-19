@@ -57,17 +57,64 @@ const PracticePlanGenerator = () => {
     }
   }, [drills, drillIds]);
 
-  // Function to determine if drills focus on putting - SIMPLIFIED & STRICT
-  const isPuttingRelated = useCallback((drill: Drill) => {
-    if (!drill) return false;
+  // Function to determine drill category for accurate practice plan generation
+  const getDrillCategory = useCallback((drill: Drill): string => {
+    if (!drill) return 'general';
     
-    // STRICT CATEGORY CHECK - most reliable indicator
-    if (drill.category?.toLowerCase() === 'putting') {
-      return true;
+    // Use strict category check - most reliable indicator
+    if (drill.category) {
+      const category = drill.category.toLowerCase();
+      if (category === 'putting' || category.includes('putt')) {
+        return 'putting';
+      }
+      if (category === 'driving' || category.includes('driver') || category.includes('tee')) {
+        return 'driving';
+      }
+      if (category.includes('iron') || category.includes('approach')) {
+        return 'iron_play';
+      }
+      if (category.includes('chip') || category.includes('pitch') || category.includes('short game')) {
+        return 'short_game';
+      }
+      if (category.includes('bunker') || category.includes('sand')) {
+        return 'bunker';
+      }
     }
     
-    return false; // ONLY use category for determination
+    // No clear category found
+    return 'general';
   }, []);
+
+  // Determine the dominant drill category for all selected drills
+  const getDominantCategory = useCallback((drills: Drill[]): string => {
+    if (!drills?.length) return 'general';
+    
+    const categoryCounts: Record<string, number> = {
+      putting: 0,
+      driving: 0,
+      iron_play: 0,
+      short_game: 0,
+      bunker: 0,
+      general: 0
+    };
+    
+    drills.forEach(drill => {
+      const category = getDrillCategory(drill);
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+    
+    let maxCount = 0;
+    let dominantCategory = 'general';
+    
+    Object.entries(categoryCounts).forEach(([category, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantCategory = category;
+      }
+    });
+    
+    return dominantCategory;
+  }, [getDrillCategory]);
 
   const generatePracticeIssue = () => {
     if (selectedDrills.length === 0) {
@@ -90,15 +137,29 @@ const PracticePlanGenerator = () => {
       const focus = selectedDrills.flatMap(d => d.focus || []);
       const categories = [...new Set(selectedDrills.map(d => d.category))];
       
-      // Check if this is primarily a putting-focused plan - STRICT CATEGORY CHECK
-      const isPuttingFocused = categories.some(c => c?.toLowerCase() === 'putting');
+      // Determine the dominant category for these drills
+      const dominantCategory = getDominantCategory(selectedDrills);
       
       // Generate an issue based on the selected drills
       let issue = `Create a practice plan focusing on ${focus.slice(0, 3).join(', ')} using drills for ${categories.join(' and ')}. Include drills: ${selectedDrills.map(d => d.title).join(', ')}`;
       
-      // Add explicit putting instruction if putting-focused
-      if (isPuttingFocused) {
-        issue = `PUTTING PRACTICE PLAN: ${issue} THIS IS STRICTLY A PUTTING-ONLY PRACTICE PLAN: ONLY include putting drills. No iron drills, no chipping drills, ONLY PUTTING drills with category="putting".`;
+      // Add explicit category instruction based on dominant drill type
+      switch (dominantCategory) {
+        case 'putting':
+          issue = `STRICTLY PUTTING ONLY: ${issue} - THIS IS A PUTTING-ONLY PRACTICE PLAN: ONLY use putting drills with category="putting".`;
+          break;
+        case 'driving':
+          issue = `STRICTLY DRIVING ONLY: ${issue} - THIS IS A DRIVING-ONLY PRACTICE PLAN: ONLY use driving drills related to tee shots and long game.`;
+          break;
+        case 'iron_play':
+          issue = `STRICTLY IRON PLAY ONLY: ${issue} - THIS IS AN IRON PLAY PLAN: ONLY use drills related to iron shots and approach shots.`;
+          break;
+        case 'short_game':
+          issue = `STRICTLY SHORT GAME ONLY: ${issue} - THIS IS A SHORT GAME PLAN: ONLY use chipping and pitching drills.`;
+          break;
+        case 'bunker':
+          issue = `STRICTLY BUNKER PLAY ONLY: ${issue} - THIS IS A BUNKER/SAND PLAN: ONLY use drills for bunker shots and sand play.`;
+          break;
       }
 
       const plan = await generatePlan(user?.id, issue, undefined, planDuration);

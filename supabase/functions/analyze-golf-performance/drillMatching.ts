@@ -1,4 +1,3 @@
-
 import { ProblemCategory, validateContextMatch } from './golfCategorization.ts';
 import { DrillRelevanceCalculator } from './matchers/drillRelevanceCalculator.ts';
 import { ChallengeRelevanceCalculator } from './matchers/challengeRelevanceCalculator.ts';
@@ -67,6 +66,143 @@ export function isPuttingRelated(drill: any): boolean {
   return secondaryMatches >= 2;
 }
 
+// Function to identify driving-related drills
+export function isDrivingRelated(drill: any): boolean {
+  if (!drill) return false;
+  
+  // Direct category check (strongest indicator)
+  if (drill.category?.toLowerCase() === 'driving' || 
+      drill.category?.toLowerCase().includes('tee shot')) {
+    return true;
+  }
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
+  ].join(' ');
+  
+  // Primary driving indicators
+  const primaryDrivingTerms = [
+    'driver', 'tee shot', 'off the tee', 'slice', 'hook'
+  ];
+  
+  // Check for obvious driving terms
+  for (const term of primaryDrivingTerms) {
+    if (drillText.includes(term)) {
+      return true;
+    }
+  }
+  
+  // Secondary driving indicators
+  const secondaryDrivingTerms = [
+    'swing path', 'face angle', 'draw', 'fade', 'long game'
+  ];
+  
+  // For secondary terms, require multiple matches
+  let secondaryMatches = 0;
+  for (const term of secondaryDrivingTerms) {
+    if (drillText.includes(term)) {
+      secondaryMatches++;
+    }
+  }
+  
+  return secondaryMatches >= 2;
+}
+
+// Function to identify iron play drills
+export function isIronPlayRelated(drill: any): boolean {
+  if (!drill) return false;
+  
+  // Direct category check
+  if (drill.category?.toLowerCase() === 'iron play' || 
+      drill.category?.toLowerCase().includes('approach') ||
+      drill.category?.toLowerCase().includes('ball striking')) {
+    return true;
+  }
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
+  ].join(' ');
+  
+  // Primary iron play indicators
+  const primaryIronTerms = [
+    'iron', 'approach', 'ball striking', 'contact', 'compress'
+  ];
+  
+  // Check for obvious iron terms
+  for (const term of primaryIronTerms) {
+    if (drillText.includes(term)) {
+      return true;
+    }
+  }
+  
+  // Secondary iron play indicators
+  const secondaryIronTerms = [
+    'divot', 'trajectory', 'fairway', 'strike', 'turf'
+  ];
+  
+  // For secondary terms, require multiple matches
+  let secondaryMatches = 0;
+  for (const term of secondaryIronTerms) {
+    if (drillText.includes(term)) {
+      secondaryMatches++;
+    }
+  }
+  
+  return secondaryMatches >= 2;
+}
+
+// Function to identify chipping/short game drills
+export function isChippingRelated(drill: any): boolean {
+  if (!drill) return false;
+  
+  // Direct category check
+  if (drill.category?.toLowerCase() === 'short game' || 
+      drill.category?.toLowerCase().includes('chip') ||
+      drill.category?.toLowerCase().includes('pitch')) {
+    return true;
+  }
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
+  ].join(' ');
+  
+  // Primary chipping indicators
+  const primaryChippingTerms = [
+    'chip', 'pitch', 'short game', 'around the green', 'wedge'
+  ];
+  
+  // Check for obvious chipping terms
+  for (const term of primaryChippingTerms) {
+    if (drillText.includes(term)) {
+      return true;
+    }
+  }
+  
+  // Secondary chipping indicators
+  const secondaryChippingTerms = [
+    'lob', 'flop', 'up and down', 'landing spot', 'roll out'
+  ];
+  
+  // For secondary terms, require multiple matches
+  let secondaryMatches = 0;
+  for (const term of secondaryChippingTerms) {
+    if (drillText.includes(term)) {
+      secondaryMatches++;
+    }
+  }
+  
+  return secondaryMatches >= 2;
+}
+
 // Strong negative indicators that a drill is NOT putting related
 export function isDefinitelyNotPuttingRelated(drill: any): boolean {
   if (!drill) return true;
@@ -109,6 +245,47 @@ export function isDefinitelyNotPuttingRelated(drill: any): boolean {
   
   // Multiple non-putting terms is a strong signal
   return nonPuttingMatches >= 2;
+}
+
+// Strong negative indicators for driving drills
+export function isDefinitelyNotDrivingRelated(drill: any): boolean {
+  if (!drill) return true;
+  
+  // Check category directly first (most reliable)
+  if (drill.category && 
+      ['putting', 'short game', 'bunker', 'sand', 'chipping', 'pitching']
+        .includes(drill.category.toLowerCase())) {
+    return true;
+  }
+  
+  const drillText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(Array.isArray(drill.focus) ? drill.focus.map((f: string) => f.toLowerCase()) : [])
+  ].join(' ');
+  
+  // These terms strongly indicate non-driving drills
+  const nonDrivingIndicators = [
+    'putt', 'green', 'chip', 'pitch', 'bunker', 'sand', 'short game'
+  ];
+  
+  // Look for strong indicators in title
+  for (const term of nonDrivingIndicators) {
+    if (drill.title?.toLowerCase().includes(term)) {
+      return true;
+    }
+  }
+  
+  // Count indicators in full text
+  let nonDrivingMatches = 0;
+  for (const term of nonDrivingIndicators) {
+    if (drillText.includes(term)) {
+      nonDrivingMatches++;
+    }
+  }
+  
+  return nonDrivingMatches >= 2;
 }
 
 // Enhanced function for bunker-related drills with improved detection
@@ -229,21 +406,9 @@ export function isDrillRelevantToProblem(drill: any, problem: string, category?:
     return validateContextMatch(drillText, problem, category);
   }
   
-  // Special handling for bunker problems - enhanced
-  if (problemLower.includes('bunker') || 
-      problemLower.includes('sand') || 
-      problemLower.includes('trap')) {
-    
-    // First, check exclusions - a bunker drill should not be a putting drill
-    if (isPuttingRelated(drill)) {
-      return false;
-    }
-    
-    // Then verify it is specifically bunker-related
-    return isBunkerRelated(drill);
-  }
+  // STRICT CATEGORY-BASED FILTERING
   
-  // Special handling for putting problems - strict filtering
+  // Putting problems - strict category enforcement
   if (problemLower.includes('putt') || 
       problemLower.includes('green') || 
       problemLower.includes('lag') ||
@@ -256,6 +421,54 @@ export function isDrillRelevantToProblem(drill: any, problem: string, category?:
     
     // And verify it is putting-related
     return isPuttingRelated(drill);
+  }
+  
+  // Driving problems - strict category enforcement
+  if (problemLower.includes('driv') || 
+      problemLower.includes('tee shot') || 
+      problemLower.includes('off the tee') ||
+      problemLower.includes('slice') ||
+      problemLower.includes('hook')) {
+    
+    // For driving problems, strictly check that it's not a non-driving drill
+    if (isDefinitelyNotDrivingRelated(drill)) {
+      return false;
+    }
+    
+    // And verify it is driving-related
+    return isDrivingRelated(drill);
+  }
+  
+  // Iron problems - strict category enforcement
+  if (problemLower.includes('iron') || 
+      problemLower.includes('approach') || 
+      problemLower.includes('ball striking') ||
+      problemLower.includes('contact')) {
+    
+    return isIronPlayRelated(drill);
+  }
+  
+  // Chipping/short game problems - strict category enforcement
+  if (problemLower.includes('chip') || 
+      problemLower.includes('pitch') || 
+      problemLower.includes('short game') ||
+      problemLower.includes('around the green')) {
+    
+    return isChippingRelated(drill);
+  }
+  
+  // Bunker/sand problems - strict category enforcement
+  if (problemLower.includes('bunker') || 
+      problemLower.includes('sand') || 
+      problemLower.includes('trap')) {
+    
+    // First, check exclusions - a bunker drill should not be a putting drill
+    if (isPuttingRelated(drill)) {
+      return false;
+    }
+    
+    // Then verify it is specifically bunker-related
+    return isBunkerRelated(drill);
   }
   
   // Special handling for topping/thin hitting problems
@@ -274,43 +487,6 @@ export function isDrillRelevantToProblem(drill: any, problem: string, category?:
            drillText.includes('compress') || 
            drillText.includes('impact') ||
            drillText.includes('position');
-  }
-  
-  // Special handling for driving/slicing problems
-  if (problemLower.includes('slice') || 
-      problemLower.includes('hook') || 
-      problemLower.includes('driver') || 
-      problemLower.includes('off the tee') || 
-      problemLower.includes('tee shot')) {
-    
-    if (drill.category?.toLowerCase() === 'putting' || drillText.includes('putt')) {
-      return false; // Putting drills aren't relevant for driving problems
-    }
-    
-    return drillText.includes('driver') || 
-           drillText.includes('tee') || 
-           drillText.includes('slice') || 
-           drillText.includes('hook') ||
-           drillText.includes('path');
-  }
-  
-  // Special handling for short game problems
-  if (problemLower.includes('chip') || 
-      problemLower.includes('pitch') || 
-      problemLower.includes('short game')) {
-    
-    if (drill.category?.toLowerCase() === 'putting' || drillText.includes('putt')) {
-      return false; // Putting drills aren't directly relevant for short game
-    }
-    
-    if (drillText.includes('driver') || drillText.includes('tee shot')) {
-      return false; // Driver drills aren't relevant for short game
-    }
-    
-    return drillText.includes('chip') || 
-           drillText.includes('pitch') || 
-           drillText.includes('wedge') || 
-           drillText.includes('short game');
   }
   
   // General relevance check - stronger keyword matching
