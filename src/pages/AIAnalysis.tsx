@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PerformanceRadarChart } from "@/components/ai-analysis/PerformanceRadarChart";
 import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
 import { IdentifiedIssues } from "@/components/ai-analysis/IdentifiedIssues";
@@ -8,12 +8,36 @@ import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { Loading } from "@/components/ui/loading";
 import { AIAnalysisHeader } from "@/components/ai-analysis/AIAnalysisHeader";
 import { AIAnalysisInfoBanner } from "@/components/ai-analysis/AIAnalysisInfoBanner";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AIAnalysis = () => {
   const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
+  const { toast } = useToast();
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  
+  // Get current user ID
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user?.id) {
+        setUserId(data.user.id);
+      }
+    };
+    
+    fetchUserId();
+  }, []);
   
   const handleRefreshAnalysis = () => {
-    generatePlan(undefined, "", "beginner", "1");
+    try {
+      generatePlan(userId, "", "beginner", "1")
+        .catch(error => {
+          console.error("Error refreshing analysis:", error);
+          // Additional error is already shown by the toast in useAIAnalysis
+        });
+    } catch (error) {
+      console.error("Error in refresh analysis handler:", error);
+    }
   };
 
   if (isGenerating) {

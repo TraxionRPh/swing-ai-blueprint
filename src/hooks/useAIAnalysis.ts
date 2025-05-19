@@ -5,6 +5,7 @@ import { HandicapLevel } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { usePracticePlanGeneration } from './usePracticePlanGeneration';
 import { useAPIUsageCheck } from './useAPIUsageCheck';
+import { supabase } from "@/integrations/supabase/client";
 
 export const useAIAnalysis = () => {
   const { generatePlan: generatePracticePlan, isGenerating: isPlanGenerating } = usePracticePlanGeneration();
@@ -27,31 +28,35 @@ export const useAIAnalysis = () => {
       setIsAnalyzing(true);
       
       // Check if the user has API usage available and get usage info
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-api-usage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
-        },
-        body: JSON.stringify({ 
+      // Use supabase client instead of direct fetch to ensure proper auth headers
+      const { data: apiData, error: apiError } = await supabase.functions.invoke('check-api-usage', {
+        body: { 
           user_id: userId, 
           type: 'ai_analysis' 
-        })
+        }
       });
       
-      const apiData = await response.json();
+      if (apiError) {
+        console.error("API usage check error:", apiError);
+        toast({
+          title: "Service Unavailable",
+          description: "Unable to check API usage. Please try again later.",
+          variant: "destructive"
+        });
+        throw new Error("Failed to check API usage");
+      }
       
-      if (apiData.currentUsage !== undefined && apiData.dailyLimit !== undefined) {
+      if (apiData && apiData.currentUsage !== undefined && apiData.dailyLimit !== undefined) {
         setApiUsageInfo({
           currentUsage: apiData.currentUsage,
           dailyLimit: apiData.dailyLimit
         });
       }
       
-      if (!apiData.success || apiData.limitReached) {
+      if (!apiData?.success || apiData?.limitReached) {
         toast({
           title: "API Limit Reached",
-          description: apiData.message || "You've reached your limit of AI-powered analyses in the last 24 hours. Upgrade to premium for unlimited access.",
+          description: apiData?.message || "You've reached your limit of AI-powered analyses in the last 24 hours. Upgrade to premium for unlimited access.",
           variant: "destructive"
         });
         throw new Error("API usage limit reached");
