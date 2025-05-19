@@ -48,6 +48,18 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
 
+  useEffect(() => {
+    // Detect 9-hole rounds from URL or session storage
+    const path = window.location.pathname;
+    if (path.includes('/rounds/new/9')) {
+      console.log("9-hole round detected from URL");
+      setHoleCount(9);
+    } else if (sessionStorage.getItem('current-hole-count') === '9') {
+      console.log("9-hole round detected from session storage");
+      setHoleCount(9);
+    }
+  }, []);
+
   // Set parent loading state based on local loading state
   useEffect(() => {
     setDetailLoading(isLoading);

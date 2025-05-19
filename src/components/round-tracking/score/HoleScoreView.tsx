@@ -60,14 +60,22 @@ export const HoleScoreView = ({
   }, [handlePrevious, currentHole]);
   
   const handleReviewRound = useCallback(() => {
-    console.log("Review Round button clicked, showing final scorecard");
-    // If onFinish prop is provided, call it, otherwise use the local state
-    if (onFinish) {
-      onFinish();
+    console.log("Review Round button clicked, checking if should show final scorecard");
+    
+    // Only show final score when completing a full 18-hole round
+    if (holeCount === 18 && currentHole === 18) {
+      console.log("Showing final scorecard for 18-hole round");
+      if (onFinish) {
+        onFinish();
+      } else {
+        setShowFinalScore(true);
+      }
     } else {
-      setShowFinalScore(true);
+      // For 9-hole rounds or other scenarios, just move forward without showing the dialog
+      console.log("Not showing final scorecard for non-18-hole round");
+      handleNext();
     }
-  }, [onFinish]);
+  }, [onFinish, holeCount, currentHole, handleNext]);
   
   const handleCancelReview = useCallback(() => {
     console.log("Cancelling review, returning to hole view");
