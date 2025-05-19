@@ -40,14 +40,9 @@ export const CourseResult = ({
   };
 
   const handleStartRound = (e: React.MouseEvent) => {
-    // Prevent the event from bubbling up to the card's click handler
     e.stopPropagation();
-    
-    // Call onSelect with the course and hole count
     onSelect(course, holeCount);
     setIsExpanded(false);
-    
-    // Navigate to the new round page
     navigate('/rounds/new');
   };
 
@@ -58,7 +53,9 @@ export const CourseResult = ({
     }
   };
 
-  const handleHoleCountChange = (value: string) => {
+  const handleHoleCountChange = (e: React.MouseEvent, value: string) => {
+    // Stop propagation to prevent the card from collapsing
+    e.stopPropagation();
     setHoleCount(parseInt(value));
   };
 
@@ -108,14 +105,16 @@ export const CourseResult = ({
                 <RadioGroup 
                   defaultValue="18" 
                   value={holeCount.toString()}
-                  onValueChange={handleHoleCountChange}
+                  onValueChange={(value) => {
+                    setHoleCount(parseInt(value));
+                  }}
                   className="grid grid-cols-2 gap-4"
                 >
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                     <RadioGroupItem value="9" id={`nine-${course.id}`} />
                     <Label htmlFor={`nine-${course.id}`}>9 Holes</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                     <RadioGroupItem value="18" id={`eighteen-${course.id}`} />
                     <Label htmlFor={`eighteen-${course.id}`}>18 Holes</Label>
                   </div>
