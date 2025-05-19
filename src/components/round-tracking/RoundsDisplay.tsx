@@ -9,12 +9,10 @@ import { InProgressRoundCard } from "./InProgressRoundCard";
 import { Loading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
-
 interface RoundsDisplayProps {
   onCourseSelect: (course: Course, holeCount?: number) => void;
   onError?: (error: string) => void;
 }
-
 interface RoundWithCourse {
   id: string;
   total_score: number | null;
@@ -25,24 +23,27 @@ interface RoundWithCourse {
   }[];
   golf_courses: Course;
 }
-
-export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) => {
+export const RoundsDisplay = ({
+  onCourseSelect,
+  onError
+}: RoundsDisplayProps) => {
   const [inProgressRounds, setInProgressRounds] = useState<RoundWithCourse[]>([]);
   const [completedRounds, setCompletedRounds] = useState<RoundWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
-
   const fetchRounds = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
       console.log("Fetching rounds data from supabase");
-      const { data: rounds, error } = await supabase
-        .from('rounds')
-        .select(`
+      const {
+        data: rounds,
+        error
+      } = await supabase.from('rounds').select(`
           id,
           total_score,
           hole_count,
@@ -64,31 +65,26 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
               slope_rating
             )
           )
-        `)
-        .order('created_at', { ascending: false });
-
+        `).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
-      
       console.log("Rounds data fetched:", rounds?.length || 0, "rounds");
-
       const inProgress = rounds?.filter(round => round.total_score === null) || [];
       const completed = rounds?.filter(round => round.total_score !== null) || [];
-      
       console.log("In-progress rounds:", inProgress.length);
       console.log("Completed rounds:", completed.length);
-
       setInProgressRounds(inProgress as RoundWithCourse[]);
       setCompletedRounds(completed as RoundWithCourse[]);
     } catch (error) {
       console.error("Error loading rounds:", error);
       const errorMessage = "Failed to load rounds data";
       setError(errorMessage);
-      
+
       // Pass the error to the parent component if callback exists
       if (onError) {
         onError(errorMessage);
       }
-      
       toast({
         title: "Error loading rounds",
         description: "Please try again later",
@@ -107,44 +103,32 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
         console.log("Forced exit from loading state in RoundsDisplay after timeout");
       }
     }, 3000); // reduced from 8s to 3s for faster response
-    
+
     return () => clearTimeout(loadingTimeout);
   }, [loading]);
-
   useEffect(() => {
     console.log("RoundsDisplay mounted, fetching rounds");
     const controller = new AbortController();
-    
     fetchRounds().catch(err => {
       if (controller.signal.aborted) return;
       console.error("Failed to fetch rounds:", err);
     });
-    
     return () => {
       controller.abort();
     };
   }, [fetchRounds]);
-
   const handleDeleteRound = async (roundId: string) => {
     try {
       console.log("Deleting round:", roundId);
-      
-      const { error: holeScoresError } = await supabase
-        .from('hole_scores')
-        .delete()
-        .eq('round_id', roundId);
-
+      const {
+        error: holeScoresError
+      } = await supabase.from('hole_scores').delete().eq('round_id', roundId);
       if (holeScoresError) throw holeScoresError;
-
-      const { error } = await supabase
-        .from('rounds')
-        .delete()
-        .eq('id', roundId);
-
+      const {
+        error
+      } = await supabase.from('rounds').delete().eq('id', roundId);
       if (error) throw error;
-
       await fetchRounds();
-      
       toast({
         title: "Round deleted",
         description: "The round has been successfully deleted"
@@ -158,20 +142,15 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
       });
     }
   };
-
   if (loading) {
-    return (
-      <Card className="mb-6 min-h-[200px]">
+    return <Card className="mb-6 min-h-[200px]">
         <CardContent className="pt-6 flex justify-center items-center">
           <Loading message="Loading rounds..." className="min-h-[150px]" />
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-  
   if (error) {
-    return (
-      <Card className="mb-6">
+    return <Card className="mb-6">
         <CardContent className="pt-6">
           <p className="text-center text-destructive">{error}</p>
           <Button variant="outline" onClick={fetchRounds} className="mt-4 mx-auto block">
@@ -179,88 +158,44 @@ export const RoundsDisplay = ({ onCourseSelect, onError }: RoundsDisplayProps) =
             Retry
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  const getLastCompletedHole = (holeScores) => {
+  const getLastCompletedHole = holeScores => {
     if (!holeScores || holeScores.length === 0) {
       return 0;
     }
-    
+
     // Find all holes that have scores
-    const scoredHoles = holeScores
-      .filter(hole => hole.score && hole.score > 0)
-      .sort((a, b) => a.hole_number - b.hole_number);
-    
+    const scoredHoles = holeScores.filter(hole => hole.score && hole.score > 0).sort((a, b) => a.hole_number - b.hole_number);
     if (scoredHoles.length > 0) {
       // Get the last hole with a score
       return scoredHoles[scoredHoles.length - 1].hole_number;
     }
-    
     return 0;
   };
-
   const renderInProgressRounds = () => {
     if (inProgressRounds.length === 0) return null;
-    
-    return inProgressRounds.map((round) => {
+    return inProgressRounds.map(round => {
       const lastCompletedHole = getLastCompletedHole(round.hole_scores);
-      
-      return (
-        <InProgressRoundCard
-          key={round.id}
-          roundId={round.id}
-          courseName={round.golf_courses.name}
-          lastHole={lastCompletedHole}
-          holeCount={round.hole_count || 18}
-          onDelete={() => handleDeleteRound(round.id)}
-        />
-      );
+      return <InProgressRoundCard key={round.id} roundId={round.id} courseName={round.golf_courses.name} lastHole={lastCompletedHole} holeCount={round.hole_count || 18} onDelete={() => handleDeleteRound(round.id)} />;
     });
   };
-
   if (inProgressRounds.length === 0 && completedRounds.length === 0) {
-    return (
-      <Card className="mb-6">
+    return <Card className="mb-6">
         <CardContent className="pt-6">
           <p className="text-center text-muted-foreground">No rounds found. Start a new round by selecting a course below.</p>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   const renderRoundsList = (rounds: RoundWithCourse[], title: string, isInProgress: boolean) => {
     if (rounds.length === 0) return null;
-
-    return (
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {rounds.map((round) => (
-            <CourseResult
-              key={round.id}
-              course={round.golf_courses}
-              onSelect={isInProgress ? 
-                () => navigate(`/rounds/${round.id}`, { replace: true }) : 
-                (course) => onCourseSelect(course, round.hole_count || 18)
-              }
-              isInProgress={isInProgress}
-              roundId={isInProgress ? round.id : undefined}
-              onDelete={isInProgress ? () => handleDeleteRound(round.id) : undefined}
-            />
-          ))}
-        </CardContent>
-      </Card>
-    );
+    return <Card className="mb-6">
+        
+        
+      </Card>;
   };
-
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       {renderInProgressRounds()}
       {renderRoundsList(completedRounds, "Recently Completed Rounds", false)}
-    </div>
-  );
+    </div>;
 };
