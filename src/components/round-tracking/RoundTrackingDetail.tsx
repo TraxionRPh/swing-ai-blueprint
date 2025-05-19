@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { Loading } from "@/components/ui/loading";
-import { FinalScoreCard } from "@/components/round-tracking/FinalScoreCard";
+import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 
 interface Props {
   onBack: () => void;
@@ -70,11 +70,9 @@ export const RoundTrackingDetail = ({
   
   const handleSubmitRound = async () => {
     console.log("Submitting final round score");
-    if (typeof finishRound === 'function') {
-      await finishRound(holeCount);
-    }
     clearResumeData();
-    onBack();
+    setShowFinalScore(false);
+    // The actual submission happens in FinalScoreView
   };
 
   const handleShowReviewCard = () => {
@@ -82,23 +80,20 @@ export const RoundTrackingDetail = ({
     setShowFinalScore(true);
   };
 
-  const handleCancelReview = () => {
-    console.log("Cancelling review, returning to hole view");
-    setShowFinalScore(false);
-  };
-  
   if (isLoading) {
     return <Loading message="Loading hole data..." minHeight={250} />;
   }
 
   if (showFinalScore) {
     return (
-      <FinalScoreCard
-        holeScores={holeScores.slice(0, holeCount)}
-        isOpen={true}
-        onConfirm={handleSubmitRound}
-        onCancel={handleCancelReview}
+      <FinalScoreView
+        holeScores={holeScores}
         holeCount={holeCount}
+        finishRound={finishRound}
+        onBack={() => {
+          setShowFinalScore(false);
+          clearResumeData();
+        }}
       />
     );
   }
@@ -117,6 +112,7 @@ export const RoundTrackingDetail = ({
       teeColor={teeId ? "blue" : undefined}
       courseId={courseId || undefined}
       teeId={teeId || undefined}
+      onFinish={handleShowReviewCard}
     />
   );
 };

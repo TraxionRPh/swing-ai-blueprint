@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,19 @@ export const FinalScoreCard = ({
     const difference = totalScore - totalPar;
     if (difference === 0) return "E";
     return difference > 0 ? `(+${difference})` : `(${difference})`;
+  };
+
+  // Handler for the submit button that logs the click for debugging
+  const handleSubmit = () => {
+    console.log("Submitting round data to Supabase:", { 
+      totalScore,
+      totalPutts: frontNineTotals.putts + backNineTotals.putts,
+      fairwaysHit: frontNineTotals.fairways + backNineTotals.fairways,
+      greensInRegulation: frontNineTotals.greens + backNineTotals.greens
+    });
+    
+    // Call the onConfirm handler from parent to save the data to Supabase
+    onConfirm();
   };
 
   return (
@@ -136,7 +148,13 @@ export const FinalScoreCard = ({
 
         <DialogFooter className="mt-2">
           <Button variant="outline" onClick={onCancel}>Back</Button>
-          <Button onClick={onConfirm}>Submit Round</Button>
+          <Button 
+            variant="review" 
+            onClick={handleSubmit} 
+            className="ml-2"
+          >
+            Submit Round
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
