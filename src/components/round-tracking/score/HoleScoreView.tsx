@@ -21,6 +21,7 @@ export interface HoleScoreViewProps {
   courseId?: string;
   teeId?: string;
   holeScores?: HoleData[];
+  onFinish?: () => void; // Added this prop to match what's being passed in RoundTrackingDetail
 }
 
 export const HoleScoreView = ({
@@ -37,7 +38,8 @@ export const HoleScoreView = ({
   teeColor,
   courseId,
   teeId,
-  holeScores = []
+  holeScores = [],
+  onFinish // Added this prop to the destructuring
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
@@ -59,8 +61,13 @@ export const HoleScoreView = ({
   
   const handleReviewRound = useCallback(() => {
     console.log("Review Round button clicked, showing final scorecard");
-    setShowFinalScore(true);
-  }, []);
+    // If onFinish prop is provided, call it, otherwise use the local state
+    if (onFinish) {
+      onFinish();
+    } else {
+      setShowFinalScore(true);
+    }
+  }, [onFinish]);
   
   const handleCancelReview = useCallback(() => {
     console.log("Cancelling review, returning to hole view");
