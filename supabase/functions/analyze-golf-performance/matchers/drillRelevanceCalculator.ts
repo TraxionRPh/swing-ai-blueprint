@@ -28,16 +28,19 @@ export class DrillRelevanceCalculator {
   calculateScore(): number {
     let score = 0;
     
-    // Special handling for putting problems
+    // Special handling for putting problems - STRICTER FILTERING
     const isPuttingProblem = this.specificProblem.includes('putt') || 
-                           this.specificProblem.includes('green');
+                           this.specificProblem.includes('green') ||
+                           this.specificProblem.includes('speed on the green') ||
+                           this.specificProblem.includes('hole') ||
+                           this.specificProblem.includes('lag');
     
     if (isPuttingProblem) {
-      // For putting problems, prioritize putting drills
+      // For putting problems, prioritize putting drills and exclude non-putting drills entirely
       if (this.isPuttingDrill()) {
-        score += 0.8; // Strong boost for putting drills
+        score += 1.0; // Strong boost for putting drills
       } else {
-        return 0.1; // Very low score for non-putting drills when putting is the problem
+        return 0.0; // EXCLUDE completely non-putting drills from putting plans
       }
     }
     
@@ -96,19 +99,23 @@ export class DrillRelevanceCalculator {
   }
   
   /**
-   * Determine if this is a putting-related drill
+   * Determine if this is a putting-related drill with STRICTER CRITERIA
    */
   private isPuttingDrill(): boolean {
-    // Direct category check
+    // Direct category check - highest priority indicator
     if (this.drillText.includes('category: putting') || 
-        this.drillText.includes('category:"putting"')) {
+        this.drillText.includes('category:"putting"') ||
+        this.drillText.includes('category: "putting"') ||
+        this.drillText.includes('category:putting')) {
       return true;
     }
     
-    // Check for putting terms in title
+    // Check for putting terms in title - strong indicator
     if (this.drillText.includes('title:') && 
         (this.drillText.split('title:')[1].includes('putt') || 
-         this.drillText.split('title:')[1].includes('green'))) {
+         this.drillText.split('title:')[1].includes('green') ||
+         this.drillText.split('title:')[1].includes('lag') ||
+         this.drillText.split('title:')[1].includes('hole'))) {
       return true;
     }
     
@@ -119,8 +126,8 @@ export class DrillRelevanceCalculator {
       return true;
     }
     
-    // General checks for putting keywords
-    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'lag', 'roll', 'stroke'];
+    // General checks for putting keywords - more comprehensive
+    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'lag', 'roll', 'stroke', 'line', 'speed'];
     let puttingTermCount = 0;
     
     for (const term of puttingTerms) {
@@ -129,7 +136,30 @@ export class DrillRelevanceCalculator {
       }
     }
     
-    return puttingTermCount >= 2; // Require at least 2 putting terms
+    // Exclude drills with strong non-putting indicators
+    if (this.drillText.includes('iron') || 
+        this.drillText.includes('driver') || 
+        this.drillText.includes('chip') || 
+        this.drillText.includes('sand') ||
+        this.drillText.includes('bunker') ||
+        this.drillText.includes('wedge') ||
+        this.drillText.includes('full swing')) {
+      // If these terms appear more than putting terms, it's not a putting drill
+      const nonPuttingTerms = ['iron', 'driver', 'chip', 'sand', 'bunker', 'wedge', 'full swing'];
+      let nonPuttingCount = 0;
+      
+      for (const term of nonPuttingTerms) {
+        if (this.drillText.includes(term)) {
+          nonPuttingCount++;
+        }
+      }
+      
+      if (nonPuttingCount >= puttingTermCount) {
+        return false;
+      }
+    }
+    
+    return puttingTermCount >= 2; // Require at least 2 putting terms to ensure it's putting-focused
   }
   
   /**

@@ -74,10 +74,13 @@ serve(async (req) => {
       console.error("Failed to fetch challenges");
     }
 
-    // Check if this is a putting-related query
+    // Check if this is a putting-related query - ENHANCED DETECTION
     const isPuttingQuery = query.toLowerCase().includes('putt') || 
                          query.toLowerCase().includes('green') ||
-                         query.toLowerCase().includes('hole');
+                         query.toLowerCase().includes('hole') ||
+                         query.toLowerCase().includes('lag') ||
+                         query.toLowerCase().includes('speed on the green') ||
+                         query.toLowerCase().includes('line') && query.toLowerCase().includes('green');
     
     // If it's a putting query, filter to only putting drills before sending to AI
     let drillsToSearch = drills;
@@ -136,14 +139,34 @@ serve(async (req) => {
     // Post-process to ensure relevance - if it's a putting query but we don't have putting drills
     // in the recommendations, try to add some putting-specific drills
     let finalRecommendedDrills = recommendedDrills;
-    if (isPuttingQuery && !recommendedDrills.some(drill => isPuttingRelated(drill))) {
-      console.log("Ensuring putting drills are included for putting query");
-      const puttingDrills = drills.filter(drill => isPuttingRelated(drill));
-      if (puttingDrills.length > 0) {
-        // Take up to 3 putting drills to supplement recommendations
-        const additionalPuttingDrills = puttingDrills.slice(0, 3);
-        finalRecommendedDrills = [...additionalPuttingDrills, ...recommendedDrills]
-          .slice(0, Math.max(3, recommendedDrills.length)); // Keep at least 3 drills
+    if (isPuttingQuery) {
+      // For putting queries, ONLY include putting-related drills
+      const isPuttingPlan = true;
+      const puttingDrills = recommendedDrills.filter(drill => isPuttingRelated(drill));
+      
+      if (puttingDrills.length === 0) {
+        // If we have no putting drills in recommendations, find all putting drills
+        console.log("No putting drills found in recommendations, getting fallback putting drills");
+        const allPuttingDrills = drills.filter(drill => isPuttingRelated(drill));
+        
+        if (allPuttingDrills.length > 0) {
+          // Take up to 4 putting drills as fallback
+          finalRecommendedDrills = allPuttingDrills.slice(0, 4);
+        }
+      } else if (puttingDrills.length < recommendedDrills.length) {
+        // If we have some non-putting drills in the mix, filter them out
+        console.log("Filtering out non-putting drills from recommendations");
+        finalRecommendedDrills = puttingDrills;
+        
+        // If we need more putting drills to fill out the recommendations
+        if (puttingDrills.length < 3) {
+          const additionalPuttingDrills = drills
+            .filter(drill => isPuttingRelated(drill))
+            .filter(drill => !puttingDrills.some(d => d.id === drill.id))
+            .slice(0, 3 - puttingDrills.length);
+            
+          finalRecommendedDrills = [...puttingDrills, ...additionalPuttingDrills];
+        }
       }
     }
     
@@ -153,6 +176,12 @@ serve(async (req) => {
     // Generate a more detailed analysis with clearer, actionable advice
     let analysisText = "";
     if (finalRecommendedDrills.length > 0) {
+      // For analysis, tell the AI specifically if this is a putting question
+      let systemPrompt = generateAnalysisPrompt();
+      if (isPuttingQuery) {
+        systemPrompt += "\n\nThis is specifically about PUTTING - focus your analysis on putting technique and green reading skills.";
+      }
+      
       const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -164,7 +193,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: generateAnalysisPrompt()
+              content: systemPrompt
             },
             {
               role: 'user',

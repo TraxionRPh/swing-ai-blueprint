@@ -37,9 +37,12 @@ export class ChallengeRelevanceCalculator {
       this.challenge.instruction3 || ''
     ].join(' ').toLowerCase();
     
-    // Special handling for putting problems 
+    // Special handling for putting problems - STRICTER FILTERING
     const isPuttingProblem = this.specificProblem.includes('putt') || 
-                           this.specificProblem.includes('green');
+                           this.specificProblem.includes('green') ||
+                           this.specificProblem.includes('speed on the green') ||
+                           this.specificProblem.includes('hole') ||
+                           this.specificProblem.includes('lag');
                            
     if (isPuttingProblem && !this.isPuttingChallenge(challengeText)) {
       return -1; // Disqualify non-putting challenges for putting problems
@@ -91,21 +94,21 @@ export class ChallengeRelevanceCalculator {
   }
   
   private isPuttingChallenge(challengeText: string): boolean {
-    // Check category directly first
+    // Check category directly first - most reliable indicator
     if (this.challenge.category && 
         this.challenge.category.toLowerCase().includes('putt')) {
       return true;
     }
     
-    // Check title for putting references
+    // Check title for putting references - also highly reliable
     if (this.challenge.title && 
         (this.challenge.title.toLowerCase().includes('putt') || 
          this.challenge.title.toLowerCase().includes('green'))) {
       return true;
     }
     
-    // Count putting terminology
-    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'stroke', 'line', 'roll'];
+    // Count putting terminology - more comprehensive check
+    const puttingTerms = ['putt', 'green', 'hole', 'cup', 'stroke', 'line', 'roll', 'lag', 'speed'];
     let puttingTermCount = 0;
     
     for (const term of puttingTerms) {

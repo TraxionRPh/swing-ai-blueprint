@@ -128,7 +128,7 @@ export function getRecommendedDrills(allDrills: Drill[], drillIds: string[]): Dr
 }
 
 /**
- * Check if a drill is putting-related
+ * Check if a drill is putting-related - ENHANCED WITH STRICTER CRITERIA
  * @param drill The drill to check
  * @returns Boolean indicating if the drill is putting-related
  */
@@ -141,21 +141,72 @@ export function isPuttingRelated(drill: Drill): boolean {
   }
   
   // Check title (strong indicator)
-  if (drill.title?.toLowerCase().includes('putt')) {
+  if (drill.title?.toLowerCase().includes('putt') || 
+      drill.title?.toLowerCase().includes('green') ||
+      drill.title?.toLowerCase().includes('hole') ||
+      drill.title?.toLowerCase().includes('lag')) {
     return true;
   }
   
-  // Check in focus areas
+  // Check in focus areas (good indicator)
   if (Array.isArray(drill.focus) && drill.focus.some(f => 
     f.toLowerCase().includes('putt') || 
-    f.toLowerCase().includes('green')
+    f.toLowerCase().includes('green') ||
+    f.toLowerCase().includes('stroke')
   )) {
     return true;
   }
   
-  // Look in overview
-  if (drill.overview?.toLowerCase().includes('putt')) {
+  // Look in overview (weaker indicator)
+  if (drill.overview?.toLowerCase().includes('putt') ||
+      drill.overview?.toLowerCase().includes('green') ||
+      drill.overview?.toLowerCase().includes('hole') ||
+      drill.overview?.toLowerCase().includes('stroke')) {
+    
+    // Check for anti-indicators that suggest it's NOT a putting drill
+    const nonPuttingTerms = ['chip', 'iron', 'driver', 'bunker', 'sand', 'wedge', 'full swing'];
+    for (const term of nonPuttingTerms) {
+      if (drill.title?.toLowerCase().includes(term) || 
+          drill.category?.toLowerCase().includes(term)) {
+        // If these key indicators suggest non-putting, then this is not a true putting drill
+        return false;
+      }
+    }
+    
     return true;
+  }
+  
+  // Check for combinations of putting terms across all drill text
+  const allText = [
+    drill.title?.toLowerCase() || '',
+    drill.overview?.toLowerCase() || '',
+    drill.category?.toLowerCase() || '',
+    ...(Array.isArray(drill.focus) ? drill.focus.map(f => f.toLowerCase()) : [])
+  ].join(' ');
+  
+  const puttingTerms = ['putt', 'green', 'hole', 'cup', 'stroke', 'line', 'lag', 'speed'];
+  let puttingTermCount = 0;
+  
+  for (const term of puttingTerms) {
+    if (allText.includes(term)) {
+      puttingTermCount++;
+    }
+  }
+  
+  // Multiple putting terms is a strong indicator (but check for conflicting indicators)
+  if (puttingTermCount >= 2) {
+    // Check for anti-indicators that suggest it's NOT a putting drill
+    const nonPuttingTerms = ['chip', 'iron', 'driver', 'bunker', 'sand', 'wedge', 'full swing'];
+    let nonPuttingCount = 0;
+    
+    for (const term of nonPuttingTerms) {
+      if (allText.includes(term)) {
+        nonPuttingCount++;
+      }
+    }
+    
+    // If more non-putting terms than putting terms, this is likely not a putting drill
+    return nonPuttingCount < puttingTermCount;
   }
   
   return false;
@@ -178,6 +229,11 @@ Return your response as a simple list of drill IDs in the format:
 \`\`\`
 drillIds: ["id1", "id2", "id3"]
 \`\`\`
+
+IMPORTANT REQUIREMENTS:
+- If the user's issue is about PUTTING, you MUST ONLY select putting-related drills
+- If the user's issue is about BUNKERS, you MUST ONLY select bunker-related drills
+- If the user's issue is about DRIVING, you MUST ONLY select driving-related drills
 
 Do not include any explanation or additional text - ONLY the JSON format with the selected drill IDs.
 `;
