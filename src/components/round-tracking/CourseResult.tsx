@@ -58,6 +58,10 @@ export const CourseResult = ({
     }
   };
 
+  const handleHoleCountChange = (value: string) => {
+    setHoleCount(parseInt(value));
+  };
+
   return (
     <Card 
       className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
@@ -103,8 +107,9 @@ export const CourseResult = ({
                 <h4 className="text-sm font-medium">How many holes?</h4>
                 <RadioGroup 
                   defaultValue="18" 
+                  value={holeCount.toString()}
+                  onValueChange={handleHoleCountChange}
                   className="grid grid-cols-2 gap-4"
-                  onValueChange={(value) => setHoleCount(parseInt(value))}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="9" id={`nine-${course.id}`} />
