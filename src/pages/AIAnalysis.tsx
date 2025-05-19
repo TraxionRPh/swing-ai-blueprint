@@ -15,6 +15,7 @@ const AIAnalysis = () => {
   const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [analysisData, setAnalysisData] = useState<any>(null);
   
   // Get current user ID
   useEffect(() => {
@@ -22,6 +23,18 @@ const AIAnalysis = () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user?.id) {
         setUserId(data.user.id);
+        
+        // Fetch the latest AI practice plan for this user
+        const { data: planData } = await supabase
+          .from('ai_practice_plans')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (planData && planData.length > 0) {
+          setAnalysisData(planData[0]);
+        }
       }
     };
     
@@ -31,6 +44,11 @@ const AIAnalysis = () => {
   const handleRefreshAnalysis = () => {
     try {
       generatePlan(userId, "", "beginner", "1")
+        .then((data) => {
+          if (data) {
+            setAnalysisData(data);
+          }
+        })
         .catch(error => {
           console.error("Error refreshing analysis:", error);
           // Additional error is already shown by the toast in useAIAnalysis
@@ -50,6 +68,18 @@ const AIAnalysis = () => {
     );
   }
 
+  // Get performance data from analysis
+  const performanceData = analysisData?.practice_plan?.performanceInsights?.performance;
+  
+  // Get confidence data
+  const confidenceData = [
+    { date: "Last Week", confidence: 75 },
+    { date: "Today", confidence: 85 }
+  ];
+  
+  // Get current confidence
+  const currentConfidence = confidenceData[confidenceData.length - 1].confidence;
+  
   return (
     <div className="space-y-4 max-w-full overflow-x-hidden">
       <AIAnalysisHeader 
@@ -58,6 +88,40 @@ const AIAnalysis = () => {
         apiUsageInfo={apiUsageInfo}
       />
       <AIAnalysisInfoBanner />
+      
+      {analysisData ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <PerformanceRadarChart data={performanceData} />
+          <ConfidenceChart confidenceData={confidenceData} currentConfidence={currentConfidence} />
+          <IdentifiedIssues issues={analysisData?.rootCauses?.map((cause: string, i: number) => ({
+            area: `Issue ${i+1}`,
+            description: cause,
+            priority: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low'
+          }))} />
+          <PracticeRecommendations 
+            recommendations={
+              analysisData?.practicePlan?.plan?.[0] ? {
+                weeklyFocus: analysisData.practicePlan.plan[0].focus || "Swing Fundamentals",
+                primaryDrill: {
+                  name: analysisData.practicePlan.plan[0].drills?.[0]?.drill?.title || "Alignment Drill",
+                  description: analysisData.practicePlan.plan[0].drills?.[0]?.drill?.overview || "Basic alignment practice",
+                  frequency: `${analysisData.practicePlan.plan[0].drills?.[0]?.sets || 3}x sets, ${analysisData.practicePlan.plan[0].drills?.[0]?.reps || 10}x reps`
+                },
+                secondaryDrill: {
+                  name: analysisData.practicePlan.plan[0].drills?.[1]?.drill?.title || "Swing Path Drill",
+                  description: analysisData.practicePlan.plan[0].drills?.[1]?.drill?.overview || "Practice your swing path",
+                  frequency: `${analysisData.practicePlan.plan[0].drills?.[1]?.sets || 2}x sets, ${analysisData.practicePlan.plan[0].drills?.[1]?.reps || 10}x reps`
+                },
+                weeklyAssignment: analysisData.practicePlan.challenge?.description || "Complete a practice challenge this week"
+              } : undefined
+            }
+          />
+        </div>
+      ) : (
+        <div className="mt-8 text-center">
+          <p className="text-muted-foreground">No analysis data yet. Click "Update Analysis" to generate your first AI analysis.</p>
+        </div>
+      )}
     </div>
   );
 };

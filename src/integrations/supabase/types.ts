@@ -45,6 +45,30 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       challenges: {
         Row: {
           category: string
