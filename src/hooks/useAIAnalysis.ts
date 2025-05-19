@@ -11,6 +11,10 @@ export const useAIAnalysis = () => {
   const { checkAPIUsage } = useAPIUsageCheck();
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [apiUsageInfo, setApiUsageInfo] = useState<{
+    currentUsage?: number;
+    dailyLimit?: number;
+  }>({});
 
   const generatePlan = async (
     userId: string | undefined,
@@ -22,9 +26,34 @@ export const useAIAnalysis = () => {
       console.log("Generating practice plan:", { userId, issue, handicapLevel, planDuration });
       setIsAnalyzing(true);
       
-      // First check if the user has API usage available
-      const canProceed = await checkAPIUsage(userId, 'practice_plan');
-      if (!canProceed) {
+      // Check if the user has API usage available and get usage info
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-api-usage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token')}`
+        },
+        body: JSON.stringify({ 
+          user_id: userId, 
+          type: 'ai_analysis' 
+        })
+      });
+      
+      const apiData = await response.json();
+      
+      if (apiData.currentUsage !== undefined && apiData.dailyLimit !== undefined) {
+        setApiUsageInfo({
+          currentUsage: apiData.currentUsage,
+          dailyLimit: apiData.dailyLimit
+        });
+      }
+      
+      if (!apiData.success || apiData.limitReached) {
+        toast({
+          title: "API Limit Reached",
+          description: apiData.message || "You've reached your daily limit of AI-powered analyses. Upgrade to premium for unlimited access.",
+          variant: "destructive"
+        });
         throw new Error("API usage limit reached");
       }
 
@@ -47,6 +76,7 @@ export const useAIAnalysis = () => {
 
   return {
     generatePlan, 
-    isGenerating: isPlanGenerating || isAnalyzing
+    isGenerating: isPlanGenerating || isAnalyzing,
+    apiUsageInfo
   };
 };

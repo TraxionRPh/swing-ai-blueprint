@@ -10,7 +10,7 @@ import { AIAnalysisHeader } from "@/components/ai-analysis/AIAnalysisHeader";
 import { AIAnalysisInfoBanner } from "@/components/ai-analysis/AIAnalysisInfoBanner";
 
 const AIAnalysis = () => {
-  const { generatePlan, isGenerating } = useAIAnalysis();
+  const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
   
   const handleRefreshAnalysis = () => {
     generatePlan(undefined, "", "beginner", "1");
@@ -31,6 +31,7 @@ const AIAnalysis = () => {
       <AIAnalysisHeader 
         isGenerating={isGenerating} 
         onRefresh={handleRefreshAnalysis}
+        apiUsageInfo={apiUsageInfo}
       />
       <AIAnalysisInfoBanner />
     </div>
