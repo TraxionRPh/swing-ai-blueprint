@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -43,6 +42,13 @@ export const CourseResult = ({
     e.stopPropagation();
     onSelect(course, holeCount);
     setIsExpanded(false);
+    
+    // Explicitly clear any existing session data to ensure a fresh start at hole 1
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.setItem('force-new-round', 'true');
+    
+    // Navigate to the new round page
     navigate('/rounds/new');
   };
 

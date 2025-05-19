@@ -17,6 +17,13 @@ export const useHoleNavigation = () => {
     
     console.log("Initializing hole navigation, URL param:", holeNumber);
     
+    // Special case for new rounds - always start at hole 1
+    if (roundId === 'new') {
+      console.log("New round detected, starting at hole 1");
+      setCurrentHole(1);
+      return;
+    }
+    
     // Handle URL param if provided (highest priority)
     if (holeNumber && !isNaN(Number(holeNumber))) {
       console.log("Using hole number from URL:", holeNumber);
@@ -26,7 +33,7 @@ export const useHoleNavigation = () => {
     
     // Check for resume data in session storage (second priority)
     const resumeHoleNumber = sessionStorage.getItem('resume-hole-number');
-    if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber))) {
+    if (resumeHoleNumber && !isNaN(Number(resumeHoleNumber)) && roundId !== 'new') {
       console.log("Using hole number from session storage:", resumeHoleNumber);
       setCurrentHole(Number(resumeHoleNumber));
       return;
@@ -35,7 +42,7 @@ export const useHoleNavigation = () => {
     // Default to hole 1 if no specific instructions
     console.log("No hole number in URL or session, defaulting to hole 1");
     setCurrentHole(1);
-  }, [holeNumber]);
+  }, [holeNumber, roundId]);
 
   const handleNext = useCallback(() => {
     if (currentHole < 18) {

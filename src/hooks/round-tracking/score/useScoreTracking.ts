@@ -36,10 +36,23 @@ export const useScoreTracking = (
   
   const { finishRound } = useRoundFinalization(baseFinishRound, holeScores);
   
-  // Apply resume hole from session storage if available
+  // Initialize new rounds at hole 1
   useEffect(() => {
+    // Check if this is a new round and force starting at hole 1
+    if (roundId === 'new' || sessionStorage.getItem('force-new-round') === 'true') {
+      console.log("New round detected in useScoreTracking, resetting to hole 1");
+      setCurrentHole(1);
+      
+      // Clear the force-new-round flag after it's been processed
+      if (sessionStorage.getItem('force-new-round') === 'true') {
+        sessionStorage.removeItem('force-new-round');
+      }
+      return;
+    }
+    
+    // For existing rounds, check if there's resume data
     const resumeHole = sessionStorage.getItem('resume-hole-number');
-    if (resumeHole && roundId) {
+    if (resumeHole && roundId && roundId !== 'new') {
       const holeNum = Number(resumeHole);
       if (!isNaN(holeNum) && holeNum >= 1 && holeNum <= 18) {
         console.log(`Setting current hole to resumed hole: ${holeNum}`);
@@ -132,6 +145,7 @@ export const useScoreTracking = (
     sessionStorage.removeItem('resume-hole-number');
     localStorage.removeItem('resume-hole-number');
     sessionStorage.removeItem('force-resume');
+    sessionStorage.removeItem('force-new-round');
     console.log("Resume data cleared");
   }, []);
 
