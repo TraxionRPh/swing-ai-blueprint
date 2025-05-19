@@ -39,10 +39,14 @@ export const CourseResult = ({
     setIsExpanded(!isExpanded);
   };
 
-  const handleStartRound = () => {
+  const handleStartRound = (e: React.MouseEvent) => {
+    // Prevent the event from bubbling up to the card's click handler
+    e.stopPropagation();
+    
     // Call onSelect with the course and hole count
     onSelect(course, holeCount);
     setIsExpanded(false);
+    
     // Navigate to the new round page
     navigate('/rounds/new');
   };
@@ -115,10 +119,7 @@ export const CourseResult = ({
               
               <Button 
                 className="w-full" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStartRound();
-                }}
+                onClick={handleStartRound}
               >
                 Start Round
               </Button>
