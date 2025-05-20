@@ -146,6 +146,13 @@ export const useRoundManagement = (user: any) => {
         holeCount
       });
       
+      console.log("Submitting round data to Supabase:", {
+        totalScore,
+        totalPutts,
+        fairwaysHit,
+        greensInRegulation
+      });
+      
       const updateResult = await supabase
         .from('rounds')
         .update({ 

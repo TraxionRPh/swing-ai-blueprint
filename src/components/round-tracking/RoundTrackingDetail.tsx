@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -52,8 +51,8 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
 
+  // Detect 9-hole rounds from URL or session storage
   useEffect(() => {
-    // Detect 9-hole rounds from URL or session storage
     const path = window.location.pathname;
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
     
@@ -72,7 +71,7 @@ export const RoundTrackingDetail = ({
     
     console.log("RoundTrackingDetail - holeCount set to:", holeCount);
   }, []);
-
+  
   // Set parent loading state based on local loading state
   useEffect(() => {
     setDetailLoading(isLoading);
@@ -96,6 +95,21 @@ export const RoundTrackingDetail = ({
   const finishRound = async (holeCount: number) => {
     if (finishRoundBase) {
       console.log(`RoundTrackingDetail - calling finishRoundBase with hole count ${holeCount}`);
+      
+      // Add validation for new rounds
+      if (currentRoundId === "new") {
+        console.log("Creating new round before submitting");
+        // You would need to implement logic here to create a new round first
+        // This is just a placeholder as we need to implement round creation logic
+        // For now, we'll just show an error message
+        toast({
+          title: "Error saving round",
+          description: "Please start a new round before submitting",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
       return await finishRoundBase(holeScores, holeCount);
     }
     return false;
