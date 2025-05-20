@@ -48,14 +48,29 @@ export const RoundTrackingDetail = ({
     clearResumeData,
   } = useScoreTracking(currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
+  // Check if we're on the special /rounds/new/1 route
+  const isNewSingleHoleRound = window.location.pathname.includes('/rounds/new/1');
+
   useEffect(() => {
     if (initialHoleNumber) {
       setCurrentHole(initialHoleNumber);
     }
-  }, [initialHoleNumber]);
+    
+    // For the special new/1 route, ensure holeCount is set to 1
+    if (isNewSingleHoleRound) {
+      console.log("Single hole round detected from URL");
+      setHoleCount(1);
+      sessionStorage.setItem('current-hole-count', '1');
+    }
+  }, [initialHoleNumber, isNewSingleHoleRound]);
 
   // Detect 9-hole rounds from URL or session storage
   useEffect(() => {
+    if (isNewSingleHoleRound) {
+      // Already handled in the previous useEffect
+      return;
+    }
+    
     const path = window.location.pathname;
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
     
@@ -66,6 +81,9 @@ export const RoundTrackingDetail = ({
     } else if (storedHoleCount === '9') {
       console.log("9-hole round detected from session storage");
       setHoleCount(9);
+    } else if (storedHoleCount === '1') {
+      console.log("1-hole round detected from session storage");
+      setHoleCount(1);
     } else {
       console.log("18-hole round assumed");
       setHoleCount(18);
@@ -73,7 +91,7 @@ export const RoundTrackingDetail = ({
     }
     
     console.log("RoundTrackingDetail - holeCount set to:", holeCount);
-  }, []);
+  }, [isNewSingleHoleRound]);
   
   // Set parent loading state based on local loading state
   useEffect(() => {
@@ -142,6 +160,7 @@ export const RoundTrackingDetail = ({
   }
   
   console.log("RoundTrackingDetail rendering with currentHole:", currentHole, "of", holeCount);
+  console.log("Is special single hole round:", isNewSingleHoleRound);
   
   return (
     <HoleScoreView
