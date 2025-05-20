@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -139,10 +140,16 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
             const holeNumber = i + 1;
             const existingScore = holeData.find(h => h.hole_number === holeNumber);
             
+            // Create a default par value since it might not exist in the database
+            const defaultPar = 4;
+            const holePar = existingScore && 'par' in existingScore 
+              ? (existingScore as any).par 
+              : defaultPar;
+            
             return {
               holeNumber,
-              par: existingScore?.par || 4, // We now need to explicitly add par here
-              distance: 0, // We'll fetch this separately if needed
+              par: holePar,
+              distance: 0,
               score: existingScore?.score || 0,
               putts: existingScore?.putts || 0,
               fairwayHit: existingScore?.fairway_hit || false,

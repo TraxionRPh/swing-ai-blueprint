@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,7 +129,7 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
               <span>{format(new Date(roundData.date), "MMMM d, yyyy")}</span>
             </div>
             <div className="flex items-center">
-              <Golf className="h-5 w-5 mr-2 text-muted-foreground" />
+              <Circle className="h-5 w-5 mr-2 text-muted-foreground" />
               <span>{roundData.hole_count} holes</span>
             </div>
           </div>
