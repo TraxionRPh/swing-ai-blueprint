@@ -54,7 +54,7 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
 
-  // Detect 9-hole rounds from URL or session storage
+  // Detect hole count from URL or session storage
   useEffect(() => {
     const path = window.location.pathname;
     const storedHoleCount = sessionStorage.getItem('current-hole-count');

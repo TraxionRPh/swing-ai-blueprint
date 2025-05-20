@@ -28,7 +28,8 @@ export const HoleNavigation = ({
 
   // Determine if the current hole should show the review button
   // For 9-hole rounds, show on hole 9; for 18-hole rounds, show on hole 18; for 1-hole rounds, show on hole 1
-  const showReviewButton = isLast || currentHole === holeCount;
+  // Don't show based on currentHole === 1 since we could be on hole 1 of an 18-hole round
+  const showReviewButton = isLast || (currentHole !== undefined && holeCount !== undefined && currentHole === holeCount);
 
   console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton}`);
 
