@@ -93,6 +93,7 @@ export const HoleScoreView = ({
   
   // Calculate if this is the last hole based on the hole count
   const isLastHole = currentHole === holeCount;
+  console.log("Is last hole check:", currentHole, holeCount, isLastHole);
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

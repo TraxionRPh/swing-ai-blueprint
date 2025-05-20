@@ -29,7 +29,7 @@ const RoundTracking = () => {
     console.log("isMainPage:", isMainPage, "roundId:", roundId, "holeNumber:", holeNumber);
     console.log("isNineHoleRound:", isNineHoleRound);
 
-    // Store hole count in session storage
+    // Store hole count in session storage based on URL
     if (isNineHoleRound) {
       sessionStorage.setItem('current-hole-count', '9');
       console.log("Set hole count to 9 in session storage");
@@ -37,6 +37,10 @@ const RoundTracking = () => {
       sessionStorage.setItem('current-hole-count', '18');
       console.log("Set default hole count to 18 in session storage");
     }
+
+    // Log current hole count from session storage
+    const currentHoleCount = sessionStorage.getItem('current-hole-count');
+    console.log("Current hole count from session storage:", currentHoleCount);
 
     const timer = setTimeout(() => {
       setLoading(false);

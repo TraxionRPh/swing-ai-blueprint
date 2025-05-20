@@ -27,7 +27,10 @@ export const HoleNavigation = ({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if the current hole should show the review button
-  const showReviewButton = isLast || (currentHole === holeCount);
+  // This is the key fix - we need to compare currentHole to holeCount
+  const showReviewButton = currentHole === holeCount;
+
+  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, showReviewButton=${showReviewButton}`);
 
   // Clear timeout on unmount
   useEffect(() => {
