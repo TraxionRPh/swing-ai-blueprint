@@ -23,17 +23,17 @@ export const IdentifiedIssues = ({ issues }: IdentifiedIssuesProps) => {
   const defaultIssues = [
     {
       area: "Driving Accuracy",
-      description: "Your data indicates inconsistent driving accuracy off the tee, particularly with a tendency toward the right side of the fairway.",
+      description: "Improving your accuracy off the tee will set you up for more successful approach shots and lower scores overall.",
       priority: "High" as const
     },
     {
-      area: "Bunker Play",
-      description: "Your sand save percentage is below average for your handicap range, indicating an opportunity to improve bunker play.",
+      area: "Short Game",
+      description: "Focus on your short game around the greens, especially bunker play. Consistent up-and-downs can significantly lower your scores.",
       priority: "Medium" as const
     },
     {
-      area: "Iron Distance Control",
-      description: "Your approach shots, especially from mid-irons, show inconsistent distance control patterns.",
+      area: "Iron Play",
+      description: "Work on consistent distance control with your irons to improve your approach shots and increase greens in regulation.",
       priority: "Low" as const
     }
   ];

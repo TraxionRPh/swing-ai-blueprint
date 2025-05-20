@@ -41,30 +41,30 @@ export class DiagnosisGenerator {
     // Add skill level context
     diagnosis += this.getSkillLevelIntro();
 
-    // Add performance data analysis
+    // Add performance data analysis in more general terms
     if (performanceInsights && performanceInsights.length > 0) {
       const highPriorityIssues = performanceInsights.filter(i => i.priority === "High");
       const mediumPriorityIssues = performanceInsights.filter(i => i.priority === "Medium");
       const strengths = performanceInsights.filter(i => i.priority === "Low");
 
       if (highPriorityIssues.length > 0) {
-        diagnosis += "\n\nBased on your recent performance data, we've identified these key areas that need immediate attention:\n";
+        diagnosis += "\n\nBased on general patterns in your game, these key areas need immediate attention:\n";
         highPriorityIssues.forEach(issue => {
-          diagnosis += `- ${issue.description}\n`;
+          diagnosis += `- ${this.generalizeDescription(issue.area)}\n`;
         });
       }
 
       if (mediumPriorityIssues.length > 0) {
-        diagnosis += "\nAreas where you're making progress but can improve further:\n";
+        diagnosis += "\nAreas where you can continue to improve:\n";
         mediumPriorityIssues.forEach(issue => {
-          diagnosis += `- ${issue.description}\n`;
+          diagnosis += `- ${this.generalizeDescription(issue.area)}\n`;
         });
       }
 
       if (strengths.length > 0) {
-        diagnosis += "\nYour current strengths:\n";
+        diagnosis += "\nConsider maintaining these strengths in your game:\n";
         strengths.forEach(strength => {
-          diagnosis += `- ${strength.description}\n`;
+          diagnosis += `- ${this.generalizeDescription(strength.area)}\n`;
         });
       }
     }
@@ -72,10 +72,28 @@ export class DiagnosisGenerator {
     // Add score goal context if available
     if (scoreGoal) {
       diagnosis += `\nWith your target score of ${scoreGoal}, this practice plan focuses on the key areas that will help you achieve this goal consistently. `;
-      diagnosis += `The drills and exercises are specifically selected to address your current performance patterns and bridge the gap to your target score.`;
+      diagnosis += `The drills and exercises are selected to address your current performance patterns and bridge the gap to your target score.`;
     }
 
     return diagnosis;
+  }
+  
+  private generalizeDescription(area: string): string {
+    switch (area.toLowerCase()) {
+      case 'driving':
+      case 'driving accuracy':
+        return "Improving your tee shots to find more fairways";
+      case 'iron play':
+        return "Working on consistent iron shots to hit more greens";
+      case 'short game':
+        return "Enhancing your short game skills around the green";
+      case 'bunker play':
+        return "Developing more consistent bunker play";
+      case 'putting':
+        return "Refining your putting skills to reduce total putts";
+      default:
+        return `Working on your ${area} skills`;
+    }
   }
 
   private generateProblemBasedDiagnosis(): string {

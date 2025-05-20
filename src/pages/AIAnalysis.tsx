@@ -80,31 +80,25 @@ const AIAnalysis = () => {
   // Get current confidence
   const currentConfidence = confidenceData[confidenceData.length - 1].confidence;
   
-  // Map raw root causes to more generalized issue format if they exist
+  // Map causes to more generalized issue format if they exist
   const mappedIssues = analysisData?.rootCauses?.map((cause: string, i: number) => {
-    // Transform the raw cause descriptions into more generalized issues
     let area, description;
     
-    // Map cause to general area based on keywords
-    if (cause.toLowerCase().includes('driv') || cause.toLowerCase().includes('tee shot')) {
+    if (i === 0) {
       area = "Driving Accuracy";
-      description = "Your driving performance shows opportunities for improvement in accuracy and consistency.";
-    } else if (cause.toLowerCase().includes('putt')) {
-      area = "Putting";
-      description = "Your putting statistics indicate room for improvement in both speed and direction control.";
-    } else if (cause.toLowerCase().includes('iron') || cause.toLowerCase().includes('approach')) {
-      area = "Iron Play";
-      description = "Your iron shots show patterns that could be improved with focused practice on contact and direction.";
-    } else if (cause.toLowerCase().includes('bunker') || cause.toLowerCase().includes('sand')) {
-      area = "Bunker Play";
-      description = "Your bunker play metrics suggest an opportunity to improve your sand save percentage.";
-    } else if (cause.toLowerCase().includes('short game') || cause.toLowerCase().includes('chip') || cause.toLowerCase().includes('pitch')) {
+      description = "Improving your accuracy off the tee will set you up for more successful approach shots and lower scores overall.";
+    } else if (i === 1) {
       area = "Short Game";
-      description = "Your short game performance around the green indicates room for improvement in up-and-down situations.";
+      description = "Focus on your short game around the greens, especially chipping and bunker play. Consistent up-and-downs can significantly lower your scores.";
+    } else if (i === 2) {
+      area = "Iron Play";
+      description = "Work on consistent distance control with your irons to improve your approach shots and increase greens in regulation.";
+    } else if (i === 3) {
+      area = "Putting";
+      description = "Enhancing your putting skills, particularly with speed control and reading greens, can eliminate unnecessary strokes from your game.";
     } else {
-      // Default fallback for unrecognized categories
-      area = `Golf Skill ${i+1}`;
-      description = cause.replace(/\b\d+%\b/g, ""); // Remove specific percentages
+      area = "Course Management";
+      description = "Developing better strategic decisions on the course can help you avoid trouble and play to your strengths.";
     }
   
     return {
