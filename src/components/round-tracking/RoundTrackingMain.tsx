@@ -6,6 +6,7 @@ import { CourseSelector } from "@/components/round-tracking/CourseSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 interface RoundTrackingMainProps {
   onBack: () => void;
@@ -51,8 +52,44 @@ export const RoundTrackingMain = ({
     console.log("Course selected with hole count:", courseHoleCount);
     if (courseHoleCount) {
       setHoleCount(courseHoleCount);
+      // Store the hole count in session storage
+      sessionStorage.setItem('current-hole-count', courseHoleCount.toString());
     }
     handleCourseSelect(course);
+  };
+
+  // Handle hole count selection
+  const handleHoleCountChange = (count: number) => {
+    console.log("Setting hole count to:", count);
+    setHoleCount(count);
+    sessionStorage.setItem('current-hole-count', count.toString());
+  };
+
+  // Start a new round with the selected parameters
+  const startNewRound = () => {
+    console.log("Starting new round with:", {
+      course: selectedCourse?.name,
+      teeId: selectedTee,
+      holeCount
+    });
+    
+    // Store selected options in session storage
+    if (selectedCourse) {
+      sessionStorage.setItem('current-course-id', selectedCourse.id);
+    }
+    
+    if (selectedTee) {
+      sessionStorage.setItem('current-tee-id', selectedTee);
+    }
+    
+    sessionStorage.setItem('current-hole-count', holeCount.toString());
+    
+    // Navigate based on the hole count (either 9-hole or 18-hole rounds)
+    if (holeCount === 9) {
+      navigate('/rounds/new/9');
+    } else {
+      navigate('/rounds/new');
+    }
   };
 
   return (
@@ -86,6 +123,39 @@ export const RoundTrackingMain = ({
             onCourseSelect={handleCourseSelect}
             onTeeSelect={setSelectedTee}
           />
+          
+          {/* Hole count selector */}
+          {selectedCourse && (
+            <Card className="mt-4">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-medium mb-4">Select hole count</h3>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => handleHoleCountChange(9)}
+                    variant={holeCount === 9 ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    9 Holes
+                  </Button>
+                  <Button 
+                    onClick={() => handleHoleCountChange(18)}
+                    variant={holeCount === 18 ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    18 Holes
+                  </Button>
+                </div>
+                
+                <Button 
+                  onClick={startNewRound}
+                  className="w-full mt-4"
+                  disabled={!selectedCourse || !selectedTee}
+                >
+                  Start Round
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>
