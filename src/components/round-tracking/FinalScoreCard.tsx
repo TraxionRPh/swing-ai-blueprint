@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -146,12 +147,18 @@ export const FinalScoreCard = ({
           </div>
         </div>
 
-        <DialogFooter className="mt-2">
-          <Button variant="outline" onClick={onCancel}>Back</Button>
+        <DialogFooter className="mt-2 flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={onCancel}
+            className="flex-1 min-w-[140px]"
+          >
+            Back
+          </Button>
           <Button 
             variant="review" 
             onClick={handleSubmit} 
-            className="ml-2"
+            className="flex-1 min-w-[140px]"
           >
             Submit Round
           </Button>
