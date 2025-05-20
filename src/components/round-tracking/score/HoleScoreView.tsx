@@ -93,15 +93,7 @@ export const HoleScoreView = ({
   
   // Calculate if this is the last hole based on the hole count
   const isLastHole = currentHole === holeCount;
-  
-  // Fix: For new round creation, detect if we're on the special /rounds/new/1 route
-  // and set isLastHole to true to enable the review button
-  const isNewSingleHoleRound = location.pathname.includes('/rounds/new/1');
-  const shouldShowReviewButton = isLastHole || isNewSingleHoleRound;
-  
   console.log("Is last hole check:", currentHole, holeCount, isLastHole);
-  console.log("Is new single hole round:", isNewSingleHoleRound);
-  console.log("Should show review button:", shouldShowReviewButton);
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -115,7 +107,7 @@ export const HoleScoreView = ({
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
         isFirst={currentHole === 1}
-        isLast={shouldShowReviewButton}
+        isLast={isLastHole}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}

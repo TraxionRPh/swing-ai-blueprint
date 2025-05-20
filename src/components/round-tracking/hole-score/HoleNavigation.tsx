@@ -26,11 +26,11 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fix: Determine if the current hole should show the review button
-  // For new rounds, also check if the isLast prop is true to help show the button
-  const showReviewButton = (currentHole === holeCount) || isLast;
+  // Determine if the current hole should show the review button
+  // For 9-hole rounds, show on hole 9; for 18-hole rounds, show on hole 18
+  const showReviewButton = currentHole === holeCount;
 
-  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, showReviewButton=${showReviewButton}, isLast=${isLast}`);
+  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, showReviewButton=${showReviewButton}`);
 
   // Clear timeout on unmount
   useEffect(() => {
