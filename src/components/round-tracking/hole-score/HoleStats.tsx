@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 interface HoleStatsProps {
   par: number;
   score: number;
-  putts: number;
+  putts: number | undefined;
 }
 
 export const HoleStats = ({
@@ -15,7 +15,7 @@ export const HoleStats = ({
   // Safety checks for undefined or null values
   const safePar = par ?? 0;
   const safeScore = score ?? 0;
-  const safePutts = putts ?? 0;
+  const safePutts = putts;
 
   // Calculate the relation to par (only if we have valid values)
   const getRelationToPar = () => {

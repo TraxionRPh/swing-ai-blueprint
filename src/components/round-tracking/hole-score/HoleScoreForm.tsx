@@ -20,7 +20,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
     holeNumber: data.holeNumber || 1,
     par: data.par ?? 4,
     score: data.score ?? 0,
-    putts: data.putts ?? 0,  // Initialize to 0 by default
+    putts: data.putts, // No default value, allow it to be undefined
     fairwayHit: !!data.fairwayHit,
     greenInRegulation: !!data.greenInRegulation,
     distance: data.distance ?? 0
@@ -33,7 +33,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
 
   const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    onDataChange("putts", isNaN(value) ? 0 : value);
+    onDataChange("putts", isNaN(value) ? undefined : value);
   };
 
   const handleParChange = (value: number) => {
