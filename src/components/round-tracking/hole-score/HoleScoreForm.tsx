@@ -20,7 +20,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
     holeNumber: data.holeNumber || 1,
     par: data.par ?? 4,
     score: data.score ?? 0,
-    putts: data.putts, // No default value, allow it to be undefined
+    putts: data.putts, // Keep putts as undefined if it's undefined
     fairwayHit: !!data.fairwayHit,
     greenInRegulation: !!data.greenInRegulation,
     distance: data.distance ?? 0
@@ -32,8 +32,8 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
   };
 
   const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    onDataChange("putts", isNaN(value) ? undefined : value);
+    const value = e.target.value === '' ? undefined : parseInt(e.target.value);
+    onDataChange("putts", isNaN(value as number) ? undefined : value);
   };
 
   const handleParChange = (value: number) => {
@@ -80,10 +80,11 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
           <Input
             id="putts"
             type="number"
-            value={safeData.putts !== undefined ? safeData.putts : ""}
+            value={safeData.putts === undefined ? "" : safeData.putts}
             onChange={handlePuttsChange}
             min={0}
             className="w-full"
+            placeholder=""
           />
         </div>
       </div>
