@@ -41,7 +41,7 @@ export const HoleScoreCardWrapper = ({
     par: holeData?.par ?? 4,
     distance: holeData?.distance ?? 0,
     score: holeData?.score ?? 0,
-    putts: holeData?.putts ?? 0,
+    putts: holeData?.putts, // Keep putts as undefined if it's undefined
     fairwayHit: !!holeData?.fairwayHit,
     greenInRegulation: !!holeData?.greenInRegulation
   };

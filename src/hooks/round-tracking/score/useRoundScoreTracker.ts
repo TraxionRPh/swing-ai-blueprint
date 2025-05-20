@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useHoleNavigation } from "./useHoleNavigation";
 import { useHolePersistence } from "./useHolePersistence";
@@ -80,7 +81,7 @@ export const useRoundScoreTracker = (
     par: 4,
     distance: 0,
     score: 0,
-    putts: 0,
+    putts: undefined, // Ensure putts is undefined by default
     fairwayHit: false,
     greenInRegulation: false
   };

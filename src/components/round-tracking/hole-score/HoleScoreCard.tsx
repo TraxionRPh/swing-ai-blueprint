@@ -28,7 +28,7 @@ export const HoleScoreCard = (props: HoleScoreCardProps) => {
     par: props.holeData?.par ?? 4,
     distance: props.holeData?.distance ?? 0,
     score: props.holeData?.score ?? 0,
-    putts: props.holeData?.putts ?? 0,
+    putts: props.holeData?.putts, // Keep putts as undefined if it's undefined
     fairwayHit: !!props.holeData?.fairwayHit,
     greenInRegulation: !!props.holeData?.greenInRegulation
   };
