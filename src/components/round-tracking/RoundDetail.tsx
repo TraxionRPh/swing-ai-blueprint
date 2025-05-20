@@ -6,7 +6,7 @@ import { useRound } from "@/context/RoundContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Golf, Circle, Clock, Play, Edit } from "lucide-react";
+import { Calendar, Circle, Clock, Play, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";

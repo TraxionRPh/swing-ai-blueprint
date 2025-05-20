@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -105,7 +104,7 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
       if (roundError) throw roundError;
       
       if (roundData) {
-        // Fetch course tees separately
+        // Fetch course tees separately to avoid the error with course_tees relation
         const { data: courseTees, error: teesError } = await supabase
           .from('course_tees')
           .select('*')
@@ -142,7 +141,7 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
             
             return {
               holeNumber,
-              par: existingScore?.par || 4, // Add default par value since it might not exist in DB
+              par: existingScore?.par || 4, // We now need to explicitly add par here
               distance: 0, // We'll fetch this separately if needed
               score: existingScore?.score || 0,
               putts: existingScore?.putts || 0,
