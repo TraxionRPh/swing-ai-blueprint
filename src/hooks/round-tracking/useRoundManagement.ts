@@ -69,7 +69,7 @@ export const useRoundManagement = () => {
         putts: score.putts || 0,
         fairwayHit: score.fairway_hit || false,
         greenInRegulation: score.green_in_regulation || false,
-        par: score.par || 4,
+        par: 4, // Default par value since it doesn't exist in the hole_scores table
         distance: 0 // Default distance
       }));
       
