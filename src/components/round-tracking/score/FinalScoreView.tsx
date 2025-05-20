@@ -49,10 +49,11 @@ export const FinalScoreView = ({
     try {
       setIsSubmitting(true);
       
-      // Prepare the data by ensuring consistent types
+      // Process hole scores to ensure proper data types
       const preparedHoleScores = holeScores.map(hole => ({
         ...hole,
         score: hole.score || 0,
+        // Ensure putts is always a number (0) if undefined
         putts: typeof hole.putts === 'number' ? hole.putts : 0,
         fairwayHit: !!hole.fairwayHit,
         greenInRegulation: !!hole.greenInRegulation

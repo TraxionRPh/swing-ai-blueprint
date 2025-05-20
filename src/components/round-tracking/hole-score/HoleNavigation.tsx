@@ -27,7 +27,7 @@ export const HoleNavigation = ({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if the current hole should show the review button
-  // This is the key fix - we compare currentHole to holeCount
+  // Check if currentHole equals holeCount (works for both 9 and 18 hole rounds)
   const showReviewButton = currentHole === holeCount;
 
   console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, showReviewButton=${showReviewButton}`);

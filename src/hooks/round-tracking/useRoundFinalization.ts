@@ -26,7 +26,7 @@ export const useRoundFinalization = (
     const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
     
     // Log goal checking and total score for debugging
-    console.log(`Finishing round with total score: ${totalScore}`);
+    console.log(`Finishing round with total score: ${totalScore}, hole count: ${actualHoleCount}`);
     if (scoreGoal) {
       console.log(`Checking score goal: ${totalScore} vs goal of ${scoreGoal}`);
     }
@@ -35,6 +35,7 @@ export const useRoundFinalization = (
     const preparedScores = relevantScores.map(hole => ({
       ...hole,
       score: hole.score || 0,
+      // Important fix: ensure putts is always a number (0) if undefined
       putts: typeof hole.putts === 'number' ? hole.putts : 0,
       fairwayHit: !!hole.fairwayHit,
       greenInRegulation: !!hole.greenInRegulation
