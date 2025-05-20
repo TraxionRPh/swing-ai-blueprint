@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +5,7 @@ import type { Course, HoleData } from "@/types/round-tracking";
 
 export const useRoundManagement = (user: any) => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const fetchInProgressRound = async () => {
@@ -98,8 +98,8 @@ export const useRoundManagement = (user: any) => {
               distance: courseHole?.distance_yards || 0,
               score: hole.score,
               putts: hole.putts,
-              fairwayHit: hole.fairway_hit,
-              greenInRegulation: hole.green_in_regulation
+              fairwayHit: !!hole.fairway_hit,
+              greenInRegulation: !!hole.green_in_regulation
             };
           }) || []
         };
@@ -117,20 +117,34 @@ export const useRoundManagement = (user: any) => {
   };
 
   const finishRound = async (holeScores: HoleData[], holeCount: number) => {
-    if (!currentRoundId) return false;
+    if (!currentRoundId || isSubmitting) return false;
+    
+    setIsSubmitting(true);
 
     try {
       console.log("Finishing round with ID:", currentRoundId);
-      console.log("Hole scores:", holeScores.slice(0, holeCount));
+      console.log("Hole scores:", holeScores);
       console.log("Hole count:", holeCount);
       
       // Only consider holes up to the hole count limit
       const relevantScores = holeScores.slice(0, holeCount);
       
+      // Ensure we have valid numbers for all calculations
       const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
-      const totalPutts = relevantScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
+      const totalPutts = relevantScores.reduce((sum, hole) => {
+        const puttsValue = typeof hole.putts === 'number' ? hole.putts : 0;
+        return sum + puttsValue;
+      }, 0);
       const fairwaysHit = relevantScores.filter(hole => hole.fairwayHit).length;
       const greensInRegulation = relevantScores.filter(hole => hole.greenInRegulation).length;
+      
+      console.log("Calculated round totals:", { 
+        totalScore,
+        totalPutts,
+        fairwaysHit,
+        greensInRegulation,
+        holeCount
+      });
       
       const updateResult = await supabase
         .from('rounds')
@@ -165,6 +179,8 @@ export const useRoundManagement = (user: any) => {
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -210,6 +226,7 @@ export const useRoundManagement = (user: any) => {
     setCurrentRoundId,
     fetchInProgressRound,
     finishRound,
-    deleteRound
+    deleteRound,
+    isSubmitting
   };
 };

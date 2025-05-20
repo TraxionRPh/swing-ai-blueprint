@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { HoleData } from "@/types/round-tracking";
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +10,14 @@ export const useRoundFinalization = (
 ) => {
   const { scoreGoal } = useProfile();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const finishRound = useCallback(async (holeCount: number) => {
+    if (isSubmitting) {
+      console.log("Already submitting round, ignoring duplicate request");
+      return false;
+    }
+    
     // Validate the hole count
     const actualHoleCount = holeCount || 18;
     
@@ -25,9 +31,21 @@ export const useRoundFinalization = (
       console.log(`Checking score goal: ${totalScore} vs goal of ${scoreGoal}`);
     }
     
+    // Prepare data for saving - ensure all values are in the correct format
+    const preparedScores = relevantScores.map(hole => ({
+      ...hole,
+      score: hole.score || 0,
+      putts: typeof hole.putts === 'number' ? hole.putts : 0,
+      fairwayHit: !!hole.fairwayHit,
+      greenInRegulation: !!hole.greenInRegulation
+    }));
+    
+    console.log("Prepared scores for submission:", preparedScores);
+    
     // Save all hole scores before finishing the round
     try {
-      return await baseFinishRound(holeScores.slice(0, actualHoleCount), actualHoleCount);
+      setIsSubmitting(true);
+      return await baseFinishRound(preparedScores, actualHoleCount);
     } catch (error) {
       console.error("Error finishing round:", error);
       toast({
@@ -36,8 +54,10 @@ export const useRoundFinalization = (
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [baseFinishRound, holeScores, scoreGoal, toast]);
+  }, [baseFinishRound, holeScores, scoreGoal, toast, isSubmitting]);
 
-  return { finishRound };
+  return { finishRound, isSubmitting };
 };

@@ -21,6 +21,7 @@ export const FinalScoreView = ({
 }: FinalScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { achievedGoal, checkScoreGoal, resetAchievedGoal, navigateToSetNewGoal } = useGoalAchievement();
   const { toast } = useToast();
   
@@ -39,7 +40,26 @@ export const FinalScoreView = ({
   
   const handleConfirmRound = async () => {
     console.log("Finalizing round with hole count:", holeCount);
+    
+    if (isSubmitting) {
+      console.log("Submission already in progress, ignoring duplicate request");
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
+      
+      // Prepare the data by ensuring consistent types
+      const preparedHoleScores = holeScores.map(hole => ({
+        ...hole,
+        score: hole.score || 0,
+        putts: typeof hole.putts === 'number' ? hole.putts : 0,
+        fairwayHit: !!hole.fairwayHit,
+        greenInRegulation: !!hole.greenInRegulation
+      }));
+      
+      console.log("Submitting finalized hole scores:", preparedHoleScores);
+      
       const success = await finishRound(holeCount);
       
       if (success) {
@@ -81,6 +101,7 @@ export const FinalScoreView = ({
         variant: "destructive"
       });
     } finally {
+      setIsSubmitting(false);
       setShowFinalScore(false);
     }
   };
@@ -106,6 +127,7 @@ export const FinalScoreView = ({
           onBack();
         }}
         holeCount={holeCount}
+        isSubmitting={isSubmitting}
       />
 
       {showGoalModal && achievedGoal && (

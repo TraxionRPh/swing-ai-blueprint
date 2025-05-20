@@ -2,6 +2,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import type { HoleData } from "@/types/round-tracking";
 
 interface FinalScoreCardProps {
@@ -10,6 +11,7 @@ interface FinalScoreCardProps {
   onConfirm: () => void;
   onCancel: () => void;
   holeCount?: number;
+  isSubmitting?: boolean;
 }
 
 export const FinalScoreCard = ({ 
@@ -17,7 +19,8 @@ export const FinalScoreCard = ({
   isOpen, 
   onConfirm, 
   onCancel, 
-  holeCount = 18 
+  holeCount = 18,
+  isSubmitting = false
 }: FinalScoreCardProps) => {
   const validHoleScores = holeScores.slice(0, holeCount);
   const frontNine = validHoleScores.slice(0, 9);
@@ -25,7 +28,11 @@ export const FinalScoreCard = ({
 
   const calculateTotal = (holes: HoleData[]) => ({
     score: holes.reduce((sum, hole) => sum + (hole.score || 0), 0),
-    putts: holes.reduce((sum, hole) => sum + (hole.putts || 0), 0),
+    putts: holes.reduce((sum, hole) => {
+      // Ensure we're dealing with a valid number
+      const puttsValue = typeof hole.putts === 'number' ? hole.putts : 0;
+      return sum + puttsValue;
+    }, 0),
     fairways: holes.filter(hole => hole.fairwayHit).length,
     greens: holes.filter(hole => hole.greenInRegulation).length,
     par: holes.reduce((sum, hole) => sum + (hole.par || 0), 0)
@@ -152,6 +159,7 @@ export const FinalScoreCard = ({
             variant="outline" 
             onClick={onCancel}
             className="flex-1 min-w-[140px]"
+            disabled={isSubmitting}
           >
             Back
           </Button>
@@ -159,8 +167,16 @@ export const FinalScoreCard = ({
             variant="review" 
             onClick={handleSubmit} 
             className="flex-1 min-w-[140px]"
+            disabled={isSubmitting}
           >
-            Submit Round
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Round"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
