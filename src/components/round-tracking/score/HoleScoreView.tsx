@@ -22,6 +22,7 @@ export interface HoleScoreViewProps {
   teeId?: string;
   holeScores?: HoleData[];
   onFinish?: () => void;
+  isLast?: boolean;
 }
 
 export const HoleScoreView = ({
@@ -39,7 +40,8 @@ export const HoleScoreView = ({
   courseId,
   teeId,
   holeScores = [],
-  onFinish
+  onFinish,
+  isLast = false
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
@@ -47,6 +49,7 @@ export const HoleScoreView = ({
   console.log("Current hole data in HoleScoreView:", currentHoleData);
   console.log("Using course ID:", courseId, "tee ID:", teeId, "with color:", teeColor);
   console.log("Save status:", { isSaving, saveSuccess, saveError });
+  console.log("isLast prop:", isLast);
     
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
@@ -91,9 +94,11 @@ export const HoleScoreView = ({
     );
   }
   
-  // Determine if this is the first or last hole based on the hole count
+  // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
-  const isLastHole = currentHole === holeCount;
+  
+  // Use the isLast prop or calculate if this is the last hole based on the current hole and hole count
+  const isLastHole = isLast || currentHole === holeCount;
   
   console.log("Is last hole check:", currentHole, holeCount, isLastHole);
   

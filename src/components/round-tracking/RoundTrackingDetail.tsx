@@ -204,6 +204,7 @@ export const RoundTrackingDetail = ({
       courseId={courseId || undefined}
       teeId={teeId || undefined}
       onFinish={handleShowReviewCard}
+      isLast={isLastHole}
     />
   );
 };
