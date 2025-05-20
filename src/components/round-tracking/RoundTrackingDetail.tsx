@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -5,6 +6,7 @@ import { Loading } from "@/components/ui/loading";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
 import { useRoundManagement } from "@/hooks/round-tracking/useRoundManagement";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   onBack: () => void;
@@ -28,6 +30,7 @@ export const RoundTrackingDetail = ({
   teeId,
 }: Props) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [holeScores, setHoleScores] = useState([]);
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [holeCount, setHoleCount] = useState(18);
