@@ -30,8 +30,8 @@ const RoundTracking = () => {
           <Route path="/new/9" element={<RoundCreation onBack={handleBack} holeCount={9} />} />
           <Route path="/new/18" element={<RoundCreation onBack={handleBack} holeCount={18} />} />
           
-          {/* Round detail page */}
-          <Route path="/:roundId" element={<RoundDetail onBack={handleBack} />} />
+          {/* Round detail page - add trailing wildcard to fix nested routing */}
+          <Route path="/:roundId/*" element={<RoundDetail onBack={handleBack} />} />
           
           {/* Round scoring page - hole by hole */}
           <Route path="/:roundId/:holeNumber" element={<HoleScoring onBack={() => navigate(`/rounds/${useParams().roundId}`)} />} />

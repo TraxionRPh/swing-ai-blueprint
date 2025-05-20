@@ -84,7 +84,11 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  const handleCreateRound = () => {
+  // Fix the navigation to properly handle route transitions
+  const handleCreateRound = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any default form submission
+    e.stopPropagation(); // Stop event propagation
+    console.log("Creating new round...");
     navigate("/rounds/new");
   };
 
