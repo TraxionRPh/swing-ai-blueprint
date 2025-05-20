@@ -6,12 +6,16 @@ import { RoundTrackingMain } from "@/components/round-tracking/RoundTrackingMain
 import { RoundTrackingDetail } from "@/components/round-tracking/RoundTrackingDetail";
 import { RoundTrackingLoading } from "@/components/round-tracking/RoundTrackingLoading";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useHoleCountDetection } from "@/hooks/round-tracking/useHoleCountDetection";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use the improved hook for hole count detection
+  const { detectHoleCountFromUrl, cleanupHoleCount } = useHoleCountDetection();
 
   const pathname = window.location.pathname;
   const isMainPage = pathname === "/rounds";
@@ -43,26 +47,8 @@ const RoundTracking = () => {
       isEighteenHoleRound
     });
 
-    // Explicitly handle the hole count based on URL with clear priorities
-    if (isNineHoleRound) {
-      // Priority 1: Path explicitly indicates 9 holes
-      console.log("URL path explicitly indicates 9-hole round");
-      sessionStorage.setItem('current-hole-count', '9');
-    } else if (isEighteenHoleRound) {
-      // Priority 1: Path explicitly indicates 18 holes
-      console.log("URL path explicitly indicates 18-hole round");
-      sessionStorage.setItem('current-hole-count', '18');
-    } else if (pathname === '/rounds/new') {
-      // Priority 2: For generic new round path, check if we already have a setting
-      const existingCount = sessionStorage.getItem('current-hole-count');
-      if (existingCount) {
-        console.log(`Using existing hole count ${existingCount} from session storage`);
-      } else {
-        // Priority 3: Default to 18 if nothing else specified
-        console.log("No hole count specified, defaulting to 18");
-        sessionStorage.setItem('current-hole-count', '18');
-      }
-    }
+    // Detect hole count when component mounts or URL changes
+    detectHoleCountFromUrl();
 
     // Always log current value for debugging
     const currentHoleCount = sessionStorage.getItem('current-hole-count');
@@ -73,7 +59,7 @@ const RoundTracking = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [pathname, isNineHoleRound, isEighteenHoleRound]);
+  }, [pathname, isNineHoleRound, isEighteenHoleRound, detectHoleCountFromUrl]);
 
   const handleBack = () => {
     console.log("Back navigation triggered");
@@ -84,10 +70,13 @@ const RoundTracking = () => {
       return;
     }
 
+    // Clean up all session data when returning to main rounds page
+    cleanupHoleCount();
     sessionStorage.removeItem("resume-hole-number");
     localStorage.removeItem("resume-hole-number");
     sessionStorage.removeItem("force-resume");
-
+    sessionStorage.removeItem("force-new-round");
+    
     navigate("/rounds");
   };
 

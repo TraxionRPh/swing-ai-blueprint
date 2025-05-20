@@ -3,7 +3,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 /**
- * Hook for managing hole navigation
+ * Hook for managing hole navigation with improved hole count handling
  */
 export const useHoleNavigation = () => {
   const [currentHole, setCurrentHole] = useState(1);
@@ -48,9 +48,12 @@ export const useHoleNavigation = () => {
   }, [holeNumber, roundId]);
 
   const handleNext = useCallback(() => {
-    // Get the current hole count from session storage
+    // Get the current hole count from session storage - with validation
     const holeCountStr = sessionStorage.getItem('current-hole-count');
-    const maxHoles = holeCountStr ? parseInt(holeCountStr, 10) : 18;
+    const parsedCount = holeCountStr ? parseInt(holeCountStr, 10) : null;
+    const maxHoles = (parsedCount === 9 || parsedCount === 18) ? parsedCount : 18;
+    
+    console.log(`handleNext: Current hole ${currentHole}, max holes ${maxHoles}`);
     
     if (currentHole < maxHoles) {
       const nextHole = currentHole + 1;
@@ -91,14 +94,15 @@ export const useHoleNavigation = () => {
     }
   }, [currentHole, navigate, roundId]);
   
-  // Add ability to set hole directly
+  // Add ability to set hole directly with validation
   const setHole = useCallback((holeNumber: number) => {
-    // Get the current hole count from session storage
+    // Get the current hole count from session storage with validation
     const holeCountStr = sessionStorage.getItem('current-hole-count');
-    const maxHoles = holeCountStr ? parseInt(holeCountStr, 10) : 18;
+    const parsedCount = holeCountStr ? parseInt(holeCountStr, 10) : null;
+    const maxHoles = (parsedCount === 9 || parsedCount === 18) ? parsedCount : 18;
     
     if (holeNumber >= 1 && holeNumber <= maxHoles) {
-      console.log(`Directly setting hole to: ${holeNumber}`);
+      console.log(`Directly setting hole to: ${holeNumber} (max: ${maxHoles})`);
       
       // Update the session storage for resume capability
       sessionStorage.setItem('resume-hole-number', holeNumber.toString());

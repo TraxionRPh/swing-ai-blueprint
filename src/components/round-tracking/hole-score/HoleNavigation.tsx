@@ -26,33 +26,42 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Get the actual hole count from session storage on every render
-  const [actualHoleCount, setActualHoleCount] = useState(holeCount);
+  // Read hole count from session storage once on mount
+  const [effectiveHoleCount, setEffectiveHoleCount] = useState(holeCount);
+  const [effectiveIsLast, setEffectiveIsLast] = useState(isLast || false);
   
-  // Force update of hole count from session storage on mount and when props change
+  // Synchronize with session storage and props on mount and when they change
   useEffect(() => {
+    // Get count from session storage
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
-    const path = window.location.pathname;
+    const parsedCount = storedHoleCount ? parseInt(storedHoleCount, 10) : null;
     
-    // First check if URL explicitly defines the hole count
-    const is9HolePath = /\/rounds\/new\/9($|\/)/.test(path);
-    const is18HolePath = /\/rounds\/new\/18($|\/)/.test(path);
+    // Determine the hole count with clear priority:
+    // 1. Use explicit isLast prop if provided (highest priority)
+    // 2. Use session storage if valid
+    // 3. Fall back to props
     
-    if (is9HolePath) {
-      console.log(`HoleNavigation: URL indicates 9-hole round`);
-      setActualHoleCount(9);
-    } else if (is18HolePath) {
-      console.log(`HoleNavigation: URL indicates 18-hole round`);
-      setActualHoleCount(18);
-    } else if (storedHoleCount) {
-      const parsedCount = parseInt(storedHoleCount, 10);
-      setActualHoleCount(parsedCount);
-      console.log(`HoleNavigation: Using hole count from session storage: ${parsedCount}`);
+    let finalHoleCount = holeCount;
+    
+    // Only use session storage if it contains a valid value
+    if (parsedCount === 9 || parsedCount === 18) {
+      finalHoleCount = parsedCount;
+      console.log(`HoleNavigation: Using hole count from session storage: ${finalHoleCount}`);
     } else {
-      setActualHoleCount(holeCount);
-      console.log(`HoleNavigation: Using prop hole count: ${holeCount}`);
+      console.log(`HoleNavigation: Using prop hole count: ${finalHoleCount}`);
     }
-  }, [holeCount, currentHole]);
+    
+    // Set the effective hole count
+    setEffectiveHoleCount(finalHoleCount);
+    
+    // Determine if this is the last hole
+    // isLast prop explicitly set takes highest priority
+    const finalIsLast = isLast === true || (currentHole === finalHoleCount);
+    setEffectiveIsLast(finalIsLast);
+    
+    console.log(`HoleNavigation: Current hole ${currentHole}/${finalHoleCount}, isLast: ${finalIsLast}`);
+    
+  }, [holeCount, currentHole, isLast]);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -63,35 +72,19 @@ export const HoleNavigation = ({
     };
   }, []);
 
-  // Simplified and more explicit logic for when to show the review button
+  // Simplified "show review button" logic
   const shouldShowReviewButton = useCallback(() => {
-    // Always get the latest value directly from session storage
-    const storedHoleCount = sessionStorage.getItem('current-hole-count');
-    const parsedHoleCount = storedHoleCount ? parseInt(storedHoleCount, 10) : actualHoleCount;
+    // Check if we're at the last hole
+    console.log(`shouldShowReviewButton check - currentHole: ${currentHole}, effectiveHoleCount: ${effectiveHoleCount}, effectiveIsLast: ${effectiveIsLast}`);
     
-    console.log(`shouldShowReviewButton check - currentHole: ${currentHole}, holeCount: ${parsedHoleCount}, isLast: ${isLast}`);
-    
-    // Explicit isLast prop takes highest priority
-    if (isLast === true) {
-      console.log("✓ isLast prop is true - showing Review Round button");
+    if (effectiveIsLast) {
+      console.log("✓ Showing review button - we're at the last hole");
       return true;
     }
     
-    // For 9-hole rounds, show Review button ONLY on hole 9
-    if (parsedHoleCount === 9 && currentHole === 9) {
-      console.log("✓ 9-hole round at hole 9 - showing Review Round button");
-      return true;
-    }
-    
-    // For 18-hole rounds, show Review button ONLY on hole 18
-    if (parsedHoleCount === 18 && currentHole === 18) {
-      console.log("✓ 18-hole round at hole 18 - showing Review Round button");
-      return true;
-    }
-    
-    console.log(`✗ Not showing Review button - currentHole: ${currentHole}, holeCount: ${parsedHoleCount}`);
+    console.log(`✗ Not showing review button - not at last hole`);
     return false;
-  }, [currentHole, actualHoleCount, isLast]);
+  }, [currentHole, effectiveHoleCount, effectiveIsLast]);
 
   // Previous button handler with debounce
   const handlePrevious = useCallback((e: React.MouseEvent) => {
@@ -140,11 +133,25 @@ export const HoleNavigation = ({
 
   return (
     <div className="flex justify-between items-center mt-6">
-      <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
+      <Button 
+        variant="outline" 
+        onClick={handlePrevious} 
+        disabled={isFirst || isClickingPrev || isClickingNext} 
+        type="button" 
+        className="w-[140px]" 
+        data-testid="previous-hole-button"
+      >
         Previous Hole
       </Button>
       
-      <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
+      <Button 
+        onClick={handleNext} 
+        disabled={isClickingNext || isClickingPrev} 
+        className="w-[140px]" 
+        type="button" 
+        data-testid="next-hole-button"
+        variant={shouldShowReviewButton() ? "review" : "default"}
+      >
         {shouldShowReviewButton() ? (
           <>
             <ClipboardList className="mr-2 h-4 w-4" />

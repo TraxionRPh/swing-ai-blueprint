@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -36,8 +37,8 @@ export const RoundTrackingDetail = ({
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [showFinalScore, setShowFinalScore] = useState(false);
   
-  // Get hole count from URL and session storage
-  const { holeCount } = useHoleCountDetection();
+  // Get hole count from URL and session storage with improved detection
+  const { holeCount, detectHoleCountFromUrl } = useHoleCountDetection();
   
   const { 
     isLoading, 
@@ -57,11 +58,14 @@ export const RoundTrackingDetail = ({
     clearResumeData,
   } = useScoreTracking(createdRoundId || currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
+  // Ensure correct hole number and redetect hole count when URL changes
   useEffect(() => {
     if (initialHoleNumber) {
       setCurrentHole(initialHoleNumber);
     }
-  }, [initialHoleNumber]);
+    // Re-detect hole count when component mounts or URL changes
+    detectHoleCountFromUrl();
+  }, [initialHoleNumber, detectHoleCountFromUrl]);
   
   useEffect(() => {
     setDetailLoading(isLoading);
@@ -92,8 +96,11 @@ export const RoundTrackingDetail = ({
     console.log(`RoundTrackingDetail - Session storage hole count: ${sessionHoleCount}`);
   }, [currentHole, holeCount]);
   
+  // Enhanced finishRound function with clear hole count handling
   const finishRound = async () => {
     try {
+      // Re-detect hole count to make sure we have the correct value
+      detectHoleCountFromUrl();
       console.log(`RoundTrackingDetail - finishing round with hole count ${holeCount}`);
       
       // Store the hole count in session storage before saving
@@ -123,13 +130,14 @@ export const RoundTrackingDetail = ({
         roundIdToUse = newRoundId;
       }
       
-      // Now save the completed round
+      // Now save the completed round with explicit hole count
       if (finishRoundBase) {
         toast({
           title: "Saving round",
           description: `Saving your ${holeCount}-hole round...`,
         });
         
+        // Pass the hole count to finishRoundBase
         return await finishRoundBase(holeScores, holeCount, roundIdToUse);
       }
       
@@ -145,8 +153,12 @@ export const RoundTrackingDetail = ({
     }
   };
 
+  // Handler to show the final score card
   const handleShowReviewCard = () => {
     console.log("Showing final score card for review with hole count:", holeCount);
+    // Re-verify the hole count before showing the review
+    const confirmedHoleCount = holeCount;
+    console.log(`Confirmed hole count for review: ${confirmedHoleCount}`);
     setShowFinalScore(true);
   };
 
@@ -188,7 +200,7 @@ export const RoundTrackingDetail = ({
       courseId={courseId || undefined}
       teeId={teeId || undefined}
       onFinish={handleShowReviewCard}
-      isLast={isLastHole}
+      isLast={isLastHole} 
     />
   );
 };

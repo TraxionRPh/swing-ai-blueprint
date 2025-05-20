@@ -51,19 +51,25 @@ export const HoleScoreView = ({
     console.log(`HoleScoreView - isLast prop value: ${isLast}`);
     console.log(`HoleScoreView - URL path: ${window.location.pathname}`);
     
-    // Check session storage for hole count
+    // Verify hole count from session storage matches props
     const sessionHoleCount = sessionStorage.getItem('current-hole-count');
     console.log(`HoleScoreView - Session storage hole count: ${sessionHoleCount}`);
+    console.log(`HoleScoreView - Props hole count: ${holeCount}`);
     
-    // Validate URL path for 9-hole vs 18-hole
-    const path = window.location.pathname;
-    const is9HolePath = /\/rounds\/new\/9($|\/)/.test(path);
-    const is18HolePath = /\/rounds\/new\/18($|\/)/.test(path);
-    console.log(`HoleScoreView - Path analysis: is9HolePath=${is9HolePath}, is18HolePath=${is18HolePath}`);
+    // Validate that the session storage and props are in sync
+    if (sessionHoleCount) {
+      const parsedSessionCount = parseInt(sessionHoleCount, 10);
+      if (parsedSessionCount !== holeCount) {
+        console.warn(`Warning: Session storage hole count (${parsedSessionCount}) doesn't match props hole count (${holeCount})`);
+      }
+    }
   }, [currentHole, holeCount, isLast]);
   
   const handleReviewRound = useCallback(() => {
     console.log(`Review Round button clicked at hole ${currentHole}/${holeCount}`);
+    
+    // Make sure hole count is set in session storage before review
+    sessionStorage.setItem('current-hole-count', holeCount.toString());
     
     // Use the onFinish prop if provided, otherwise show the final scorecard
     if (onFinish) {
@@ -97,18 +103,10 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Calculate if this is the last hole based on the hole count
-  // This is a simple equality check that's reliable
-  const isLastHole = currentHole === holeCount;
-  
-  // Use the explicit isLast prop or fall back to calculated isLastHole
-  const effectiveIsLast = isLast || isLastHole;
-  
+  // Use the explicit isLast prop as the source of truth
   console.log(`HoleScoreView - Final calculation:
   - isFirstHole: ${isFirstHole}
-  - isLastHole (calculated): ${isLastHole}
   - isLast (prop): ${isLast}
-  - effectiveIsLast: ${effectiveIsLast}
   - holeCount: ${holeCount}
   - currentHole: ${currentHole}`);
   
@@ -123,7 +121,7 @@ export const HoleScoreView = ({
         onPrevious={handlePrevious}
         onReviewRound={handleReviewRound}
         isFirst={isFirstHole}
-        isLast={effectiveIsLast}
+        isLast={isLast}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}
