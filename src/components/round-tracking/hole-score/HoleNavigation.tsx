@@ -27,10 +27,10 @@ export const HoleNavigation = ({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if the current hole should show the review button
-  // For 9-hole rounds, show on hole 9; for 18-hole rounds, show on hole 18
-  const showReviewButton = currentHole === holeCount;
+  // For 9-hole rounds, show on hole 9; for 18-hole rounds, show on hole 18; for 1-hole rounds, show on hole 1
+  const showReviewButton = isLast || currentHole === holeCount;
 
-  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, showReviewButton=${showReviewButton}`);
+  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton}`);
 
   // Clear timeout on unmount
   useEffect(() => {

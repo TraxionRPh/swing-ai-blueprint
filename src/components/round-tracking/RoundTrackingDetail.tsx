@@ -63,9 +63,14 @@ export const RoundTrackingDetail = ({
       console.log("9-hole round detected from URL");
       setHoleCount(9);
       sessionStorage.setItem('current-hole-count', '9');
-    } else if (storedHoleCount === '9') {
-      console.log("9-hole round detected from session storage");
-      setHoleCount(9);
+    } else if (path.includes('/rounds/new/1')) {
+      console.log("1-hole round detected from URL");
+      setHoleCount(1);
+      sessionStorage.setItem('current-hole-count', '1');
+    } else if (storedHoleCount) {
+      const count = parseInt(storedHoleCount);
+      console.log(`${count}-hole round detected from session storage`);
+      setHoleCount(count);
     } else {
       console.log("18-hole round assumed");
       setHoleCount(18);
