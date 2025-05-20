@@ -42,8 +42,13 @@ export const HoleNavigation = ({
       return true;
     }
     
+    // Check if we're on the last hole of a 9-hole round
+    if (holeCount === 9 && currentHole === 9) {
+      console.log("On hole 9 of a 9-hole round, showing review button");
+      return true;
+    }
+    
     // Normal case: show review button when we reach the defined hole count
-    // This handles both 9-hole and 18-hole rounds
     if (currentHole === holeCount) {
       console.log(`Current hole ${currentHole} equals hole count ${holeCount}, showing review button`);
       return true;

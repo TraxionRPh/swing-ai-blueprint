@@ -261,6 +261,7 @@ export const RoundTrackingDetail = ({
   
   // Determine if this is the last hole
   const isLastHole = currentHole === holeCount;
+  console.log("Is last hole check:", {currentHole, holeCount, isLastHole, path: window.location.pathname});
   
   return (
     <HoleScoreView

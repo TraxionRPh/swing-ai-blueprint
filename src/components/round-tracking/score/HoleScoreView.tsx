@@ -97,10 +97,14 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Use the isLast prop or calculate if this is the last hole based on the current hole and hole count
-  const isLastHole = isLast || currentHole === holeCount;
+  // Check specifically for 9-hole rounds
+  const isNineHoleRound = holeCount === 9;
   
-  console.log("Is last hole check:", currentHole, holeCount, isLastHole);
+  // Use the isLast prop or calculate if this is the last hole based on the current hole and hole count
+  // For 9-hole rounds, ensure we show the review button on hole 9
+  const isLastHole = isLast || (isNineHoleRound && currentHole === 9) || currentHole === holeCount;
+  
+  console.log("Is last hole check:", {currentHole, holeCount, isNineHoleRound, isLastHole});
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
