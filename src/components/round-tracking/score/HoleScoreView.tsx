@@ -91,8 +91,10 @@ export const HoleScoreView = ({
     );
   }
   
-  // Calculate if this is the last hole based on the hole count
+  // Determine if this is the first or last hole based on the hole count
+  const isFirstHole = currentHole === 1;
   const isLastHole = currentHole === holeCount;
+  
   console.log("Is last hole check:", currentHole, holeCount, isLastHole);
   
   return (
@@ -106,7 +108,7 @@ export const HoleScoreView = ({
         onNext={handleNextHole}
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
-        isFirst={currentHole === 1}
+        isFirst={isFirstHole}
         isLast={isLastHole}
         isSaving={isSaving}
         saveSuccess={saveSuccess}

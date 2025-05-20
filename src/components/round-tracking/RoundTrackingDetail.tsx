@@ -54,30 +54,68 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
 
-  // Detect hole count from URL or session storage
+  // Detect and set hole count from URL path and sessionStorage
   useEffect(() => {
-    const path = window.location.pathname;
-    const storedHoleCount = sessionStorage.getItem('current-hole-count');
+    const detectHoleCount = () => {
+      // Get the current path
+      const path = window.location.pathname;
+      console.log("Detecting hole count from path:", path);
+      
+      // First check if specific hole count in URL
+      if (path.includes('/rounds/new/9')) {
+        console.log("9-hole round detected from URL");
+        setHoleCount(9);
+        sessionStorage.setItem('current-hole-count', '9');
+        return 9;
+      } else if (path.includes('/rounds/new/1')) {
+        // Check if this is actually a single-hole round (special case)
+        const singleHoleRound = path.includes('1-hole') || sessionStorage.getItem('single-hole-round') === 'true';
+        
+        if (singleHoleRound) {
+          console.log("Single-hole round detected");
+          setHoleCount(1);
+          sessionStorage.setItem('current-hole-count', '1');
+          sessionStorage.setItem('single-hole-round', 'true');
+          return 1; 
+        } else {
+          // This is just the first hole of a regular round
+          console.log("Regular round, first hole");
+          // Check stored hole count
+          const storedHoleCount = sessionStorage.getItem('current-hole-count');
+          if (storedHoleCount) {
+            const count = parseInt(storedHoleCount);
+            console.log(`${count}-hole round detected from session storage`);
+            setHoleCount(count);
+            return count;
+          } else {
+            // Default to 18
+            console.log("No specific hole count found, defaulting to 18");
+            setHoleCount(18);
+            sessionStorage.setItem('current-hole-count', '18');
+            return 18;
+          }
+        }
+      } else {
+        // Check stored hole count if no specific indicator in URL
+        const storedHoleCount = sessionStorage.getItem('current-hole-count');
+        if (storedHoleCount) {
+          const count = parseInt(storedHoleCount);
+          console.log(`${count}-hole round detected from session storage`);
+          setHoleCount(count);
+          return count;
+        } else {
+          // Default to 18
+          console.log("No specific hole count found, defaulting to 18");
+          setHoleCount(18);
+          sessionStorage.setItem('current-hole-count', '18');
+          return 18;
+        }
+      }
+    };
     
-    if (path.includes('/rounds/new/9')) {
-      console.log("9-hole round detected from URL");
-      setHoleCount(9);
-      sessionStorage.setItem('current-hole-count', '9');
-    } else if (path.includes('/rounds/new/1')) {
-      console.log("1-hole round detected from URL");
-      setHoleCount(1);
-      sessionStorage.setItem('current-hole-count', '1');
-    } else if (storedHoleCount) {
-      const count = parseInt(storedHoleCount);
-      console.log(`${count}-hole round detected from session storage`);
-      setHoleCount(count);
-    } else {
-      console.log("18-hole round assumed");
-      setHoleCount(18);
-      sessionStorage.setItem('current-hole-count', '18');
-    }
-    
-    console.log("RoundTrackingDetail - holeCount set to:", holeCount);
+    // Run the detection and log the result
+    const detectedHoleCount = detectHoleCount();
+    console.log("RoundTrackingDetail - holeCount set to:", detectedHoleCount);
   }, []);
   
   // Set parent loading state based on local loading state
@@ -147,6 +185,9 @@ export const RoundTrackingDetail = ({
   }
   
   console.log("RoundTrackingDetail rendering with currentHole:", currentHole, "of", holeCount);
+  
+  // Determine if this is the last hole
+  const isLastHole = currentHole === holeCount;
   
   return (
     <HoleScoreView

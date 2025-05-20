@@ -26,10 +26,27 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Determine if the current hole should show the review button
-  // For 9-hole rounds, show on hole 9; for 18-hole rounds, show on hole 18; for 1-hole rounds, show on hole 1
-  // Don't show based on currentHole === 1 since we could be on hole 1 of an 18-hole round
-  const showReviewButton = isLast || (currentHole !== undefined && holeCount !== undefined && currentHole === holeCount);
+  // Improved logic for determining if we should show the review button
+  const shouldShowReviewButton = () => {
+    // Special single-hole round case
+    if (holeCount === 1 && currentHole === 1) {
+      return true;
+    }
+    
+    // Normal case: show review button on the last hole
+    if (currentHole === holeCount) {
+      return true;
+    }
+    
+    // Fallback to isLast prop if provided
+    if (isLast) {
+      return true;
+    }
+    
+    return false;
+  };
+  
+  const showReviewButton = shouldShowReviewButton();
 
   console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton}`);
 
