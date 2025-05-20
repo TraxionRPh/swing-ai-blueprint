@@ -4,6 +4,8 @@ import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking"
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
 import { Loading } from "@/components/ui/loading";
 import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView";
+import { useRoundManagement } from "@/hooks/round-tracking/useRoundManagement";
+import { useAuth } from "@/context/AuthContext";
 
 interface Props {
   onBack: () => void;
@@ -26,11 +28,14 @@ export const RoundTrackingDetail = ({
   courseId,
   teeId,
 }: Props) => {
+  const { user } = useAuth();
   const [holeScores, setHoleScores] = useState([]);
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [holeCount, setHoleCount] = useState(18);
   const [isLoading, setIsLoading] = useState(false);
   const [showFinalScore, setShowFinalScore] = useState(false);
+  
+  const { finishRound: finishRoundBase } = useRoundManagement(user);
   
   const {
     handleHoleUpdate,
@@ -39,7 +44,6 @@ export const RoundTrackingDetail = ({
     isSaving,
     currentHoleData,
     clearResumeData,
-    finishRound,
   } = useScoreTracking(currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
   useEffect(() => {
@@ -87,11 +91,11 @@ export const RoundTrackingDetail = ({
     return () => clearTimeout(loadingTimeout);
   }, []);
   
-  const handleSubmitRound = async () => {
-    console.log("Submitting final round score");
-    clearResumeData();
-    setShowFinalScore(false);
-    // The actual submission happens in FinalScoreView
+  const finishRound = async (holeCount: number) => {
+    if (finishRoundBase) {
+      return await finishRoundBase(holeScores, holeCount);
+    }
+    return false;
   };
 
   const handleShowReviewCard = () => {

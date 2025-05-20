@@ -4,6 +4,8 @@ import type { HoleData } from "@/types/round-tracking";
 import { useHoleNavigation } from "../score/useHoleNavigation";
 import { useHolePersistence } from "../score/use-hole-persistence";
 import { useRoundFinalization } from "../useRoundFinalization";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const useScoreTracking = (
   roundId: string | null, 
@@ -14,8 +16,9 @@ export const useScoreTracking = (
   const { currentHole, setCurrentHole, handleNext, handlePrevious } = useHoleNavigation();
   const { saveHoleScore, isSaving } = useHolePersistence(roundId);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
+  const { toast } = useToast();
   
-  // Import the finishRound functionality
+  // Base finish round implementation
   const baseFinishRound = useCallback(async (holeScores: HoleData[], holeCount: number) => {
     console.log("Base finish round called with:", { holeScores, holeCount, roundId });
     
@@ -25,14 +28,50 @@ export const useScoreTracking = (
     }
     
     try {
-      // This is a simplified implementation - the actual logic would be handled in the parent component
-      console.log("Would finish round with ID:", roundId);
+      // Calculate totals from valid holes
+      const validHoleScores = holeScores.slice(0, holeCount);
+      
+      const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
+      const totalPutts = validHoleScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
+      const fairwaysHit = validHoleScores.filter(hole => hole.fairwayHit).length;
+      const greensInRegulation = validHoleScores.filter(hole => hole.greenInRegulation).length;
+      
+      console.log("Submitting round data to Supabase:", {
+        totalScore,
+        totalPutts,
+        fairwaysHit,
+        greensInRegulation
+      });
+      
+      // Update the round with final scores
+      const { error } = await supabase
+        .from('rounds')
+        .update({ 
+          total_score: totalScore,
+          total_putts: totalPutts,
+          fairways_hit: fairwaysHit,
+          greens_in_regulation: greensInRegulation,
+          hole_count: holeCount
+        })
+        .eq('id', roundId);
+        
+      if (error) {
+        console.error('Error updating round:', error);
+        toast({
+          title: "Error saving round",
+          description: "Could not save your round data. Please try again.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      console.log("Round successfully updated with final scores");
       return true;
     } catch (error) {
       console.error("Error in baseFinishRound:", error);
       return false;
     }
-  }, [roundId]);
+  }, [roundId, toast]);
   
   const { finishRound } = useRoundFinalization(baseFinishRound, holeScores);
   
@@ -158,6 +197,6 @@ export const useScoreTracking = (
     isSaving,
     currentHoleData,
     clearResumeData,
-    finishRound // Export the finishRound function
+    finishRound
   };
 };
