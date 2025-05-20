@@ -55,7 +55,7 @@ export const useScoreTracking = (
       par: 4,
       distance: 0,
       score: 0,
-      putts: 0,
+      putts: undefined, // Changed from 0 to undefined
       fairwayHit: false,
       greenInRegulation: false
     };
