@@ -26,8 +26,8 @@ export const FinalScoreView = ({
   const { toast } = useToast();
   
   // Calculate total score to check against goal but don't show achievement immediately
-  // This is now just preparing the achievement check
   useEffect(() => {
+    // Only use the relevant scores based on hole count
     const validHoleScores = holeScores.slice(0, holeCount);
     const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
     
@@ -49,12 +49,13 @@ export const FinalScoreView = ({
     try {
       setIsSubmitting(true);
       
+      // Pass the explicit hole count to ensure proper saving
       const success = await finishRound(holeCount);
       
       if (success) {
         toast({
           title: "Round submitted",
-          description: "Your round has been saved successfully!",
+          description: `Your ${holeCount}-hole round has been saved successfully!`,
           variant: "default"
         });
         
@@ -65,7 +66,7 @@ export const FinalScoreView = ({
           const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
           const hasAchievement = checkScoreGoal(totalScore, true);
           
-          // Only show goal modal if there's an achievement and it's an 18-hole round
+          // Only show goal modal if there's an achievement
           if (hasAchievement) {
             setShowGoalModal(true);
           } else {

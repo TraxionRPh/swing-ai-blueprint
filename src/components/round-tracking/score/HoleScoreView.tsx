@@ -47,10 +47,7 @@ export const HoleScoreView = ({
   
   console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
   console.log("Current hole data in HoleScoreView:", currentHoleData);
-  console.log("Using course ID:", courseId, "tee ID:", teeId, "with color:", teeColor);
-  console.log("Save status:", { isSaving, saveSuccess, saveError });
-  console.log("isLast prop:", isLast);
-    
+  
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
     console.log(`Next clicked in HoleScoreView for hole ${currentHole}`);
@@ -97,14 +94,10 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Check specifically for 9-hole rounds
-  const isNineHoleRound = holeCount === 9;
+  // Determine if this is the last hole (explicitly handle 9-hole rounds)
+  const isLastHole = isLast || (holeCount === 9 && currentHole === 9) || (currentHole === holeCount);
   
-  // Use the isLast prop or calculate if this is the last hole based on the current hole and hole count
-  // For 9-hole rounds, ensure we show the review button on hole 9
-  const isLastHole = isLast || (isNineHoleRound && currentHole === 9) || currentHole === holeCount;
-  
-  console.log("Is last hole check:", {currentHole, holeCount, isNineHoleRound, isLastHole});
+  console.log("Is last hole check:", {currentHole, holeCount, isLastHole});
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

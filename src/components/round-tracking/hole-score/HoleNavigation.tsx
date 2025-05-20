@@ -26,41 +26,31 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Improved logic for determining if we should show the review button
-  const shouldShowReviewButton = useCallback(() => {
-    console.log(`Checking review button logic: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}`);
-    
-    // Special case: if it's explicitly marked as the last hole
-    if (isLast === true) {
-      console.log("isLast prop is true, showing review button");
-      return true;
-    }
-    
-    // Special single-hole round case
-    if (holeCount === 1 && currentHole === 1) {
-      console.log("Single-hole round detected, showing review button");
-      return true;
-    }
-    
-    // Check if we're on the last hole of a 9-hole round
-    if (holeCount === 9 && currentHole === 9) {
-      console.log("On hole 9 of a 9-hole round, showing review button");
-      return true;
-    }
-    
-    // Normal case: show review button when we reach the defined hole count
+  // Simplified logic for determining if we should show the review button
+  const showReviewButton = useCallback(() => {
+    // If current hole matches the total hole count, show review button
     if (currentHole === holeCount) {
       console.log(`Current hole ${currentHole} equals hole count ${holeCount}, showing review button`);
+      return true;
+    }
+    
+    // Special case for 9-hole rounds
+    if (holeCount === 9 && currentHole === 9) {
+      console.log("On last hole (9) of a 9-hole round, showing review button");
+      return true;
+    }
+    
+    // Explicit override using isLast prop
+    if (isLast === true) {
+      console.log("isLast prop is true, showing review button");
       return true;
     }
     
     console.log("Review button conditions not met, showing Next Hole");
     return false;
   }, [currentHole, holeCount, isLast]);
-  
-  const showReviewButton = shouldShowReviewButton();
 
-  console.log(`HoleNavigation: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton}`);
+  console.log(`HoleNavigation rendered: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton()}`);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -106,8 +96,8 @@ export const HoleNavigation = ({
     setIsClickingNext(true);
     console.log("Next button clicked");
     
-    // Special handling for review round button
-    if (showReviewButton && onReviewRound) {
+    // Use simplified show review button logic
+    if (showReviewButton() && onReviewRound) {
       console.log("Showing round review");
       onReviewRound();
       
@@ -138,7 +128,7 @@ export const HoleNavigation = ({
       </Button>
       
       <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
-        {showReviewButton ? <>
+        {showReviewButton() ? <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round
           </> : "Next Hole"}

@@ -8,6 +8,7 @@ import { useRoundManagement } from "@/hooks/round-tracking/useRoundManagement";
 import { useAuth } from "@/context/AuthContext";
 import { useHoleCountDetection } from "@/hooks/round-tracking/useHoleCountDetection";
 import { useRoundCreation } from "@/hooks/round-tracking/useRoundCreation";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   onBack: () => void;
@@ -31,6 +32,7 @@ export const RoundTrackingDetail = ({
   teeId,
 }: Props) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [holeScores, setHoleScores] = useState([]);
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [showFinalScore, setShowFinalScore] = useState(false);
@@ -81,24 +83,56 @@ export const RoundTrackingDetail = ({
   }, [setIsLoading]);
   
   const finishRound = async (holeCount: number) => {
-    if (finishRoundBase) {
-      console.log(`RoundTrackingDetail - calling finishRoundBase with hole count ${holeCount}`);
+    try {
+      console.log(`RoundTrackingDetail - finishing round with hole count ${holeCount}`);
+      
+      // Store the hole count in session storage before saving
+      sessionStorage.setItem('current-hole-count', holeCount.toString());
       
       let roundIdToUse = createdRoundId || currentRoundId;
       
-      // Check if we need to create a new round first
+      // If this is a new round, create it in the database first
       if (roundIdToUse === "new") {
         console.log("Creating new round before submitting");
+        toast({
+          title: "Creating round",
+          description: "Setting up your round in the database...",
+        });
+        
         const newRoundId = await createNewRound();
         if (!newRoundId) {
+          toast({
+            title: "Error",
+            description: "Could not create a new round. Please try again.",
+            variant: "destructive"
+          });
           return false;
         }
+        
+        console.log("Created new round with ID:", newRoundId);
         roundIdToUse = newRoundId;
       }
       
-      return await finishRoundBase(holeScores, holeCount, roundIdToUse);
+      // Now save the completed round
+      if (finishRoundBase) {
+        toast({
+          title: "Saving round",
+          description: `Saving your ${holeCount}-hole round...`,
+        });
+        
+        return await finishRoundBase(holeScores, holeCount, roundIdToUse);
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error finishing round:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your round. Please try again.",
+        variant: "destructive"
+      });
+      return false;
     }
-    return false;
   };
 
   const handleShowReviewCard = () => {

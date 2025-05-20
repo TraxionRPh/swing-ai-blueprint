@@ -150,6 +150,10 @@ async function updateRoundSummary(roundId: string) {
   try {
     console.log('Updating round summary for round:', roundId);
     
+    // Get the current hole count from session storage
+    const holeCount = parseInt(sessionStorage.getItem('current-hole-count') || '18');
+    console.log(`Using hole count ${holeCount} from session storage for round summary`);
+    
     const { data: holeScores, error: fetchError } = await supabase
       .from('hole_scores')
       .select('*')
@@ -165,25 +169,33 @@ async function updateRoundSummary(roundId: string) {
       return;
     }
 
-    // Calculate totals from all holes, skipping null values
-    const totals = holeScores.reduce((acc, hole) => ({
+    // Limit scores to the correct hole count (9 or 18)
+    const validScores = holeScores.filter(score => score.hole_number <= holeCount);
+    console.log(`Using ${validScores.length} scores out of ${holeScores.length} for a ${holeCount}-hole round`);
+
+    // Calculate totals from all valid holes
+    const totals = validScores.reduce((acc, hole) => ({
       score: acc.score + (hole.score || 0),
       putts: acc.putts + (hole.putts || 0),
       fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
       greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
-      scoreCount: acc.scoreCount + (hole.score ? 1 : 0),
-      puttsCount: acc.puttsCount + (hole.putts ? 1 : 0)
+      scoreCount: acc.scoreCount + (hole.score !== null ? 1 : 0),
+      puttsCount: acc.puttsCount + (hole.putts !== null ? 1 : 0)
     }), { score: 0, putts: 0, fairways: 0, greens: 0, scoreCount: 0, puttsCount: 0 });
     
     console.log('Calculated round totals:', totals);
     
-    // Only update total_score and total_putts if we have complete data
-    // Otherwise keep them null until the round is finished
-    const updateData: any = {
+    // Update with the calculated values and ensure hole_count is set correctly
+    const updateData = {
+      total_score: totals.score,
+      total_putts: totals.putts,
       fairways_hit: totals.fairways,
       greens_in_regulation: totals.greens,
+      hole_count: holeCount,
       updated_at: new Date().toISOString()
     };
+    
+    console.log('Updating round with:', updateData);
     
     const { error: updateError } = await supabase
       .from('rounds')

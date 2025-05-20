@@ -43,6 +43,8 @@ export const useRoundCreation = (user: any) => {
       const storedHoleCount = sessionStorage.getItem('current-hole-count');
       const roundHoleCount = storedHoleCount ? parseInt(storedHoleCount) : 18;
       
+      console.log(`Creating a ${roundHoleCount}-hole round for course: ${actualCourseId}`);
+      
       // Create the round in the database
       const { data, error } = await supabase
         .from('rounds')
@@ -67,8 +69,12 @@ export const useRoundCreation = (user: any) => {
         return null;
       }
       
-      console.log("Created new round with ID:", data.id);
+      console.log(`Created new ${roundHoleCount}-hole round with ID:`, data.id);
       setCreatedRoundId(data.id);
+      
+      // Ensure hole count is persisted in session storage
+      sessionStorage.setItem('current-hole-count', roundHoleCount.toString());
+      
       setIsLoading(false);
       return data.id;
     } catch (error) {
