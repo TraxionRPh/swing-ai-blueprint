@@ -145,7 +145,7 @@ export const RoundTrackingDetail = ({
   if (showFinalScore) {
     return (
       <RoundReview
-        holeScores={holeScores}
+        holeScores={holeScores.slice(0, holeCount)}
         holeCount={holeCount}
         finishRound={finishRound}
         onBack={() => {

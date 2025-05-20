@@ -16,10 +16,10 @@ const RoundTracking = () => {
   const pathname = window.location.pathname;
   const isMainPage = pathname === "/rounds";
   const pathMatch = pathname.match(/\/rounds\/([a-zA-Z0-9-]+)(?:\/(\d+))?$/);
-  const isNineHoleRound = pathname.includes('/rounds/new/9');
-  const isEighteenHoleRound = pathname.includes('/rounds/new/18');
-  const isDetailPage = !!pathMatch || isNineHoleRound || isEighteenHoleRound;
-  const roundId = pathMatch ? pathMatch[1] : (isNineHoleRound || isEighteenHoleRound ? "new" : null);
+  const isNineHoleRound = pathname === '/rounds/new/9' || pathname.includes('/rounds/new/9/');
+  const isEighteenHoleRound = pathname === '/rounds/new/18' || pathname.includes('/rounds/new/18/');
+  const isDetailPage = !!pathMatch || isNineHoleRound || isEighteenHoleRound || pathname === '/rounds/new';
+  const roundId = pathMatch ? pathMatch[1] : (isNineHoleRound || isEighteenHoleRound || pathname === '/rounds/new' ? "new" : null);
   const holeNumber = pathMatch && pathMatch[2] ? parseInt(pathMatch[2]) : null;
 
   const courseId = sessionStorage.getItem("current-course-id");
@@ -38,6 +38,7 @@ const RoundTracking = () => {
       sessionStorage.setItem('current-hole-count', '18');
       console.log("Set hole count to 18 in session storage");
     } else if (!sessionStorage.getItem('current-hole-count')) {
+      // For the /rounds/new path, set a reasonable default
       sessionStorage.setItem('current-hole-count', '18');
       console.log("Set default hole count to 18 in session storage");
     }

@@ -48,9 +48,13 @@ export const useHoleNavigation = () => {
   }, [holeNumber, roundId]);
 
   const handleNext = useCallback(() => {
-    if (currentHole < 18) {
+    // Get the current hole count from session storage
+    const holeCountStr = sessionStorage.getItem('current-hole-count');
+    const maxHoles = holeCountStr ? parseInt(holeCountStr, 10) : 18;
+    
+    if (currentHole < maxHoles) {
       const nextHole = currentHole + 1;
-      console.log(`Moving to next hole: ${nextHole}`);
+      console.log(`Moving to next hole: ${nextHole} (max: ${maxHoles})`);
       
       // Update the session storage for resume capability
       sessionStorage.setItem('resume-hole-number', nextHole.toString());
@@ -62,6 +66,8 @@ export const useHoleNavigation = () => {
       
       // Also update the state to ensure instant UI updates
       setCurrentHole(nextHole);
+    } else {
+      console.log(`Already at max hole (${currentHole}/${maxHoles}), not advancing`);
     }
   }, [currentHole, navigate, roundId]);
 
@@ -80,12 +86,18 @@ export const useHoleNavigation = () => {
       
       // Also update the state to ensure instant UI updates
       setCurrentHole(prevHole);
+    } else {
+      console.log("Already at first hole, not going back");
     }
   }, [currentHole, navigate, roundId]);
   
   // Add ability to set hole directly
   const setHole = useCallback((holeNumber: number) => {
-    if (holeNumber >= 1 && holeNumber <= 18) {
+    // Get the current hole count from session storage
+    const holeCountStr = sessionStorage.getItem('current-hole-count');
+    const maxHoles = holeCountStr ? parseInt(holeCountStr, 10) : 18;
+    
+    if (holeNumber >= 1 && holeNumber <= maxHoles) {
       console.log(`Directly setting hole to: ${holeNumber}`);
       
       // Update the session storage for resume capability
@@ -99,7 +111,7 @@ export const useHoleNavigation = () => {
       // Update the state with the new hole number
       setCurrentHole(holeNumber);
     } else {
-      console.warn(`Invalid hole number: ${holeNumber}, must be between 1 and 18`);
+      console.warn(`Invalid hole number: ${holeNumber}, must be between 1 and ${maxHoles}`);
     }
   }, [navigate, roundId]);
 
