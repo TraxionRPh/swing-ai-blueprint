@@ -20,17 +20,20 @@ export const FinalScoreView = ({
   onBack
 }: FinalScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(true);
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const { achievedGoal, checkScoreGoal, resetAchievedGoal, navigateToSetNewGoal } = useGoalAchievement();
   const { toast } = useToast();
   
-  // Calculate total score to check against goal
+  // Calculate total score to check against goal but don't show achievement immediately
+  // This is now just preparing the achievement check
   useEffect(() => {
     const validHoleScores = holeScores.slice(0, holeCount);
     const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
     
+    // Initialize the check, but don't display yet
     if (totalScore > 0) {
-      // Check if score goal is achieved
-      checkScoreGoal(totalScore);
+      // Only run the check but don't display until after round submission
+      checkScoreGoal(totalScore, false);
     }
   }, [holeScores, holeCount, checkScoreGoal]);
   
@@ -46,7 +49,21 @@ export const FinalScoreView = ({
           variant: "default"
         });
         
-        if (!achievedGoal) {
+        // Only show achievement modal for 18-hole rounds after successful round submission
+        if (holeCount === 18) {
+          // Re-check the score goal with display enabled
+          const validHoleScores = holeScores.slice(0, holeCount);
+          const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
+          const hasAchievement = checkScoreGoal(totalScore, true);
+          
+          // Only show goal modal if there's an achievement and it's an 18-hole round
+          if (hasAchievement) {
+            setShowGoalModal(true);
+          } else {
+            onBack();
+          }
+        } else {
+          // If it's a 9-hole round, just go back
           onBack();
         }
       } else {
@@ -91,11 +108,13 @@ export const FinalScoreView = ({
         holeCount={holeCount}
       />
 
-      <GoalAchievementModal
-        achievedGoal={achievedGoal}
-        onClose={handleCloseGoalModal}
-        onSetNewGoal={handleSetNewGoal}
-      />
+      {showGoalModal && achievedGoal && (
+        <GoalAchievementModal
+          achievedGoal={achievedGoal}
+          onClose={handleCloseGoalModal}
+          onSetNewGoal={handleSetNewGoal}
+        />
+      )}
     </>
   );
 };
