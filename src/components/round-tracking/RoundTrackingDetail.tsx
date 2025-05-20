@@ -80,7 +80,7 @@ export const RoundTrackingDetail = ({
     return () => clearTimeout(loadingTimeout);
   }, [setIsLoading]);
   
-  const finishRound = async (holeCount: number) => {
+  const finishRound = async () => {
     try {
       console.log(`RoundTrackingDetail - finishing round with explicit hole count ${holeCount}`);
       

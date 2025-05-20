@@ -39,18 +39,24 @@ export const useRoundCreation = (user: any) => {
         return null;
       }
       
-      // Get hole count from session storage or URL
-      const isNineHoleRound = window.location.pathname.includes('/rounds/new/9');
-      let roundHoleCount = 18;
+      // Get hole count from session storage and URL
+      // First check URL for definitive indicators
+      const is9HoleRound = window.location.pathname.includes('/rounds/new/9');
+      const is18HoleRound = window.location.pathname.includes('/rounds/new/18');
+      let roundHoleCount = 18; // Default
       
-      if (isNineHoleRound) {
+      if (is9HoleRound) {
         roundHoleCount = 9;
         console.log("Creating a 9-hole round based on URL");
+      } else if (is18HoleRound) {
+        roundHoleCount = 18;
+        console.log("Creating an 18-hole round based on URL");
       } else {
         // Check session storage as fallback
         const storedHoleCount = sessionStorage.getItem('current-hole-count');
         if (storedHoleCount) {
           roundHoleCount = parseInt(storedHoleCount, 10);
+          console.log(`Creating a ${roundHoleCount}-hole round based on session storage`);
         }
       }
       

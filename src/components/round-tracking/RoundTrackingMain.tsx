@@ -84,11 +84,11 @@ export const RoundTrackingMain = ({
     
     sessionStorage.setItem('current-hole-count', holeCount.toString());
     
-    // Navigate based on the hole count (either 9-hole or 18-hole rounds)
+    // Navigate based on the hole count (either 9-hole or 18-hole specific routes)
     if (holeCount === 9) {
       navigate('/rounds/new/9');
     } else {
-      navigate('/rounds/new');
+      navigate('/rounds/new/18');
     }
   };
 

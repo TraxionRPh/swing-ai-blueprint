@@ -77,6 +77,14 @@ const router = createBrowserRouter([
         element: <RoundTracking />,
       },
       {
+        path: "rounds/new/9",
+        element: <RoundTracking />,
+      },
+      {
+        path: "rounds/new/18",
+        element: <RoundTracking />,
+      },
+      {
         path: "rounds/:roundId",
         element: <RoundTracking />,
       },

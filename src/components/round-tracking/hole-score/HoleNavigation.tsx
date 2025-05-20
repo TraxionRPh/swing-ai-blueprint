@@ -35,21 +35,21 @@ export const HoleNavigation = ({
     };
   }, []);
 
-  // Simplified and explicit check for when to show review button
+  // Explicit check for when to show review button - simplified to be very direct
   const shouldShowReviewButton = useCallback(() => {
-    // Check if we're on the last hole of a 9-hole round
+    // For 9-hole rounds, show the Review button on hole 9
     if (holeCount === 9 && currentHole === 9) {
       console.log("On hole 9 of a 9-hole round, showing Review Round button");
       return true;
     }
     
-    // Check if we're on the last hole of an 18-hole round
+    // For 18-hole rounds, show the Review button on hole 18
     if (holeCount === 18 && currentHole === 18) {
       console.log("On hole 18 of an 18-hole round, showing Review Round button");
       return true;
     }
     
-    // Explicit override using isLast prop
+    // If explicitly marked as the last hole, show the Review button
     if (isLast === true) {
       console.log("isLast prop is true, showing Review Round button");
       return true;
@@ -61,7 +61,7 @@ export const HoleNavigation = ({
 
   console.log(`HoleNavigation rendered - Hole: ${currentHole}/${holeCount}, isLast: ${isLast}, shouldShowReview: ${shouldShowReviewButton()}`);
 
-  // Enhanced previous button handler with debounce
+  // Previous button handler with debounce
   const handlePrevious = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -80,7 +80,7 @@ export const HoleNavigation = ({
     }
   }, [onPrevious, isClickingPrev, isClickingNext]);
 
-  // Enhanced next button handler with debounce
+  // Next button handler with debounce
   const handleNext = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -106,16 +106,20 @@ export const HoleNavigation = ({
     }, 500);
   }, [onNext, onReviewRound, shouldShowReviewButton, isClickingNext, isClickingPrev]);
 
-  return <div className="flex justify-between items-center mt-6">
+  return (
+    <div className="flex justify-between items-center mt-6">
       <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
         Previous Hole
       </Button>
       
       <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
-        {shouldShowReviewButton() ? <>
+        {shouldShowReviewButton() ? (
+          <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round
-          </> : "Next Hole"}
+          </>
+        ) : "Next Hole"}
       </Button>
-    </div>;
+    </div>
+  );
 };
