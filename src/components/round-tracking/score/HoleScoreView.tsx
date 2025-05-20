@@ -45,7 +45,9 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
+  // Log critical information for debugging on every render
   console.log(`HoleScoreView rendered - Hole: ${currentHole}/${holeCount}, isLast: ${isLast}`);
+  console.log(`Is 9-hole round? ${holeCount === 9}`);
   
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
@@ -93,11 +95,16 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
+  // Calculate if this is the last hole based on the current hole count - this is critical!
+  const isLastHole = currentHole === holeCount;
+  const effectiveIsLast = isLast || isLastHole;
+  
   // Explicitly log all conditions for debugging purposes
   console.log(`HoleScoreView status check - Hole: ${currentHole}/${holeCount}`);
   console.log(`- isFirstHole: ${isFirstHole}`);
-  console.log(`- isLast: ${isLast}`);
-  console.log(`- isLast OR currentHole === holeCount: ${isLast || currentHole === holeCount}`);
+  console.log(`- isLast prop: ${isLast}`);
+  console.log(`- isLastHole (calculated): ${isLastHole}`);
+  console.log(`- effectiveIsLast: ${effectiveIsLast}`);
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -110,7 +117,7 @@ export const HoleScoreView = ({
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
         isFirst={isFirstHole}
-        isLast={isLast}
+        isLast={effectiveIsLast}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}

@@ -36,6 +36,8 @@ export const RoundTrackingDetail = ({
   const [holeScores, setHoleScores] = useState([]);
   const [currentHole, setCurrentHole] = useState(initialHoleNumber || 1);
   const [showFinalScore, setShowFinalScore] = useState(false);
+  
+  // Get hole count from URL and session storage
   const { holeCount } = useHoleCountDetection();
   
   const { 
@@ -79,6 +81,13 @@ export const RoundTrackingDetail = ({
     
     return () => clearTimeout(loadingTimeout);
   }, [setIsLoading]);
+  
+  // Log the hole count on every render for debugging
+  useEffect(() => {
+    console.log(`RoundTrackingDetail - Current hole count: ${holeCount}`);
+    console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}`);
+    console.log(`RoundTrackingDetail - Is last hole? ${currentHole === holeCount}`);
+  }, [currentHole, holeCount]);
   
   const finishRound = async () => {
     try {
@@ -156,7 +165,7 @@ export const RoundTrackingDetail = ({
     );
   }
   
-  // Determine if this is the last hole based on the current hole count
+  // Explicitly calculate if this is the last hole based on the current hole count
   const isLastHole = currentHole === holeCount;
   console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}, Is last hole: ${isLastHole}`);
   

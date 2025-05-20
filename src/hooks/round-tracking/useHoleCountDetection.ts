@@ -8,20 +8,34 @@ export const useHoleCountDetection = () => {
   const [holeCount, setHoleCount] = useState(18);
   
   useEffect(() => {
-    // First check URL for hole count indicators (highest priority)
-    const is9HoleRound = window.location.pathname.includes('/rounds/new/9');
-    const is18HoleRound = window.location.pathname.includes('/rounds/new/18');
+    // More precise pattern matching for path detection
+    const path = window.location.pathname;
     
-    // Then check if hole count is in session storage
+    // Exact path matching for 9-hole rounds
+    const is9HoleRound = path === '/rounds/new/9' || 
+                          path.startsWith('/rounds/new/9/') || 
+                          path.includes('/9/');
+    
+    // Exact path matching for 18-hole rounds
+    const is18HoleRound = path === '/rounds/new/18' || 
+                           path.startsWith('/rounds/new/18/') || 
+                           path.includes('/18/');
+    
+    // Get stored hole count
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
     
+    console.log(`Path detection - path: ${path}`);
+    console.log(`Is 9-hole round from path? ${is9HoleRound}`);
+    console.log(`Is 18-hole round from path? ${is18HoleRound}`);
+    console.log(`Stored hole count: ${storedHoleCount}`);
+    
     if (is9HoleRound) {
-      console.log("Detected 9-hole round from URL: /rounds/new/9");
+      console.log("Setting hole count to 9 from URL path detection");
       setHoleCount(9);
       // Ensure session storage is updated
       sessionStorage.setItem('current-hole-count', '9');
     } else if (is18HoleRound) {
-      console.log("Detected 18-hole round from URL: /rounds/new/18");
+      console.log("Setting hole count to 18 from URL path detection");
       setHoleCount(18);
       // Ensure session storage is updated
       sessionStorage.setItem('current-hole-count', '18');
@@ -39,7 +53,7 @@ export const useHoleCountDetection = () => {
   }, []);
   
   const updateHoleCount = (count: number) => {
-    console.log(`Updating hole count to ${count}`);
+    console.log(`Explicitly updating hole count to ${count}`);
     setHoleCount(count);
     sessionStorage.setItem('current-hole-count', count.toString());
   };
