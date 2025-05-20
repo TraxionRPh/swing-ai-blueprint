@@ -1,15 +1,17 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Course } from "@/types/round-tracking";
+import { useAuth } from "@/context/AuthContext";
 
-export const useRoundInitialization = (user: any, currentRoundId: string | null, setCurrentRoundId: (id: string | null) => void) => {
+export const useRoundInitialization = (currentRoundId: string | null, setCurrentRoundId: (id: string | null) => void) => {
   const [courseName, setCourseName] = useState<string | null>(null);
-  const [holeCount, setHoleCount] = useState<number | null>(null);
+  const [holeCount, setHoleCount] = useState<number>(18);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [initAttempt, setInitAttempt] = useState(0);
+  const { user } = useAuth();
 
   // Function to fetch details of a specific round
   const fetchRoundDetails = useCallback(async (roundId: string) => {
@@ -44,11 +46,11 @@ export const useRoundInitialization = (user: any, currentRoundId: string | null,
   }, []);
 
   // Update course name when selected course changes
-  const updateCourseName = (course: Course | null) => {
+  const updateCourseName = useCallback((course: Course | null) => {
     if (course) {
       setCourseName(course.name);
     }
-  };
+  }, []);
 
   return {
     courseName,

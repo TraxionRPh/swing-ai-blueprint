@@ -1,243 +1,235 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Course, HoleData } from "@/types/round-tracking";
+import { useAuth } from "@/context/AuthContext";
+import type { HoleData } from "@/types/round-tracking";
 
-export const useRoundManagement = (user: any) => {
+export const useRoundManagement = () => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const fetchInProgressRound = async () => {
-    if (!user) return null;
+  // Fetch an in-progress round for the current user
+  const fetchInProgressRound = useCallback(async () => {
+    if (!user) {
+      console.log("No authenticated user, cannot fetch in-progress round");
+      return null;
+    }
 
     try {
-      console.log("Fetching in-progress round for user:", user.id);
+      console.log("Fetching in-progress rounds for user:", user.id);
       
-      const { data, error } = await supabase
+      // First, check for recent rounds that might be in progress
+      const { data: roundsData, error: roundsError } = await supabase
         .from('rounds')
         .select(`
           id,
           hole_count,
-          course_id,
           golf_courses:course_id (
             id,
             name,
             city,
-            state,
-            total_par
-          ),
-          hole_scores (*)
+            state
+          )
         `)
         .eq('user_id', user.id)
-        .is('total_score', null)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching in-progress round:', error);
+        .is('total_score', null) // Not yet completed
+        .order('created_at', { ascending: false })
+        .limit(1);
+        
+      if (roundsError) {
+        console.error("Error fetching in-progress rounds:", roundsError);
         return null;
       }
-
-      console.log("In-progress round data:", data);
-
-      if (data) {
-        // Get tees for the course
-        let courseTeesData = [];
-        try {
-          if (data.course_id) {
-            const courseTeesResponse = await supabase
-              .from('course_tees')
-              .select('*')
-              .eq('course_id', data.course_id);
-              
-            if (courseTeesResponse.error) {
-              console.error('Error fetching course tees:', courseTeesResponse.error);
-            } else {
-              courseTeesData = courseTeesResponse.data || [];
-            }
-          }
-        } catch (teesError) {
-          console.error('Failed to fetch course tees:', teesError);
-          // Continue with what we have
-        }
-        
-        // Get hole information including distance
-        let holeInfo = [];
-        try {
-          if (data.course_id) {
-            const holeInfoResponse = await supabase
-              .from('course_holes')
-              .select('*')
-              .eq('course_id', data.course_id);
-              
-            if (holeInfoResponse.error) {
-              console.error('Error fetching hole info:', holeInfoResponse.error);
-            } else {
-              holeInfo = holeInfoResponse.data || [];
-            }
-          }
-        } catch (holeError) {
-          console.error('Failed to fetch hole info:', holeError);
-          // Continue with what we have
-        }
-        
-        return {
-          roundId: data.id,
-          holeCount: data.hole_count || 18,
-          course: data.golf_courses ? {
-            ...data.golf_courses,
-            course_tees: courseTeesData
-          } : null,
-          holeScores: (data.hole_scores || []).map((hole: any) => {
-            // Find corresponding hole info to get distance
-            const courseHole = holeInfo.find((h: any) => h.hole_number === hole.hole_number);
-            
-            return {
-              holeNumber: hole.hole_number,
-              par: courseHole?.par || 4,
-              distance: courseHole?.distance_yards || 0,
-              score: hole.score,
-              putts: hole.putts,
-              fairwayHit: !!hole.fairway_hit,
-              greenInRegulation: !!hole.green_in_regulation
-            };
-          }) || []
-        };
+      
+      if (!roundsData || roundsData.length === 0) {
+        console.log("No in-progress rounds found");
+        return null;
       }
-      return null;
+      
+      console.log("Found in-progress round:", roundsData[0]);
+      const roundId = roundsData[0].id;
+      
+      // Fetch hole scores for this round
+      const { data: scoresData, error: scoresError } = await supabase
+        .from('hole_scores')
+        .select('*')
+        .eq('round_id', roundId)
+        .order('hole_number', { ascending: true });
+        
+      if (scoresError) {
+        console.error("Error fetching hole scores:", scoresError);
+      }
+      
+      // Format hole scores into the HoleData format
+      const holeScores = (scoresData || []).map(score => ({
+        holeNumber: score.hole_number,
+        score: score.score || 0,
+        putts: score.putts || 0,
+        fairwayHit: score.fairway_hit || false,
+        greenInRegulation: score.green_in_regulation || false,
+        par: score.par || 4,
+        distance: 0 // Default distance
+      }));
+      
+      return {
+        roundId,
+        holeCount: roundsData[0].hole_count || 18,
+        course: roundsData[0].golf_courses,
+        holeScores
+      };
     } catch (error) {
-      console.error('Error fetching in-progress round:', error);
-      toast({
-        title: "Error loading round",
-        description: "Could not load round data. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Error in fetchInProgressRound:", error);
       return null;
     }
-  };
+  }, [user]);
 
-  const finishRound = async (holeScores: HoleData[], holeCount: number, roundId?: string | null) => {
-    // Use the provided roundId if available, otherwise use the currentRoundId
-    const idToUse = roundId || currentRoundId;
+  // Finalize and save a round
+  const finishRound = useCallback(async (
+    holeScores: HoleData[], 
+    holeCount: number, 
+    roundId?: string | null
+  ) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save your round",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    const targetRoundId = roundId || currentRoundId;
     
-    if (!idToUse || isSubmitting) return false;
-    
-    setIsSubmitting(true);
+    if (!targetRoundId || targetRoundId === "new") {
+      console.error("Cannot finish round: Invalid round ID");
+      toast({
+        title: "Error Saving Round",
+        description: "Round ID is missing or invalid.",
+        variant: "destructive"
+      });
+      return false;
+    }
 
     try {
-      console.log("Finishing round with ID:", idToUse);
-      console.log("Hole scores:", holeScores);
-      console.log("Hole count:", holeCount);
+      console.log(`Finishing round ${targetRoundId} with ${holeCount} holes`);
       
-      // Only consider holes up to the hole count limit
-      const relevantScores = holeScores.slice(0, holeCount);
+      // Calculate totals
+      const totalScore = holeScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
+      const totalPutts = holeScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
+      const fairwaysHit = holeScores.filter(hole => hole.fairwayHit).length;
+      const greensInRegulation = holeScores.filter(hole => hole.greenInRegulation).length;
       
-      // Ensure we have valid numbers for all calculations
-      const totalScore = relevantScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
-      const totalPutts = relevantScores.reduce((sum, hole) => {
-        const puttsValue = typeof hole.putts === 'number' ? hole.putts : 0;
-        return sum + puttsValue;
-      }, 0);
-      const fairwaysHit = relevantScores.filter(hole => hole.fairwayHit).length;
-      const greensInRegulation = relevantScores.filter(hole => hole.greenInRegulation).length;
-      
-      console.log("Calculated round totals:", { 
-        totalScore,
-        totalPutts,
-        fairwaysHit,
-        greensInRegulation,
-        holeCount
-      });
-      
-      console.log("Submitting round data to Supabase:", {
-        totalScore,
-        totalPutts,
-        fairwaysHit,
-        greensInRegulation
-      });
-      
-      const updateResult = await supabase
+      // Update the round with calculated totals
+      const { error } = await supabase
         .from('rounds')
-        .update({ 
+        .update({
           total_score: totalScore,
           total_putts: totalPutts,
           fairways_hit: fairwaysHit,
           greens_in_regulation: greensInRegulation,
           hole_count: holeCount
         })
-        .eq('id', idToUse);
+        .eq('id', targetRoundId);
         
-      if (updateResult.error) {
-        console.error('Error updating round:', updateResult.error);
-        throw updateResult.error;
+      if (error) {
+        console.error("Error saving round:", error);
+        toast({
+          title: "Error Saving Round",
+          description: "Could not save round totals. Please try again.",
+          variant: "destructive"
+        });
+        return false;
       }
       
-      console.log("Round successfully updated with final scores:", updateResult);
-
       toast({
         title: "Round Completed",
-        description: "Your round has been saved successfully!"
+        description: "Your round has been saved successfully!",
       });
-
-      setCurrentRoundId(null);
+      
+      // Clear any session storage data used for this round
+      sessionStorage.removeItem('resume-hole-number');
+      sessionStorage.removeItem('force-resume');
+      
       return true;
     } catch (error) {
-      console.error('Error finishing round:', error);
+      console.error("Error in finishRound:", error);
       toast({
-        title: "Error finishing round",
-        description: "Could not save round details. Please try again.",
+        title: "Error Saving Round",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
       return false;
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  }, [currentRoundId, toast, user]);
 
-  const deleteRound = async (roundId: string) => {
+  // Delete a round
+  const deleteRound = useCallback(async (roundId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to delete a round",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     try {
-      // Delete hole scores first due to foreign key constraints
-      const { error: holeScoresError } = await supabase
+      // First delete all hole scores for this round
+      const { error: scoresError } = await supabase
         .from('hole_scores')
         .delete()
         .eq('round_id', roundId);
-
-      if (holeScoresError) throw holeScoresError;
-
-      // Then delete the round
+        
+      if (scoresError) {
+        console.error("Error deleting hole scores:", scoresError);
+        toast({
+          title: "Error Deleting Round",
+          description: "Could not delete hole scores. Please try again.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      // Then delete the round itself
       const { error: roundError } = await supabase
         .from('rounds')
         .delete()
         .eq('id', roundId);
-
-      if (roundError) throw roundError;
-
-      setCurrentRoundId(null);
+        
+      if (roundError) {
+        console.error("Error deleting round:", roundError);
+        toast({
+          title: "Error Deleting Round",
+          description: "Could not delete round. Please try again.",
+          variant: "destructive"
+        });
+        return false;
+      }
       
       toast({
         title: "Round Deleted",
-        description: "The round has been successfully deleted",
+        description: "Your round has been deleted successfully!",
       });
       
       return true;
     } catch (error) {
-      console.error('Error deleting round:', error);
+      console.error("Error in deleteRound:", error);
       toast({
-        title: "Error deleting round",
-        description: "Could not delete the round. Please try again.",
+        title: "Error Deleting Round",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
       return false;
     }
-  };
+  }, [toast, user]);
 
   return {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
     finishRound,
-    deleteRound,
-    isSubmitting
+    deleteRound
   };
 };
