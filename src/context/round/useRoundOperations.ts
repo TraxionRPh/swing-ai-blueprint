@@ -81,8 +81,8 @@ export const useRoundOperations = (
       
       if (error) throw error;
       
-      // Update the hole scores in state
-      setHoleScores(prev => {
+      // Update the hole scores in state - Fixed the type issue here
+      setHoleScores((prev: HoleData[]) => {
         const newScores = [...prev];
         const index = newScores.findIndex(h => h.holeNumber === holeData.holeNumber);
         
