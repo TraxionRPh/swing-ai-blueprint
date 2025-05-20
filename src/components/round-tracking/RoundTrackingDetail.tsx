@@ -57,6 +57,9 @@ export const RoundTrackingDetail = ({
     } else if (sessionStorage.getItem('current-hole-count') === '9') {
       console.log("9-hole round detected from session storage");
       setHoleCount(9);
+    } else {
+      console.log("18-hole round assumed");
+      setHoleCount(18);
     }
   }, []);
 
@@ -88,7 +91,7 @@ export const RoundTrackingDetail = ({
   };
 
   const handleShowReviewCard = () => {
-    console.log("Showing final score card for review");
+    console.log("Showing final score card for review with hole count:", holeCount);
     setShowFinalScore(true);
   };
 

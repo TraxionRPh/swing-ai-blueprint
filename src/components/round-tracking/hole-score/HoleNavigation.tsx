@@ -20,14 +20,14 @@ export const HoleNavigation = ({
   isFirst,
   isLast,
   currentHole,
-  holeCount
+  holeCount = 18
 }: HoleNavigationProps) => {
   const [isClickingNext, setIsClickingNext] = useState(false);
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Determine if the current hole should show the review button
-  const showReviewButton = currentHole === 9 || currentHole === 18 || isLast;
+  const showReviewButton = isLast || (currentHole === holeCount);
 
   // Clear timeout on unmount
   useEffect(() => {

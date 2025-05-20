@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,7 @@ const RoundTracking = () => {
   const pathname = window.location.pathname;
   const isMainPage = pathname === "/rounds";
   const pathMatch = pathname.match(/\/rounds\/([a-zA-Z0-9-]+)(?:\/(\d+))?$/);
+  const isNineHoleRound = pathname.includes('/rounds/new/9');
   const isDetailPage = !!pathMatch;
   const roundId = pathMatch ? pathMatch[1] : null;
   const holeNumber = pathMatch && pathMatch[2] ? parseInt(pathMatch[2]) : null;
@@ -25,6 +27,16 @@ const RoundTracking = () => {
   useEffect(() => {
     console.log("RoundTracking mounted with path:", pathname);
     console.log("isMainPage:", isMainPage, "roundId:", roundId, "holeNumber:", holeNumber);
+    console.log("isNineHoleRound:", isNineHoleRound);
+
+    // Store hole count in session storage
+    if (isNineHoleRound) {
+      sessionStorage.setItem('current-hole-count', '9');
+      console.log("Set hole count to 9 in session storage");
+    } else if (!sessionStorage.getItem('current-hole-count')) {
+      sessionStorage.setItem('current-hole-count', '18');
+      console.log("Set default hole count to 18 in session storage");
+    }
 
     const timer = setTimeout(() => {
       setLoading(false);
@@ -32,7 +44,7 @@ const RoundTracking = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [pathname]);
+  }, [pathname, isNineHoleRound]);
 
   const handleBack = () => {
     console.log("Back navigation triggered");

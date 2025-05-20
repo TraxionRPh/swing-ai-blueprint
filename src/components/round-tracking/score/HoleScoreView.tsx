@@ -21,7 +21,7 @@ export interface HoleScoreViewProps {
   courseId?: string;
   teeId?: string;
   holeScores?: HoleData[];
-  onFinish?: () => void; // Added this prop to match what's being passed in RoundTrackingDetail
+  onFinish?: () => void;
 }
 
 export const HoleScoreView = ({
@@ -39,7 +39,7 @@ export const HoleScoreView = ({
   courseId,
   teeId,
   holeScores = [],
-  onFinish // Added this prop to the destructuring
+  onFinish
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
@@ -60,22 +60,15 @@ export const HoleScoreView = ({
   }, [handlePrevious, currentHole]);
   
   const handleReviewRound = useCallback(() => {
-    console.log("Review Round button clicked, checking if should show final scorecard");
+    console.log(`Review Round button clicked for hole ${currentHole} of ${holeCount} holes`);
     
-    // Only show final score when completing a full 18-hole round
-    if (holeCount === 18 && currentHole === 18) {
-      console.log("Showing final scorecard for 18-hole round");
-      if (onFinish) {
-        onFinish();
-      } else {
-        setShowFinalScore(true);
-      }
+    // Use the onFinish prop if provided, otherwise show the final scorecard
+    if (onFinish) {
+      onFinish();
     } else {
-      // For 9-hole rounds or other scenarios, just move forward without showing the dialog
-      console.log("Not showing final scorecard for non-18-hole round");
-      handleNext();
+      setShowFinalScore(true);
     }
-  }, [onFinish, holeCount, currentHole, handleNext]);
+  }, [onFinish, currentHole, holeCount]);
   
   const handleCancelReview = useCallback(() => {
     console.log("Cancelling review, returning to hole view");
@@ -98,6 +91,9 @@ export const HoleScoreView = ({
     );
   }
   
+  // Calculate if this is the last hole based on the hole count
+  const isLastHole = currentHole === holeCount;
+  
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Add score summary at the top */}
@@ -110,7 +106,7 @@ export const HoleScoreView = ({
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
         isFirst={currentHole === 1}
-        isLast={currentHole === holeCount || currentHole === 9 || currentHole === 18}
+        isLast={isLastHole}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}
