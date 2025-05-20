@@ -2,22 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-interface RoundTrackingHeaderProps {
-  onBack: () => void;
-  hideBackButton?: boolean;
-  title?: string;
+interface RoundHeaderProps {
+  title: string;
   subtitle?: string;
+  onBack?: () => void;
+  hideBackButton?: boolean;
 }
 
-export const RoundTrackingHeader = ({ 
-  onBack, 
-  hideBackButton = false,
-  title = "Round Tracking",
-  subtitle = "Track your round hole by hole"
-}: RoundTrackingHeaderProps) => {
+export const RoundHeader = ({
+  title,
+  subtitle,
+  onBack,
+  hideBackButton = false
+}: RoundHeaderProps) => {
   return (
     <div className="flex items-center space-x-4 mb-6">
-      {!hideBackButton && (
+      {!hideBackButton && onBack && (
         <Button 
           variant="outline" 
           size="icon" 
@@ -30,9 +30,7 @@ export const RoundTrackingHeader = ({
       )}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground">
-          {subtitle}
-        </p>
+        {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
       </div>
     </div>
   );
