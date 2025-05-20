@@ -41,7 +41,7 @@ export const useRoundFinalization = (
       greenInRegulation: !!hole.greenInRegulation
     }));
     
-    console.log("Prepared scores for submission:", preparedScores);
+    console.log(`Prepared ${preparedScores.length} scores for submission with hole count ${actualHoleCount}`);
     
     // Save all hole scores before finishing the round
     try {
