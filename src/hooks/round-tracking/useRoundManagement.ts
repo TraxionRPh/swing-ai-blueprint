@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -116,13 +117,16 @@ export const useRoundManagement = (user: any) => {
     }
   };
 
-  const finishRound = async (holeScores: HoleData[], holeCount: number) => {
-    if (!currentRoundId || isSubmitting) return false;
+  const finishRound = async (holeScores: HoleData[], holeCount: number, roundId?: string | null) => {
+    // Use the provided roundId if available, otherwise use the currentRoundId
+    const idToUse = roundId || currentRoundId;
+    
+    if (!idToUse || isSubmitting) return false;
     
     setIsSubmitting(true);
 
     try {
-      console.log("Finishing round with ID:", currentRoundId);
+      console.log("Finishing round with ID:", idToUse);
       console.log("Hole scores:", holeScores);
       console.log("Hole count:", holeCount);
       
@@ -162,7 +166,7 @@ export const useRoundManagement = (user: any) => {
           greens_in_regulation: greensInRegulation,
           hole_count: holeCount
         })
-        .eq('id', currentRoundId);
+        .eq('id', idToUse);
         
       if (updateResult.error) {
         console.error('Error updating round:', updateResult.error);
