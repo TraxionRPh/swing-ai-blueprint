@@ -35,35 +35,41 @@ const RoundTracking = () => {
 
   useEffect(() => {
     console.log("RoundTracking mounted with path:", pathname);
-    console.log("isMainPage:", isMainPage, "roundId:", roundId, "holeNumber:", holeNumber);
-    console.log("isNineHoleRound:", isNineHoleRound, "isEighteenHoleRound:", isEighteenHoleRound);
+    console.log("URL analysis:", {
+      isMainPage, 
+      roundId, 
+      holeNumber,
+      isNineHoleRound,
+      isEighteenHoleRound
+    });
 
-    // Store hole count in session storage based on URL with explicit logging
+    // Explicitly handle the hole count based on URL with clear priorities
     if (isNineHoleRound) {
+      // Priority 1: Path explicitly indicates 9 holes
+      console.log("URL path explicitly indicates 9-hole round");
       sessionStorage.setItem('current-hole-count', '9');
-      console.log("RoundTracking: Set hole count to 9 in session storage");
     } else if (isEighteenHoleRound) {
+      // Priority 1: Path explicitly indicates 18 holes
+      console.log("URL path explicitly indicates 18-hole round");
       sessionStorage.setItem('current-hole-count', '18');
-      console.log("RoundTracking: Set hole count to 18 in session storage");
     } else if (pathname === '/rounds/new') {
-      // For the generic /rounds/new path, check if we already have a setting
+      // Priority 2: For generic new round path, check if we already have a setting
       const existingCount = sessionStorage.getItem('current-hole-count');
       if (existingCount) {
-        console.log(`RoundTracking: Using existing hole count ${existingCount} from session storage`);
+        console.log(`Using existing hole count ${existingCount} from session storage`);
       } else {
-        // If not, set default to 18
+        // Priority 3: Default to 18 if nothing else specified
+        console.log("No hole count specified, defaulting to 18");
         sessionStorage.setItem('current-hole-count', '18');
-        console.log("RoundTracking: Set default hole count to 18 in session storage");
       }
     }
 
-    // Log current hole count from session storage
+    // Always log current value for debugging
     const currentHoleCount = sessionStorage.getItem('current-hole-count');
-    console.log("Current hole count from session storage:", currentHoleCount);
+    console.log(`Current hole count in session storage: ${currentHoleCount}`);
 
     const timer = setTimeout(() => {
       setLoading(false);
-      console.log("Initial loading state complete");
     }, 500);
 
     return () => clearTimeout(timer);

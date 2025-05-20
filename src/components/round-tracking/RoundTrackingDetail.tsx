@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useScoreTracking } from "@/hooks/round-tracking/score/useScoreTracking";
 import { HoleScoreView } from "@/components/round-tracking/score/HoleScoreView";
@@ -84,7 +83,7 @@ export const RoundTrackingDetail = ({
   
   // Log the hole count on every render for debugging
   useEffect(() => {
-    console.log(`RoundTrackingDetail - Current hole count from useHoleCountDetection: ${holeCount}`);
+    console.log(`RoundTrackingDetail - Current hole count: ${holeCount}`);
     console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}`);
     console.log(`RoundTrackingDetail - Path: ${window.location.pathname}`);
     
@@ -95,7 +94,7 @@ export const RoundTrackingDetail = ({
   
   const finishRound = async () => {
     try {
-      console.log(`RoundTrackingDetail - finishing round with explicit hole count ${holeCount}`);
+      console.log(`RoundTrackingDetail - finishing round with hole count ${holeCount}`);
       
       // Store the hole count in session storage before saving
       sessionStorage.setItem('current-hole-count', holeCount.toString());
@@ -169,9 +168,10 @@ export const RoundTrackingDetail = ({
     );
   }
   
-  // Explicitly calculate if this is the last hole based on the current hole count
+  // Calculate if this is the last hole based on the current hole count
+  // Using strict equality to ensure type matching
   const isLastHole = currentHole === holeCount;
-  console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}, Is last hole: ${isLastHole}`);
+  console.log(`RoundTrackingDetail - Is last hole check: ${currentHole} === ${holeCount} = ${isLastHole}`);
   
   return (
     <HoleScoreView
