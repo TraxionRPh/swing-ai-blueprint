@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef } from "react";
+
+import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { HoleData } from "@/types/round-tracking";
@@ -10,6 +11,16 @@ export const useHoleDataSaving = (roundId: string | null, currentHoleData: HoleD
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+    };
+  }, []);
 
   const saveHoleScore = useCallback(async (holeData: HoleData) => {
     if (!roundId || roundId === "new") {
@@ -83,6 +94,11 @@ export const useHoleDataSaving = (roundId: string | null, currentHoleData: HoleD
       });
       return false;
     } finally {
+      // Clear any existing timeout
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+      
       // Add a slightly longer delay before removing the saving indicator
       timeoutIdRef.current = setTimeout(() => {
         setIsSaving(false);
