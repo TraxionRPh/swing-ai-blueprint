@@ -1,7 +1,10 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+/**
+ * Hook for managing hole navigation
+ */
 export const useHoleNavigation = () => {
   const [currentHole, setCurrentHole] = useState(1);
   const { roundId, holeNumber } = useParams();
@@ -100,10 +103,20 @@ export const useHoleNavigation = () => {
     }
   }, [navigate, roundId]);
 
+  // Function to clear resume data from storage
+  const clearResumeData = useCallback(() => {
+    sessionStorage.removeItem('resume-hole-number');
+    localStorage.removeItem('resume-hole-number');
+    sessionStorage.removeItem('force-resume');
+    sessionStorage.removeItem('force-new-round');
+    console.log("Resume data cleared");
+  }, []);
+
   return {
     currentHole,
     setCurrentHole: setHole,
     handleNext,
-    handlePrevious
+    handlePrevious,
+    clearResumeData
   };
 };
