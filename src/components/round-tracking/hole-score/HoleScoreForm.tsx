@@ -20,7 +20,7 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
     holeNumber: data.holeNumber || 1,
     par: data.par ?? 4,
     score: data.score ?? 0,
-    putts: data.putts ?? 0,
+    putts: data.putts ?? 0,  // Initialize to 0 by default
     fairwayHit: !!data.fairwayHit,
     greenInRegulation: !!data.greenInRegulation,
     distance: data.distance ?? 0
@@ -75,11 +75,12 @@ export const HoleScoreForm = ({ data, onDataChange }: HoleScoreFormProps) => {
         <div>
           <label htmlFor="putts" className="block text-sm font-medium mb-1">
             Putts
+            <span className="text-xs text-gray-500 ml-1">(0 for chip-in)</span>
           </label>
           <Input
             id="putts"
             type="number"
-            value={safeData.putts || ""}
+            value={safeData.putts !== undefined ? safeData.putts : ""}
             onChange={handlePuttsChange}
             min={0}
             className="w-full"

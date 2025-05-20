@@ -35,6 +35,12 @@ export const HoleStats = ({
     return "bg-red-100 text-red-800"; // Over par
   };
 
+  // Get appropriate text for putts display
+  const getPuttsText = () => {
+    if (safePutts === 0) return "Chip-in";
+    return `${safePutts} ${safePutts === 1 ? 'Putt' : 'Putts'}`;
+  };
+
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       {safeScore > 0 && (
@@ -43,9 +49,9 @@ export const HoleStats = ({
         </Badge>
       )}
       
-      {safePutts > 0 && (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800">
-          {safePutts} {safePutts === 1 ? 'Putt' : 'Putts'}
+      {safePutts !== undefined && (
+        <Badge variant="outline" className={safePutts === 0 ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}>
+          {getPuttsText()}
         </Badge>
       )}
     </div>
