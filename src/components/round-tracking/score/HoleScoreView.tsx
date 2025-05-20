@@ -45,10 +45,16 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
-  // Log critical information for debugging
+  // Enhanced logging for debugging
   useEffect(() => {
+    // URL-based validation for isLast
+    const path = window.location.pathname;
+    const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+    const urlBasedIsLast = (is9HoleRound && currentHole === 9) || (!is9HoleRound && currentHole === holeCount);
+
     console.log(`HoleScoreView mounted - Current hole: ${currentHole}/${holeCount}`);
     console.log(`HoleScoreView - isLast prop value: ${isLast}`);
+    console.log(`HoleScoreView - URL-based isLast calculation: ${urlBasedIsLast}`);
     console.log(`HoleScoreView - URL path: ${window.location.pathname}`);
     
     // Verify hole count from session storage matches props
@@ -61,7 +67,19 @@ export const HoleScoreView = ({
       const parsedSessionCount = parseInt(sessionHoleCount, 10);
       if (parsedSessionCount !== holeCount) {
         console.warn(`Warning: Session storage hole count (${parsedSessionCount}) doesn't match props hole count (${holeCount})`);
+        
+        // For 9-hole rounds, ensure session storage is correct
+        if (is9HoleRound && parsedSessionCount !== 9) {
+          console.log("Auto-correcting session storage for 9-hole round");
+          sessionStorage.setItem('current-hole-count', '9');
+        }
       }
+    }
+
+    // Force-set session storage based on URL if needed
+    if (is9HoleRound && sessionHoleCount !== '9') {
+      console.log("URL indicates 9-hole round, updating session storage");
+      sessionStorage.setItem('current-hole-count', '9');
     }
   }, [currentHole, holeCount, isLast]);
   
@@ -103,10 +121,19 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Use the explicit isLast prop as the source of truth
+  // URL-based validation for isLast as a double-check
+  const path = window.location.pathname;
+  const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+  const urlBasedIsLast = (is9HoleRound && currentHole === 9) || (!is9HoleRound && currentHole === holeCount);
+  
+  // Final isLast determination using both prop and URL validation
+  const finalIsLast = isLast === true || urlBasedIsLast;
+  
   console.log(`HoleScoreView - Final calculation:
   - isFirstHole: ${isFirstHole}
   - isLast (prop): ${isLast}
+  - URL-based isLast: ${urlBasedIsLast}
+  - Final isLast: ${finalIsLast}
   - holeCount: ${holeCount}
   - currentHole: ${currentHole}`);
   
@@ -121,7 +148,7 @@ export const HoleScoreView = ({
         onPrevious={handlePrevious}
         onReviewRound={handleReviewRound}
         isFirst={isFirstHole}
-        isLast={isLast}
+        isLast={finalIsLast}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}

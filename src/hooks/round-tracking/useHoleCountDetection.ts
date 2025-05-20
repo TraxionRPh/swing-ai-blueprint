@@ -14,12 +14,12 @@ export const useHoleCountDetection = () => {
     const path = window.location.pathname;
     console.log(`useHoleCountDetection - Analyzing path: ${path}`);
     
-    // Explicit path pattern matching for 9-hole rounds
-    const is9HolePattern = /\/rounds\/new\/9($|\/)|\/9\//;
+    // Improved path pattern matching for 9-hole rounds - check for exact matches
+    const is9HolePattern = /\/rounds\/new\/9($|\/)|\/(rounds\/)[^\/]+\/9($|\/)/;
     const is9HoleRound = is9HolePattern.test(path);
     
-    // Explicit path pattern matching for 18-hole rounds
-    const is18HolePattern = /\/rounds\/new\/18($|\/)|\/18\//;
+    // Improved path pattern matching for 18-hole rounds - check for exact matches
+    const is18HolePattern = /\/rounds\/new\/18($|\/)|\/(rounds\/)[^\/]+\/18($|\/)/;
     const is18HoleRound = is18HolePattern.test(path);
     
     // Get stored hole count
@@ -30,15 +30,29 @@ export const useHoleCountDetection = () => {
     console.log(`- Is 18-hole round from path? ${is18HoleRound}`);
     console.log(`- Stored hole count: ${storedHoleCount}`);
     
-    // Priority 1: URL path takes precedence over everything else
-    if (is9HoleRound) {
-      console.log("Setting hole count to 9 from URL path detection");
+    // Enhanced path detection to determine if we're in a 9 or 18 hole path
+    if (path.includes('/rounds/new/9') || path.endsWith('/9')) {
+      console.log("Setting hole count to 9 from EXACT URL path match");
+      setHoleCount(9);
+      // Update session storage to match path
+      sessionStorage.setItem('current-hole-count', '9');
+      return 9;
+    } else if (path.includes('/rounds/new/18') || path.endsWith('/18')) {
+      console.log("Setting hole count to 18 from EXACT URL path match");
+      setHoleCount(18);
+      // Update session storage to match path
+      sessionStorage.setItem('current-hole-count', '18');
+      return 18;
+    }
+    // Priority 1: URL path detection with improved patterns
+    else if (is9HoleRound) {
+      console.log("Setting hole count to 9 from URL path pattern detection");
       setHoleCount(9);
       // Update session storage to match path
       sessionStorage.setItem('current-hole-count', '9');
       return 9;
     } else if (is18HoleRound) {
-      console.log("Setting hole count to 18 from URL path detection");
+      console.log("Setting hole count to 18 from URL path pattern detection");
       setHoleCount(18);
       // Update session storage to match path
       sessionStorage.setItem('current-hole-count', '18');
@@ -78,18 +92,34 @@ export const useHoleCountDetection = () => {
     const detectedCount = detectHoleCountFromUrl();
     console.log(`Initial hole count detection: ${detectedCount}`);
     
-    // Set up listener for URL changes
+    // Set up listener for URL changes via both popstate and pushState/replaceState
     const handleUrlChange = () => {
       console.log("URL changed, re-detecting hole count");
       detectHoleCountFromUrl();
     };
     
-    // Listen for url changes via popstate and pushstate
+    // Listen for url changes via popstate
     window.addEventListener('popstate', handleUrlChange);
+    
+    // Override history methods to detect programmatic navigation
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+    
+    window.history.pushState = function() {
+      originalPushState.apply(this, arguments);
+      handleUrlChange();
+    };
+    
+    window.history.replaceState = function() {
+      originalReplaceState.apply(this, arguments);
+      handleUrlChange();
+    };
     
     // Cleanup
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
     };
   }, [detectHoleCountFromUrl]);
   

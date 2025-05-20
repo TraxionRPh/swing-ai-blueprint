@@ -63,9 +63,22 @@ export const RoundTrackingDetail = ({
     if (initialHoleNumber) {
       setCurrentHole(initialHoleNumber);
     }
+    
     // Re-detect hole count when component mounts or URL changes
-    detectHoleCountFromUrl();
-  }, [initialHoleNumber, detectHoleCountFromUrl]);
+    const detectedCount = detectHoleCountFromUrl();
+    console.log(`RoundTrackingDetail - detected hole count: ${detectedCount}`);
+    
+    // Add URL-based validation
+    const path = window.location.pathname;
+    const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+    
+    // Force session storage to match URL for 9-hole rounds
+    if (is9HoleRound && sessionStorage.getItem('current-hole-count') !== '9') {
+      console.log("URL indicates 9-hole round, fixing session storage");
+      sessionStorage.setItem('current-hole-count', '9');
+    }
+    
+  }, [initialHoleNumber, detectHoleCountFromUrl, window.location.pathname]);
   
   useEffect(() => {
     setDetailLoading(isLoading);
@@ -94,17 +107,33 @@ export const RoundTrackingDetail = ({
     // Also log the session storage value directly
     const sessionHoleCount = sessionStorage.getItem('current-hole-count');
     console.log(`RoundTrackingDetail - Session storage hole count: ${sessionHoleCount}`);
-  }, [currentHole, holeCount]);
+    
+    // URL-based validation
+    const path = window.location.pathname;
+    const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+    if (is9HoleRound && sessionHoleCount !== '9') {
+      console.log("RoundTrackingDetail - URL indicates 9 holes but session storage is different, fixing");
+      sessionStorage.setItem('current-hole-count', '9');
+    }
+  }, [currentHole, holeCount, window.location.pathname]);
   
   // Enhanced finishRound function with clear hole count handling
   const finishRound = async () => {
     try {
       // Re-detect hole count to make sure we have the correct value
       detectHoleCountFromUrl();
-      console.log(`RoundTrackingDetail - finishing round with hole count ${holeCount}`);
+      
+      // URL-based validation
+      const path = window.location.pathname;
+      const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+      
+      // Force hole count to 9 for 9-hole rounds regardless of other settings
+      const finalHoleCount = is9HoleRound ? 9 : holeCount;
+      
+      console.log(`RoundTrackingDetail - finishing round with hole count ${finalHoleCount}`);
       
       // Store the hole count in session storage before saving
-      sessionStorage.setItem('current-hole-count', holeCount.toString());
+      sessionStorage.setItem('current-hole-count', finalHoleCount.toString());
       
       let roundIdToUse = createdRoundId || currentRoundId;
       
@@ -134,11 +163,11 @@ export const RoundTrackingDetail = ({
       if (finishRoundBase) {
         toast({
           title: "Saving round",
-          description: `Saving your ${holeCount}-hole round...`,
+          description: `Saving your ${finalHoleCount}-hole round...`,
         });
         
-        // Pass the hole count to finishRoundBase
-        return await finishRoundBase(holeScores, holeCount, roundIdToUse);
+        // Pass the explicit hole count to finishRoundBase
+        return await finishRoundBase(holeScores, finalHoleCount, roundIdToUse);
       }
       
       return false;
@@ -155,10 +184,18 @@ export const RoundTrackingDetail = ({
 
   // Handler to show the final score card
   const handleShowReviewCard = () => {
-    console.log("Showing final score card for review with hole count:", holeCount);
+    // URL-based validation
+    const path = window.location.pathname;
+    const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+    
+    // Force hole count to 9 for 9-hole rounds regardless of other settings
+    const finalHoleCount = is9HoleRound ? 9 : holeCount;
+    
+    console.log(`Showing final score card for review with hole count: ${finalHoleCount}`);
+    
     // Re-verify the hole count before showing the review
-    const confirmedHoleCount = holeCount;
-    console.log(`Confirmed hole count for review: ${confirmedHoleCount}`);
+    sessionStorage.setItem('current-hole-count', finalHoleCount.toString());
+    
     setShowFinalScore(true);
   };
 
@@ -167,10 +204,17 @@ export const RoundTrackingDetail = ({
   }
 
   if (showFinalScore) {
+    // URL-based validation
+    const path = window.location.pathname;
+    const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+    
+    // Force hole count to 9 for 9-hole rounds regardless of other settings
+    const finalHoleCount = is9HoleRound ? 9 : holeCount;
+    
     return (
       <RoundReview
-        holeScores={holeScores.slice(0, holeCount)}
-        holeCount={holeCount}
+        holeScores={holeScores.slice(0, finalHoleCount)}
+        holeCount={finalHoleCount}
         finishRound={finishRound}
         onBack={() => {
           setShowFinalScore(false);
@@ -181,9 +225,18 @@ export const RoundTrackingDetail = ({
   }
   
   // Calculate if this is the last hole based on the current hole count
-  // Using strict equality to ensure type matching
-  const isLastHole = currentHole === holeCount;
-  console.log(`RoundTrackingDetail - Is last hole check: ${currentHole} === ${holeCount} = ${isLastHole}`);
+  // URL-based validation for extra safety
+  const path = window.location.pathname;
+  const is9HoleRound = path.includes('/rounds/new/9') || path.endsWith('/9');
+  
+  // Force hole count to 9 for 9-hole rounds regardless of other settings
+  const effectiveHoleCount = is9HoleRound ? 9 : holeCount;
+  
+  // Calculate isLastHole using the effective hole count
+  const isLastHole = currentHole === effectiveHoleCount;
+  
+  console.log(`RoundTrackingDetail - Is last hole check: ${currentHole} === ${effectiveHoleCount} = ${isLastHole}`);
+  console.log(`RoundTrackingDetail - URL is9HoleRound check: ${is9HoleRound}`);
   
   return (
     <HoleScoreView
@@ -192,7 +245,7 @@ export const RoundTrackingDetail = ({
       handleNext={handleNext}
       handlePrevious={handlePrevious}
       currentHole={currentHole}
-      holeCount={holeCount}
+      holeCount={effectiveHoleCount}
       isSaving={isSaving}
       isLoading={isLoading}
       holeScores={holeScores}
