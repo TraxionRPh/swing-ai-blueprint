@@ -27,17 +27,20 @@ export const HoleNavigation = ({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get the actual hole count from session storage on every render
-  const [currentHoleCount, setCurrentHoleCount] = useState(holeCount);
+  const [actualHoleCount, setActualHoleCount] = useState(holeCount);
   
-  // Force update of hole count from session storage on every render
+  // Force update of hole count from session storage on mount and when props change
   useEffect(() => {
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
-    const parsedCount = storedHoleCount ? parseInt(storedHoleCount, 10) : holeCount;
-    setCurrentHoleCount(parsedCount);
-    
-    console.log(`HoleNavigation refreshed hole count: ${parsedCount} (from props: ${holeCount})`);
-    console.log(`Current hole: ${currentHole}, Is last hole? ${isLast}`);
-  }, [holeCount, currentHole, isLast]);
+    if (storedHoleCount) {
+      const parsedCount = parseInt(storedHoleCount, 10);
+      setActualHoleCount(parsedCount);
+      console.log(`HoleNavigation: Updated actual hole count from session storage: ${parsedCount}`);
+    } else {
+      setActualHoleCount(holeCount);
+      console.log(`HoleNavigation: Using prop hole count: ${holeCount}`);
+    }
+  }, [holeCount, currentHole]);
 
   // Clear timeout on unmount
   useEffect(() => {
@@ -50,41 +53,35 @@ export const HoleNavigation = ({
 
   // Explicit check for when to show review button - simplified to be very direct
   const shouldShowReviewButton = useCallback(() => {
-    // Get latest hole count from session storage for most accurate check
+    // Always get the latest value directly from session storage
     const storedHoleCount = sessionStorage.getItem('current-hole-count');
-    const actualHoleCount = storedHoleCount ? parseInt(storedHoleCount, 10) : currentHoleCount;
+    const effectiveHoleCount = storedHoleCount ? parseInt(storedHoleCount, 10) : actualHoleCount;
     
-    console.log(`shouldShowReviewButton check - currentHole: ${currentHole}, actualHoleCount: ${actualHoleCount}`);
+    console.log(`shouldShowReviewButton check - currentHole: ${currentHole}, effectiveHoleCount: ${effectiveHoleCount}, isLast: ${isLast}`);
     
-    // For 9-hole rounds, show the Review button on hole 9
-    if (actualHoleCount === 9 && currentHole === 9) {
-      console.log("✓ MATCH: 9-hole round at hole 9 - showing Review Round button");
-      return true;
-    }
-    
-    // For 18-hole rounds, show the Review button on hole 18
-    if (actualHoleCount === 18 && currentHole === 18) {
-      console.log("✓ MATCH: 18-hole round at hole 18 - showing Review Round button");
-      return true;
-    }
-    
-    // If explicitly marked as the last hole, show the Review button
+    // If isLast is explicitly set via props, always respect that
     if (isLast === true) {
       console.log("✓ MATCH: isLast prop is true - showing Review Round button");
       return true;
     }
     
-    // If current hole equals the hole count, show the Review button as well
-    if (currentHole === actualHoleCount) {
-      console.log(`✓ MATCH: Current hole (${currentHole}) equals hole count (${actualHoleCount}) - showing Review Round button`);
+    // For 9-hole rounds, show Review button on hole 9
+    if (effectiveHoleCount === 9 && currentHole === 9) {
+      console.log("✓ MATCH: 9-hole round at hole 9 - showing Review Round button");
       return true;
     }
     
-    console.log(`✗ NO MATCH: Not showing Review button - currentHole: ${currentHole}, holeCount: ${actualHoleCount}, isLast: ${isLast}`);
+    // For 18-hole rounds, show Review button on hole 18
+    if (effectiveHoleCount === 18 && currentHole === 18) {
+      console.log("✓ MATCH: 18-hole round at hole 18 - showing Review Round button");
+      return true;
+    }
+    
+    console.log(`✗ NO MATCH: Not showing Review button - currentHole: ${currentHole}, effectiveHoleCount: ${effectiveHoleCount}`);
     return false;
-  }, [currentHole, currentHoleCount, isLast]);
+  }, [currentHole, actualHoleCount, isLast]);
 
-  console.log(`HoleNavigation rendered - Hole: ${currentHole}/${currentHoleCount}, isLast: ${isLast}, shouldShowReview: ${shouldShowReviewButton()}`);
+  console.log(`HoleNavigation rendered - Hole: ${currentHole}/${actualHoleCount}, isLast: ${isLast}, shouldShowReview: ${shouldShowReviewButton()}`);
 
   // Previous button handler with debounce
   const handlePrevious = useCallback((e: React.MouseEvent) => {

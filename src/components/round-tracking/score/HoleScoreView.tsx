@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { HoleScoreCard } from "@/components/round-tracking/hole-score/HoleScoreCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreSummary } from "@/components/round-tracking/ScoreSummary";
@@ -44,16 +44,30 @@ export const HoleScoreView = ({
   isLast = false
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
+  const [actualHoleCount, setActualHoleCount] = useState(holeCount);
+  
+  // Sync with session storage on mount and when holeCount changes
+  useEffect(() => {
+    const sessionHoleCount = sessionStorage.getItem('current-hole-count');
+    if (sessionHoleCount) {
+      const parsedCount = parseInt(sessionHoleCount, 10);
+      setActualHoleCount(parsedCount);
+      console.log(`HoleScoreView: Updated actual hole count from session: ${parsedCount} (prop value: ${holeCount})`);
+    } else {
+      setActualHoleCount(holeCount);
+      console.log(`HoleScoreView: Using prop hole count: ${holeCount} (no session value)`);
+    }
+  }, [holeCount]);
   
   // Log critical information for debugging on every render
-  console.log(`HoleScoreView rendered - Hole: ${currentHole}/${holeCount}, isLast: ${isLast}`);
-  console.log(`Is 9-hole round? ${holeCount === 9}`);
+  console.log(`HoleScoreView rendered - Hole: ${currentHole}/${actualHoleCount}, isLast: ${isLast}`);
+  console.log(`Is 9-hole round? ${actualHoleCount === 9}`);
   
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
-    console.log(`Next clicked in HoleScoreView for hole ${currentHole}/${holeCount}`);
+    console.log(`Next clicked in HoleScoreView for hole ${currentHole}/${actualHoleCount}`);
     handleNext();
-  }, [handleNext, currentHole, holeCount]);
+  }, [handleNext, currentHole, actualHoleCount]);
   
   const handlePreviousHole = useCallback(() => {
     console.log(`Previous clicked in HoleScoreView for hole ${currentHole}`);
@@ -61,7 +75,7 @@ export const HoleScoreView = ({
   }, [handlePrevious, currentHole]);
   
   const handleReviewRound = useCallback(() => {
-    console.log(`Review Round button clicked at hole ${currentHole}/${holeCount}`);
+    console.log(`Review Round button clicked at hole ${currentHole}/${actualHoleCount}`);
     
     // Use the onFinish prop if provided, otherwise show the final scorecard
     if (onFinish) {
@@ -69,7 +83,7 @@ export const HoleScoreView = ({
     } else {
       setShowFinalScore(true);
     }
-  }, [onFinish, currentHole, holeCount]);
+  }, [onFinish, currentHole, actualHoleCount]);
   
   const handleCancelReview = useCallback(() => {
     console.log("Cancelling review, returning to hole view");
@@ -83,11 +97,11 @@ export const HoleScoreView = ({
   if (showFinalScore) {
     return (
       <FinalScoreCard
-        holeScores={holeScores.slice(0, holeCount)}
+        holeScores={holeScores.slice(0, actualHoleCount)}
         isOpen={true}
         onConfirm={() => {}} // This will be connected to submit functionality
         onCancel={handleCancelReview}
-        holeCount={holeCount}
+        holeCount={actualHoleCount}
       />
     );
   }
@@ -95,12 +109,12 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Calculate if this is the last hole based on the current hole count - this is critical!
-  const isLastHole = currentHole === holeCount;
+  // Calculate if this is the last hole based on the actual hole count from session/props
+  const isLastHole = currentHole === actualHoleCount;
   const effectiveIsLast = isLast || isLastHole;
   
   // Explicitly log all conditions for debugging purposes
-  console.log(`HoleScoreView status check - Hole: ${currentHole}/${holeCount}`);
+  console.log(`HoleScoreView status check - Hole: ${currentHole}/${actualHoleCount}`);
   console.log(`- isFirstHole: ${isFirstHole}`);
   console.log(`- isLast prop: ${isLast}`);
   console.log(`- isLastHole (calculated): ${isLastHole}`);
@@ -122,7 +136,7 @@ export const HoleScoreView = ({
         saveSuccess={saveSuccess}
         saveError={saveError}
         currentHole={currentHole}
-        holeCount={holeCount}
+        holeCount={actualHoleCount}
         teeColor={teeColor}
         courseId={courseId}
         teeId={teeId}

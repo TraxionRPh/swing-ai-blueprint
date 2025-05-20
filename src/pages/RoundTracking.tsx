@@ -15,11 +15,17 @@ const RoundTracking = () => {
 
   const pathname = window.location.pathname;
   const isMainPage = pathname === "/rounds";
+  
+  // Enhanced path matching
   const pathMatch = pathname.match(/\/rounds\/([a-zA-Z0-9-]+)(?:\/(\d+))?$/);
   
-  // More specific path matching for 9 and 18-hole rounds
-  const isNineHoleRound = pathname === '/rounds/new/9' || pathname.includes('/rounds/new/9/');
-  const isEighteenHoleRound = pathname === '/rounds/new/18' || pathname.includes('/rounds/new/18/');
+  // More specific pattern matching for 9 and 18-hole rounds
+  const isNineHolePattern = /\/rounds\/new\/9($|\/)/;
+  const isNineHoleRound = isNineHolePattern.test(pathname);
+  
+  const isEighteenHolePattern = /\/rounds\/new\/18($|\/)/; 
+  const isEighteenHoleRound = isEighteenHolePattern.test(pathname);
+  
   const isDetailPage = !!pathMatch || isNineHoleRound || isEighteenHoleRound || pathname === '/rounds/new';
   const roundId = pathMatch ? pathMatch[1] : (isNineHoleRound || isEighteenHoleRound || pathname === '/rounds/new' ? "new" : null);
   const holeNumber = pathMatch && pathMatch[2] ? parseInt(pathMatch[2]) : null;

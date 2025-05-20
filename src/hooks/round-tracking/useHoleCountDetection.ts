@@ -11,15 +11,15 @@ export const useHoleCountDetection = () => {
     // More precise pattern matching for path detection
     const path = window.location.pathname;
     
-    // Exact path matching for 9-hole rounds
-    const is9HoleRound = path === '/rounds/new/9' || 
-                          path.startsWith('/rounds/new/9/') || 
-                          path.includes('/9/');
+    // Check if the path explicitly matches /rounds/new/9 or contains /9/ 
+    // with strict boundary checks to avoid matching numbers like 19
+    const is9HolePattern = /\/rounds\/new\/9($|\/)|\/9\//;
+    const is9HoleRound = is9HolePattern.test(path);
     
-    // Exact path matching for 18-hole rounds
-    const is18HoleRound = path === '/rounds/new/18' || 
-                           path.startsWith('/rounds/new/18/') || 
-                           path.includes('/18/');
+    // Check if the path explicitly matches /rounds/new/18 or contains /18/
+    // with strict boundary checks
+    const is18HolePattern = /\/rounds\/new\/18($|\/)|\/18\//;
+    const is18HoleRound = is18HolePattern.test(path);
     
     // Get stored hole count
     const storedHoleCount = sessionStorage.getItem('current-hole-count');

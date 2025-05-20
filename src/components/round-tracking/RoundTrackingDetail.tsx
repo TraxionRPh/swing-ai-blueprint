@@ -84,9 +84,13 @@ export const RoundTrackingDetail = ({
   
   // Log the hole count on every render for debugging
   useEffect(() => {
-    console.log(`RoundTrackingDetail - Current hole count: ${holeCount}`);
+    console.log(`RoundTrackingDetail - Current hole count from useHoleCountDetection: ${holeCount}`);
     console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}`);
-    console.log(`RoundTrackingDetail - Is last hole? ${currentHole === holeCount}`);
+    console.log(`RoundTrackingDetail - Path: ${window.location.pathname}`);
+    
+    // Also log the session storage value directly
+    const sessionHoleCount = sessionStorage.getItem('current-hole-count');
+    console.log(`RoundTrackingDetail - Session storage hole count: ${sessionHoleCount}`);
   }, [currentHole, holeCount]);
   
   const finishRound = async () => {
