@@ -39,7 +39,7 @@ export const FinalScoreView = ({
   }, [holeScores, holeCount, checkScoreGoal]);
   
   const handleConfirmRound = async () => {
-    console.log("Finalizing round with hole count:", holeCount);
+    console.log(`Finalizing round with hole count: ${holeCount}, scores: ${holeScores.length}`);
     
     if (isSubmitting) {
       console.log("Submission already in progress, ignoring duplicate request");
@@ -48,18 +48,6 @@ export const FinalScoreView = ({
     
     try {
       setIsSubmitting(true);
-      
-      // Process hole scores to ensure proper data types
-      const preparedHoleScores = holeScores.map(hole => ({
-        ...hole,
-        score: hole.score || 0,
-        // Ensure putts is always a number (0) if undefined
-        putts: typeof hole.putts === 'number' ? hole.putts : 0,
-        fairwayHit: !!hole.fairwayHit,
-        greenInRegulation: !!hole.greenInRegulation
-      }));
-      
-      console.log("Submitting finalized hole scores:", preparedHoleScores);
       
       const success = await finishRound(holeCount);
       

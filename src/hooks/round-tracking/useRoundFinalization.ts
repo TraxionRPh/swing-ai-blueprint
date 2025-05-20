@@ -18,8 +18,11 @@ export const useRoundFinalization = (
       return false;
     }
     
-    // Validate the hole count
-    const actualHoleCount = holeCount || 18;
+    // Get the hole count from parameter or session storage as fallback
+    const storedHoleCount = sessionStorage.getItem('current-hole-count');
+    const actualHoleCount = holeCount || (storedHoleCount ? parseInt(storedHoleCount) : 18);
+    
+    console.log(`Finishing round with hole count: ${actualHoleCount}, scores available: ${holeScores.length}`);
     
     // Calculate total score before finishing the round
     const relevantScores = holeScores.slice(0, actualHoleCount);

@@ -28,8 +28,8 @@ export const useHolePersistence = (roundId: string | null) => {
       const dataToSave = {
         round_id: roundId,
         hole_number: holeData.holeNumber,
-        score: holeData.score || null,  // Use null instead of 0 for empty values
-        putts: holeData.putts || null,  // Use null instead of 0 for empty values
+        score: holeData.score || 0,  // Use 0 instead of null for empty values
+        putts: typeof holeData.putts === 'number' ? holeData.putts : 0,  // Use 0 instead of null for consistency
         fairway_hit: !!holeData.fairwayHit,
         green_in_regulation: !!holeData.greenInRegulation
       };

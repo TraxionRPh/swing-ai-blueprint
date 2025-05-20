@@ -95,6 +95,7 @@ export const RoundTrackingDetail = ({
   
   const finishRound = async (holeCount: number) => {
     if (finishRoundBase) {
+      console.log(`RoundTrackingDetail - calling finishRoundBase with hole count ${holeCount}`);
       return await finishRoundBase(holeScores, holeCount);
     }
     return false;
