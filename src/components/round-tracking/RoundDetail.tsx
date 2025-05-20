@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,7 @@ import { useRound } from "@/context/RoundContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, GolfClub, Circle, Clock, Play, Edit } from "lucide-react";
+import { Calendar, Golf, Circle, Clock, Play, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
@@ -129,7 +128,7 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
               <span>{format(new Date(roundData.date), "MMMM d, yyyy")}</span>
             </div>
             <div className="flex items-center">
-              <GolfClub className="h-5 w-5 mr-2 text-muted-foreground" />
+              <Golf className="h-5 w-5 mr-2 text-muted-foreground" />
               <span>{roundData.hole_count} holes</span>
             </div>
           </div>

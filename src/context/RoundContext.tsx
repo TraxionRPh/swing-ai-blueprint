@@ -96,8 +96,7 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
             name,
             city,
             state,
-            total_par,
-            course_tees (*)
+            total_par
           )
         `)
         .eq('id', currentRoundId)
@@ -106,10 +105,25 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
       if (roundError) throw roundError;
       
       if (roundData) {
+        // Fetch course tees separately
+        const { data: courseTees, error: teesError } = await supabase
+          .from('course_tees')
+          .select('*')
+          .eq('course_id', roundData.course_id);
+          
+        if (teesError) throw teesError;
+        
         // Set course and tee
-        setSelectedCourse(roundData.golf_courses);
-        setSelectedTeeId(roundData.tee_id);
-        setHoleCount(roundData.hole_count || 18);
+        if (roundData.golf_courses) {
+          const courseWithTees: Course = {
+            ...roundData.golf_courses,
+            course_tees: courseTees || []
+          };
+          
+          setSelectedCourse(courseWithTees);
+          setSelectedTeeId(roundData.tee_id);
+          setHoleCount(roundData.hole_count || 18);
+        }
         
         // Fetch hole scores
         const { data: holeData, error: holeError } = await supabase
@@ -128,7 +142,7 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
             
             return {
               holeNumber,
-              par: existingScore?.par || 4,
+              par: existingScore?.par || 4, // Add default par value since it might not exist in DB
               distance: 0, // We'll fetch this separately if needed
               score: existingScore?.score || 0,
               putts: existingScore?.putts || 0,

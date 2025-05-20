@@ -61,8 +61,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
             id,
             name,
             city,
-            state,
-            course_tees (*)
+            state
           )
         `)
         .eq('user_id', user!.id)
@@ -76,8 +75,28 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
         .filter((course, index, self) => 
           course && self.findIndex(c => c?.id === course.id) === index
         );
-        
-      setRecentCourses(uniqueCourses || []);
+      
+      // Fix for TypeScript error - ensure course_tees is an array
+      const coursesWithTees = await Promise.all(
+        (uniqueCourses || []).map(async (course) => {
+          if (!course) return null;
+          
+          // Fetch tees separately
+          const { data: tees } = await supabase
+            .from('course_tees')
+            .select('*')
+            .eq('course_id', course.id);
+            
+          return {
+            ...course,
+            course_tees: tees || []
+          };
+        })
+      );
+      
+      // Filter out nulls from the async map
+      const validCourses = coursesWithTees.filter(course => course !== null) as Course[];
+      setRecentCourses(validCourses);
     } catch (error) {
       console.error("Error fetching recent courses:", error);
     }
@@ -90,16 +109,32 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     setShowRecentCourses(false);
     
     try {
-      const { data, error } = await supabase
+      // First get the course data
+      const { data: coursesData, error: coursesError } = await supabase
         .from('golf_courses')
-        .select('*, course_tees (*)')
+        .select('id, name, city, state')
         .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
         .order('name')
         .limit(10);
         
-      if (error) throw error;
+      if (coursesError) throw coursesError;
       
-      setSearchResults(data || []);
+      // Now get tees for each course
+      const coursesWithTees = await Promise.all(
+        (coursesData || []).map(async (course) => {
+          const { data: tees } = await supabase
+            .from('course_tees')
+            .select('*')
+            .eq('course_id', course.id);
+            
+          return {
+            ...course,
+            course_tees: tees || []
+          };
+        })
+      );
+      
+      setSearchResults(coursesWithTees);
     } catch (error) {
       console.error("Error searching courses:", error);
       toast({

@@ -12,8 +12,6 @@ import { RoundReview } from "@/components/round-tracking/RoundReview";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { roundId, holeCount, holeNumber } = useParams();
 
   // Handle navigation back to the rounds list
   const handleBack = () => {
@@ -36,10 +34,10 @@ const RoundTracking = () => {
           <Route path="/:roundId" element={<RoundDetail onBack={handleBack} />} />
           
           {/* Round scoring page - hole by hole */}
-          <Route path="/:roundId/:holeNumber" element={<HoleScoring onBack={() => navigate(`/rounds/${roundId}`)} />} />
+          <Route path="/:roundId/:holeNumber" element={<HoleScoring onBack={() => navigate(`/rounds/${useParams().roundId}`)} />} />
           
           {/* Round review page */}
-          <Route path="/:roundId/review" element={<RoundReview onBack={() => navigate(`/rounds/${roundId}`)} />} />
+          <Route path="/:roundId/review" element={<RoundReview onBack={() => navigate(`/rounds/${useParams().roundId}`)} />} />
           
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/rounds" replace />} />
