@@ -7,7 +7,6 @@ import { FinalScoreView } from "@/components/round-tracking/score/FinalScoreView
 import { useRoundManagement } from "@/hooks/round-tracking/useRoundManagement";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   onBack: () => void;
@@ -37,7 +36,6 @@ export const RoundTrackingDetail = ({
   const [holeCount, setHoleCount] = useState(18);
   const [isLoading, setIsLoading] = useState(false);
   const [showFinalScore, setShowFinalScore] = useState(false);
-  const [actualRoundId, setActualRoundId] = useState<string | null>(currentRoundId);
   
   const { finishRound: finishRoundBase } = useRoundManagement(user);
   
@@ -48,7 +46,7 @@ export const RoundTrackingDetail = ({
     isSaving,
     currentHoleData,
     clearResumeData,
-  } = useScoreTracking(actualRoundId, courseId || undefined, holeScores, setHoleScores);
+  } = useScoreTracking(currentRoundId, courseId || undefined, holeScores, setHoleScores);
 
   useEffect(() => {
     if (initialHoleNumber) {
@@ -140,75 +138,22 @@ export const RoundTrackingDetail = ({
     return () => clearTimeout(loadingTimeout);
   }, []);
   
-  // Create a new round in the database if this is a new round
-  const createNewRound = async () => {
-    if (!user || !courseId) {
-      toast({
-        title: "Error creating round",
-        description: "Missing user or course information",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    try {
-      console.log("Creating new round in database with course ID:", courseId);
-      
-      const { data, error } = await supabase
-        .from('rounds')
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          hole_count: holeCount,
-          tee_id: teeId || null
-        })
-        .select('id')
-        .single();
-      
-      if (error) {
-        console.error("Error creating new round:", error);
-        toast({
-          title: "Error creating round",
-          description: error.message,
-          variant: "destructive"
-        });
-        return null;
-      }
-      
-      console.log("Successfully created new round with ID:", data.id);
-      setActualRoundId(data.id);
-      return data.id;
-    } catch (err) {
-      console.error("Exception creating new round:", err);
-      toast({
-        title: "Error creating round",
-        description: "Unexpected error creating round",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-  
   const finishRound = async (holeCount: number) => {
     if (finishRoundBase) {
       console.log(`RoundTrackingDetail - calling finishRoundBase with hole count ${holeCount}`);
       
       // Add validation for new rounds
-      if (actualRoundId === "new") {
+      if (currentRoundId === "new") {
         console.log("Creating new round before submitting");
-        const newRoundId = await createNewRound();
-        
-        if (!newRoundId) {
-          toast({
-            title: "Error saving round",
-            description: "Could not create a new round",
-            variant: "destructive"
-          });
-          return false;
-        }
-        
-        // Now we can finish the round with the new ID
-        return await finishRoundBase(holeScores, holeCount, newRoundId);
+        // You would need to implement logic here to create a new round first
+        // This is just a placeholder as we need to implement round creation logic
+        // For now, we'll just show an error message
+        toast({
+          title: "Error saving round",
+          description: "Please start a new round before submitting",
+          variant: "destructive"
+        });
+        return false;
       }
       
       return await finishRoundBase(holeScores, holeCount);

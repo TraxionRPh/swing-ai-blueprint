@@ -116,16 +116,13 @@ export const useRoundManagement = (user: any) => {
     }
   };
 
-  const finishRound = async (holeScores: HoleData[], holeCount: number, overrideRoundId?: string | null) => {
-    // Use the override round ID if provided, otherwise use the current round ID
-    const roundIdToUse = overrideRoundId || currentRoundId;
-    
-    if (!roundIdToUse || isSubmitting) return false;
+  const finishRound = async (holeScores: HoleData[], holeCount: number) => {
+    if (!currentRoundId || isSubmitting) return false;
     
     setIsSubmitting(true);
 
     try {
-      console.log("Finishing round with ID:", roundIdToUse);
+      console.log("Finishing round with ID:", currentRoundId);
       console.log("Hole scores:", holeScores);
       console.log("Hole count:", holeCount);
       
@@ -165,7 +162,7 @@ export const useRoundManagement = (user: any) => {
           greens_in_regulation: greensInRegulation,
           hole_count: holeCount
         })
-        .eq('id', roundIdToUse);
+        .eq('id', currentRoundId);
         
       if (updateResult.error) {
         console.error('Error updating round:', updateResult.error);
