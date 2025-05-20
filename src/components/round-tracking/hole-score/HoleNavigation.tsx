@@ -26,32 +26,6 @@ export const HoleNavigation = ({
   const [isClickingPrev, setIsClickingPrev] = useState(false);
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Simplified logic for determining if we should show the review button
-  const showReviewButton = useCallback(() => {
-    // If current hole matches the total hole count, show review button
-    if (currentHole === holeCount) {
-      console.log(`Current hole ${currentHole} equals hole count ${holeCount}, showing review button`);
-      return true;
-    }
-    
-    // Special case for 9-hole rounds
-    if (holeCount === 9 && currentHole === 9) {
-      console.log("On last hole (9) of a 9-hole round, showing review button");
-      return true;
-    }
-    
-    // Explicit override using isLast prop
-    if (isLast === true) {
-      console.log("isLast prop is true, showing review button");
-      return true;
-    }
-    
-    console.log("Review button conditions not met, showing Next Hole");
-    return false;
-  }, [currentHole, holeCount, isLast]);
-
-  console.log(`HoleNavigation rendered: currentHole=${currentHole}, holeCount=${holeCount}, isLast=${isLast}, showReviewButton=${showReviewButton()}`);
-
   // Clear timeout on unmount
   useEffect(() => {
     return () => {
@@ -61,26 +35,47 @@ export const HoleNavigation = ({
     };
   }, []);
 
+  // Simplified and explicit check for when to show review button
+  const shouldShowReviewButton = useCallback(() => {
+    // Check if we're on the last hole of a 9-hole round
+    if (holeCount === 9 && currentHole === 9) {
+      console.log("On hole 9 of a 9-hole round, showing Review Round button");
+      return true;
+    }
+    
+    // Check if we're on the last hole of an 18-hole round
+    if (holeCount === 18 && currentHole === 18) {
+      console.log("On hole 18 of an 18-hole round, showing Review Round button");
+      return true;
+    }
+    
+    // Explicit override using isLast prop
+    if (isLast === true) {
+      console.log("isLast prop is true, showing Review Round button");
+      return true;
+    }
+    
+    console.log(`Not showing Review Round button: hole ${currentHole} of ${holeCount}`);
+    return false;
+  }, [currentHole, holeCount, isLast]);
+
+  console.log(`HoleNavigation rendered - Hole: ${currentHole}/${holeCount}, isLast: ${isLast}, shouldShowReview: ${shouldShowReviewButton()}`);
+
   // Enhanced previous button handler with debounce
   const handlePrevious = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isClickingPrev || isClickingNext) {
-      console.log("Navigation blocked: already processing a click");
       return;
     }
     setIsClickingPrev(true);
     console.log("Previous button clicked");
     if (typeof onPrevious === 'function') {
-      // Call the handler directly
       onPrevious();
-
-      // Reset clicking state after a delay
       clickTimeoutRef.current = setTimeout(() => {
         setIsClickingPrev(false);
       }, 500);
     } else {
-      console.warn("Previous handler is not defined");
       setIsClickingPrev(false);
     }
   }, [onPrevious, isClickingPrev, isClickingNext]);
@@ -90,37 +85,26 @@ export const HoleNavigation = ({
     e.preventDefault();
     e.stopPropagation();
     if (isClickingNext || isClickingPrev) {
-      console.log("Navigation blocked: already processing a click");
       return;
     }
     setIsClickingNext(true);
     console.log("Next button clicked");
     
-    // Use simplified show review button logic
-    if (showReviewButton() && onReviewRound) {
+    const showReview = shouldShowReviewButton();
+    console.log(`Should show review: ${showReview}`);
+    
+    if (showReview && onReviewRound) {
       console.log("Showing round review");
       onReviewRound();
-      
-      // Reset clicking state after a delay
-      clickTimeoutRef.current = setTimeout(() => {
-        setIsClickingNext(false);
-      }, 500);
-      return;
+    } else if (typeof onNext === 'function') {
+      console.log("Navigating to next hole");
+      onNext();
     }
     
-    if (typeof onNext === 'function') {
-      // Call the handler directly
-      onNext();
-
-      // Reset clicking state after a delay
-      clickTimeoutRef.current = setTimeout(() => {
-        setIsClickingNext(false);
-      }, 500);
-    } else {
-      console.warn("Next handler is not defined");
+    clickTimeoutRef.current = setTimeout(() => {
       setIsClickingNext(false);
-    }
-  }, [onNext, onReviewRound, showReviewButton, isClickingNext, isClickingPrev]);
+    }, 500);
+  }, [onNext, onReviewRound, shouldShowReviewButton, isClickingNext, isClickingPrev]);
 
   return <div className="flex justify-between items-center mt-6">
       <Button variant="outline" onClick={handlePrevious} disabled={isFirst || isClickingPrev || isClickingNext} type="button" className="w-[140px]" data-testid="previous-hole-button">
@@ -128,7 +112,7 @@ export const HoleNavigation = ({
       </Button>
       
       <Button onClick={handleNext} disabled={isClickingNext || isClickingPrev} className="w-[140px]" type="button" data-testid="next-hole-button">
-        {showReviewButton() ? <>
+        {shouldShowReviewButton() ? <>
             <ClipboardList className="mr-2 h-4 w-4" />
             Review Round
           </> : "Next Hole"}

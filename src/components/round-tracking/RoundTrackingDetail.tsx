@@ -62,7 +62,6 @@ export const RoundTrackingDetail = ({
     }
   }, [initialHoleNumber]);
   
-  // Set parent loading state based on local loading state
   useEffect(() => {
     setDetailLoading(isLoading);
     if (!isLoading && !holeScores.length) {
@@ -75,7 +74,6 @@ export const RoundTrackingDetail = ({
   // Force exit from loading state if it takes too long
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
-      console.log("Forcing exit from loading state after timeout");
       setIsLoading(false);
     }, 1000); // 1 second timeout
     
@@ -84,7 +82,7 @@ export const RoundTrackingDetail = ({
   
   const finishRound = async (holeCount: number) => {
     try {
-      console.log(`RoundTrackingDetail - finishing round with hole count ${holeCount}`);
+      console.log(`RoundTrackingDetail - finishing round with explicit hole count ${holeCount}`);
       
       // Store the hole count in session storage before saving
       sessionStorage.setItem('current-hole-count', holeCount.toString());
@@ -158,11 +156,9 @@ export const RoundTrackingDetail = ({
     );
   }
   
-  console.log("RoundTrackingDetail rendering with currentHole:", currentHole, "of", holeCount);
-  
-  // Determine if this is the last hole
+  // Determine if this is the last hole based on the current hole count
   const isLastHole = currentHole === holeCount;
-  console.log("Is last hole check:", {currentHole, holeCount, isLastHole, path: window.location.pathname});
+  console.log(`RoundTrackingDetail - Current hole: ${currentHole}/${holeCount}, Is last hole: ${isLastHole}`);
   
   return (
     <HoleScoreView

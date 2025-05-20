@@ -39,7 +39,7 @@ export const FinalScoreView = ({
   }, [holeScores, holeCount, checkScoreGoal]);
   
   const handleConfirmRound = async () => {
-    console.log(`Finalizing round with hole count: ${holeCount}, scores: ${holeScores.length}`);
+    console.log(`Finalizing ${holeCount}-hole round with ${holeScores.length} scores`);
     
     if (isSubmitting) {
       console.log("Submission already in progress, ignoring duplicate request");
@@ -66,7 +66,6 @@ export const FinalScoreView = ({
           const totalScore = validHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
           const hasAchievement = checkScoreGoal(totalScore, true);
           
-          // Only show goal modal if there's an achievement
           if (hasAchievement) {
             setShowGoalModal(true);
           } else {
@@ -74,6 +73,7 @@ export const FinalScoreView = ({
           }
         } else {
           // If it's a 9-hole round, just go back
+          console.log("9-hole round completed, skipping achievement check");
           onBack();
         }
       } else {

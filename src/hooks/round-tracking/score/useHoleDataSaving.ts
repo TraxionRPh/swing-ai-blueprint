@@ -48,15 +48,12 @@ export const useHoleDataSaving = (roundId: string | null, currentHoleData: HoleD
         round_id: roundId,
         hole_number: holeData.holeNumber,
         score: holeData.score || 0,  // Use 0 instead of null for empty values
-        putts: typeof holeData.putts === 'number' ? holeData.putts : 0,  // Use 0 instead of null for consistency
+        putts: typeof holeData.putts === 'number' ? holeData.putts : 0,  // Use 0 if not set
         fairway_hit: !!holeData.fairwayHit,
         green_in_regulation: !!holeData.greenInRegulation
       };
       
       console.log('Saving hole data to database:', dataToSave);
-      
-      // Track time for the save operation
-      const startTime = Date.now();
       
       const { error } = await supabase
         .from('hole_scores')
@@ -68,9 +65,6 @@ export const useHoleDataSaving = (roundId: string | null, currentHoleData: HoleD
         console.error('Error in supabase upsert:', error);
         throw error;
       }
-      
-      const saveTime = Date.now() - startTime;
-      console.log(`Database save completed in ${saveTime}ms`);
       
       // Only update round summary after successful save of hole data
       await updateRoundSummary(roundId);
@@ -145,14 +139,19 @@ export const useHoleDataSaving = (roundId: string | null, currentHoleData: HoleD
   };
 };
 
-// Helper function to update the round summary
+// Helper function to update the round summary with correct hole count
 async function updateRoundSummary(roundId: string) {
   try {
     console.log('Updating round summary for round:', roundId);
     
     // Get the current hole count from session storage
-    const holeCount = parseInt(sessionStorage.getItem('current-hole-count') || '18');
-    console.log(`Using hole count ${holeCount} from session storage for round summary`);
+    let holeCount = 18; // Default to 18 holes
+    const storedHoleCount = sessionStorage.getItem('current-hole-count');
+    
+    if (storedHoleCount) {
+      holeCount = parseInt(storedHoleCount, 10);
+      console.log(`Using stored hole count: ${holeCount}`);
+    }
     
     const { data: holeScores, error: fetchError } = await supabase
       .from('hole_scores')
@@ -178,10 +177,8 @@ async function updateRoundSummary(roundId: string) {
       score: acc.score + (hole.score || 0),
       putts: acc.putts + (hole.putts || 0),
       fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
-      greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
-      scoreCount: acc.scoreCount + (hole.score !== null ? 1 : 0),
-      puttsCount: acc.puttsCount + (hole.putts !== null ? 1 : 0)
-    }), { score: 0, putts: 0, fairways: 0, greens: 0, scoreCount: 0, puttsCount: 0 });
+      greens: acc.greens + (hole.green_in_regulation ? 1 : 0)
+    }), { score: 0, putts: 0, fairways: 0, greens: 0 });
     
     console.log('Calculated round totals:', totals);
     

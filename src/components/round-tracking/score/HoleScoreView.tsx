@@ -45,14 +45,13 @@ export const HoleScoreView = ({
 }: HoleScoreViewProps) => {
   const [showFinalScore, setShowFinalScore] = useState(false);
   
-  console.log("HoleScoreView rendered with current hole:", currentHole, "out of", holeCount);
-  console.log("Current hole data in HoleScoreView:", currentHoleData);
+  console.log(`HoleScoreView rendered - Hole: ${currentHole}/${holeCount}, isLast: ${isLast}`);
   
   // Enhanced navigation handlers with useCallback to prevent unnecessary re-renders
   const handleNextHole = useCallback(() => {
-    console.log(`Next clicked in HoleScoreView for hole ${currentHole}`);
+    console.log(`Next clicked in HoleScoreView for hole ${currentHole}/${holeCount}`);
     handleNext();
-  }, [handleNext, currentHole]);
+  }, [handleNext, currentHole, holeCount]);
   
   const handlePreviousHole = useCallback(() => {
     console.log(`Previous clicked in HoleScoreView for hole ${currentHole}`);
@@ -60,7 +59,7 @@ export const HoleScoreView = ({
   }, [handlePrevious, currentHole]);
   
   const handleReviewRound = useCallback(() => {
-    console.log(`Review Round button clicked for hole ${currentHole} of ${holeCount} holes`);
+    console.log(`Review Round button clicked at hole ${currentHole}/${holeCount}`);
     
     // Use the onFinish prop if provided, otherwise show the final scorecard
     if (onFinish) {
@@ -94,14 +93,14 @@ export const HoleScoreView = ({
   // Determine if this is the first hole based on the hole number
   const isFirstHole = currentHole === 1;
   
-  // Determine if this is the last hole (explicitly handle 9-hole rounds)
-  const isLastHole = isLast || (holeCount === 9 && currentHole === 9) || (currentHole === holeCount);
-  
-  console.log("Is last hole check:", {currentHole, holeCount, isLastHole});
+  // Explicitly log all conditions for debugging purposes
+  console.log(`HoleScoreView status check - Hole: ${currentHole}/${holeCount}`);
+  console.log(`- isFirstHole: ${isFirstHole}`);
+  console.log(`- isLast: ${isLast}`);
+  console.log(`- isLast OR currentHole === holeCount: ${isLast || currentHole === holeCount}`);
   
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Add score summary at the top */}
       <ScoreSummary holeScores={holeScores} />
       
       <HoleScoreCard
@@ -111,7 +110,7 @@ export const HoleScoreView = ({
         onPrevious={handlePreviousHole}
         onReviewRound={handleReviewRound}
         isFirst={isFirstHole}
-        isLast={isLastHole}
+        isLast={isLast}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}

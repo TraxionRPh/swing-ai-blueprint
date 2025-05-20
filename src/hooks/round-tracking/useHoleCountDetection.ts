@@ -8,14 +8,14 @@ export const useHoleCountDetection = () => {
   const [holeCount, setHoleCount] = useState(18);
   
   useEffect(() => {
-    // First check if hole count is in session storage
-    const storedHoleCount = sessionStorage.getItem('current-hole-count');
-    
-    // Then check URL for 9-hole indicator
+    // First check URL for 9-hole indicator 
     const isNineHoleRound = window.location.pathname.includes('/rounds/new/9');
     
+    // Then check if hole count is in session storage
+    const storedHoleCount = sessionStorage.getItem('current-hole-count');
+    
     if (isNineHoleRound) {
-      console.log("Detected 9-hole round from URL");
+      console.log("Detected 9-hole round from URL: /rounds/new/9");
       setHoleCount(9);
       // Ensure session storage is updated
       sessionStorage.setItem('current-hole-count', '9');
