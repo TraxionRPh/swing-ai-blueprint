@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -30,11 +31,11 @@ const CourseSelection = () => {
     refreshCourses 
   } = useCourseSelection();
 
-  // Add useRound hook for context integration
+  // Add useRound hook for context integration - renaming variables to avoid conflicts
   const { 
-    setSelectedCourse, 
-    setSelectedTeeId, 
-    setHoleCount, 
+    setSelectedCourse: setContextSelectedCourse, 
+    setSelectedTeeId: setContextSelectedTeeId, 
+    setHoleCount: setContextHoleCount, 
     createRound 
   } = useRound();
   
@@ -149,10 +150,10 @@ const CourseSelection = () => {
       setIsProcessing(true);
       console.log(`Starting round with course: ${selectedCourse.name}, tee: ${selectedTeeId}, holes: ${selectedHoleCount}`);
       
-      // Update context with selected values
-      setSelectedCourse(selectedCourse);
-      setSelectedTeeId(selectedTeeId);
-      setHoleCount(selectedHoleCount);
+      // Update context with selected values - using renamed context functions
+      setContextSelectedCourse(selectedCourse);
+      setContextSelectedTeeId(selectedTeeId);
+      setContextHoleCount(selectedHoleCount);
       
       // Use context's createRound function
       const roundId = await createRound(selectedCourse.id, selectedTeeId);
