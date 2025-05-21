@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +40,14 @@ export const useRoundOperations = (
       if (error) throw error;
       
       if (data) {
+        // Save the new round ID to storage for persistence
+        try {
+          sessionStorage.setItem('current-round-id', data.id);
+          localStorage.setItem('current-round-id', data.id);
+        } catch (storageError) {
+          console.error('Failed to save round ID to storage:', storageError);
+        }
+        
         return data.id;
       }
       
@@ -59,14 +66,15 @@ export const useRoundOperations = (
   // Update a hole score
   const updateHoleScore = async (holeData: HoleData, currentRoundId: string | null) => {
     if (!currentRoundId || currentRoundId === 'new') {
-      return true; // No need to save for new rounds
+      console.error("Cannot save score: No valid round ID");
+      return false;
     }
     
     setSaveInProgress(true);
+    console.log(`Saving score for hole ${holeData.holeNumber} in round ${currentRoundId}`);
     
     try {
-      // Remove the 'par' field from the data being sent to Supabase
-      // as the 'hole_scores' table doesn't have a 'par' column
+      // Remove any fields not in the database schema
       const { error } = await supabase
         .from('hole_scores')
         .upsert({
@@ -80,21 +88,24 @@ export const useRoundOperations = (
           onConflict: 'round_id,hole_number'
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database error saving hole score:", error.message);
+        throw error;
+      }
       
-      // Update the hole scores in state with proper React.SetStateAction type
-      setHoleScores(prev => {
-        const newScores = [...prev];
-        const index = newScores.findIndex(h => h.holeNumber === holeData.holeNumber);
+      // Verify the save was successful
+      const { data: verifyData } = await supabase
+        .from('hole_scores')
+        .select('*')
+        .eq('round_id', currentRoundId)
+        .eq('hole_number', holeData.holeNumber)
+        .single();
         
-        if (index >= 0) {
-          newScores[index] = holeData;
-        } else {
-          newScores.push(holeData);
-        }
-        
-        return newScores;
-      });
+      if (verifyData) {
+        console.log(`Successfully verified save for hole ${holeData.holeNumber}:`, verifyData);
+      } else {
+        console.warn(`Could not verify save for hole ${holeData.holeNumber}`);
+      }
       
       return true;
     } catch (error) {
@@ -124,12 +135,22 @@ export const useRoundOperations = (
     setSaveInProgress(true);
     
     try {
-      // Calculate totals
-      const totals = holeScores.reduce((acc, hole) => ({
+      // Calculate totals from existing scores
+      const { data: holeScoresData, error: fetchError } = await supabase
+        .from('hole_scores')
+        .select('*')
+        .eq('round_id', currentRoundId);
+        
+      if (fetchError) throw fetchError;
+      
+      const completedScores = holeScoresData || [];
+      
+      // Calculate totals - only count values that actually exist
+      const totals = completedScores.reduce((acc, hole) => ({
         score: acc.score + (hole.score || 0),
         putts: acc.putts + (hole.putts || 0),
-        fairways: acc.fairways + (hole.fairwayHit ? 1 : 0),
-        greens: acc.greens + (hole.greenInRegulation ? 1 : 0),
+        fairways: acc.fairways + (hole.fairway_hit ? 1 : 0),
+        greens: acc.greens + (hole.green_in_regulation ? 1 : 0),
       }), { score: 0, putts: 0, fairways: 0, greens: 0 });
       
       // Update round totals
@@ -148,8 +169,17 @@ export const useRoundOperations = (
       
       toast({
         title: "Round Completed",
-        description: "Your round has been saved successfully",
+        description: `Your round has been saved successfully with a score of ${totals.score}`,
       });
+      
+      // Clear session storage so it doesn't auto-resume this round
+      try {
+        sessionStorage.removeItem('resume-hole-number');
+        sessionStorage.removeItem('current-hole-number');
+        // Keep current-round-id for history purposes
+      } catch (error) {
+        console.error('Error clearing storage:', error);
+      }
       
       return true;
     } catch (error) {

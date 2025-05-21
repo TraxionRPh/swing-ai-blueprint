@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +55,7 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
       // Store the current round ID in session storage for persistence
       try {
         sessionStorage.setItem('current-round-id', roundId);
+        localStorage.setItem('current-round-id', roundId);
       } catch (error) {
         console.error('Error storing round ID:', error);
       }
@@ -65,6 +67,14 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
         console.log(`Setting current hole to ${parsedHoleNumber}`);
         setCurrentHole(parsedHoleNumber);
         setCurrentHoleNumber(parsedHoleNumber);
+        
+        // Also save the current hole number for resuming later
+        try {
+          sessionStorage.setItem('current-hole-number', parsedHoleNumber.toString());
+          localStorage.setItem('current-hole-number', parsedHoleNumber.toString());
+        } catch (error) {
+          console.error('Error storing current hole:', error);
+        }
       }
     }
   }, [roundId, holeNumber, setCurrentRoundId, setCurrentHoleNumber]);
@@ -75,9 +85,11 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
       const hole = holeScores.find(h => h.holeNumber === currentHole);
       
       if (hole) {
+        console.log(`Found existing data for hole ${currentHole}:`, hole);
         setHoleData(hole);
       } else {
         // Create default data for this hole
+        console.log(`No existing data for hole ${currentHole}, creating default`);
         setHoleData({
           holeNumber: currentHole,
           par: 4,
@@ -132,14 +144,18 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
     setSaveSuccess(false);
     setSaveError(null);
     
+    console.log(`Saving hole ${currentHole} data:`, holeData);
+    
     try {
       const success = await updateHoleScore(holeData);
       
       if (success) {
+        console.log(`Successfully saved hole ${currentHole} data`);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
         return true;
       } else {
+        console.error(`Failed to save hole ${currentHole} data`);
         setSaveError("Failed to save score");
         return false;
       }
@@ -178,6 +194,18 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
     if (diff === 1) return "bg-yellow-100 text-yellow-800"; // Bogey
     return "bg-red-100 text-red-800"; // Over par
   };
+  
+  // Auto-save when user makes changes after a short delay
+  useEffect(() => {
+    const saveTimer = setTimeout(() => {
+      // Only auto-save if we have actual data
+      if (holeData.score > 0 || holeData.putts > 0 || holeData.fairwayHit || holeData.greenInRegulation) {
+        handleSave();
+      }
+    }, 1500); // 1.5 second delay
+    
+    return () => clearTimeout(saveTimer);
+  }, [holeData]);
   
   if (isLoading) {
     return <LoadingState onBack={onBack} message={`Loading hole ${currentHole}...`} />;

@@ -35,7 +35,7 @@ export const useRoundData = () => {
   
   // Fetch round data from Supabase
   const fetchRoundData = async (roundId: string) => {
-    if (!roundId) return;
+    if (!roundId) return null;
     
     setIsLoading(true);
     console.log(`Fetching round data for round ID: ${roundId}`);
@@ -92,6 +92,7 @@ export const useRoundData = () => {
           
           // Format hole scores
           if (holeData && holeData.length > 0) {
+            // Create a complete array with all holes
             const formattedScores = Array.from({ length: roundData.hole_count || 18 }, (_, i) => {
               const holeNumber = i + 1;
               const existingScore = holeData.find(h => h.hole_number === holeNumber);
@@ -100,14 +101,15 @@ export const useRoundData = () => {
                 holeNumber,
                 par: 4, // Default par since it's not stored in the database
                 distance: 0,
-                score: existingScore?.score || 0,
-                putts: existingScore?.putts || 0,
-                fairwayHit: existingScore?.fairway_hit || false,
-                greenInRegulation: existingScore?.green_in_regulation || false
+                // Ensure we use the actual score value if it exists, otherwise use 0
+                score: existingScore?.score ?? 0,
+                putts: existingScore?.putts ?? 0,
+                fairwayHit: existingScore?.fairway_hit ?? false,
+                greenInRegulation: existingScore?.green_in_regulation ?? false
               };
             });
             
-            console.log('Formatted hole scores:', formattedScores);
+            console.log('Formatted hole scores with existing data:', formattedScores);
             setHoleScores(formattedScores);
           } else {
             // If no hole scores found, initialize with empty scores

@@ -35,6 +35,14 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
     if (roundId && roundId !== currentRoundId) {
       console.log(`Setting current round ID to: ${roundId}`);
       setCurrentRoundId(roundId);
+      
+      // Also ensure it's saved to storage for persistence
+      try {
+        sessionStorage.setItem('current-round-id', roundId);
+        localStorage.setItem('current-round-id', roundId);
+      } catch (error) {
+        console.error('Error saving round ID to storage:', error);
+      }
     } else if (!roundId) {
       const savedRoundId = getSavedRoundId();
       if (savedRoundId) {
@@ -46,15 +54,62 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
 
   // Determine the next hole to play
   const getNextHoleToPlay = () => {
-    if (resumeHole) return resumeHole;
-    
-    // Find the first hole that doesn't have a score
-    const incompleteHole = holeScores.find(h => !h.score);
-    if (incompleteHole) {
-      return incompleteHole.holeNumber;
+    if (resumeHole) {
+      console.log(`Resuming at hole ${resumeHole} based on saved state`);
+      return resumeHole;
     }
     
-    return 1; // Default to the first hole if all are completed
+    // Check storage for last played hole
+    try {
+      const sessionHole = sessionStorage.getItem('current-hole-number');
+      const localHole = localStorage.getItem('current-hole-number');
+      
+      if (sessionHole && !isNaN(Number(sessionHole))) {
+        const parsed = Number(sessionHole);
+        if (parsed >= 1 && parsed <= holeCount) {
+          console.log(`Found saved hole number in session: ${parsed}`);
+          return parsed;
+        }
+      }
+      
+      if (localHole && !isNaN(Number(localHole))) {
+        const parsed = Number(localHole);
+        if (parsed >= 1 && parsed <= holeCount) {
+          console.log(`Found saved hole number in local storage: ${parsed}`);
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('Error reading stored hole number:', error);
+    }
+    
+    // Find the first hole that doesn't have a score or the last scored hole + 1
+    let lastScoredHole = 0;
+    let firstIncompleteHole = null;
+    
+    for (let i = 0; i < holeScores.length; i++) {
+      const hole = holeScores[i];
+      if (hole.score) {
+        lastScoredHole = Math.max(lastScoredHole, hole.holeNumber);
+      } else if (firstIncompleteHole === null) {
+        firstIncompleteHole = hole.holeNumber;
+      }
+    }
+    
+    if (firstIncompleteHole !== null) {
+      console.log(`First incomplete hole: ${firstIncompleteHole}`);
+      return firstIncompleteHole;
+    }
+    
+    // If all holes have scores or no holes have scores, go to first hole
+    // If we have some completed holes, go to the next one
+    if (lastScoredHole > 0 && lastScoredHole < holeCount) {
+      console.log(`Continuing from hole ${lastScoredHole + 1} (after last scored hole)`);
+      return lastScoredHole + 1;
+    }
+    
+    console.log(`Starting at hole 1 (default)`);
+    return 1;
   };
 
   const handleStartRound = () => {
@@ -103,7 +158,7 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
             {completedHoles > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Status</span>
-                <span className="font-semibold">In Progress</span>
+                <span className="font-semibold text-amber-600">In Progress</span>
               </div>
             )}
           </div>
