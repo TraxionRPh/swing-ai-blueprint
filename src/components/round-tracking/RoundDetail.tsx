@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
 import { useResumeSession } from "@/hooks/round-tracking/useResumeSession";
+import { useToast } from "@/hooks/use-toast";
 
 interface RoundDetailProps {
   onBack: () => void;
@@ -15,13 +16,16 @@ interface RoundDetailProps {
 export const RoundDetail = ({ onBack }: RoundDetailProps) => {
   const navigate = useNavigate();
   const { roundId } = useParams();
+  const { toast } = useToast();
+  
   const { 
     currentRoundId,
     setCurrentRoundId,
     holeScores, 
     holeCount,
     selectedCourse,
-    isLoading
+    isLoading,
+    setIsLoading
   } = useRound();
   
   const { resumeHole, getSavedRoundId } = useResumeSession({
@@ -30,10 +34,10 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
     roundId: roundId || null
   });
 
-  // Initialize with the round ID from the URL or from session storage
+  // Initialize with the round ID from the URL
   useEffect(() => {
     if (roundId && roundId !== currentRoundId) {
-      console.log(`Setting current round ID to: ${roundId}`);
+      console.log(`RoundDetail: Setting current round ID to: ${roundId}`);
       setCurrentRoundId(roundId);
       
       // Also ensure it's saved to storage for persistence
@@ -43,14 +47,8 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
       } catch (error) {
         console.error('Error saving round ID to storage:', error);
       }
-    } else if (!roundId) {
-      const savedRoundId = getSavedRoundId();
-      if (savedRoundId) {
-        console.log(`Restored round ID from storage: ${savedRoundId}`);
-        setCurrentRoundId(savedRoundId);
-      }
     }
-  }, [roundId, currentRoundId, setCurrentRoundId, getSavedRoundId]);
+  }, [roundId, currentRoundId, setCurrentRoundId]);
 
   // Determine the next hole to play
   const getNextHoleToPlay = () => {
@@ -113,12 +111,30 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
   };
 
   const handleStartRound = () => {
+    if (!roundId) {
+      toast({
+        title: "Error",
+        description: "Round ID is missing. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const nextHole = getNextHoleToPlay();
     console.log(`Starting/continuing round at hole ${nextHole}`);
     navigate(`/rounds/${roundId}/${nextHole}`);
   };
   
   const handleReview = () => {
+    if (!roundId) {
+      toast({
+        title: "Error",
+        description: "Round ID is missing. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     console.log(`Navigating to review for round ${roundId}`);
     navigate(`/rounds/${roundId}/review`);
   };

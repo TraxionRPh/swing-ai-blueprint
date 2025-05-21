@@ -31,28 +31,6 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
     finishRound: finishRoundOperation
   } = useRoundOperations(holeScores, setHoleScores, holeCount);
   
-  // Fetch hole scores when round ID changes
-  useEffect(() => {
-    if (currentRoundId && currentRoundId !== 'new') {
-      console.log(`RoundProvider: Loading data for round ${currentRoundId}`);
-      fetchRoundData(currentRoundId);
-    }
-  }, [currentRoundId]);
-  
-  // Persist currentRoundId in both session and local storage to maintain state between page navigations
-  useEffect(() => {
-    if (currentRoundId) {
-      try {
-        // Store in both session and local storage for better persistence
-        sessionStorage.setItem('current-round-id', currentRoundId);
-        localStorage.setItem('current-round-id', currentRoundId);
-        console.log(`Saved currentRoundId to session storage: ${currentRoundId}`);
-      } catch (error) {
-        console.error('Error saving round ID to storage:', error);
-      }
-    }
-  }, [currentRoundId]);
-  
   // Restore currentRoundId from storage when component mounts
   useEffect(() => {
     try {
@@ -65,13 +43,35 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (savedRoundId && savedRoundId !== 'new') {
-        console.log(`Restored currentRoundId from session storage: ${savedRoundId}`);
+        console.log(`Restored currentRoundId from storage: ${savedRoundId}`);
         setCurrentRoundId(savedRoundId);
       }
     } catch (error) {
       console.error('Error retrieving round ID from storage:', error);
     }
   }, []);
+  
+  // Fetch hole scores when round ID changes
+  useEffect(() => {
+    if (currentRoundId && currentRoundId !== 'new') {
+      console.log(`RoundProvider: Loading data for round ${currentRoundId}`);
+      fetchRoundData(currentRoundId);
+    }
+  }, [currentRoundId, fetchRoundData]);
+  
+  // Persist currentRoundId in both session and local storage to maintain state between page navigations
+  useEffect(() => {
+    if (currentRoundId) {
+      try {
+        // Store in both session and local storage for better persistence
+        sessionStorage.setItem('current-round-id', currentRoundId);
+        localStorage.setItem('current-round-id', currentRoundId);
+        console.log(`Saved currentRoundId to storage: ${currentRoundId}`);
+      } catch (error) {
+        console.error('Error saving round ID to storage:', error);
+      }
+    }
+  }, [currentRoundId]);
   
   // Wrapper functions to add any context-specific logic
   const updateHoleScore = async (holeData: HoleData) => {
@@ -84,6 +84,9 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
         const index = updated.findIndex(h => h.holeNumber === holeData.holeNumber);
         if (index >= 0) {
           updated[index] = holeData;
+        } else {
+          // If this hole isn't in our array yet, add it
+          updated.push(holeData);
         }
         return updated;
       });
