@@ -246,8 +246,8 @@ const CourseSelection = () => {
                     <p className="text-sm text-muted-foreground mb-4">No tee information available</p>
                   )}
                   
-                  {/* Hole Count Selection */}
-                  <div className="mb-4">
+                  {/* Hole Count Selection - Added mt-6 for spacing */}
+                  <div className="mt-6 mb-4">
                     <h4 className="text-sm font-medium mb-2">Holes to Play</h4>
                     <Tabs 
                       value={selectedHoleCount.toString()} 
