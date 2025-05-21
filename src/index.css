@@ -54,4 +54,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Override Command component styling for selected items */
+  [cmdk-item][data-selected="true"] {
+    background-color: transparent !important;
+  }
 }

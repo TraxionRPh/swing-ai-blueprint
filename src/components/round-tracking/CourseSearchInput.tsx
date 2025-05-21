@@ -1,6 +1,7 @@
 
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Course } from "@/types/round-tracking";
+import { cn } from "@/lib/utils";
 
 interface CourseSearchInputProps {
   searchQuery: string;
@@ -47,7 +48,10 @@ export const CourseSearchInput = ({
                 <CommandItem
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
-                  className="flex flex-col items-start p-2"
+                  className={cn(
+                    "flex flex-col items-start p-2",
+                    selectedCourseId === course.id ? "bg-transparent" : ""
+                  )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
@@ -66,7 +70,10 @@ export const CourseSearchInput = ({
                 <CommandItem
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
-                  className="flex flex-col items-start p-2"
+                  className={cn(
+                    "flex flex-col items-start p-2",
+                    selectedCourseId === course.id ? "bg-transparent" : ""
+                  )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
