@@ -53,15 +53,17 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
       // Check if this round meets the user's score goal (only for 18-hole rounds)
       let goalAchieved = false;
       if (totalHoles === 18) {
-        goalAchieved = checkScoreGoal(totalScore, false);
+        console.log("Checking if score goal achieved:", totalScore);
+        // Use true to ensure achievedGoal state is updated
+        goalAchieved = checkScoreGoal(totalScore, true);
         
         if (goalAchieved) {
           console.log("Goal achieved! Redirecting to achievement page");
-          // Instead of showing modal, navigate directly to achievement page
+          // Navigate directly to achievement page with the necessary state
           navigate("/goal-achievement", {
             state: {
               goalType: "score",
-              goalValue: achievedGoal?.value,
+              goalValue: totalScore <= 0 ? 0 : totalScore,
               actualValue: totalScore
             }
           });

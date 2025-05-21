@@ -11,7 +11,7 @@ export const useGoalAchievement = () => {
   const { scoreGoal, handicapGoal } = useProfile();
   const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
 
-  const checkScoreGoal = useCallback((score: number, showAchievement: boolean = false) => {
+  const checkScoreGoal = useCallback((score: number, showAchievement: boolean = true) => {
     if (scoreGoal && score <= scoreGoal) {
       console.log(`Score goal achieved! ${score} <= ${scoreGoal}`);
       
