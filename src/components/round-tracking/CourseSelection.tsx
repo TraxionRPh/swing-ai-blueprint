@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,7 @@ const CourseSelection = () => {
     refreshCourses 
   } = useCourseSelection();
 
-  // Add useRound hook for context integration - renaming variables to avoid conflicts
+  // Add useRound hook for context integration - using different variable names to avoid conflicts
   const { 
     setSelectedCourse: setContextSelectedCourse, 
     setSelectedTeeId: setContextSelectedTeeId, 
@@ -118,7 +117,7 @@ const CourseSelection = () => {
     }
   };
   
-  // Start a new round - UPDATED with better error handling
+  // Start a new round - UPDATED with better error handling and navigation
   const handleStartRound = async () => {
     setProcessingError(null);
     
@@ -153,26 +152,20 @@ const CourseSelection = () => {
       setIsProcessing(true);
       console.log(`Starting round with course: ${selectedCourse.name}, tee: ${selectedTeeId}, holes: ${selectedHoleCount}`);
       
-      // Update context with selected values - using renamed context functions
+      // Update context with selected values
       setContextSelectedCourse(selectedCourse);
       setContextSelectedTeeId(selectedTeeId);
       setContextHoleCount(selectedHoleCount);
       
-      // Use context's createRound function with timeout protection
-      const roundPromise = createRound(selectedCourse.id, selectedTeeId);
-      
-      // Add a timeout to prevent UI from getting stuck
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error("Round creation timed out")), 10000);
-      });
-      
-      // Race the promises to handle potential timeouts
-      const roundId = await Promise.race([roundPromise, timeoutPromise]);
+      // Create the round using the context function
+      const roundId = await createRound(selectedCourse.id, selectedTeeId);
       
       if (roundId) {
         console.log(`Round created with ID: ${roundId}, navigating to hole 1`);
-        // Navigate to the first hole
-        navigate(`/rounds/track/${roundId}/1`);
+        // Navigate to the first hole - with a slight delay to ensure all state is updated
+        setTimeout(() => {
+          navigate(`/rounds/track/${roundId}/1`);
+        }, 100);
       } else {
         throw new Error("Failed to create round - no round ID returned");
       }

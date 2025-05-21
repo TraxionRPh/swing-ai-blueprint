@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,10 +28,11 @@ export const useRoundOperations = (
     
     try {
       console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'} and ${holeCount} holes`);
+      setSaveInProgress(true);
       
       // Set a timeout to ensure we don't wait indefinitely
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased timeout
       
       const { data, error } = await supabase
         .from('rounds')
@@ -60,6 +62,9 @@ export const useRoundOperations = (
         try {
           sessionStorage.setItem('current-round-id', data.id);
           localStorage.setItem('current-round-id', data.id);
+          
+          // Set the current hole number to 1 for a new round
+          sessionStorage.setItem('current-hole-number', '1');
         } catch (storageError) {
           console.error('Failed to save round ID to storage:', storageError);
           // Continue anyway - this is non-critical
@@ -77,6 +82,8 @@ export const useRoundOperations = (
       }
       console.error("Error creating round:", error);
       throw error; // Re-throw for proper error handling upstream
+    } finally {
+      setSaveInProgress(false);
     }
   };
   
