@@ -1,5 +1,4 @@
-
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CourseSelection from "@/components/round-tracking/CourseSelection";
 import HoleTracking from "@/components/round-tracking/HoleTracking";
@@ -8,6 +7,7 @@ import { RoundProvider } from "@/context/round";
 import { RoundCreation } from "@/components/round-tracking/RoundCreation";
 import { useState } from "react";
 import { AchievedGoal } from "@/hooks/useGoalAchievement";
+import { AchievementModal } from "@/components/round-tracking/review";
 
 // Route parameter extractor for hole count
 const RoundCreationWrapper = () => {
@@ -25,6 +25,7 @@ const RoundCreationWrapper = () => {
 const RoundTracking = () => {
   const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
   const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const navigate = useNavigate();
   
   // Handle completed round with goal achievement
   const handleRoundComplete = (goal: AchievedGoal) => {
