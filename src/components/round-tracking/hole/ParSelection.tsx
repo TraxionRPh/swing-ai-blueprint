@@ -3,19 +3,19 @@ import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface ParSelectionProps {
-  par: number;
-  onParChange: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const ParSelection = ({ par, onParChange }: ParSelectionProps) => {
+export const ParSelection = ({ value, onChange }: ParSelectionProps) => {
   return (
     <div>
       <Label htmlFor="par-selection" className="text-sm text-muted-foreground mb-1 block">Par</Label>
       <ToggleGroup 
         type="single" 
         variant="outline" 
-        value={par.toString()} 
-        onValueChange={onParChange}
+        value={value} 
+        onValueChange={onChange}
         className="justify-start"
       >
         <ToggleGroupItem value="3" className="w-12 h-8">3</ToggleGroupItem>
