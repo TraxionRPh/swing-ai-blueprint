@@ -21,17 +21,18 @@ export const HoleFooterActions = ({
   onSave
 }: HoleFooterActionsProps) => {
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-center w-full gap-4">
       <Button 
         variant="outline" 
         onClick={onCancel}
+        className="min-w-[120px]"
       >
         {currentHole === 1 ? "Cancel Round" : "Previous Hole"}
       </Button>
       <Button 
         onClick={onSave} 
         disabled={isSaving || !hasScore}
-        className="min-w-[120px] ml-4"
+        className="min-w-[120px]"
       >
         {isSaving ? (
           <Loading size="sm" message="Saving..." inline />
