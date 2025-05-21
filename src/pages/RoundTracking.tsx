@@ -1,7 +1,5 @@
 
-import { useNavigate, useParams, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { RoundProvider } from "@/context/round"; 
 import { RoundsList } from "@/components/round-tracking/RoundsList";
@@ -31,23 +29,13 @@ const RoundTracking = () => {
           <Route path="/new/18" element={<RoundCreation onBack={handleBack} holeCount={18} />} />
           
           {/* Round detail page */}
-          <Route path="/:roundId" element={
-            <RoundDetail onBack={handleBack} />
-          } />
+          <Route path="/:roundId" element={<RoundDetail onBack={handleBack} />} />
           
           {/* Round scoring page - hole by hole */}
-          <Route path="/:roundId/:holeNumber" element={
-            <HoleScoring onBack={() => navigate(-1)} />
-          } />
+          <Route path="/:roundId/:holeNumber" element={<HoleScoring onBack={() => navigate(-1)} />} />
           
           {/* Round review page */}
-          <Route path="/:roundId/review" element={
-            <RoundReview onBack={() => {
-              // Get the roundId from the URL
-              const { roundId } = useParams();
-              return navigate(`/rounds/${roundId}`);
-            }} />
-          } />
+          <Route path="/:roundId/review" element={<RoundReview onBack={() => navigate(-1)} />} />
           
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/rounds" replace />} />

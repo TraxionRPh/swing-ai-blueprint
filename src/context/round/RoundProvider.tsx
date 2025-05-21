@@ -7,6 +7,10 @@ import { HoleData, Course } from "@/types/round-tracking";
 
 const RoundContext = createContext<RoundContextType | undefined>(undefined);
 
+// Cache key constants
+const ROUND_CACHE_PREFIX = "cached-round-";
+const CACHE_EXPIRY_KEY = "cache-expiry-";
+
 export const RoundProvider = ({ children }: { children: ReactNode }) => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
   const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1);
@@ -33,10 +37,10 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
     finishRound: finishRoundOperation
   } = useRoundOperations(holeScores, setHoleScores, holeCount);
   
-  // Restore currentRoundId from storage when component mounts
+  // Check if round data is in cache or restore from storage
   useEffect(() => {
     try {
-      // First try session storage (for current browser tab)
+      // First check if we're in the middle of a page reload for the same round
       let savedRoundId = sessionStorage.getItem('current-round-id');
       
       // If not in session storage, try local storage (for returning users)
@@ -47,26 +51,93 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
       if (savedRoundId && savedRoundId !== 'new') {
         console.log(`Restored currentRoundId from storage: ${savedRoundId}`);
         setCurrentRoundId(savedRoundId);
+
+        // Check if we have a cache for this round
+        const cachedRound = localStorage.getItem(ROUND_CACHE_PREFIX + savedRoundId);
+        const cacheExpiry = localStorage.getItem(CACHE_EXPIRY_KEY + savedRoundId);
+        
+        if (cachedRound && cacheExpiry) {
+          const expiryTime = parseInt(cacheExpiry);
+          
+          // If cache hasn't expired (1 day = 86400000 ms)
+          if (expiryTime > Date.now()) {
+            console.log(`Using cached data for round ${savedRoundId}`);
+            try {
+              const parsedData = JSON.parse(cachedRound);
+              
+              if (parsedData.course) {
+                setSelectedCourse(parsedData.course);
+              }
+              
+              if (parsedData.holeCount) {
+                setHoleCount(parsedData.holeCount);
+              }
+              
+              if (parsedData.holeScores && parsedData.holeScores.length > 0) {
+                setHoleScores(parsedData.holeScores);
+              }
+              
+              // Mark as loaded since we're using cache
+              setIsLoading(false);
+              return;
+            } catch (parseError) {
+              console.error("Error parsing cached round data:", parseError);
+            }
+          } else {
+            // Cache expired, remove it
+            localStorage.removeItem(ROUND_CACHE_PREFIX + savedRoundId);
+            localStorage.removeItem(CACHE_EXPIRY_KEY + savedRoundId);
+          }
+        }
       }
     } catch (error) {
       console.error('Error retrieving round ID from storage:', error);
     }
-  }, []);
+  }, [setSelectedCourse, setHoleCount, setHoleScores, setIsLoading]);
   
-  // Fetch hole scores when round ID changes
+  // Fetch hole scores when round ID changes (only if no cache)
   useEffect(() => {
     if (currentRoundId && currentRoundId !== 'new') {
+      // Check if we already have cache data
+      const cachedRound = localStorage.getItem(ROUND_CACHE_PREFIX + currentRoundId);
+      const cacheExpiry = localStorage.getItem(CACHE_EXPIRY_KEY + currentRoundId);
+      
+      if (cachedRound && cacheExpiry && parseInt(cacheExpiry) > Date.now()) {
+        console.log(`Using existing cache for round ${currentRoundId}, skipping fetch`);
+        return;
+      }
+      
+      // Prevent infinite fetching - only try a few times
       if (fetchTries > 3) {
         console.log(`Stopping fetch attempts after ${fetchTries} tries`);
-        return; // Stop trying after multiple failures
+        return;
       }
       
       console.log(`RoundProvider: Loading data for round ${currentRoundId}`);
-      fetchRoundData(currentRoundId).finally(() => {
+      fetchRoundData(currentRoundId).then(data => {
+        // If fetch successful, cache the data
+        if (data) {
+          const cacheData = {
+            course: selectedCourse,
+            holeCount: holeCount,
+            holeScores: holeScores
+          };
+          
+          try {
+            // Cache for 24 hours
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+            localStorage.setItem(ROUND_CACHE_PREFIX + currentRoundId, JSON.stringify(cacheData));
+            localStorage.setItem(CACHE_EXPIRY_KEY + currentRoundId, expiryTime.toString());
+            console.log(`Cached round data for ${currentRoundId}`);
+          } catch (error) {
+            console.error("Error caching round data:", error);
+          }
+        }
+      }).finally(() => {
         setFetchTries(prev => prev + 1);
       });
     }
-  }, [currentRoundId, fetchRoundData, fetchTries]);
+  }, [currentRoundId, fetchRoundData, fetchTries, selectedCourse, holeCount, holeScores]);
   
   // Reset fetch tries if round ID changes
   useEffect(() => {
@@ -102,6 +173,22 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
           // If this hole isn't in our array yet, add it
           updated.push(holeData);
         }
+        
+        // Update cache with new scores
+        try {
+          const cacheData = {
+            course: selectedCourse,
+            holeCount: holeCount,
+            holeScores: updated
+          };
+          
+          const expiryTime = Date.now() + (24 * 60 * 60 * 1000);
+          localStorage.setItem(ROUND_CACHE_PREFIX + currentRoundId, JSON.stringify(cacheData));
+          localStorage.setItem(CACHE_EXPIRY_KEY + currentRoundId, expiryTime.toString());
+        } catch (error) {
+          console.error("Error updating cache with new score:", error);
+        }
+        
         return updated;
       });
     }
@@ -110,7 +197,19 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const finishRound = async () => {
-    return await finishRoundOperation(currentRoundId);
+    const result = await finishRoundOperation(currentRoundId);
+    
+    if (result) {
+      // Clear cache on successful finish
+      try {
+        localStorage.removeItem(ROUND_CACHE_PREFIX + currentRoundId);
+        localStorage.removeItem(CACHE_EXPIRY_KEY + currentRoundId);
+      } catch (error) {
+        console.error("Error clearing cache on round finish:", error);
+      }
+    }
+    
+    return result;
   };
   
   const value: RoundContextType = {

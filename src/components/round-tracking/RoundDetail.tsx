@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
-import { useResumeSession } from "@/hooks/round-tracking/useResumeSession";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 
 interface RoundDetailProps {
   onBack: () => void;
@@ -30,88 +30,15 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
     hasFetchError
   } = useRound();
   
-  const { resumeHole, getSavedRoundId } = useResumeSession({
-    currentHole: 1,
-    holeCount,
-    roundId: roundId || null
-  });
-
   // Initialize with the round ID from the URL
   useEffect(() => {
     if (roundId && roundId !== currentRoundId) {
       console.log(`RoundDetail: Setting current round ID to: ${roundId}`);
       setCurrentRoundId(roundId);
-      
-      // Also ensure it's saved to storage for persistence
-      try {
-        sessionStorage.setItem('current-round-id', roundId);
-        localStorage.setItem('current-round-id', roundId);
-      } catch (error) {
-        console.error('Error saving round ID to storage:', error);
-      }
     }
   }, [roundId, currentRoundId, setCurrentRoundId]);
 
-  // Determine the next hole to play
-  const getNextHoleToPlay = () => {
-    if (resumeHole) {
-      console.log(`Resuming at hole ${resumeHole} based on saved state`);
-      return resumeHole;
-    }
-    
-    // Check storage for last played hole
-    try {
-      const sessionHole = sessionStorage.getItem('current-hole-number');
-      const localHole = localStorage.getItem('current-hole-number');
-      
-      if (sessionHole && !isNaN(Number(sessionHole))) {
-        const parsed = Number(sessionHole);
-        if (parsed >= 1 && parsed <= holeCount) {
-          console.log(`Found saved hole number in session: ${parsed}`);
-          return parsed;
-        }
-      }
-      
-      if (localHole && !isNaN(Number(localHole))) {
-        const parsed = Number(localHole);
-        if (parsed >= 1 && parsed <= holeCount) {
-          console.log(`Found saved hole number in local storage: ${parsed}`);
-          return parsed;
-        }
-      }
-    } catch (error) {
-      console.error('Error reading stored hole number:', error);
-    }
-    
-    // Find the first hole that doesn't have a score or the last scored hole + 1
-    let lastScoredHole = 0;
-    let firstIncompleteHole = null;
-    
-    for (let i = 0; i < holeScores.length; i++) {
-      const hole = holeScores[i];
-      if (hole.score) {
-        lastScoredHole = Math.max(lastScoredHole, hole.holeNumber);
-      } else if (firstIncompleteHole === null) {
-        firstIncompleteHole = hole.holeNumber;
-      }
-    }
-    
-    if (firstIncompleteHole !== null) {
-      console.log(`First incomplete hole: ${firstIncompleteHole}`);
-      return firstIncompleteHole;
-    }
-    
-    // If all holes have scores or no holes have scores, go to first hole
-    // If we have some completed holes, go to the next one
-    if (lastScoredHole > 0 && lastScoredHole < holeCount) {
-      console.log(`Continuing from hole ${lastScoredHole + 1} (after last scored hole)`);
-      return lastScoredHole + 1;
-    }
-    
-    console.log(`Starting at hole 1 (default)`);
-    return 1;
-  };
-
+  // Start the round at hole 1 (simplified approach)
   const handleStartRound = () => {
     if (!roundId) {
       toast({
@@ -122,9 +49,17 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
       return;
     }
     
-    const nextHole = getNextHoleToPlay();
-    console.log(`Starting/continuing round at hole ${nextHole}`);
-    navigate(`/rounds/${roundId}/${nextHole}`);
+    console.log(`Starting round at hole 1`);
+    
+    // Save to storage for persistence
+    try {
+      sessionStorage.setItem('current-hole-number', '1');
+      localStorage.setItem('current-hole-number', '1');
+    } catch (error) {
+      console.error('Error saving hole number to storage:', error);
+    }
+    
+    navigate(`/rounds/${roundId}/1`);
   };
   
   const handleReview = () => {
@@ -147,9 +82,19 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
       window.location.reload();
     }
   };
-  
+
+  // If still loading after initial check
   if (isLoading) {
-    return <LoadingState onBack={onBack} message="Loading round details..." />;
+    return (
+      <div className="space-y-6">
+        <RoundHeader
+          title={selectedCourse?.name || "Round Tracking"}
+          subtitle={selectedCourse ? `${selectedCourse.city}, ${selectedCourse.state}` : "Loading round details..."}
+          onBack={onBack}
+        />
+        <Loading message="Loading round details..." size="md" />
+      </div>
+    );
   }
 
   // Show error state if data failed to load
@@ -196,7 +141,7 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Round Progress</CardTitle>
+          <CardTitle>Round Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4">
@@ -223,7 +168,7 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
               onClick={handleStartRound} 
               className="w-full"
             >
-              {completedHoles > 0 ? "Continue Round" : "Start Round"}
+              {completedHoles === 0 ? "Start Round" : "Continue Round"}
             </Button>
             
             <Button 
