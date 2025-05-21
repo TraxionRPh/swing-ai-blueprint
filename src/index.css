@@ -63,8 +63,21 @@
   /* Ensure text in command items is visible */
   [cmdk-item] {
     color: hsl(var(--foreground)) !important;
+    position: relative !important;
   }
   
+  /* Add hover styling for all command items */
+  [cmdk-item]:hover::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background-color: hsl(var(--primary));
+    opacity: 0.8;
+  }
+  
+  /* Style group headings */
   [cmdk-group-heading] {
     color: hsl(var(--muted-foreground)) !important;
     font-weight: 600 !important;

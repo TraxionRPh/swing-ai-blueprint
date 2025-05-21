@@ -49,8 +49,8 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-2",
-                    selectedCourseId === course.id ? "bg-transparent" : ""
+                    "flex flex-col items-start p-2 transition-colors cursor-pointer hover:bg-secondary/20 rounded-md mb-1",
+                    selectedCourseId === course.id ? "bg-transparent border border-primary/60" : ""
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
@@ -71,8 +71,8 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-2",
-                    selectedCourseId === course.id ? "bg-transparent" : ""
+                    "flex flex-col items-start p-2 transition-colors cursor-pointer hover:bg-secondary/20 rounded-md mb-1",
+                    selectedCourseId === course.id ? "bg-transparent border border-primary/60" : ""
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
