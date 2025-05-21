@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Course, CourseTee } from "@/types/round-tracking";
+import { cn } from "@/lib/utils";
 
 interface TeeSelectionProps {
   selectedCourse: Course | null;
@@ -21,17 +22,21 @@ export const TeeSelection = ({
       <div className="flex flex-wrap gap-2">
         {selectedCourse.course_tees.map((tee) => {
           const isLightColor = ['white', 'yellow', 'gold', 'beige'].includes(tee.color?.toLowerCase() || '');
+          const isSelected = selectedTeeId === tee.id;
           
           return (
             <Button
               key={tee.id}
               size="sm"
-              variant={selectedTeeId === tee.id ? "default" : "outline"}
+              variant="outline"
               onClick={() => onTeeSelect(tee.id)}
+              className={cn(
+                "border-2",
+                isSelected ? "border-primary ring-2 ring-primary/30" : "border-transparent"
+              )}
               style={{
-                backgroundColor: selectedTeeId === tee.id ? undefined : tee.color || undefined,
-                color: selectedTeeId === tee.id ? undefined : 
-                       (tee.color ? (isLightColor ? 'black' : 'white') : undefined)
+                backgroundColor: tee.color || undefined,
+                color: tee.color ? (isLightColor ? 'black' : 'white') : undefined
               }}
             >
               {tee.color || tee.name}
