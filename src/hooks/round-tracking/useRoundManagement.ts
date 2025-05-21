@@ -11,11 +11,16 @@ export const useRoundManagement = () => {
   const { finishRound } = useRoundFinalization();
   const { deleteRound } = useRoundDeletion();
 
+  // Add loading state
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   return {
     currentRoundId,
     setCurrentRoundId,
     fetchInProgressRound,
     finishRound,
-    deleteRound
+    deleteRound,
+    isLoading,
+    setIsLoading
   };
 };

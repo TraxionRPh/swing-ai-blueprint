@@ -73,16 +73,20 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       
       // Add timeout protection
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Round creation timed out")), 10000);
+        setTimeout(() => reject(new Error("Round creation timed out")), 20000); // Increased timeout
       });
       
       // Race between creation and timeout
       const roundId = await Promise.race([roundCreationPromise, timeoutPromise]);
       
       if (roundId) {
-        // Navigate to first hole
-        navigate(`/rounds/${roundId}/1`);
+        console.log(`Round created successfully, ID: ${roundId}, navigating to first hole...`);
+        // Add a small delay before navigation to ensure state updates are complete
+        setTimeout(() => {
+          navigate(`/rounds/track/${roundId}/1`);
+        }, 500);
       } else {
+        console.error("Failed to create round: No round ID returned");
         throw new Error("Failed to create round");
       }
     } catch (error) {
