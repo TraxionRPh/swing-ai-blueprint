@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,11 +83,10 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  // Fix the navigation to properly handle route transitions
-  const handleCreateRound = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent any default form submission
-    e.stopPropagation(); // Stop event propagation
+  // Fix the navigation to properly handle the new round creation flow
+  const handleCreateRound = () => {
     console.log("Creating new round...");
+    // Navigate to the round creation page where users can select a course and hole count
     navigate("/rounds/new");
   };
 
