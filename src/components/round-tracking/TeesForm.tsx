@@ -14,7 +14,7 @@ interface TeeData {
 }
 
 interface TeesFormProps {
-  onTeesSubmit: (tees: TeeData[]) => void;
+  onTeesSubmit: (tees: TeeData[]) => Promise<boolean | void> | void;
 }
 
 export const TeesForm = ({ onTeesSubmit }: TeesFormProps) => {

@@ -12,7 +12,7 @@ interface TeeDialogProps {
   currentCourse: Course | null;
   showDialog: boolean;
   onOpenChange: (open: boolean) => void;
-  onTeeSubmit: (teeData: any) => Promise<void>;
+  onTeeSubmit: (teeData: any) => Promise<boolean | void>;
 }
 
 export const TeeDialog = ({ 
