@@ -47,7 +47,7 @@ export const CourseSearchInput = ({
                 <CommandItem
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
-                  className={`flex flex-col items-start p-2 ${selectedCourseId === course.id ? 'bg-accent' : ''}`}
+                  className="flex flex-col items-start p-2"
                   value={`${course.name} ${course.city} ${course.state}`}
                 >
                   <div className="font-medium">{course.name}</div>
@@ -65,7 +65,7 @@ export const CourseSearchInput = ({
                 <CommandItem
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
-                  className={`flex flex-col items-start p-2 ${selectedCourseId === course.id ? 'bg-accent' : ''}`}
+                  className="flex flex-col items-start p-2"
                   value={`${course.name} ${course.city} ${course.state}`}
                 >
                   <div className="font-medium">{course.name}</div>
