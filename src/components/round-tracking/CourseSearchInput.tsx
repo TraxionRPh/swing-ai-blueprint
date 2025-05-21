@@ -58,7 +58,7 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {searchQuery.trim() === "" && showRecentCourses && recentCourses.length > 0 && (
+          {searchQuery === "" && showRecentCourses && recentCourses.length > 0 && (
             <CommandGroup heading="Recently Played">
               {recentCourses.map((course) => (
                 <CommandItem
@@ -75,7 +75,7 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {searchQuery.trim() !== "" && searchResults.length === 0 && !isSearching && (
+          {searchQuery !== "" && searchResults.length === 0 && !isSearching && (
             <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
           )}
         </CommandList>

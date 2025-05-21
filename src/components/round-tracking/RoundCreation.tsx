@@ -52,6 +52,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
   }, [user]);
 
   const handleCourseSelect = (course: Course) => {
+    console.log("Selected course:", course);
     setSelectedCourse(course);
     
     // Set the first tee as default if available

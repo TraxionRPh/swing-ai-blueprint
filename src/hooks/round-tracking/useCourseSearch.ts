@@ -23,9 +23,12 @@ export function useCourseSearch() {
     if (!searchQuery.trim()) {
       setShowRecentCourses(true);
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
+    setIsSearching(true);
+    
     // Set timeout for debounce
     searchTimeoutRef.current = setTimeout(() => {
       handleSearch();
@@ -92,26 +95,28 @@ export function useCourseSearch() {
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    setShowRecentCourses(false);
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
     
     try {
       console.log("Searching for courses with query:", searchQuery);
       
-      // First get the course data
-      const { data: coursesData, error: coursesError } = await supabase
+      // First search by name
+      const { data: nameResults, error: nameError } = await supabase
         .from('golf_courses')
         .select('id, name, city, state')
-        .ilike('name', `%${searchQuery}%`) // Focus on course name search first
+        .ilike('name', `%${searchQuery}%`)
         .order('name')
         .limit(10);
         
-      if (coursesError) throw coursesError;
+      if (nameError) throw nameError;
       
-      if (!coursesData || coursesData.length === 0) {
-        // If no results found by name, try searching by city or state
+      // If no name results, search by location
+      let searchData = nameResults;
+      if (!nameResults || nameResults.length === 0) {
         const { data: locationData, error: locationError } = await supabase
           .from('golf_courses')
           .select('id, name, city, state')
@@ -120,40 +125,21 @@ export function useCourseSearch() {
           .limit(10);
           
         if (locationError) throw locationError;
-        
-        if (!locationData || locationData.length === 0) {
-          setSearchResults([]);
-          setIsSearching(false);
-          return;
-        }
-        
-        console.log("Found courses by location:", locationData);
-        
-        // Now get tees for each course found by location
-        const coursesByLocation = await Promise.all(
-          locationData.map(async (course) => {
-            const { data: tees } = await supabase
-              .from('course_tees')
-              .select('*')
-              .eq('course_id', course.id);
-              
-            return {
-              ...course,
-              course_tees: tees || []
-            };
-          })
-        );
-        
-        setSearchResults(coursesByLocation);
+        searchData = locationData || [];
+      }
+      
+      if (searchData.length === 0) {
+        setSearchResults([]);
         setIsSearching(false);
+        setShowRecentCourses(false);
         return;
       }
       
-      console.log("Found courses:", coursesData);
+      console.log("Found courses:", searchData);
       
       // Now get tees for each course
       const coursesWithTees = await Promise.all(
-        coursesData.map(async (course) => {
+        searchData.map(async (course) => {
           const { data: tees } = await supabase
             .from('course_tees')
             .select('*')
@@ -167,6 +153,7 @@ export function useCourseSearch() {
       );
       
       setSearchResults(coursesWithTees);
+      setShowRecentCourses(false);
     } catch (error) {
       console.error("Error searching courses:", error);
       toast({
