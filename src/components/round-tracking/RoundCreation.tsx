@@ -6,11 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRound } from "@/context/round"; 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoundHeader } from "./RoundHeader";
-import { CourseSearchInput } from "./CourseSearchInput";
 import { CourseDetails } from "./CourseDetails";
-import { useCourseSearch } from "@/hooks/round-tracking/useCourseSearch";
-import { Course } from "@/types/round-tracking";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 interface CourseCreationProps {
@@ -32,38 +28,21 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     createRound
   } = useRound();
   
-  const {
-    searchQuery,
-    setSearchQuery,
-    searchResults,
-    isSearching,
-    recentCourses,
-    showRecentCourses,
-    fetchRecentCourses,
-    hasSearchError
-  } = useCourseSearch();
-  
   // Set the hole count from props
   useEffect(() => {
     setHoleCount(holeCount);
   }, [holeCount, setHoleCount]);
 
-  // Fetch recent courses on component mount
+  // Redirect if no course is selected
   useEffect(() => {
-    if (user) {
-      fetchRecentCourses(user.id);
+    if (!selectedCourse) {
+      navigate('/rounds');
+      toast({
+        title: "No Course Selected",
+        description: "Please select a course first",
+      });
     }
-  }, [user]);
-
-  const handleCourseSelect = (course: Course) => {
-    console.log("Selected course:", course);
-    setSelectedCourse(course);
-    
-    // Set the first tee as default if available
-    if (course.course_tees?.length > 0) {
-      setSelectedTeeId(course.course_tees[0].id);
-    }
-  };
+  }, [selectedCourse, navigate, toast]);
 
   const handleStartRound = async () => {
     if (!selectedCourse) {
@@ -100,59 +79,21 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     }
   };
 
-  // Add a manual course option
-  const handleAddCourseManually = () => {
-    // This is where you would navigate to a course creation form
-    // For now we'll just show a toast
-    toast({
-      title: "Manual Course Creation",
-      description: "This feature is coming soon!",
-    });
-  };
+  if (!selectedCourse) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <RoundHeader
         title="New Round"
-        subtitle="Select a course and start tracking your round"
+        subtitle="Configure your round details"
         onBack={onBack}
       />
-      
-      {/* Course Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Find a Course</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CourseSearchInput
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchResults={searchResults}
-            isSearching={isSearching}
-            recentCourses={recentCourses}
-            showRecentCourses={showRecentCourses}
-            onCourseSelect={handleCourseSelect}
-            selectedCourseId={selectedCourse?.id}
-            hasSearchError={hasSearchError}
-          />
-          
-          {/* Add a manual add option */}
-          {searchQuery && searchResults.length === 0 && !isSearching && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Can't find your course?
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleAddCourseManually}
-              >
-                Add Course Manually
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
       
       {/* Selected Course Details */}
       {selectedCourse && (

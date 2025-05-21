@@ -3,10 +3,10 @@ import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { RoundProvider } from "@/context/round"; 
 import { RoundsList } from "@/components/round-tracking/RoundsList";
-import { RoundCreation } from "@/components/round-tracking/RoundCreation"; 
 import { RoundDetail } from "@/components/round-tracking/RoundDetail";
 import { HoleScoring } from "@/components/round-tracking/HoleScoring";
 import { RoundReview } from "@/components/round-tracking/RoundReview";
+import { CoursesListing } from "@/components/round-tracking/CoursesListing";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
@@ -20,13 +20,11 @@ const RoundTracking = () => {
     <ErrorBoundary>
       <RoundProvider>
         <Routes>
-          {/* Main rounds listing page */}
-          <Route path="/" element={<RoundsList onBack={handleBack} />} />
+          {/* Main courses listing page (new default landing) */}
+          <Route path="/" element={<CoursesListing onBack={handleBack} />} />
           
-          {/* New round creation page - separate routes for different hole counts */}
-          <Route path="/new" element={<RoundCreation onBack={handleBack} />} />
-          <Route path="/new/9" element={<RoundCreation onBack={handleBack} holeCount={9} />} />
-          <Route path="/new/18" element={<RoundCreation onBack={handleBack} holeCount={18} />} />
+          {/* Rounds listing (now secondary) */}
+          <Route path="/list" element={<RoundsList onBack={handleBack} />} />
           
           {/* Round detail page */}
           <Route path="/:roundId" element={<RoundDetail onBack={handleBack} />} />
