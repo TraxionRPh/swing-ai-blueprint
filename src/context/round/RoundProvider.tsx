@@ -1,8 +1,7 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRoundData } from "./useRoundData";
 import { useRoundOperations } from "./useRoundOperations";
-import { RoundContextType } from "./types";
+import { RoundContextType, RoundProviderProps } from "./types";
 import { HoleData, Course } from "@/types/round-tracking";
 
 const RoundContext = createContext<RoundContextType | undefined>(undefined);
@@ -13,8 +12,8 @@ const CACHE_EXPIRY_KEY = "cache-expiry-";
 // Maximum number of fetch attempts
 const MAX_FETCH_ATTEMPTS = 3;
 
-export const RoundProvider = ({ children }: { children: ReactNode }) => {
-  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
+export const RoundProvider = ({ children, initialRoundId }: RoundProviderProps) => {
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(initialRoundId || null);
   const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1);
   const [selectedTeeId, setSelectedTeeId] = useState<string | null>(null);
   const [fetchTries, setFetchTries] = useState<number>(0);

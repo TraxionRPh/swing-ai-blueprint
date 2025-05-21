@@ -22,3 +22,8 @@ export interface RoundContextType {
   saveInProgress: boolean;
   hasFetchError?: boolean;
 }
+
+export interface RoundProviderProps {
+  children: React.ReactNode;
+  initialRoundId?: string | null;
+}
