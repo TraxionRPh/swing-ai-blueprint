@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -220,6 +221,26 @@ const HoleTracking = () => {
     }));
   };
   
+  // Validate and handle score input change
+  const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Allow empty input or valid numbers
+    if (value === "" || (/^\d+$/.test(value) && parseInt(value) > 0)) {
+      handleInputChange('score', value === "" ? 0 : parseInt(value));
+    }
+  };
+  
+  // Validate and handle putts input change
+  const handlePuttsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Allow empty input or valid numbers (including 0)
+    if (value === "" || (/^\d+$/.test(value) && parseInt(value) >= 0)) {
+      handleInputChange('putts', value === "" ? 0 : parseInt(value));
+    }
+  };
+  
   if (isLoading) {
     return <Loading size="lg" message="Loading hole information..." />;
   }
@@ -261,40 +282,32 @@ const HoleTracking = () => {
             
             <Separator />
             
-            {/* Score Input */}
+            {/* Score Input - Now using text input instead of buttons */}
             <div>
               <Label htmlFor="score">Score</Label>
-              <div className="flex space-x-2 mt-1">
-                {[...Array(8)].map((_, i) => (
-                  <Button
-                    key={i}
-                    type="button"
-                    variant={holeData.score === i + 1 ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => handleInputChange('score', i + 1)}
-                  >
-                    {i + 1}
-                  </Button>
-                ))}
-              </div>
+              <Input
+                id="score"
+                type="number"
+                min="1"
+                value={holeData.score || ""}
+                onChange={handleScoreChange}
+                className="mt-2"
+                placeholder="Enter score"
+              />
             </div>
             
-            {/* Putts Input */}
+            {/* Putts Input - Now using text input instead of buttons */}
             <div>
               <Label htmlFor="putts">Putts</Label>
-              <div className="flex space-x-2 mt-1">
-                {[...Array(5)].map((_, i) => (
-                  <Button
-                    key={i}
-                    type="button"
-                    variant={holeData.putts === i ? "default" : "outline"}
-                    className="flex-1"
-                    onClick={() => handleInputChange('putts', i)}
-                  >
-                    {i}
-                  </Button>
-                ))}
-              </div>
+              <Input
+                id="putts"
+                type="number"
+                min="0"
+                value={holeData.putts || ""}
+                onChange={handlePuttsChange}
+                className="mt-2"
+                placeholder="Enter putts"
+              />
             </div>
             
             {/* Fairway and Green Regulation */}
