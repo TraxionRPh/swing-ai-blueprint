@@ -32,7 +32,7 @@ export const TeeSelection = ({
               onClick={() => onTeeSelect(tee.id)}
               className={cn(
                 "border-2",
-                isSelected ? "border-primary ring-2 ring-primary/30" : "border-transparent"
+                isSelected ? "border-white ring-2 ring-white/30" : "border-transparent"
               )}
               style={{
                 backgroundColor: tee.color || undefined,
