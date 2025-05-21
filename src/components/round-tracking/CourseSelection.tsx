@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +15,7 @@ import { TeeSelection } from "./TeeSelection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TeesForm } from "./TeesForm";
 import { useCourseSelection } from "@/hooks/round-tracking/useCourseSelection";
+import { useRound } from "@/context/round";
 
 const CourseSelection = () => {
   const navigate = useNavigate();
@@ -29,6 +29,14 @@ const CourseSelection = () => {
     hasError,
     refreshCourses 
   } = useCourseSelection();
+
+  // Add useRound hook for context integration
+  const { 
+    setSelectedCourse, 
+    setSelectedTeeId, 
+    setHoleCount, 
+    createRound 
+  } = useRound();
   
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const [selectedTeeId, setSelectedTeeId] = useState<string | null>(null);
@@ -36,6 +44,7 @@ const CourseSelection = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showTeeDialog, setShowTeeDialog] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Handle course card click
   const handleCourseClick = (courseId: string, course: Course) => {
@@ -107,7 +116,7 @@ const CourseSelection = () => {
     }
   };
   
-  // Start a new round
+  // Start a new round - UPDATED to use the context
   const handleStartRound = async () => {
     if (!user) {
       toast({
@@ -126,34 +135,34 @@ const CourseSelection = () => {
       });
       return;
     }
+
+    if (!selectedTeeId) {
+      toast({
+        title: "Select a tee",
+        description: "Please select a tee to continue",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
-      // Create new round in the database
-      const { data, error } = await supabase
-        .from("rounds")
-        .insert({
-          user_id: user.id,
-          course_id: selectedCourse.id,
-          tee_id: selectedTeeId,
-          hole_count: selectedHoleCount,
-          date: new Date().toISOString().split('T')[0]
-        })
-        .select("id")
-        .single();
+      setIsProcessing(true);
+      console.log(`Starting round with course: ${selectedCourse.name}, tee: ${selectedTeeId}, holes: ${selectedHoleCount}`);
       
-      if (error) throw error;
+      // Update context with selected values
+      setSelectedCourse(selectedCourse);
+      setSelectedTeeId(selectedTeeId);
+      setHoleCount(selectedHoleCount);
       
-      if (data && data.id) {
-        // Save info to session storage for persistence
-        try {
-          sessionStorage.setItem('current-round-id', data.id);
-          sessionStorage.setItem('selected-hole-count', selectedHoleCount.toString());
-        } catch (storageError) {
-          console.error('Failed to save to storage:', storageError);
-        }
-        
+      // Use context's createRound function
+      const roundId = await createRound(selectedCourse.id, selectedTeeId);
+      
+      if (roundId) {
+        console.log(`Round created with ID: ${roundId}, navigating to hole 1`);
         // Navigate to the first hole
-        navigate(`/rounds/track/${data.id}/1`);
+        navigate(`/rounds/track/${roundId}/1`);
+      } else {
+        throw new Error("Failed to create round");
       }
     } catch (error) {
       console.error("Error creating round:", error);
@@ -162,6 +171,8 @@ const CourseSelection = () => {
         description: "Please try again",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -287,8 +298,9 @@ const CourseSelection = () => {
                   <Button 
                     className="w-full mt-2" 
                     onClick={handleStartRound}
+                    disabled={isProcessing}
                   >
-                    Start Round
+                    {isProcessing ? 'Creating Round...' : 'Start Round'}
                   </Button>
                 </div>
               )}
