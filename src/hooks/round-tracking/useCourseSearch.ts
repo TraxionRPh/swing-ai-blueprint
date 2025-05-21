@@ -20,13 +20,15 @@ export function useCourseSearch() {
       clearTimeout(searchTimeoutRef.current);
     }
 
+    // If empty query, show recent courses
     if (!searchQuery.trim()) {
-      setShowRecentCourses(true);
       setSearchResults([]);
       setIsSearching(false);
+      setShowRecentCourses(true);
       return;
     }
 
+    // When typing, show loading state immediately
     setIsSearching(true);
     
     // Set timeout for debounce
@@ -98,13 +100,14 @@ export function useCourseSearch() {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setIsSearching(false);
+      setShowRecentCourses(true);
       return;
     }
     
     try {
       console.log("Searching for courses with query:", searchQuery);
       
-      // First search by name
+      // Search by name first
       const { data: nameResults, error: nameError } = await supabase
         .from('golf_courses')
         .select('id, name, city, state')
@@ -115,7 +118,7 @@ export function useCourseSearch() {
       if (nameError) throw nameError;
       
       // If no name results, search by location
-      let searchData = nameResults;
+      let searchData = nameResults || [];
       if (!nameResults || nameResults.length === 0) {
         const { data: locationData, error: locationError } = await supabase
           .from('golf_courses')
@@ -128,14 +131,14 @@ export function useCourseSearch() {
         searchData = locationData || [];
       }
       
+      console.log("Found courses:", searchData);
+      
       if (searchData.length === 0) {
         setSearchResults([]);
         setIsSearching(false);
         setShowRecentCourses(false);
         return;
       }
-      
-      console.log("Found courses:", searchData);
       
       // Now get tees for each course
       const coursesWithTees = await Promise.all(

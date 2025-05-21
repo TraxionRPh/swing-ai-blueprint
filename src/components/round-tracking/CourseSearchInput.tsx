@@ -48,6 +48,7 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={`flex flex-col items-start p-2 ${selectedCourseId === course.id ? 'bg-accent' : ''}`}
+                  value={`${course.name} ${course.city} ${course.state}`}
                 >
                   <div className="font-medium">{course.name}</div>
                   <div className="text-sm text-muted-foreground">
@@ -58,13 +59,14 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {searchQuery === "" && showRecentCourses && recentCourses.length > 0 && (
+          {!isSearching && searchQuery === "" && showRecentCourses && recentCourses.length > 0 && (
             <CommandGroup heading="Recently Played">
               {recentCourses.map((course) => (
                 <CommandItem
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={`flex flex-col items-start p-2 ${selectedCourseId === course.id ? 'bg-accent' : ''}`}
+                  value={`${course.name} ${course.city} ${course.state}`}
                 >
                   <div className="font-medium">{course.name}</div>
                   <div className="text-sm text-muted-foreground">
@@ -75,7 +77,7 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {searchQuery !== "" && searchResults.length === 0 && !isSearching && (
+          {!isSearching && searchQuery !== "" && searchResults.length === 0 && (
             <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
           )}
         </CommandList>
