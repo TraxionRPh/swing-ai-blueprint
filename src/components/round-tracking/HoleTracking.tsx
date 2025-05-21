@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loading } from "@/components/ui/loading";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { useRound } from "@/context/round";
+import { useHoleScores } from "@/hooks/round-tracking/score/useHoleScores";
 
 const HoleTracking = () => {
   const navigate = useNavigate();
@@ -20,11 +22,30 @@ const HoleTracking = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
+  // Use the round context if available
+  const roundContext = useRound();
+  
   const [currentHole, setCurrentHole] = useState<number>(parseInt(holeNumberParam || "1"));
   const [holeCount, setHoleCount] = useState<number>(18); // Default to 18
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<{ name: string; city: string; state: string; par?: number } | null>(null);
+  const [roundStats, setRoundStats] = useState<{
+    totalStrokes: number;
+    totalPutts: number;
+    fairwaysHit: number;
+    totalFairways: number;
+    greensInRegulation: number;
+    totalGreens: number;
+  }>({
+    totalStrokes: 0,
+    totalPutts: 0,
+    fairwaysHit: 0,
+    totalFairways: 0,
+    greensInRegulation: 0,
+    totalGreens: currentHole - 1,
+  });
+  
   const [holeData, setHoleData] = useState<HoleData>({
     holeNumber: currentHole,
     par: 4, // Default par
@@ -80,6 +101,24 @@ const HoleTracking = () => {
         if (courseError) throw courseError;
         
         setCourseDetails(courseData || null);
+        
+        // Get all hole scores to calculate round stats
+        const { data: allHoleScores, error: allScoresError } = await supabase
+          .from("hole_scores")
+          .select("*")
+          .eq("round_id", roundId);
+          
+        if (!allScoresError && allHoleScores) {
+          const stats = {
+            totalStrokes: allHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
+            totalPutts: allHoleScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
+            fairwaysHit: allHoleScores.filter(hole => hole.fairway_hit).length,
+            totalFairways: allHoleScores.length,
+            greensInRegulation: allHoleScores.filter(hole => hole.green_in_regulation).length,
+            totalGreens: allHoleScores.length,
+          };
+          setRoundStats(stats);
+        }
       }
     } catch (error) {
       console.error("Error loading round info:", error);
@@ -241,6 +280,16 @@ const HoleTracking = () => {
     }
   };
   
+  // Validate and handle distance input change
+  const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Allow empty input or valid numbers (including 0)
+    if (value === "" || (/^\d+$/.test(value) && parseInt(value) >= 0)) {
+      handleInputChange('distance', value === "" ? 0 : parseInt(value));
+    }
+  };
+  
   if (isLoading) {
     return <Loading size="lg" message="Loading hole information..." />;
   }
@@ -249,7 +298,7 @@ const HoleTracking = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Track Hole {currentHole}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hole {currentHole}</h1>
           <p className="text-muted-foreground">
             {courseDetails?.name || "Loading course..."} - {holeCount} holes
           </p>
@@ -257,13 +306,46 @@ const HoleTracking = () => {
       </div>
       
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col space-y-6">
-            {/* Hole Information */}
-            <div className="flex justify-between items-center mb-2">
+        <CardContent className="pt-6 space-y-6">
+          {/* Stat Tiles */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 text-center">
+                <h3 className="text-sm font-medium mb-1">Total Strokes</h3>
+                <p className="text-2xl font-bold">{roundStats.totalStrokes || 0}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 text-center">
+                <h3 className="text-sm font-medium mb-1">Total Putts</h3>
+                <p className="text-2xl font-bold">{roundStats.totalPutts || 0}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 text-center">
+                <h3 className="text-sm font-medium mb-1">FIR</h3>
+                <p className="text-2xl font-bold">{roundStats.fairwaysHit || 0}/{Math.max(1, currentHole - 1)}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 text-center">
+                <h3 className="text-sm font-medium mb-1">GIR</h3>
+                <p className="text-2xl font-bold">{roundStats.greensInRegulation || 0}/{Math.max(1, currentHole - 1)}</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 gap-6">
+            {/* Hole information */}
+            <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-medium">Hole {currentHole}</h3>
-                <p className="text-sm text-muted-foreground">Par {holeData.par} - {holeData.distance} yards</p>
+                <p className="text-sm text-muted-foreground">Par {holeData.par}</p>
               </div>
               <div className="flex space-x-4">
                 <Button 
@@ -280,53 +362,68 @@ const HoleTracking = () => {
               </div>
             </div>
             
-            <Separator />
-            
-            {/* Score Input - Now using text input instead of buttons */}
-            <div>
-              <Label htmlFor="score">Score</Label>
-              <Input
-                id="score"
-                type="number"
-                min="1"
-                value={holeData.score || ""}
-                onChange={handleScoreChange}
-                className="mt-2"
-                placeholder="Enter score"
-              />
-            </div>
-            
-            {/* Putts Input - Now using text input instead of buttons */}
-            <div>
-              <Label htmlFor="putts">Putts</Label>
-              <Input
-                id="putts"
-                type="number"
-                min="0"
-                value={holeData.putts || ""}
-                onChange={handlePuttsChange}
-                className="mt-2"
-                placeholder="Enter putts"
-              />
-            </div>
-            
-            {/* Fairway and Green Regulation */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="fairway"
-                  checked={holeData.fairwayHit}
-                  onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
+            {/* Hole Data Entry */}
+            <div className="space-y-4">
+              {/* Yardage Input */}
+              <div>
+                <Label htmlFor="distance">Distance (yards)</Label>
+                <Input
+                  id="distance"
+                  type="number"
+                  min="0"
+                  value={holeData.distance || ""}
+                  onChange={handleDistanceChange}
+                  className="mt-2"
+                  placeholder="Enter distance"
                 />
-                <Label htmlFor="fairway">Fairway Hit</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="gir"
-                  checked={holeData.greenInRegulation}
-                  onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
+              
+              {/* Score Input */}
+              <div>
+                <Label htmlFor="score">Score</Label>
+                <Input
+                  id="score"
+                  type="number"
+                  min="1"
+                  value={holeData.score || ""}
+                  onChange={handleScoreChange}
+                  className="mt-2"
+                  placeholder="Enter score"
                 />
-                <Label htmlFor="gir">Green in Regulation</Label>
+              </div>
+              
+              {/* Putts Input */}
+              <div>
+                <Label htmlFor="putts">Putts</Label>
+                <Input
+                  id="putts"
+                  type="number"
+                  min="0"
+                  value={holeData.putts || ""}
+                  onChange={handlePuttsChange}
+                  className="mt-2"
+                  placeholder="Enter putts"
+                />
+              </div>
+              
+              {/* Fairway and Green Regulation */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="fairway"
+                    checked={holeData.fairwayHit}
+                    onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
+                  />
+                  <Label htmlFor="fairway">Fairway Hit</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="gir"
+                    checked={holeData.greenInRegulation}
+                    onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
+                  />
+                  <Label htmlFor="gir">Green in Regulation</Label>
+                </div>
               </div>
             </div>
           </div>
@@ -336,7 +433,7 @@ const HoleTracking = () => {
             variant="outline" 
             onClick={() => navigate("/rounds")}
           >
-            Cancel Round
+            {currentHole === 1 ? "Cancel Round" : "Previous Hole"}
           </Button>
           <Button 
             onClick={saveHoleData} 
@@ -346,7 +443,7 @@ const HoleTracking = () => {
             {isSaving ? (
               <Loading size="sm" message="Saving..." inline />
             ) : currentHole === holeCount ? (
-              "Finish Round"
+              "Review Round"
             ) : (
               <span className="flex items-center">
                 Next <ChevronRight className="ml-1 h-4 w-4" />
