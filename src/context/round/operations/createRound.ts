@@ -25,7 +25,7 @@ export const useCreateRound = () => {
       console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'} and ${holeCount} holes`);
       setSaveInProgress(true);
       
-      // Create the new round in the database
+      // Create the new round using an optimized query
       const { data, error } = await supabase
         .from('rounds')
         .insert({

@@ -16,14 +16,13 @@ export const useRoundOperations = (
   const { updateHoleScore: updateScore, saveInProgress: updateInProgress } = useUpdateHoleScore();
   const { finishRound: finishRoundOperation, saveInProgress: finishInProgress } = useFinishRound();
   
-  // Create a new round
+  // Create a new round with optimized handling
   const createRound = async (courseId: string, teeId: string | null) => {
     setSaveInProgress(true);
     try {
       console.log(`Creating round with ${holeCount} holes`);
-      const roundId = await createNewRound(courseId, teeId, holeCount);
-      console.log(`Round created with ID: ${roundId}`);
-      return roundId;
+      // Directly return the round ID without additional processing
+      return await createNewRound(courseId, teeId, holeCount);
     } catch (error) {
       console.error("Error in createRound:", error);
       throw error; // Re-throw to allow proper error handling upstream

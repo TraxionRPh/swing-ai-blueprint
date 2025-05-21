@@ -67,7 +67,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     setIsProcessing(true);
     
     try {
-      // Create a new round with explicit timeout handling
+      // Create a new round
       const roundId = await createRound(selectedCourse.id, selectedTeeId);
       
       if (roundId) {
@@ -82,26 +82,22 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
           console.error("Failed to save round data to storage:", storageError);
         }
         
-        // Add a slightly longer delay to ensure state updates are complete
-        console.log("Preparing to navigate to hole 1...");
-        setTimeout(() => {
-          const trackUrl = `/rounds/track/${roundId}/1`;
-          console.log(`Navigating to: ${trackUrl}`);
-          navigate(trackUrl);
-        }, 1000);
+        // Navigate immediately to hole 1
+        const trackUrl = `/rounds/track/${roundId}/1`;
+        console.log(`Navigating to: ${trackUrl}`);
+        navigate(trackUrl);
       } else {
         console.error("Failed to create round: No round ID returned");
         throw new Error("Failed to create round");
       }
     } catch (error) {
       console.error("Error creating round:", error);
+      setIsProcessing(false);
       toast({
         title: "Error Creating Round",
         description: "There was a problem creating your round. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
