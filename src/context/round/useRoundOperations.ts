@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,21 +16,21 @@ export const useRoundOperations = (
   // Create a new round
   const createRound = async (courseId: string, teeId: string | null) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to create a round",
-        variant: "destructive"
-      });
-      return null;
+      console.error("Cannot create round: No authenticated user");
+      throw new Error("Authentication required");
     }
     
     if (!courseId) {
       console.error("Cannot create round: No course ID provided");
-      return null;
+      throw new Error("Course selection required");
     }
     
     try {
-      console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'}`);
+      console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'} and ${holeCount} holes`);
+      
+      // Set a timeout to ensure we don't wait indefinitely
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       const { data, error } = await supabase
         .from('rounds')
@@ -43,11 +42,15 @@ export const useRoundOperations = (
           date: new Date().toISOString().split('T')[0]
         })
         .select('id')
+        .abortSignal(controller.signal)
         .single();
+      
+      // Clear timeout since we have a response
+      clearTimeout(timeoutId);
       
       if (error) {
         console.error("Database error creating round:", error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
       }
       
       if (data && data.id) {
@@ -59,21 +62,21 @@ export const useRoundOperations = (
           localStorage.setItem('current-round-id', data.id);
         } catch (storageError) {
           console.error('Failed to save round ID to storage:', storageError);
+          // Continue anyway - this is non-critical
         }
         
         return data.id;
       } else {
         console.error("No round ID returned from database");
-        return null;
+        throw new Error("Failed to create round");
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        console.error("Round creation request timed out");
+        throw new Error("Request timed out. Please try again.");
+      }
       console.error("Error creating round:", error);
-      toast({
-        title: "Error Creating Round",
-        description: "Could not create a new round. Please try again.",
-        variant: "destructive"
-      });
-      return null;
+      throw error; // Re-throw for proper error handling upstream
     }
   };
   

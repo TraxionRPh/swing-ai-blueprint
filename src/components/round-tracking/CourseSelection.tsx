@@ -46,6 +46,7 @@ const CourseSelection = () => {
   const [showTeeDialog, setShowTeeDialog] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
   
   // Handle course card click
   const handleCourseClick = (courseId: string, course: Course) => {
@@ -117,8 +118,10 @@ const CourseSelection = () => {
     }
   };
   
-  // Start a new round - UPDATED to use the context
+  // Start a new round - UPDATED with better error handling
   const handleStartRound = async () => {
+    setProcessingError(null);
+    
     if (!user) {
       toast({
         title: "Please login",
@@ -155,21 +158,30 @@ const CourseSelection = () => {
       setContextSelectedTeeId(selectedTeeId);
       setContextHoleCount(selectedHoleCount);
       
-      // Use context's createRound function
-      const roundId = await createRound(selectedCourse.id, selectedTeeId);
+      // Use context's createRound function with timeout protection
+      const roundPromise = createRound(selectedCourse.id, selectedTeeId);
+      
+      // Add a timeout to prevent UI from getting stuck
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error("Round creation timed out")), 10000);
+      });
+      
+      // Race the promises to handle potential timeouts
+      const roundId = await Promise.race([roundPromise, timeoutPromise]);
       
       if (roundId) {
         console.log(`Round created with ID: ${roundId}, navigating to hole 1`);
         // Navigate to the first hole
         navigate(`/rounds/track/${roundId}/1`);
       } else {
-        throw new Error("Failed to create round");
+        throw new Error("Failed to create round - no round ID returned");
       }
     } catch (error) {
       console.error("Error creating round:", error);
+      setProcessingError((error as Error).message || "Failed to create round");
       toast({
         title: "Failed to start round",
-        description: "Please try again",
+        description: "Please try again. " + ((error as Error).message || ""),
         variant: "destructive"
       });
     } finally {
@@ -299,10 +311,16 @@ const CourseSelection = () => {
                   <Button 
                     className="w-full mt-2" 
                     onClick={handleStartRound}
-                    disabled={isProcessing}
+                    disabled={isProcessing || !selectedTeeId}
                   >
                     {isProcessing ? 'Creating Round...' : 'Start Round'}
                   </Button>
+                  
+                  {processingError && (
+                    <p className="text-sm text-destructive mt-2">
+                      {processingError}
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
