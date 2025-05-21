@@ -5,74 +5,63 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
 export const useCreateRound = () => {
-  const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
   const { user } = useAuth();
-  const [saveInProgress, setSaveInProgress] = useState<boolean>(false);
+  const { toast } = useToast();
 
-  // Create a new round
-  const createRound = async (courseId: string, teeId: string | null, holeCount: number) => {
-    if (!user) {
-      console.error("Cannot create round: No authenticated user");
-      throw new Error("Authentication required");
-    }
-    
-    if (!courseId) {
-      console.error("Cannot create round: No course ID provided");
-      throw new Error("Course selection required");
-    }
-    
+  const createRound = async (courseId: string, teeId: string | null, holeCount: number = 18) => {
     try {
-      console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'} and ${holeCount} holes`);
-      setSaveInProgress(true);
+      setIsCreating(true);
       
-      // Create the new round using an optimized query
+      if (!user?.id) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to track rounds",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      console.log(`Creating round with ${holeCount} holes`);
+      
+      // Create the round in the database
       const { data, error } = await supabase
-        .from('rounds')
+        .from("rounds")
         .insert({
           user_id: user.id,
           course_id: courseId,
           tee_id: teeId,
-          hole_count: holeCount,
-          date: new Date().toISOString().split('T')[0]
+          hole_count: holeCount, // Make sure holeCount is passed through here
+          date: new Date().toISOString().split('T')[0], // Current date formatted as YYYY-MM-DD
         })
-        .select('id')
+        .select("id")
         .single();
       
       if (error) {
-        console.error("Database error creating round:", error);
-        throw new Error(`Database error: ${error.message}`);
+        console.error("Error creating round:", error);
+        toast({
+          title: "Error Creating Round",
+          description: "Could not create a new round. Please try again.",
+          variant: "destructive",
+        });
+        return null;
       }
       
-      if (data && data.id) {
-        console.log(`Successfully created round with ID: ${data.id}`);
-        
-        // Save the new round ID to storage for persistence
-        try {
-          sessionStorage.setItem('current-round-id', data.id);
-          localStorage.setItem('current-round-id', data.id);
-          
-          // Set the current hole number to 1 for a new round
-          sessionStorage.setItem('current-hole-number', '1');
-        } catch (storageError) {
-          console.error('Failed to save round ID to storage:', storageError);
-          // Continue anyway - this is non-critical
-        }
-        
-        return data.id;
-      } else {
-        console.error("No round ID returned from database");
-        throw new Error("Failed to create round");
-      }
+      console.log("Round created with ID:", data.id);
+      
+      return data.id;
     } catch (error) {
-      console.error("Error creating round:", error);
-      throw error; // Re-throw for proper error handling upstream
+      console.error("Error in create round function:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while creating the round",
+        variant: "destructive",
+      });
+      return null;
     } finally {
-      setSaveInProgress(false);
+      setIsCreating(false);
     }
   };
 
-  return {
-    createRound,
-    saveInProgress
-  };
+  return { createRound, isCreating };
 };

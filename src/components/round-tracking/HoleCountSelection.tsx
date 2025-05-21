@@ -20,8 +20,10 @@ export const HoleCountSelection = ({ holeCount, setHoleCount }: HoleCountSelecti
       // Check if URL contains hole count information
       if (location.pathname.includes('/9')) {
         setHoleCount(9);
+        console.log("Setting hole count to 9 from URL path");
       } else if (location.pathname.includes('/18')) {
         setHoleCount(18);
+        console.log("Setting hole count to 18 from URL path");
       }
       setInitialLoad(false);
     }
@@ -30,6 +32,7 @@ export const HoleCountSelection = ({ holeCount, setHoleCount }: HoleCountSelecti
   const handleHoleCountChange = (value: string) => {
     const newHoleCount = parseInt(value);
     setHoleCount(newHoleCount);
+    console.log("Hole count changed to:", newHoleCount);
     
     // Update URL without navigation
     const currentPath = location.pathname;

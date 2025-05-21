@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -102,7 +103,10 @@ const HoleTracking = () => {
       if (roundError) throw roundError;
       
       if (roundData) {
-        setHoleCount(roundData.hole_count || 18);
+        // Make sure to use the actual hole_count from the database
+        const actualHoleCount = roundData.hole_count || 18;
+        setHoleCount(actualHoleCount);
+        console.log("Setting hole count from database:", actualHoleCount);
         
         // Get course details
         const { data: courseData, error: courseError } = await supabase
