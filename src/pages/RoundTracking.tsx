@@ -7,6 +7,7 @@ import { RoundDetail } from "@/components/round-tracking/RoundDetail";
 import { HoleScoring } from "@/components/round-tracking/HoleScoring";
 import { RoundReview } from "@/components/round-tracking/RoundReview";
 import { CoursesListing } from "@/components/round-tracking/CoursesListing";
+import { RoundCreation } from "@/components/round-tracking/RoundCreation";
 
 const RoundTracking = () => {
   const navigate = useNavigate();
@@ -20,10 +21,13 @@ const RoundTracking = () => {
     <ErrorBoundary>
       <RoundProvider>
         <Routes>
-          {/* Main courses listing page (new default landing) */}
+          {/* Main courses listing page (default landing) */}
           <Route path="/" element={<CoursesListing onBack={handleBack} />} />
           
-          {/* Rounds listing (now secondary) */}
+          {/* New Round creation page */}
+          <Route path="/new" element={<RoundCreation onBack={() => navigate(-1)} />} />
+          
+          {/* Rounds listing */}
           <Route path="/list" element={<RoundsList onBack={handleBack} />} />
           
           {/* Round detail page */}

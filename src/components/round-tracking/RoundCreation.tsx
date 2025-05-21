@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useRound } from "@/context/round"; 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoundHeader } from "./RoundHeader";
 import { CourseDetails } from "./CourseDetails";
 import { Loader2 } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 
 interface CourseCreationProps {
   onBack: () => void;
@@ -80,11 +80,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
   };
 
   if (!selectedCourse) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <Loading size="md" message="Loading course details..." />;
   }
 
   return (

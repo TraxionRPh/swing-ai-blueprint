@@ -1,16 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Search, AlertTriangle } from "lucide-react";
 import { RoundHeader } from "./RoundHeader";
 import { Course } from "@/types/round-tracking";
 import { useRound } from "@/context/round";
+import { useCoursesFetcher } from "@/hooks/round-tracking/useCoursesFetcher";
+import { CourseCardSkeletonGrid } from "./CourseCardSkeleton";
+import { Loading } from "@/components/ui/loading";
 
 interface CoursesListingProps {
   onBack: () => void;
@@ -22,73 +24,19 @@ export const CoursesListing = ({ onBack }: CoursesListingProps) => {
   const { user } = useAuth();
   const { setSelectedCourse, setSelectedTeeId } = useRound();
   
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const {
+    filteredCourses,
+    isLoading,
+    hasError,
+    searchQuery,
+    setSearchQuery,
+    fetchCourses,
+    refetchCourses
+  } = useCoursesFetcher();
 
   useEffect(() => {
-    fetchAllCourses();
+    fetchCourses();
   }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredCourses(courses);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredCourses(
-        courses.filter(
-          (course) =>
-            course.name.toLowerCase().includes(query) ||
-            course.city.toLowerCase().includes(query) ||
-            course.state.toLowerCase().includes(query)
-        )
-      );
-    }
-  }, [searchQuery, courses]);
-
-  const fetchAllCourses = async () => {
-    setIsLoading(true);
-    setHasError(false);
-    
-    try {
-      const { data, error } = await supabase
-        .from("golf_courses")
-        .select("id, name, city, state")
-        .order("name");
-
-      if (error) throw error;
-
-      // Now get tees for each course
-      const coursesWithTees = await Promise.all(
-        (data || []).map(async (course) => {
-          const { data: tees } = await supabase
-            .from("course_tees")
-            .select("*")
-            .eq("course_id", course.id);
-            
-          return {
-            ...course,
-            course_tees: tees || []
-          };
-        })
-      );
-
-      setCourses(coursesWithTees);
-      setFilteredCourses(coursesWithTees);
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      setHasError(true);
-      toast({
-        title: "Error loading courses",
-        description: "Could not load the course list. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSelectCourse = (course: Course) => {
     setSelectedCourse(course);
@@ -143,10 +91,7 @@ export const CoursesListing = ({ onBack }: CoursesListingProps) => {
       </div>
 
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2 text-muted-foreground">Loading courses...</p>
-        </div>
+        <CourseCardSkeletonGrid />
       )}
 
       {hasError && !isLoading && (
@@ -155,7 +100,7 @@ export const CoursesListing = ({ onBack }: CoursesListingProps) => {
             <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
             <h3 className="text-lg font-semibold mb-2">Failed to load courses</h3>
             <p className="text-muted-foreground mb-4">There was a problem loading the course list.</p>
-            <Button onClick={fetchAllCourses}>Try Again</Button>
+            <Button onClick={refetchCourses}>Try Again</Button>
           </CardContent>
         </Card>
       )}
