@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +14,7 @@ import { Loading } from "@/components/ui/loading";
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { useRound } from "@/context/round";
 import { useHoleScores } from "@/hooks/round-tracking/score/useHoleScores";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const HoleTracking = () => {
   const navigate = useNavigate();
@@ -320,6 +320,12 @@ const HoleTracking = () => {
     }
   };
   
+  const handleParChange = (value: string) => {
+    if (value) {
+      handleInputChange('par', parseInt(value));
+    }
+  };
+  
   if (isLoading) {
     return <Loading size="lg" message="Loading hole information..." />;
   }
@@ -373,9 +379,22 @@ const HoleTracking = () => {
           <div className="grid grid-cols-1 gap-6">
             {/* Hole information */}
             <div className="flex justify-between items-center">
-              <div>
+              <div className="flex flex-col space-y-2">
                 <h3 className="font-medium">Hole {currentHole}</h3>
-                <p className="text-sm text-muted-foreground">Par {holeData.par}</p>
+                <div>
+                  <Label htmlFor="par-selection" className="text-sm text-muted-foreground mb-1 block">Par</Label>
+                  <ToggleGroup 
+                    type="single" 
+                    variant="outline" 
+                    value={holeData.par.toString()} 
+                    onValueChange={handleParChange}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem value="3" className="w-12 h-8">3</ToggleGroupItem>
+                    <ToggleGroupItem value="4" className="w-12 h-8">4</ToggleGroupItem>
+                    <ToggleGroupItem value="5" className="w-12 h-8">5</ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
               </div>
               <div className="flex space-x-4">
                 <Button 
