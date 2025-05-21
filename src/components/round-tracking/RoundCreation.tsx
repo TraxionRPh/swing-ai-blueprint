@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,14 +142,47 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       const { data: coursesData, error: coursesError } = await supabase
         .from('golf_courses')
         .select('id, name, city, state')
-        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+        .ilike('name', `%${searchQuery}%`) // Focus on course name search first
         .order('name')
         .limit(10);
         
       if (coursesError) throw coursesError;
       
       if (!coursesData || coursesData.length === 0) {
-        setSearchResults([]);
+        // If no results found by name, try searching by city or state
+        const { data: locationData, error: locationError } = await supabase
+          .from('golf_courses')
+          .select('id, name, city, state')
+          .or(`city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+          .order('name')
+          .limit(10);
+          
+        if (locationError) throw locationError;
+        
+        if (!locationData || locationData.length === 0) {
+          setSearchResults([]);
+          setIsSearching(false);
+          return;
+        }
+        
+        console.log("Found courses by location:", locationData);
+        
+        // Now get tees for each course found by location
+        const coursesByLocation = await Promise.all(
+          locationData.map(async (course) => {
+            const { data: tees } = await supabase
+              .from('course_tees')
+              .select('*')
+              .eq('course_id', course.id);
+              
+            return {
+              ...course,
+              course_tees: tees || []
+            };
+          })
+        );
+        
+        setSearchResults(coursesByLocation);
         setIsSearching(false);
         return;
       }
@@ -300,65 +332,61 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
           <CardTitle>Find a Course</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Replace basic Input with Command component for better search UX */}
-          <div className="relative w-full mb-6 border rounded-md">
+          <div className="relative w-full mb-6">
             <Command className="rounded-lg border shadow-md">
-              <div className="flex items-center border-b px-3">
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                <CommandInput
-                  placeholder="Search for a course name, city, or state..."
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-              {isSearching && (
-                <div className="py-6 text-center">
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                  <p className="text-sm text-muted-foreground mt-2">Searching courses...</p>
-                </div>
-              )}
-              {!isSearching && (
-                <CommandList>
-                  {searchResults.length > 0 && (
-                    <CommandGroup heading="Search Results">
-                      {searchResults.map((course) => (
-                        <CommandItem
-                          key={course.id}
-                          onSelect={() => handleCourseSelect(course)}
-                          className={`flex flex-col items-start p-2 cursor-pointer ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
-                        >
-                          <div className="font-medium">{course.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {course.city}, {course.state}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                  
-                  {searchQuery.trim() === "" && showRecentCourses && recentCourses.length > 0 && (
-                    <CommandGroup heading="Recently Played">
-                      {recentCourses.map((course) => (
-                        <CommandItem
-                          key={course.id}
-                          onSelect={() => handleCourseSelect(course)}
-                          className={`flex flex-col items-start p-2 cursor-pointer ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
-                        >
-                          <div className="font-medium">{course.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {course.city}, {course.state}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                  
-                  {searchQuery.trim() !== "" && searchResults.length === 0 && !isSearching && (
-                    <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
-                  )}
-                </CommandList>
-              )}
+              <CommandInput
+                placeholder="Search for a course name, city, or state..."
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+                className="h-11"
+              />
+              
+              <CommandList className="max-h-[300px] overflow-y-auto">
+                {isSearching && (
+                  <div className="py-6 text-center">
+                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                    <p className="text-sm text-muted-foreground mt-2">Searching courses...</p>
+                  </div>
+                )}
+                
+                {!isSearching && searchResults.length > 0 && (
+                  <CommandGroup heading="Search Results">
+                    {searchResults.map((course) => (
+                      <CommandItem
+                        key={course.id}
+                        onSelect={() => handleCourseSelect(course)}
+                        className={`flex flex-col items-start p-2 ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
+                      >
+                        <div className="font-medium">{course.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {course.city}, {course.state}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                
+                {searchQuery.trim() === "" && showRecentCourses && recentCourses.length > 0 && (
+                  <CommandGroup heading="Recently Played">
+                    {recentCourses.map((course) => (
+                      <CommandItem
+                        key={course.id}
+                        onSelect={() => handleCourseSelect(course)}
+                        className={`flex flex-col items-start p-2 ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
+                      >
+                        <div className="font-medium">{course.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {course.city}, {course.state}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                
+                {searchQuery.trim() !== "" && searchResults.length === 0 && !isSearching && (
+                  <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
+                )}
+              </CommandList>
             </Command>
           </div>
         </CardContent>
