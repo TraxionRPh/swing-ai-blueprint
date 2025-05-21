@@ -25,10 +25,7 @@ export const useCreateRound = () => {
       console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'} and ${holeCount} holes`);
       setSaveInProgress(true);
       
-      // Set a timeout to ensure we don't wait indefinitely
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased timeout
-      
+      // Create the new round in the database
       const { data, error } = await supabase
         .from('rounds')
         .insert({
@@ -39,11 +36,7 @@ export const useCreateRound = () => {
           date: new Date().toISOString().split('T')[0]
         })
         .select('id')
-        .abortSignal(controller.signal)
         .single();
-      
-      // Clear timeout since we have a response
-      clearTimeout(timeoutId);
       
       if (error) {
         console.error("Database error creating round:", error);
@@ -71,10 +64,6 @@ export const useCreateRound = () => {
         throw new Error("Failed to create round");
       }
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        console.error("Round creation request timed out");
-        throw new Error("Request timed out. Please try again.");
-      }
       console.error("Error creating round:", error);
       throw error; // Re-throw for proper error handling upstream
     } finally {

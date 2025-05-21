@@ -31,12 +31,20 @@ export const HoleCountSelection = ({ holeCount, setHoleCount }: HoleCountSelecti
     const newHoleCount = parseInt(value);
     setHoleCount(newHoleCount);
     
-    // Update URL without forcing navigation/reload
-    // Use history.replaceState to avoid full page reload
-    const baseUrl = "/rounds/new";
-    const newUrl = value === "9" ? `${baseUrl}/9` : `${baseUrl}/18`;
+    // Update URL without navigation
+    const currentPath = location.pathname;
     
-    // Only update URL, don't navigate (which would cause a reload)
+    // Determine the base path and construct new URL
+    let newUrl;
+    if (currentPath.includes('/rounds/new')) {
+      // If we're already on the rounds/new path, just update the hole count
+      newUrl = value === "9" ? `/rounds/new/9` : `/rounds/new/18`;
+    } else {
+      // Default fallback
+      newUrl = value === "9" ? `/rounds/new/9` : `/rounds/new/18`;
+    }
+    
+    // Update URL without triggering full navigation
     window.history.replaceState(null, '', newUrl);
   };
 

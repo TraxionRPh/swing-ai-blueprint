@@ -20,8 +20,13 @@ export const useRoundOperations = (
   const createRound = async (courseId: string, teeId: string | null) => {
     setSaveInProgress(true);
     try {
+      console.log(`Creating round with ${holeCount} holes`);
       const roundId = await createNewRound(courseId, teeId, holeCount);
+      console.log(`Round created with ID: ${roundId}`);
       return roundId;
+    } catch (error) {
+      console.error("Error in createRound:", error);
+      throw error; // Re-throw to allow proper error handling upstream
     } finally {
       setSaveInProgress(false);
     }

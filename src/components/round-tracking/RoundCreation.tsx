@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useRound } from "@/context/round"; 
 import { RoundHeader } from "./RoundHeader";
 import { CourseDetails } from "./CourseDetails";
-import { Loader2 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 
 interface CourseCreationProps {
@@ -69,22 +68,27 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     
     try {
       // Create a new round with explicit timeout handling
-      const roundCreationPromise = createRound(selectedCourse.id, selectedTeeId);
-      
-      // Add timeout protection
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Round creation timed out")), 20000); // Increased timeout
-      });
-      
-      // Race between creation and timeout
-      const roundId = await Promise.race([roundCreationPromise, timeoutPromise]);
+      const roundId = await createRound(selectedCourse.id, selectedTeeId);
       
       if (roundId) {
-        console.log(`Round created successfully, ID: ${roundId}, navigating to first hole...`);
-        // Add a small delay before navigation to ensure state updates are complete
+        console.log(`Round created successfully, ID: ${roundId}`);
+        
+        // Explicitly save the round ID to storage as a backup
+        try {
+          sessionStorage.setItem('current-round-id', roundId);
+          localStorage.setItem('current-round-id', roundId);
+          sessionStorage.setItem('current-hole-number', '1');
+        } catch (storageError) {
+          console.error("Failed to save round data to storage:", storageError);
+        }
+        
+        // Add a slightly longer delay to ensure state updates are complete
+        console.log("Preparing to navigate to hole 1...");
         setTimeout(() => {
-          navigate(`/rounds/track/${roundId}/1`);
-        }, 500);
+          const trackUrl = `/rounds/track/${roundId}/1`;
+          console.log(`Navigating to: ${trackUrl}`);
+          navigate(trackUrl);
+        }, 1000);
       } else {
         console.error("Failed to create round: No round ID returned");
         throw new Error("Failed to create round");
@@ -117,7 +121,6 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
         onBack={onBack}
       />
       
-      {/* Selected Course Details */}
       <CourseDetails
         selectedCourse={selectedCourse}
         selectedTeeId={selectedTeeId}
