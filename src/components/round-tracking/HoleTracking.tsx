@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -30,21 +30,7 @@ const HoleTracking = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [courseDetails, setCourseDetails] = useState<{ name: string; city: string; state: string; par?: number } | null>(null);
-  const [roundStats, setRoundStats] = useState<{
-    totalStrokes: number;
-    totalPutts: number;
-    fairwaysHit: number;
-    totalFairways: number;
-    greensInRegulation: number;
-    totalGreens: number;
-  }>({
-    totalStrokes: 0,
-    totalPutts: 0,
-    fairwaysHit: 0,
-    totalFairways: 0,
-    greensInRegulation: 0,
-    totalGreens: currentHole - 1,
-  });
+  const [allHoleScores, setAllHoleScores] = useState<HoleData[]>([]);
   
   const [holeData, setHoleData] = useState<HoleData>({
     holeNumber: currentHole,
@@ -55,6 +41,33 @@ const HoleTracking = () => {
     fairwayHit: false,
     greenInRegulation: false,
   });
+  
+  // Calculate round stats based on all hole scores + current hole data
+  const roundStats = useMemo(() => {
+    // Create a copy of all hole scores
+    const allScores = [...allHoleScores];
+    
+    // Find if current hole already exists in scores
+    const currentHoleIndex = allScores.findIndex(h => h.holeNumber === currentHole);
+    
+    // Either update or add current hole data
+    if (currentHoleIndex >= 0) {
+      allScores[currentHoleIndex] = holeData;
+    } else if (holeData.score || holeData.putts || holeData.fairwayHit || holeData.greenInRegulation) {
+      // Only add current hole if it has some data
+      allScores.push(holeData);
+    }
+    
+    // Calculate stats from all holes
+    return {
+      totalStrokes: allScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
+      totalPutts: allScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
+      fairwaysHit: allScores.filter(hole => hole.fairwayHit).length,
+      totalFairways: Math.max(1, currentHole - 1), // Prevent divide by zero
+      greensInRegulation: allScores.filter(hole => hole.greenInRegulation).length,
+      totalGreens: Math.max(1, currentHole - 1), // Prevent divide by zero
+    };
+  }, [allHoleScores, holeData, currentHole]);
   
   // Load round information on mount
   useEffect(() => {
@@ -109,15 +122,18 @@ const HoleTracking = () => {
           .eq("round_id", roundId);
           
         if (!allScoresError && allHoleScores) {
-          const stats = {
-            totalStrokes: allHoleScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
-            totalPutts: allHoleScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
-            fairwaysHit: allHoleScores.filter(hole => hole.fairway_hit).length,
-            totalFairways: allHoleScores.length,
-            greensInRegulation: allHoleScores.filter(hole => hole.green_in_regulation).length,
-            totalGreens: allHoleScores.length,
-          };
-          setRoundStats(stats);
+          // Convert database format to our HoleData format
+          const formattedScores: HoleData[] = allHoleScores.map(hole => ({
+            holeNumber: hole.hole_number,
+            par: 4, // Default as we don't store this
+            distance: 0,
+            score: hole.score || 0,
+            putts: hole.putts || 0,
+            fairwayHit: !!hole.fairway_hit,
+            greenInRegulation: !!hole.green_in_regulation
+          }));
+          
+          setAllHoleScores(formattedScores);
         }
       }
     } catch (error) {
@@ -219,6 +235,20 @@ const HoleTracking = () => {
         });
       
       if (error) throw error;
+      
+      // Update the allHoleScores with current hole data
+      setAllHoleScores(prev => {
+        const updated = [...prev];
+        const existingIndex = updated.findIndex(h => h.holeNumber === currentHole);
+        
+        if (existingIndex >= 0) {
+          updated[existingIndex] = holeData;
+        } else {
+          updated.push(holeData);
+        }
+        
+        return updated;
+      });
       
       toast({
         title: "Score saved",
@@ -326,14 +356,14 @@ const HoleTracking = () => {
             <Card className="bg-muted/50">
               <CardContent className="p-4 text-center">
                 <h3 className="text-sm font-medium mb-1">FIR</h3>
-                <p className="text-2xl font-bold">{roundStats.fairwaysHit || 0}/{Math.max(1, currentHole - 1)}</p>
+                <p className="text-2xl font-bold">{roundStats.fairwaysHit || 0}/{roundStats.totalFairways}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-muted/50">
               <CardContent className="p-4 text-center">
                 <h3 className="text-sm font-medium mb-1">GIR</h3>
-                <p className="text-2xl font-bold">{roundStats.greensInRegulation || 0}/{Math.max(1, currentHole - 1)}</p>
+                <p className="text-2xl font-bold">{roundStats.greensInRegulation || 0}/{roundStats.totalGreens}</p>
               </CardContent>
             </Card>
           </div>
