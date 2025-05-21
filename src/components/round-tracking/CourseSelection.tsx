@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -10,91 +10,32 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Search, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { TeeSelection } from "./TeeSelection";
-import { HoleCountSelection } from "./HoleCountSelection";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TeesForm } from "./TeesForm";
+import { useCourseSelection } from "@/hooks/round-tracking/useCourseSelection";
 
 const CourseSelection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const { 
+    filteredCourses, 
+    searchQuery, 
+    setSearchQuery, 
+    isLoading, 
+    hasError,
+    refreshCourses 
+  } = useCourseSelection();
+  
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const [selectedTeeId, setSelectedTeeId] = useState<string | null>(null);
   const [selectedHoleCount, setSelectedHoleCount] = useState<number>(18);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showTeeDialog, setShowTeeDialog] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
-  
-  // Fetch courses on component mount
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-  
-  // Filter courses based on search query
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredCourses(courses);
-      return;
-    }
-    
-    const query = searchQuery.toLowerCase();
-    const filtered = courses.filter(course => 
-      course.name.toLowerCase().includes(query) || 
-      course.city.toLowerCase().includes(query) || 
-      course.state.toLowerCase().includes(query)
-    );
-    
-    setFilteredCourses(filtered);
-  }, [searchQuery, courses]);
-  
-  // Fetch courses from Supabase
-  const fetchCourses = async () => {
-    try {
-      setIsLoading(true);
-      
-      // First get all courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from("golf_courses")
-        .select("*")
-        .order("name");
-      
-      if (coursesError) throw coursesError;
-      
-      // Then get all tees for these courses
-      const { data: teesData, error: teesError } = await supabase
-        .from("course_tees")
-        .select("*");
-      
-      if (teesError) throw teesError;
-      
-      // Combine the data
-      const coursesWithTees = coursesData.map(course => ({
-        ...course,
-        course_tees: teesData.filter(tee => tee.course_id === course.id) || []
-      }));
-      
-      setCourses(coursesWithTees);
-      setFilteredCourses(coursesWithTees);
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      toast({
-        title: "Failed to load courses",
-        description: "Please try again later",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
   
   // Handle course card click
   const handleCourseClick = (courseId: string, course: Course) => {
@@ -146,31 +87,13 @@ const CourseSelection = () => {
       
       if (error) throw error;
       
-      // Update the course in the state with the new tee
-      if (newTee) {
-        const updatedCourses = courses.map(course => {
-          if (course.id === currentCourse.id) {
-            return {
-              ...course,
-              course_tees: [...course.course_tees, newTee]
-            };
-          }
-          return course;
-        });
-        
-        setCourses(updatedCourses);
-        setFilteredCourses(updatedCourses);
-        
-        // Auto select the newly created tee
-        if (expandedCourseId === currentCourse.id) {
-          setSelectedTeeId(newTee.id);
-        }
-        
-        toast({
-          title: "Tee added successfully",
-          description: `${newTee.name} tee has been added to ${currentCourse.name}`,
-        });
-      }
+      toast({
+        title: "Tee added successfully",
+        description: `${newTee.name} tee has been added to ${currentCourse.name}`,
+      });
+      
+      // Refresh courses to get updated data
+      refreshCourses();
       
       // Close the dialog
       setShowTeeDialog(false);
@@ -259,6 +182,21 @@ const CourseSelection = () => {
             </Card>
           ))}
         </div>
+      );
+    }
+    
+    if (hasError) {
+      return (
+        <Card className="w-full">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <p className="text-muted-foreground mb-4">
+              Could not load courses. Please try again.
+            </p>
+            <Button variant="default" onClick={refreshCourses}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       );
     }
     
