@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from 'react';
 import { useProfile } from '@/hooks/useProfile';
-import { useNavigate } from 'react-router-dom';
 
 export type AchievedGoal = {
   type: 'score' | 'handicap';
@@ -10,7 +9,6 @@ export type AchievedGoal = {
 
 export const useGoalAchievement = () => {
   const { scoreGoal, handicapGoal } = useProfile();
-  const navigate = useNavigate();
   const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
 
   const checkScoreGoal = useCallback((score: number, showAchievement: boolean = false) => {
@@ -44,15 +42,10 @@ export const useGoalAchievement = () => {
     setAchievedGoal(null);
   }, []);
 
-  const navigateToSetNewGoal = useCallback(() => {
-    navigate('/profile');
-  }, [navigate]);
-
   return {
     achievedGoal,
     checkScoreGoal,
     checkHandicapGoal,
-    resetAchievedGoal,
-    navigateToSetNewGoal
+    resetAchievedGoal
   };
 };

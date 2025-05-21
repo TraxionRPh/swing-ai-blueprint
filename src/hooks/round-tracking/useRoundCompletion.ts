@@ -9,7 +9,6 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [showConfetti, setShowConfetti] = useState<boolean>(false);
   
   // Import goal achievement hooks
   const { 
@@ -51,24 +50,35 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
         console.error('Error clearing storage:', storageError);
       }
       
-      // Check if this is a personal best or meets the user's score goal
-      // The true parameter makes the modal show after completion
+      // Check if this round meets the user's score goal (only for 18-hole rounds)
+      let goalAchieved = false;
       if (totalHoles === 18) {
-        const goalAchieved = checkScoreGoal(totalScore, true);
+        goalAchieved = checkScoreGoal(totalScore, false);
         
         if (goalAchieved) {
-          console.log("Goal achieved! Setting showConfetti to true");
-          setShowConfetti(true);
+          console.log("Goal achieved! Redirecting to achievement page");
+          // Instead of showing modal, navigate directly to achievement page
+          navigate("/goal-achievement", {
+            state: {
+              goalType: "score",
+              goalValue: achievedGoal?.value,
+              actualValue: totalScore
+            }
+          });
+          return; // Exit early after redirect
         }
       }
       
-      toast({
-        title: "Round Completed",
-        description: `Your ${totalHoles}-hole round has been saved`,
-      });
-      
-      // Navigate to rounds dashboard
-      navigate("/rounds");
+      // Only show regular toast if no goal was achieved
+      if (!goalAchieved) {
+        toast({
+          title: "Round Completed",
+          description: `Your ${totalHoles}-hole round has been saved`,
+        });
+        
+        // Navigate to rounds dashboard for normal completion
+        navigate("/rounds");
+      }
     } catch (error) {
       console.error("Error completing round:", error);
       toast({
@@ -84,7 +94,6 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
   return { 
     completeRound, 
     isSaving, 
-    showConfetti,
     achievedGoal,
     resetAchievedGoal
   };

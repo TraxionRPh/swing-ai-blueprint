@@ -2,21 +2,14 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
-import { useGoalAchievement, AchievedGoal } from "@/hooks/useGoalAchievement";
 import { RoundSummaryCard, HoleDetailsTable } from "@/components/round-tracking/review";
 import { useRoundReviewData } from "@/hooks/round-tracking/useRoundReviewData";
 import { useRoundCompletion } from "@/hooks/round-tracking/useRoundCompletion";
 import { CardFooter } from "@/components/ui/card";
-import { useState, useEffect } from "react";
 
-interface RoundReviewProps {
-  onGoalAchieved?: (goal: AchievedGoal) => void;
-}
-
-const RoundReview = ({ onGoalAchieved }: RoundReviewProps) => {
+const RoundReview = () => {
   const navigate = useNavigate();
   const { roundId } = useParams<{ roundId: string }>();
-  const [goalChecked, setGoalChecked] = useState(false);
   
   // Load round data using custom hook
   const { isLoading, holeScores, roundStats } = useRoundReviewData(roundId);
@@ -24,22 +17,12 @@ const RoundReview = ({ onGoalAchieved }: RoundReviewProps) => {
   // Handle round completion using custom hook
   const { 
     completeRound, 
-    isSaving, 
-    achievedGoal 
+    isSaving
   } = useRoundCompletion(
     roundId, 
     roundStats.totalScore,
     roundStats.totalHoles
   );
-  
-  // Effect to notify parent of goal achievement after round completion
-  useEffect(() => {
-    // Only send the achievement to parent after saving is complete and we have an achievement
-    if (!isSaving && achievedGoal && goalChecked && onGoalAchieved) {
-      console.log("Round completed, notifying parent of goal achievement:", achievedGoal);
-      onGoalAchieved(achievedGoal);
-    }
-  }, [isSaving, achievedGoal, goalChecked, onGoalAchieved]);
   
   // Handle round completion
   const handleCompleteRound = async () => {
@@ -50,8 +33,7 @@ const RoundReview = ({ onGoalAchieved }: RoundReviewProps) => {
       greensInRegulation: roundStats.greensInRegulation
     });
     
-    // Mark that we've checked goals after completion
-    setGoalChecked(true);
+    // No need for explicit navigation here - the completeRound function handles it
   };
   
   if (isLoading) {

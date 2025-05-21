@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -8,6 +9,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import RoundTracking from "./pages/RoundTracking";
+import GoalAchievement from "./pages/GoalAchievement";
 import ChallengeLibrary from "./pages/ChallengeLibrary";
 import DrillLibrary from "./pages/DrillLibrary";
 import ChallengeTracking from "./pages/ChallengeTracking";
@@ -74,6 +76,10 @@ const router = createBrowserRouter([
       {
         path: "rounds/*",
         element: <RoundTracking />,
+      },
+      {
+        path: "goal-achievement",
+        element: <GoalAchievement />,
       },
       {
         path: "ai-analysis",

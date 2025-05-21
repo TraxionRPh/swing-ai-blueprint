@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CourseSelection from "@/components/round-tracking/CourseSelection";
@@ -5,9 +6,6 @@ import HoleTracking from "@/components/round-tracking/HoleTracking";
 import RoundReview from "@/components/round-tracking/RoundReview";
 import { RoundProvider } from "@/context/round";
 import { RoundCreation } from "@/components/round-tracking/RoundCreation";
-import { useState } from "react";
-import { AchievedGoal } from "@/hooks/useGoalAchievement";
-import { AchievementModal } from "@/components/round-tracking/review";
 
 // Route parameter extractor for hole count
 const RoundCreationWrapper = () => {
@@ -23,19 +21,6 @@ const RoundCreationWrapper = () => {
 };
 
 const RoundTracking = () => {
-  const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const navigate = useNavigate();
-  
-  // Handle completed round with goal achievement
-  const handleRoundComplete = (goal: AchievedGoal) => {
-    if (goal) {
-      console.log("Round completed with goal achievement:", goal);
-      setAchievedGoal(goal);
-      setShowAchievementModal(true);
-    }
-  };
-  
   return (
     <ErrorBoundary>
       <Routes>
@@ -70,9 +55,7 @@ const RoundTracking = () => {
           path="/review/:roundId" 
           element={
             <RoundProvider>
-              <RoundReview 
-                onGoalAchieved={handleRoundComplete}
-              />
+              <RoundReview />
             </RoundProvider>
           }
         />
@@ -80,23 +63,6 @@ const RoundTracking = () => {
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/rounds" replace />} />
       </Routes>
-      
-      {/* Achievement modal that will appear after navigation */}
-      {achievedGoal && (
-        <AchievementModal
-          achievedGoal={achievedGoal}
-          showModal={showAchievementModal}
-          onClose={() => {
-            setShowAchievementModal(false);
-            setAchievedGoal(null);
-          }}
-          onSetNewGoal={() => {
-            setShowAchievementModal(false);
-            setAchievedGoal(null);
-            navigate('/profile');
-          }}
-        />
-      )}
     </ErrorBoundary>
   );
 };
