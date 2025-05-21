@@ -1,18 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useRound } from "@/context/round"; 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { RoundHeader } from "./RoundHeader";
-import { LoadingState } from "./LoadingState";
-import { Course, CourseTee } from "@/types/round-tracking";
-import { Search } from "lucide-react";
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { CourseSearchInput } from "./CourseSearchInput";
+import { CourseDetails } from "./CourseDetails";
+import { useCourseSearch } from "@/hooks/round-tracking/useCourseSearch";
+import { Course } from "@/types/round-tracking";
 
 interface CourseCreationProps {
   onBack: () => void;
@@ -32,12 +29,15 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     createRound
   } = useRound();
   
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Course[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
-  const [showRecentCourses, setShowRecentCourses] = useState(true);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    isSearching,
+    recentCourses,
+    showRecentCourses,
+    fetchRecentCourses
+  } = useCourseSearch();
   
   // Set the hole count from props
   useEffect(() => {
@@ -47,175 +47,9 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
   // Fetch recent courses on component mount
   useEffect(() => {
     if (user) {
-      fetchRecentCourses();
+      fetchRecentCourses(user.id);
     }
   }, [user]);
-
-  // Live search effect
-  useEffect(() => {
-    // Clear any existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    if (!searchQuery.trim()) {
-      setShowRecentCourses(true);
-      setSearchResults([]);
-      return;
-    }
-
-    // Set timeout for debounce
-    searchTimeoutRef.current = setTimeout(() => {
-      handleSearch();
-    }, 300); // 300ms delay
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  const fetchRecentCourses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('rounds')
-        .select(`
-          course_id,
-          golf_courses:course_id (
-            id,
-            name,
-            city,
-            state
-          )
-        `)
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-        
-      if (error) throw error;
-      
-      // Filter out duplicates and nulls
-      const uniqueCourses = data
-        ?.filter(item => item.golf_courses) // Filter out null golf_courses
-        ?.map(item => item.golf_courses)
-        .filter((course, index, self) => 
-          course && self.findIndex(c => c?.id === course?.id) === index
-        );
-      
-      // Fix for TypeScript error - ensure course_tees is an array
-      const coursesWithTees = await Promise.all(
-        (uniqueCourses || []).map(async (course) => {
-          if (!course) return null;
-          
-          // Fetch tees separately
-          const { data: tees } = await supabase
-            .from('course_tees')
-            .select('*')
-            .eq('course_id', course.id);
-            
-          return {
-            ...course,
-            course_tees: tees || []
-          };
-        })
-      );
-      
-      // Filter out nulls from the async map
-      const validCourses = coursesWithTees.filter(course => course !== null) as Course[];
-      setRecentCourses(validCourses);
-    } catch (error) {
-      console.error("Error fetching recent courses:", error);
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    setShowRecentCourses(false);
-    
-    try {
-      console.log("Searching for courses with query:", searchQuery);
-      
-      // First get the course data
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('golf_courses')
-        .select('id, name, city, state')
-        .ilike('name', `%${searchQuery}%`) // Focus on course name search first
-        .order('name')
-        .limit(10);
-        
-      if (coursesError) throw coursesError;
-      
-      if (!coursesData || coursesData.length === 0) {
-        // If no results found by name, try searching by city or state
-        const { data: locationData, error: locationError } = await supabase
-          .from('golf_courses')
-          .select('id, name, city, state')
-          .or(`city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
-          .order('name')
-          .limit(10);
-          
-        if (locationError) throw locationError;
-        
-        if (!locationData || locationData.length === 0) {
-          setSearchResults([]);
-          setIsSearching(false);
-          return;
-        }
-        
-        console.log("Found courses by location:", locationData);
-        
-        // Now get tees for each course found by location
-        const coursesByLocation = await Promise.all(
-          locationData.map(async (course) => {
-            const { data: tees } = await supabase
-              .from('course_tees')
-              .select('*')
-              .eq('course_id', course.id);
-              
-            return {
-              ...course,
-              course_tees: tees || []
-            };
-          })
-        );
-        
-        setSearchResults(coursesByLocation);
-        setIsSearching(false);
-        return;
-      }
-      
-      console.log("Found courses:", coursesData);
-      
-      // Now get tees for each course
-      const coursesWithTees = await Promise.all(
-        coursesData.map(async (course) => {
-          const { data: tees } = await supabase
-            .from('course_tees')
-            .select('*')
-            .eq('course_id', course.id);
-            
-          return {
-            ...course,
-            course_tees: tees || []
-          };
-        })
-      );
-      
-      setSearchResults(coursesWithTees);
-    } catch (error) {
-      console.error("Error searching courses:", error);
-      toast({
-        title: "Error searching courses",
-        description: "Could not complete the search. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
@@ -224,10 +58,6 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     if (course.course_tees?.length > 0) {
       setSelectedTeeId(course.course_tees[0].id);
     }
-  };
-
-  const handleTeeSelect = (teeId: string) => {
-    setSelectedTeeId(teeId);
   };
 
   const handleStartRound = async () => {
@@ -251,73 +81,6 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     }
   };
 
-  // Render tee selection
-  const renderTeeSelection = () => {
-    if (!selectedCourse || !selectedCourse.course_tees?.length) return null;
-    
-    return (
-      <div className="mt-4">
-        <h3 className="text-sm font-medium mb-2">Select Tee</h3>
-        <div className="flex flex-wrap gap-2">
-          {selectedCourse.course_tees.map((tee) => {
-            const isLightColor = ['white', 'yellow', 'gold', 'beige'].includes(tee.color?.toLowerCase() || '');
-            
-            return (
-              <Button
-                key={tee.id}
-                size="sm"
-                variant={selectedTeeId === tee.id ? "default" : "outline"}
-                onClick={() => handleTeeSelect(tee.id)}
-                style={{
-                  backgroundColor: selectedTeeId === tee.id ? undefined : tee.color || undefined,
-                  color: selectedTeeId === tee.id ? undefined : 
-                         (tee.color ? (isLightColor ? 'black' : 'white') : undefined)
-                }}
-              >
-                {tee.color || tee.name}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  // Render hole count selection
-  const renderHoleCountSelection = () => {
-    return (
-      <div className="mt-6">
-        <h3 className="text-sm font-medium mb-2">Round Type</h3>
-        <RadioGroup 
-          defaultValue={holeCount.toString()} 
-          className="grid grid-cols-2 gap-4"
-          onValueChange={(value) => {
-            setHoleCount(parseInt(value));
-            
-            // Update URL to reflect hole count
-            const baseUrl = "/rounds/new";
-            if (value === "9") {
-              navigate(`${baseUrl}/9`, { replace: true });
-            } else if (value === "18") {
-              navigate(`${baseUrl}/18`, { replace: true });
-            } else {
-              navigate(baseUrl, { replace: true });
-            }
-          }}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="9" id="nine" />
-            <Label htmlFor="nine">9 Holes</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="18" id="eighteen" />
-            <Label htmlFor="eighteen">18 Holes</Label>
-          </div>
-        </RadioGroup>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <RoundHeader
@@ -332,93 +95,29 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
           <CardTitle>Find a Course</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full mb-6">
-            <Command className="rounded-lg border shadow-md">
-              <CommandInput
-                placeholder="Search for a course name, city, or state..."
-                value={searchQuery}
-                onValueChange={setSearchQuery}
-                className="h-11"
-              />
-              
-              <CommandList className="max-h-[300px] overflow-y-auto">
-                {isSearching && (
-                  <div className="py-6 text-center">
-                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    <p className="text-sm text-muted-foreground mt-2">Searching courses...</p>
-                  </div>
-                )}
-                
-                {!isSearching && searchResults.length > 0 && (
-                  <CommandGroup heading="Search Results">
-                    {searchResults.map((course) => (
-                      <CommandItem
-                        key={course.id}
-                        onSelect={() => handleCourseSelect(course)}
-                        className={`flex flex-col items-start p-2 ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
-                      >
-                        <div className="font-medium">{course.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {course.city}, {course.state}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-                
-                {searchQuery.trim() === "" && showRecentCourses && recentCourses.length > 0 && (
-                  <CommandGroup heading="Recently Played">
-                    {recentCourses.map((course) => (
-                      <CommandItem
-                        key={course.id}
-                        onSelect={() => handleCourseSelect(course)}
-                        className={`flex flex-col items-start p-2 ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
-                      >
-                        <div className="font-medium">{course.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {course.city}, {course.state}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-                
-                {searchQuery.trim() !== "" && searchResults.length === 0 && !isSearching && (
-                  <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
-                )}
-              </CommandList>
-            </Command>
-          </div>
+          <CourseSearchInput
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+            isSearching={isSearching}
+            recentCourses={recentCourses}
+            showRecentCourses={showRecentCourses}
+            onCourseSelect={handleCourseSelect}
+            selectedCourseId={selectedCourse?.id}
+          />
         </CardContent>
       </Card>
       
-      {/* Selected Course */}
+      {/* Selected Course Details */}
       {selectedCourse && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Course Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="text-xl font-bold">{selectedCourse.name}</h3>
-              <p className="text-muted-foreground">
-                {selectedCourse.city}, {selectedCourse.state}
-              </p>
-            </div>
-            
-            {renderTeeSelection()}
-            {renderHoleCountSelection()}
-            
-            <Button 
-              className="w-full mt-6" 
-              size="lg" 
-              onClick={handleStartRound}
-              disabled={!selectedCourse || !selectedTeeId}
-            >
-              Start Round
-            </Button>
-          </CardContent>
-        </Card>
+        <CourseDetails
+          selectedCourse={selectedCourse}
+          selectedTeeId={selectedTeeId}
+          setSelectedTeeId={setSelectedTeeId}
+          holeCount={holeCount}
+          setHoleCount={setHoleCount}
+          onStartRound={handleStartRound}
+        />
       )}
     </div>
   );
