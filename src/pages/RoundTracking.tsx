@@ -1,10 +1,24 @@
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CourseSelection from "@/components/round-tracking/CourseSelection";
 import HoleTracking from "@/components/round-tracking/HoleTracking";
 import RoundReview from "@/components/round-tracking/RoundReview";
 import { RoundProvider } from "@/context/round";
+import { RoundCreation } from "@/components/round-tracking/RoundCreation";
+
+// Route parameter extractor for hole count
+const RoundCreationWrapper = () => {
+  const { holeCount } = useParams();
+  return (
+    <RoundProvider initialRoundId="new">
+      <RoundCreation 
+        onBack={() => window.history.back()} 
+        holeCount={holeCount ? parseInt(holeCount) : 18} 
+      />
+    </RoundProvider>
+  );
+};
 
 const RoundTracking = () => {
   return (
@@ -18,6 +32,12 @@ const RoundTracking = () => {
               <CourseSelection />
             </RoundProvider>
           }
+        />
+        
+        {/* New route for course details with hole count parameter */}
+        <Route 
+          path="/new/:holeCount?" 
+          element={<RoundCreationWrapper />} 
         />
         
         {/* Hole tracking page with dynamic hole number */}
