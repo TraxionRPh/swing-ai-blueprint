@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export const useRoundOperations = (
   holeScores: HoleData[], 
-  setHoleScores: (scores: HoleData[]) => void,
+  setHoleScores: React.Dispatch<React.SetStateAction<HoleData[]>>,
   holeCount: number
 ) => {
   const { toast } = useToast();
@@ -81,8 +81,8 @@ export const useRoundOperations = (
       
       if (error) throw error;
       
-      // Update the hole scores in state - Fixed the type issue here
-      setHoleScores((prev: HoleData[]) => {
+      // Update the hole scores in state with proper React.SetStateAction type
+      setHoleScores(prev => {
         const newScores = [...prev];
         const index = newScores.findIndex(h => h.holeNumber === holeData.holeNumber);
         
