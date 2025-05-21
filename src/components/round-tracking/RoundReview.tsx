@@ -1,190 +1,295 @@
 
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useRound } from "@/context/round"; // Updated import path
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { HoleData } from "@/types/round-tracking";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, AlertCircle, Edit } from "lucide-react";
-import { RoundHeader } from "./RoundHeader";
-import { LoadingState } from "./LoadingState";
+import { Loading } from "@/components/ui/loading";
+import { CheckCircle, AlertTriangle } from "lucide-react";
+import confetti from "react-confetti";
 
-interface RoundReviewProps {
-  onBack: () => void;
+interface RoundStats {
+  totalScore: number;
+  totalPutts: number;
+  fairwaysHit: number;
+  greensInRegulation: number;
+  totalHoles: number;
+  parTotal: number;
+  courseName: string;
+  date: string;
 }
 
-export const RoundReview = ({ onBack }: RoundReviewProps) => {
-  const { roundId } = useParams();
+const RoundReview = () => {
   const navigate = useNavigate();
+  const { roundId } = useParams<{ roundId: string }>();
   const { toast } = useToast();
-  const {
-    currentRoundId,
-    setCurrentRoundId,
-    selectedCourse,
-    holeScores,
-    holeCount,
-    finishRound,
-    isLoading
-  } = useRound();
+  const { user } = useAuth();
   
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  
-  // Initialize the component
-  useEffect(() => {
-    if (roundId && roundId !== 'new') {
-      setCurrentRoundId(roundId);
-    }
-  }, [roundId, setCurrentRoundId]);
-  
-  // Calculate round totals
-  const totals = holeScores.reduce((acc, hole) => ({
-    score: acc.score + (hole.score || 0),
-    putts: acc.putts + (hole.putts || 0),
-    fairways: acc.fairways + (hole.fairwayHit ? 1 : 0),
-    greens: acc.greens + (hole.greenInRegulation ? 1 : 0),
-    parCount: acc.parCount + (hole.score === hole.par ? 1 : 0),
-    birdieCount: acc.birdieCount + (hole.score === hole.par - 1 ? 1 : 0),
-    eagleCount: acc.eagleCount + (hole.score <= hole.par - 2 ? 1 : 0),
-    bogeyCount: acc.bogeyCount + (hole.score === hole.par + 1 ? 1 : 0),
-    doubleCount: acc.doubleCount + (hole.score >= hole.par + 2 ? 1 : 0),
-  }), {
-    score: 0,
-    putts: 0,
-    fairways: 0,
-    greens: 0,
-    parCount: 0,
-    birdieCount: 0,
-    eagleCount: 0,
-    bogeyCount: 0,
-    doubleCount: 0,
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [holeScores, setHoleScores] = useState<HoleData[]>([]);
+  const [roundStats, setRoundStats] = useState<RoundStats>({
+    totalScore: 0,
+    totalPutts: 0,
+    fairwaysHit: 0,
+    greensInRegulation: 0,
+    totalHoles: 0,
+    parTotal: 0,
+    courseName: "",
+    date: new Date().toLocaleDateString()
   });
   
-  // Calculate relation to par
-  const totalPar = holeScores.reduce((sum, hole) => sum + hole.par, 0);
-  const scoreToPar = totals.score - totalPar;
+  // Load round review data
+  useEffect(() => {
+    if (roundId) {
+      loadRoundData();
+    }
+  }, [roundId]);
   
-  const scoreRelationText = scoreToPar === 0
-    ? "Even par"
-    : scoreToPar > 0
-      ? `+${scoreToPar}`
-      : scoreToPar;
+  // Check if we should show congratulations
+  useEffect(() => {
+    checkForAchievements();
+  }, [roundStats]);
   
-  // Handle editing a specific hole
-  const handleEditHole = (holeNumber: number) => {
-    navigate(`/rounds/${roundId}/${holeNumber}`);
-  };
-  
-  // Handle submitting the final round
-  const handleSubmitRound = async () => {
-    setIsSubmitting(true);
-    setSubmitSuccess(false);
-    setSubmitError(null);
-    
+  // Load round data from database
+  const loadRoundData = async () => {
     try {
-      const success = await finishRound();
+      setIsLoading(true);
       
-      if (success) {
-        setSubmitSuccess(true);
-        toast({
-          title: "Round Completed",
-          description: "Your round has been saved successfully",
-        });
+      // Get round details
+      const { data: roundData, error: roundError } = await supabase
+        .from("rounds")
+        .select("hole_count, course_id, date")
+        .eq("id", roundId)
+        .single();
+      
+      if (roundError) throw roundError;
+      
+      // Get hole scores
+      const { data: holeScoresData, error: scoresError } = await supabase
+        .from("hole_scores")
+        .select("*")
+        .eq("round_id", roundId)
+        .order("hole_number");
+      
+      if (scoresError) throw scoresError;
+      
+      // Get course information
+      const { data: courseData, error: courseError } = await supabase
+        .from("golf_courses")
+        .select("name, total_par")
+        .eq("id", roundData.course_id)
+        .single();
+      
+      if (courseError) throw courseError;
+      
+      // Get course holes information
+      const { data: courseHolesData } = await supabase
+        .from("course_holes")
+        .select("hole_number, par")
+        .eq("course_id", roundData.course_id)
+        .order("hole_number");
+      
+      // Combine hole data with scores
+      const holeDataWithScores: HoleData[] = [];
+      
+      for (let i = 1; i <= roundData.hole_count; i++) {
+        const scoreData = holeScoresData?.find(s => s.hole_number === i);
+        const holeInfo = courseHolesData?.find(h => h.hole_number === i);
         
-        // Navigate back to rounds list after a short delay
-        setTimeout(() => {
-          navigate("/rounds");
-        }, 1500);
-      } else {
-        setSubmitError("Could not complete round. Please try again.");
+        if (scoreData) {
+          holeDataWithScores.push({
+            holeNumber: i,
+            par: holeInfo?.par || 4,
+            distance: 0, // Not showing distance in review
+            score: scoreData.score || 0,
+            putts: scoreData.putts || 0,
+            fairwayHit: scoreData.fairway_hit || false,
+            greenInRegulation: scoreData.green_in_regulation || false,
+          });
+        }
+      }
+      
+      setHoleScores(holeDataWithScores);
+      
+      // Calculate stats
+      if (holeDataWithScores.length > 0) {
+        const totalScore = holeDataWithScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
+        const totalPutts = holeDataWithScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
+        const fairwaysHit = holeDataWithScores.filter(h => h.fairwayHit).length;
+        const greensInRegulation = holeDataWithScores.filter(h => h.greenInRegulation).length;
+        const parTotal = holeDataWithScores.reduce((sum, hole) => sum + (hole.par || 0), 0);
+        
+        setRoundStats({
+          totalScore,
+          totalPutts,
+          fairwaysHit,
+          greensInRegulation,
+          totalHoles: holeDataWithScores.length,
+          parTotal,
+          courseName: courseData?.name || "Unknown Course",
+          date: new Date(roundData.date).toLocaleDateString()
+        });
       }
     } catch (error) {
-      console.error("Error submitting round:", error);
-      setSubmitError("An error occurred. Please try again.");
+      console.error("Error loading round data:", error);
+      toast({
+        title: "Error loading round",
+        description: "Could not load round information",
+        variant: "destructive"
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
+    }
+  };
+  
+  // Check if user has achieved their goal
+  const checkForAchievements = async () => {
+    if (!user || roundStats.totalHoles !== 18) return;
+    
+    try {
+      // Get user's score goal
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("score_goal")
+        .eq("id", user.id)
+        .single();
+      
+      // Get all previous rounds to compare
+      const { data: previousRounds } = await supabase
+        .from("rounds")
+        .select("total_score")
+        .eq("user_id", user.id)
+        .neq("id", roundId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      // Check if this is a personal best
+      const previousBest = previousRounds?.length 
+        ? Math.min(...previousRounds.filter(r => r.total_score).map(r => r.total_score))
+        : 999;
+      
+      // If user has a score goal and achieved it, or if this is a personal best
+      if ((profileData?.score_goal && roundStats.totalScore <= profileData.score_goal) || 
+          (roundStats.totalScore < previousBest)) {
+        setShowConfetti(true);
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error("Error checking achievements:", error);
+    }
+  };
+  
+  // Submit and complete the round
+  const completeRound = async () => {
+    if (!roundId) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Update round with totals
+      const { error } = await supabase
+        .from("rounds")
+        .update({
+          total_score: roundStats.totalScore,
+          total_putts: roundStats.totalPutts,
+          fairways_hit: roundStats.fairwaysHit,
+          greens_in_regulation: roundStats.greensInRegulation,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", roundId);
+      
+      if (error) throw error;
+      
+      // Clean up session storage
+      try {
+        sessionStorage.removeItem("current-round-id");
+        sessionStorage.removeItem("selected-hole-count");
+      } catch (storageError) {
+        console.error('Error clearing storage:', storageError);
+      }
+      
+      toast({
+        title: "Round Completed",
+        description: `Your ${roundStats.totalHoles}-hole round has been saved`,
+      });
+      
+      // Navigate to rounds dashboard
+      navigate("/rounds");
+    } catch (error) {
+      console.error("Error completing round:", error);
+      toast({
+        title: "Error saving round",
+        description: "Could not save round information",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
   
   if (isLoading) {
-    return <LoadingState onBack={onBack} message="Loading round data..." />;
+    return <Loading size="lg" message="Loading round summary..." />;
   }
   
   return (
     <div className="space-y-6">
-      <RoundHeader
-        title="Round Review"
-        subtitle={selectedCourse?.name || "Review your round scores"}
-        onBack={onBack}
-      />
+      {showConfetti && <confetti recycle={false} numberOfPieces={500} />}
       
-      {/* Round Summary */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Round Review</h1>
+        <p className="text-muted-foreground">
+          Review and submit your {roundStats.totalHoles}-hole round
+        </p>
+      </div>
+      
+      {/* Round Summary Card */}
       <Card>
         <CardHeader>
           <CardTitle>Round Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-card rounded-lg p-3 border border-border shadow-sm">
-              <div className="text-xl font-bold">{totals.score}</div>
-              <div className="text-xs text-muted-foreground">Total Score</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 border rounded-md">
+              <p className="text-muted-foreground text-sm">Total Score</p>
+              <p className="text-3xl font-bold">{roundStats.totalScore}</p>
+              <p className="text-sm">{roundStats.totalScore - roundStats.parTotal >= 0 ? "+" : ""}{roundStats.totalScore - roundStats.parTotal} to Par</p>
             </div>
-            <div className="bg-card rounded-lg p-3 border border-border shadow-sm">
-              <div className="text-xl font-bold">{scoreRelationText}</div>
-              <div className="text-xs text-muted-foreground">vs. Par</div>
+            <div className="text-center p-4 border rounded-md">
+              <p className="text-muted-foreground text-sm">Total Putts</p>
+              <p className="text-3xl font-bold">{roundStats.totalPutts}</p>
+              <p className="text-sm">{(roundStats.totalPutts / roundStats.totalHoles).toFixed(1)} per hole</p>
             </div>
-            <div className="bg-card rounded-lg p-3 border border-border shadow-sm">
-              <div className="text-xl font-bold">{totals.putts}</div>
-              <div className="text-xs text-muted-foreground">Total Putts</div>
+            <div className="text-center p-4 border rounded-md">
+              <p className="text-muted-foreground text-sm">Fairways Hit</p>
+              <p className="text-3xl font-bold">{roundStats.fairwaysHit}</p>
+              <p className="text-sm">{Math.round((roundStats.fairwaysHit / roundStats.totalHoles) * 100)}%</p>
             </div>
-            <div className="bg-card rounded-lg p-3 border border-border shadow-sm">
-              <div className="text-xl font-bold">{(totals.putts / holeCount).toFixed(1)}</div>
-              <div className="text-xs text-muted-foreground">Putts per Hole</div>
+            <div className="text-center p-4 border rounded-md">
+              <p className="text-muted-foreground text-sm">Greens in Reg.</p>
+              <p className="text-3xl font-bold">{roundStats.greensInRegulation}</p>
+              <p className="text-sm">{Math.round((roundStats.greensInRegulation / roundStats.totalHoles) * 100)}%</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-2 mt-6">
-            <div className="text-center p-2">
-              <div className="text-xs text-muted-foreground mb-1">Eagles</div>
-              <div className="bg-green-100 text-green-800 text-lg font-bold rounded-full w-10 h-10 mx-auto flex items-center justify-center">
-                {totals.eagleCount}
-              </div>
-            </div>
-            <div className="text-center p-2">
-              <div className="text-xs text-muted-foreground mb-1">Birdies</div>
-              <div className="bg-green-100 text-green-800 text-lg font-bold rounded-full w-10 h-10 mx-auto flex items-center justify-center">
-                {totals.birdieCount}
-              </div>
-            </div>
-            <div className="text-center p-2">
-              <div className="text-xs text-muted-foreground mb-1">Pars</div>
-              <div className="bg-gray-100 text-gray-800 text-lg font-bold rounded-full w-10 h-10 mx-auto flex items-center justify-center">
-                {totals.parCount}
-              </div>
-            </div>
-            <div className="text-center p-2">
-              <div className="text-xs text-muted-foreground mb-1">Bogeys</div>
-              <div className="bg-yellow-100 text-yellow-800 text-lg font-bold rounded-full w-10 h-10 mx-auto flex items-center justify-center">
-                {totals.bogeyCount}
-              </div>
-            </div>
-            <div className="text-center p-2">
-              <div className="text-xs text-muted-foreground mb-1">Doubles+</div>
-              <div className="bg-red-100 text-red-800 text-lg font-bold rounded-full w-10 h-10 mx-auto flex items-center justify-center">
-                {totals.doubleCount}
-              </div>
-            </div>
+          <div className="text-center mt-4">
+            <h3 className="text-lg font-medium">{roundStats.courseName}</h3>
+            <p className="text-sm text-muted-foreground">{roundStats.date}</p>
           </div>
         </CardContent>
       </Card>
       
-      {/* Hole-by-hole scores */}
+      {/* Hole by Hole Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Hole-by-hole Scores</CardTitle>
+          <CardTitle>Hole by Hole Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -193,99 +298,73 @@ export const RoundReview = ({ onBack }: RoundReviewProps) => {
                 <TableHead>Hole</TableHead>
                 <TableHead>Par</TableHead>
                 <TableHead>Score</TableHead>
-                <TableHead>+/-</TableHead>
                 <TableHead>Putts</TableHead>
-                <TableHead>FIR</TableHead>
-                <TableHead>GIR</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="hidden md:table-cell">Fairway</TableHead>
+                <TableHead className="hidden md:table-cell">GIR</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {holeScores.slice(0, holeCount).map((hole) => {
-                // Determine score relation class
-                const scoreDiff = hole.score - hole.par;
-                let scoreClass = "bg-gray-100 text-gray-700";
-                let scoreText = "E";
-                
-                if (hole.score > 0) {
-                  if (scoreDiff < 0) {
-                    scoreClass = "bg-green-100 text-green-800";
-                    scoreText = scoreDiff.toString();
-                  } else if (scoreDiff === 0) {
-                    scoreClass = "bg-gray-100 text-gray-700";
-                    scoreText = "E";
-                  } else {
-                    scoreClass = "bg-red-100 text-red-800";
-                    scoreText = `+${scoreDiff}`;
-                  }
-                } else {
-                  scoreText = "—";
-                }
-                
-                return (
-                  <TableRow key={hole.holeNumber}>
-                    <TableCell>{hole.holeNumber}</TableCell>
-                    <TableCell>{hole.par}</TableCell>
-                    <TableCell>{hole.score || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={scoreClass}>
-                        {scoreText}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{hole.putts !== undefined ? hole.putts : "—"}</TableCell>
-                    <TableCell>{hole.fairwayHit ? "✅" : "—"}</TableCell>
-                    <TableCell>{hole.greenInRegulation ? "✅" : "—"}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditHole(hole.holeNumber)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {holeScores.map(hole => (
+                <TableRow key={hole.holeNumber}>
+                  <TableCell>{hole.holeNumber}</TableCell>
+                  <TableCell>{hole.par}</TableCell>
+                  <TableCell className={
+                    hole.score < hole.par ? "text-green-600 font-medium" : 
+                    hole.score > hole.par ? "text-red-600 font-medium" : 
+                    "font-medium"
+                  }>
+                    {hole.score}
+                  </TableCell>
+                  <TableCell>{hole.putts}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {hole.fairwayHit ? <CheckCircle className="h-4 w-4 text-green-500" /> : "-"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {hole.greenInRegulation ? <CheckCircle className="h-4 w-4 text-green-500" /> : "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
+          
+          {holeScores.length === 0 && (
+            <div className="text-center py-8">
+              <AlertTriangle className="h-10 w-10 text-yellow-500 mx-auto mb-2" />
+              <p>No hole scores found for this round.</p>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back to Round
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(`/rounds/track/${roundId}/${roundStats.totalHoles}`)}
+          >
+            Back to Scoring
           </Button>
-          <Button onClick={handleSubmitRound} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Complete Round'
-            )}
+          <Button 
+            onClick={completeRound} 
+            disabled={isSaving || holeScores.length === 0}
+          >
+            {isSaving ? <Loading size="sm" message="Saving..." inline /> : "Complete Round"}
           </Button>
         </CardFooter>
       </Card>
       
-      {/* Submit status */}
-      {(submitSuccess || submitError) && (
-        <div className={`flex items-center justify-center p-4 rounded-md ${
-          submitSuccess ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-        }`}>
-          {submitSuccess ? (
-            <>
-              <Check className="h-5 w-5 mr-2" />
-              <span>Round completed successfully</span>
-            </>
-          ) : (
-            <>
-              <AlertCircle className="h-5 w-5 mr-2" />
-              <span>{submitError}</span>
-            </>
-          )}
-        </div>
+      {showConfetti && (
+        <Card className="border-green-500">
+          <CardContent className="flex items-center justify-center p-6">
+            <div className="text-center">
+              <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
+              <h3 className="text-xl font-bold text-green-700">Congratulations!</h3>
+              <p className="mt-2">
+                You've achieved a new personal best score. Keep up the great work!
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 };
+
+export default RoundReview;
