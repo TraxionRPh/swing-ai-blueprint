@@ -25,6 +25,7 @@ export const useHolePersistence = (roundId: string | null) => {
     
     try {
       // Ensure we have all the required fields for the database
+      // Remove the par field as it's not in the hole_scores table
       const dataToSave = {
         round_id: roundId,
         hole_number: holeData.holeNumber,

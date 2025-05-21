@@ -65,6 +65,8 @@ export const useRoundOperations = (
     setSaveInProgress(true);
     
     try {
+      // Remove the 'par' field from the data being sent to Supabase
+      // as the 'hole_scores' table doesn't have a 'par' column
       const { error } = await supabase
         .from('hole_scores')
         .upsert({
@@ -73,8 +75,7 @@ export const useRoundOperations = (
           score: holeData.score,
           putts: holeData.putts,
           fairway_hit: holeData.fairwayHit,
-          green_in_regulation: holeData.greenInRegulation,
-          par: holeData.par
+          green_in_regulation: holeData.greenInRegulation
         }, {
           onConflict: 'round_id,hole_number'
         });
