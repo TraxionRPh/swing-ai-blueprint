@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Course } from "@/types/round-tracking";
 import { TeeSelection } from "./TeeSelection";
 import { HoleCountSelection } from "./HoleCountSelection";
+import { Loader2 } from "lucide-react";
 
 interface CourseDetailsProps {
   selectedCourse: Course | null;
@@ -12,6 +13,7 @@ interface CourseDetailsProps {
   holeCount: number;
   setHoleCount: (count: number) => void;
   onStartRound: () => void;
+  isProcessing?: boolean;
 }
 
 export const CourseDetails = ({
@@ -21,6 +23,7 @@ export const CourseDetails = ({
   holeCount,
   setHoleCount,
   onStartRound,
+  isProcessing = false,
 }: CourseDetailsProps) => {
   if (!selectedCourse) return null;
 
@@ -52,9 +55,16 @@ export const CourseDetails = ({
           className="w-full mt-6" 
           size="lg" 
           onClick={onStartRound}
-          disabled={!selectedCourse || !selectedTeeId}
+          disabled={!selectedCourse || !selectedTeeId || isProcessing}
         >
-          Start Round
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating round...
+            </>
+          ) : (
+            "Start Round"
+          )}
         </Button>
       </CardContent>
     </Card>

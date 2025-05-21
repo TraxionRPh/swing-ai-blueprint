@@ -2,6 +2,8 @@
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Course } from "@/types/round-tracking";
 import { cn } from "@/lib/utils";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CourseSearchInputProps {
   searchQuery: string;
@@ -12,6 +14,7 @@ interface CourseSearchInputProps {
   showRecentCourses: boolean;
   onCourseSelect: (course: Course) => void;
   selectedCourseId?: string | null;
+  hasSearchError?: boolean;
 }
 
 export const CourseSearchInput = ({
@@ -22,8 +25,19 @@ export const CourseSearchInput = ({
   recentCourses,
   showRecentCourses,
   onCourseSelect,
-  selectedCourseId
+  selectedCourseId,
+  hasSearchError = false
 }: CourseSearchInputProps) => {
+  
+  const handleRetry = () => {
+    if (searchQuery.trim()) {
+      // Trigger a search by slightly modifying the query and then setting it back
+      const currentQuery = searchQuery;
+      setSearchQuery(currentQuery + " ");
+      setTimeout(() => setSearchQuery(currentQuery), 10);
+    }
+  };
+  
   return (
     <div className="relative w-full mb-6">
       <Command className="rounded-lg border shadow-md">
@@ -42,7 +56,18 @@ export const CourseSearchInput = ({
             </div>
           )}
           
-          {!isSearching && searchResults.length > 0 && (
+          {hasSearchError && (
+            <div className="py-6 text-center">
+              <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-2" />
+              <p className="text-sm text-destructive font-medium mb-2">Error searching courses</p>
+              <p className="text-sm text-muted-foreground mb-3">Check your connection and try again</p>
+              <Button size="sm" variant="outline" onClick={handleRetry}>
+                Retry Search
+              </Button>
+            </div>
+          )}
+          
+          {!isSearching && !hasSearchError && searchResults.length > 0 && (
             <CommandGroup heading="Search Results">
               {searchResults.map((course) => (
                 <CommandItem
@@ -68,7 +93,7 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {!isSearching && searchQuery === "" && showRecentCourses && recentCourses.length > 0 && (
+          {!isSearching && !hasSearchError && searchQuery === "" && showRecentCourses && recentCourses.length > 0 && (
             <CommandGroup heading="Recently Played">
               {recentCourses.map((course) => (
                 <CommandItem
@@ -94,7 +119,7 @@ export const CourseSearchInput = ({
             </CommandGroup>
           )}
           
-          {!isSearching && searchQuery !== "" && searchResults.length === 0 && (
+          {!isSearching && !hasSearchError && searchQuery !== "" && searchResults.length === 0 && (
             <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
           )}
         </CommandList>

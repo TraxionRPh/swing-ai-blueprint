@@ -10,6 +10,8 @@ import { CourseSearchInput } from "./CourseSearchInput";
 import { CourseDetails } from "./CourseDetails";
 import { useCourseSearch } from "@/hooks/round-tracking/useCourseSearch";
 import { Course } from "@/types/round-tracking";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface CourseCreationProps {
   onBack: () => void;
@@ -20,6 +22,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
   const { 
     setHoleCount, 
     selectedCourse, 
@@ -36,7 +39,8 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     isSearching,
     recentCourses,
     showRecentCourses,
-    fetchRecentCourses
+    fetchRecentCourses,
+    hasSearchError
   } = useCourseSearch();
   
   // Set the hole count from props
@@ -72,14 +76,38 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     }
     
     console.log("Creating new round...");
+    setIsProcessing(true);
     
-    // Create a new round
-    const roundId = await createRound(selectedCourse.id, selectedTeeId);
-    
-    if (roundId) {
-      // Navigate to first hole
-      navigate(`/rounds/${roundId}/1`);
+    try {
+      // Create a new round
+      const roundId = await createRound(selectedCourse.id, selectedTeeId);
+      
+      if (roundId) {
+        // Navigate to first hole
+        navigate(`/rounds/${roundId}/1`);
+      } else {
+        throw new Error("Failed to create round");
+      }
+    } catch (error) {
+      console.error("Error creating round:", error);
+      toast({
+        title: "Error Creating Round",
+        description: "There was a problem creating your round. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  // Add a manual course option
+  const handleAddCourseManually = () => {
+    // This is where you would navigate to a course creation form
+    // For now we'll just show a toast
+    toast({
+      title: "Manual Course Creation",
+      description: "This feature is coming soon!",
+    });
   };
 
   return (
@@ -105,7 +133,24 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
             showRecentCourses={showRecentCourses}
             onCourseSelect={handleCourseSelect}
             selectedCourseId={selectedCourse?.id}
+            hasSearchError={hasSearchError}
           />
+          
+          {/* Add a manual add option */}
+          {searchQuery && searchResults.length === 0 && !isSearching && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                Can't find your course?
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleAddCourseManually}
+              >
+                Add Course Manually
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -118,6 +163,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
           holeCount={holeCount}
           setHoleCount={setHoleCount}
           onStartRound={handleStartRound}
+          isProcessing={isProcessing}
         />
       )}
     </div>

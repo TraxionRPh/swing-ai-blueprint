@@ -11,6 +11,7 @@ export function useCourseSearch() {
   const [isSearching, setIsSearching] = useState(false);
   const [recentCourses, setRecentCourses] = useState<Course[]>([]);
   const [showRecentCourses, setShowRecentCourses] = useState(true);
+  const [hasSearchError, setHasSearchError] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Live search effect
@@ -25,26 +26,44 @@ export function useCourseSearch() {
       setSearchResults([]);
       setIsSearching(false);
       setShowRecentCourses(true);
+      setHasSearchError(false);
       return;
     }
 
     // When typing, show loading state immediately
     setIsSearching(true);
+    setHasSearchError(false);
     
-    // Set timeout for debounce
+    // Set timeout for debounce with a maximum search time
     searchTimeoutRef.current = setTimeout(() => {
       handleSearch();
     }, 300); // 300ms delay
+
+    // Add a timeout to prevent endless loading
+    const maxSearchTime = setTimeout(() => {
+      if (isSearching) {
+        setIsSearching(false);
+        setHasSearchError(true);
+        toast({
+          title: "Search timeout",
+          description: "The search took too long. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }, 8000); // 8 seconds max search time
 
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
+      clearTimeout(maxSearchTime);
     };
   }, [searchQuery]);
 
   const fetchRecentCourses = async (userId: string) => {
     try {
+      setIsSearching(true);
+      
       const { data, error } = await supabase
         .from('rounds')
         .select(`
@@ -93,6 +112,9 @@ export function useCourseSearch() {
       setRecentCourses(validCourses);
     } catch (error) {
       console.error("Error fetching recent courses:", error);
+      setHasSearchError(true);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -157,8 +179,10 @@ export function useCourseSearch() {
       
       setSearchResults(coursesWithTees);
       setShowRecentCourses(false);
+      setHasSearchError(false);
     } catch (error) {
       console.error("Error searching courses:", error);
+      setHasSearchError(true);
       toast({
         title: "Error searching courses",
         description: "Could not complete the search. Please try again.",
@@ -177,5 +201,6 @@ export function useCourseSearch() {
     recentCourses,
     showRecentCourses,
     fetchRecentCourses,
+    hasSearchError,
   };
 }
