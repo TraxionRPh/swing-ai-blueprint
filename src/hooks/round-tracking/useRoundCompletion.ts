@@ -13,7 +13,9 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
   
   // Import goal achievement hooks
   const { 
-    checkScoreGoal
+    checkScoreGoal,
+    achievedGoal,
+    resetAchievedGoal
   } = useGoalAchievement();
 
   const completeRound = async (roundStats: {
@@ -50,11 +52,12 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
       }
       
       // Check if this is a personal best or meets the user's score goal
-      // Pass true to make the modal show after completion
+      // The true parameter makes the modal show after completion
       if (totalHoles === 18) {
         const goalAchieved = checkScoreGoal(totalScore, true);
         
         if (goalAchieved) {
+          console.log("Goal achieved! Setting showConfetti to true");
           setShowConfetti(true);
         }
       }
@@ -78,5 +81,11 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
     }
   };
   
-  return { completeRound, isSaving, showConfetti };
+  return { 
+    completeRound, 
+    isSaving, 
+    showConfetti,
+    achievedGoal,
+    resetAchievedGoal
+  };
 };

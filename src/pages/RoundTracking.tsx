@@ -6,6 +6,8 @@ import HoleTracking from "@/components/round-tracking/HoleTracking";
 import RoundReview from "@/components/round-tracking/RoundReview";
 import { RoundProvider } from "@/context/round";
 import { RoundCreation } from "@/components/round-tracking/RoundCreation";
+import { useState } from "react";
+import { AchievedGoal } from "@/hooks/useGoalAchievement";
 
 // Route parameter extractor for hole count
 const RoundCreationWrapper = () => {
@@ -21,6 +23,18 @@ const RoundCreationWrapper = () => {
 };
 
 const RoundTracking = () => {
+  const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  
+  // Handle completed round with goal achievement
+  const handleRoundComplete = (goal: AchievedGoal) => {
+    if (goal) {
+      console.log("Round completed with goal achievement:", goal);
+      setAchievedGoal(goal);
+      setShowAchievementModal(true);
+    }
+  };
+  
   return (
     <ErrorBoundary>
       <Routes>
@@ -55,7 +69,9 @@ const RoundTracking = () => {
           path="/review/:roundId" 
           element={
             <RoundProvider>
-              <RoundReview />
+              <RoundReview 
+                onGoalAchieved={handleRoundComplete}
+              />
             </RoundProvider>
           }
         />
@@ -63,6 +79,23 @@ const RoundTracking = () => {
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/rounds" replace />} />
       </Routes>
+      
+      {/* Achievement modal that will appear after navigation */}
+      {achievedGoal && (
+        <AchievementModal
+          achievedGoal={achievedGoal}
+          showModal={showAchievementModal}
+          onClose={() => {
+            setShowAchievementModal(false);
+            setAchievedGoal(null);
+          }}
+          onSetNewGoal={() => {
+            setShowAchievementModal(false);
+            setAchievedGoal(null);
+            navigate('/profile');
+          }}
+        />
+      )}
     </ErrorBoundary>
   );
 };

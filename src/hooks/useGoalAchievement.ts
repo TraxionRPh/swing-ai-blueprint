@@ -19,6 +19,7 @@ export const useGoalAchievement = () => {
       
       // Only set the achieved goal state if showAchievement is true
       if (showAchievement) {
+        console.log("Setting achieved goal state for score:", scoreGoal);
         setAchievedGoal({ type: 'score', value: scoreGoal });
       }
       return true;
