@@ -1,7 +1,7 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
-interface RoundStatsProps {
+interface RoundStatsSummaryProps {
   totalStrokes: number;
   totalPutts: number;
   fairwaysHit: number;
@@ -17,36 +17,26 @@ export const RoundStatsSummary = ({
   totalFairways,
   greensInRegulation,
   totalGreens
-}: RoundStatsProps) => {
+}: RoundStatsSummaryProps) => {
+  // Format the fairway and green stats
+  const fairwayText = `${fairwaysHit}/${totalFairways}`;
+  const girText = `${greensInRegulation}/${totalGreens}`;
+  
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card className="bg-muted/50">
-        <CardContent className="p-4 text-center">
-          <h3 className="text-sm font-medium mb-1">Total Strokes</h3>
-          <p className="text-2xl font-bold">{totalStrokes || 0}</p>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-muted/50">
-        <CardContent className="p-4 text-center">
-          <h3 className="text-sm font-medium mb-1">Total Putts</h3>
-          <p className="text-2xl font-bold">{totalPutts || 0}</p>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-muted/50">
-        <CardContent className="p-4 text-center">
-          <h3 className="text-sm font-medium mb-1">FIR</h3>
-          <p className="text-2xl font-bold">{fairwaysHit || 0}/{totalFairways}</p>
-        </CardContent>
-      </Card>
-      
-      <Card className="bg-muted/50">
-        <CardContent className="p-4 text-center">
-          <h3 className="text-sm font-medium mb-1">GIR</h3>
-          <p className="text-2xl font-bold">{greensInRegulation || 0}/{totalGreens}</p>
-        </CardContent>
-      </Card>
+      <StatCard title="Total Strokes" value={totalStrokes.toString()} />
+      <StatCard title="Total Putts" value={totalPutts.toString()} />
+      <StatCard title="FIR" value={fairwayText} />
+      <StatCard title="GIR" value={girText} />
     </div>
+  );
+};
+
+const StatCard = ({ title, value }: { title: string; value: string }) => {
+  return (
+    <Card className="p-4 flex flex-col items-center justify-center">
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p className="text-3xl font-bold">{value}</p>
+    </Card>
   );
 };

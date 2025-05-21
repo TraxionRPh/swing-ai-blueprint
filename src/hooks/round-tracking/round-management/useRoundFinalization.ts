@@ -71,7 +71,7 @@ export const useRoundFinalization = () => {
       
       toast({
         title: "Round Completed",
-        description: "Your round has been saved successfully!",
+        description: `Your ${holeCount}-hole round has been saved successfully!`,
       });
       
       // Clear any session storage data used for this round
