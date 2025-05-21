@@ -49,6 +49,7 @@ export const CourseSearchInput = ({
                   onSelect={() => onCourseSelect(course)}
                   className="flex flex-col items-start p-2"
                   value={`${course.name} ${course.city} ${course.state}`}
+                  data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
                   <div className="font-medium">{course.name}</div>
                   <div className="text-sm text-muted-foreground">
@@ -67,6 +68,7 @@ export const CourseSearchInput = ({
                   onSelect={() => onCourseSelect(course)}
                   className="flex flex-col items-start p-2"
                   value={`${course.name} ${course.city} ${course.state}`}
+                  data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
                   <div className="font-medium">{course.name}</div>
                   <div className="text-sm text-muted-foreground">
