@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { TeeSelection } from "./TeeSelection";
+import { HoleCountSelection } from "./HoleCountSelection";
 
 const CourseSelection = () => {
   const navigate = useNavigate();
@@ -234,29 +235,13 @@ const CourseSelection = () => {
               {/* Expanded section with tee selection and hole count */}
               {expandedCourseId === course.id && (
                 <div className="p-6 pt-0 border-t">
-                  {/* Tee Selection */}
+                  {/* Use the TeeSelection component */}
                   {course.course_tees && course.course_tees.length > 0 ? (
-                    <div className="mb-4">
-                      <h4 className="text-sm font-medium mb-2">Select Tee</h4>
-                      <RadioGroup 
-                        value={selectedTeeId || ''} 
-                        onValueChange={setSelectedTeeId}
-                        className="grid grid-cols-2 gap-2"
-                      >
-                        {course.course_tees.map(tee => (
-                          <div key={tee.id} className="flex items-center space-x-2">
-                            <RadioGroupItem value={tee.id} id={tee.id} />
-                            <Label htmlFor={tee.id} className="flex items-center">
-                              <div 
-                                className="w-3 h-3 rounded-full mr-2" 
-                                style={{ backgroundColor: tee.color || '#888' }} 
-                              />
-                              {tee.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
+                    <TeeSelection
+                      selectedCourse={course}
+                      selectedTeeId={selectedTeeId}
+                      onTeeSelect={setSelectedTeeId}
+                    />
                   ) : (
                     <p className="text-sm text-muted-foreground mb-4">No tee information available</p>
                   )}

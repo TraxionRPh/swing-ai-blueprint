@@ -29,10 +29,10 @@ export const TeeSelection = ({
             <Button
               key={tee.id}
               size="sm"
-              variant="outline"
+              variant={isSelected ? "secondary" : "outline"}
               onClick={() => onTeeSelect(tee.id)}
               className={cn(
-                "relative flex items-center overflow-hidden transition-all",
+                "flex items-center",
                 isSelected ? "ring-2 ring-white/70 ring-offset-1 shadow-md" : ""
               )}
             >
@@ -41,7 +41,7 @@ export const TeeSelection = ({
                 className="h-4 w-4 mr-2"
                 strokeWidth={isLightColor ? 1 : 0}
               />
-              <span>{tee.color || tee.name}</span>
+              <span>{tee.name}</span>
             </Button>
           );
         })}
