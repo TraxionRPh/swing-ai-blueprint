@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loading } from "@/components/ui/loading";
 import { CheckCircle, AlertTriangle } from "lucide-react";
-import confetti from "react-confetti";
+import Confetti from "react-confetti";
 
 interface RoundStats {
   totalScore: number;
@@ -241,7 +240,7 @@ const RoundReview = () => {
   
   return (
     <div className="space-y-6">
-      {showConfetti && <confetti recycle={false} numberOfPieces={500} />}
+      {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
       
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Round Review</h1>
