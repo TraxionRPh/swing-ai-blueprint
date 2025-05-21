@@ -25,7 +25,8 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     setSelectedCourse,
     selectedTeeId,
     setSelectedTeeId,
-    createRound
+    createRound,
+    isLoading
   } = useRound();
   
   // Set the hole count from props
@@ -54,12 +55,29 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       return;
     }
     
+    if (!selectedTeeId) {
+      toast({
+        title: "Tee Selection Required",
+        description: "Please select a tee color before starting your round",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     console.log("Creating new round...");
     setIsProcessing(true);
     
     try {
-      // Create a new round
-      const roundId = await createRound(selectedCourse.id, selectedTeeId);
+      // Create a new round with explicit timeout handling
+      const roundCreationPromise = createRound(selectedCourse.id, selectedTeeId);
+      
+      // Add timeout protection
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Round creation timed out")), 10000);
+      });
+      
+      // Race between creation and timeout
+      const roundId = await Promise.race([roundCreationPromise, timeoutPromise]);
       
       if (roundId) {
         // Navigate to first hole
@@ -79,8 +97,12 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     }
   };
 
-  if (!selectedCourse) {
+  if (isLoading) {
     return <Loading size="md" message="Loading course details..." />;
+  }
+
+  if (!selectedCourse) {
+    return <Loading size="md" message="No course selected. Redirecting..." />;
   }
 
   return (
@@ -92,17 +114,15 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       />
       
       {/* Selected Course Details */}
-      {selectedCourse && (
-        <CourseDetails
-          selectedCourse={selectedCourse}
-          selectedTeeId={selectedTeeId}
-          setSelectedTeeId={setSelectedTeeId}
-          holeCount={holeCount}
-          setHoleCount={setHoleCount}
-          onStartRound={handleStartRound}
-          isProcessing={isProcessing}
-        />
-      )}
+      <CourseDetails
+        selectedCourse={selectedCourse}
+        selectedTeeId={selectedTeeId}
+        setSelectedTeeId={setSelectedTeeId}
+        holeCount={holeCount}
+        setHoleCount={setHoleCount}
+        onStartRound={handleStartRound}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 };

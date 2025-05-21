@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +25,14 @@ export const useRoundOperations = (
       return null;
     }
     
+    if (!courseId) {
+      console.error("Cannot create round: No course ID provided");
+      return null;
+    }
+    
     try {
+      console.log(`Creating round for course ${courseId} with tee ${teeId || 'none'}`);
+      
       const { data, error } = await supabase
         .from('rounds')
         .insert({
@@ -37,9 +45,14 @@ export const useRoundOperations = (
         .select('id')
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database error creating round:", error);
+        throw error;
+      }
       
-      if (data) {
+      if (data && data.id) {
+        console.log(`Successfully created round with ID: ${data.id}`);
+        
         // Save the new round ID to storage for persistence
         try {
           sessionStorage.setItem('current-round-id', data.id);
@@ -49,9 +62,10 @@ export const useRoundOperations = (
         }
         
         return data.id;
+      } else {
+        console.error("No round ID returned from database");
+        return null;
       }
-      
-      return null;
     } catch (error) {
       console.error("Error creating round:", error);
       toast({

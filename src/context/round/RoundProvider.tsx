@@ -10,6 +10,8 @@ const RoundContext = createContext<RoundContextType | undefined>(undefined);
 // Cache key constants
 const ROUND_CACHE_PREFIX = "cached-round-";
 const CACHE_EXPIRY_KEY = "cache-expiry-";
+// Maximum number of fetch attempts
+const MAX_FETCH_ATTEMPTS = 3;
 
 export const RoundProvider = ({ children }: { children: ReactNode }) => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
@@ -108,12 +110,13 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Prevent infinite fetching - only try a few times
-      if (fetchTries > 3) {
+      if (fetchTries >= MAX_FETCH_ATTEMPTS) {
         console.log(`Stopping fetch attempts after ${fetchTries} tries`);
+        setIsLoading(false); // Stop loading if we've reached max attempts
         return;
       }
       
-      console.log(`RoundProvider: Loading data for round ${currentRoundId}`);
+      console.log(`RoundProvider: Loading data for round ${currentRoundId} (attempt ${fetchTries + 1}/${MAX_FETCH_ATTEMPTS})`);
       fetchRoundData(currentRoundId).then(data => {
         // If fetch successful, cache the data
         if (data) {
@@ -133,11 +136,16 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error caching round data:", error);
           }
         }
+      }).catch(error => {
+        console.error("Error fetching round data:", error);
+        if (fetchTries + 1 >= MAX_FETCH_ATTEMPTS) {
+          setIsLoading(false); // Stop loading after max attempts
+        }
       }).finally(() => {
         setFetchTries(prev => prev + 1);
       });
     }
-  }, [currentRoundId, fetchRoundData, fetchTries, selectedCourse, holeCount, holeScores]);
+  }, [currentRoundId, fetchRoundData, fetchTries, selectedCourse, holeCount, holeScores, setIsLoading]);
   
   // Reset fetch tries if round ID changes
   useEffect(() => {
