@@ -83,11 +83,9 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  // Fix the navigation to properly handle the new round creation flow
   const handleCreateRound = () => {
     console.log("Creating new round...");
-    // Navigate to the round creation page where users can select a course and hole count
-    navigate("/rounds/new");
+    window.location.href = "/rounds/new";
   };
 
   const handleSelectRound = (roundId: string) => {
