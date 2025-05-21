@@ -12,7 +12,8 @@ export const useRoundOperations = (
 ) => {
   const [saveInProgress, setSaveInProgress] = useState<boolean>(false);
   
-  const { createRound: createNewRound, saveInProgress: createInProgress } = useCreateRound();
+  // Fix: Update property name from saveInProgress to isCreating to match what useCreateRound returns
+  const { createRound: createNewRound, isCreating: createInProgress } = useCreateRound();
   const { updateHoleScore: updateScore, saveInProgress: updateInProgress } = useUpdateHoleScore();
   const { finishRound: finishRoundOperation, saveInProgress: finishInProgress } = useFinishRound();
   
