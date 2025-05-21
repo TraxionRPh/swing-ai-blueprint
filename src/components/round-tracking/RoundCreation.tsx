@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
 import { Course, CourseTee } from "@/types/round-tracking";
@@ -98,9 +97,11 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       if (error) throw error;
       
       // Filter out duplicates and nulls
-      const uniqueCourses = data?.map(item => item.golf_courses)
+      const uniqueCourses = data
+        ?.filter(item => item.golf_courses) // Filter out null golf_courses
+        ?.map(item => item.golf_courses)
         .filter((course, index, self) => 
-          course && self.findIndex(c => c?.id === course.id) === index
+          course && self.findIndex(c => c?.id === course?.id) === index
         );
       
       // Fix for TypeScript error - ensure course_tees is an array
@@ -136,6 +137,8 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
     setShowRecentCourses(false);
     
     try {
+      console.log("Searching for courses with query:", searchQuery);
+      
       // First get the course data
       const { data: coursesData, error: coursesError } = await supabase
         .from('golf_courses')
@@ -146,9 +149,17 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
         
       if (coursesError) throw coursesError;
       
+      if (!coursesData || coursesData.length === 0) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+      
+      console.log("Found courses:", coursesData);
+      
       // Now get tees for each course
       const coursesWithTees = await Promise.all(
-        (coursesData || []).map(async (course) => {
+        coursesData.map(async (course) => {
           const { data: tees } = await supabase
             .from('course_tees')
             .select('*')
@@ -196,6 +207,8 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       });
       return;
     }
+    
+    console.log("Creating new round...");
     
     // Create a new round
     const roundId = await createRound(selectedCourse.id, selectedTeeId);
