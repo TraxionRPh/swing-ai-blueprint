@@ -31,7 +31,7 @@ export const HoleFooterActions = ({
       <Button 
         onClick={onSave} 
         disabled={isSaving || !hasScore}
-        className="min-w-[120px]"
+        className="min-w-[120px] ml-4"
       >
         {isSaving ? (
           <Loading size="sm" message="Saving..." inline />
