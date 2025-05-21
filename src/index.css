@@ -59,4 +59,14 @@
   [cmdk-item][data-selected="true"] {
     background-color: transparent !important;
   }
+  
+  /* Ensure text in command items is visible */
+  [cmdk-item] {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  [cmdk-group-heading] {
+    color: hsl(var(--muted-foreground)) !important;
+    font-weight: 600 !important;
+  }
 }

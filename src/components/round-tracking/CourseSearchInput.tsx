@@ -55,8 +55,8 @@ export const CourseSearchInput = ({
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium">{course.name}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="font-medium text-foreground">{course.name}</div>
+                  <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
                   </div>
                 </CommandItem>
@@ -77,8 +77,8 @@ export const CourseSearchInput = ({
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium">{course.name}</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="font-medium text-foreground">{course.name}</div>
+                  <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
                   </div>
                 </CommandItem>
