@@ -33,7 +33,7 @@ export const TeeSelection = ({
               onClick={() => onTeeSelect(tee.id)}
               className={cn(
                 "relative flex items-center overflow-hidden transition-all",
-                isSelected ? "ring-2 ring-primary ring-offset-1 shadow-md" : ""
+                isSelected ? "ring-2 ring-accent ring-offset-1 shadow-md" : ""
               )}
             >
               <Circle 
