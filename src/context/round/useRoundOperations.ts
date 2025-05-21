@@ -22,7 +22,7 @@ export const useRoundOperations = (
     setSaveInProgress(true);
     try {
       console.log(`Creating round with ${holeCount} holes`);
-      // Directly return the round ID without additional processing
+      // Pass the holeCount to createNewRound
       return await createNewRound(courseId, teeId, holeCount);
     } catch (error) {
       console.error("Error in createRound:", error);

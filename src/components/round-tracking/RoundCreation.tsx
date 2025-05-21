@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +18,15 @@ export const RoundCreation = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { selectedCourse, selectedTeeId } = useRound();
+  const { selectedCourse, selectedTeeId, setHoleCount } = useRound();
   const { createRound, isCreating } = useCreateRound();
   const [loading, setLoading] = useState(false);
+
+  // Set the hole count in context when component initializes
+  useEffect(() => {
+    setHoleCount(holeCount);
+    console.log("Setting hole count in context:", holeCount);
+  }, [holeCount, setHoleCount]);
 
   // Function to start a new round
   const startRound = async () => {
@@ -73,6 +80,9 @@ export const RoundCreation = ({
             </h2>
             <p className="text-sm text-muted-foreground">
               {selectedCourse.city}, {selectedCourse.state}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {holeCount}-hole round
             </p>
           </>
         ) : (

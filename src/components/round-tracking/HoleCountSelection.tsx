@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useRound } from "@/context/round";
 
 interface HoleCountSelectionProps {
   holeCount: number;
@@ -13,25 +14,40 @@ export const HoleCountSelection = ({ holeCount, setHoleCount }: HoleCountSelecti
   const navigate = useNavigate();
   const location = useLocation();
   const [initialLoad, setInitialLoad] = useState(true);
-
+  const roundContext = useRound();
+  
   // Set initial value based on URL if present, but only on first render
   useEffect(() => {
     if (initialLoad) {
       // Check if URL contains hole count information
       if (location.pathname.includes('/9')) {
         setHoleCount(9);
+        // Also update in round context if available
+        if (roundContext?.setHoleCount) {
+          roundContext.setHoleCount(9);
+        }
         console.log("Setting hole count to 9 from URL path");
       } else if (location.pathname.includes('/18')) {
         setHoleCount(18);
+        // Also update in round context if available
+        if (roundContext?.setHoleCount) {
+          roundContext.setHoleCount(18);
+        }
         console.log("Setting hole count to 18 from URL path");
       }
       setInitialLoad(false);
     }
-  }, [location.pathname, setHoleCount, initialLoad]);
+  }, [location.pathname, setHoleCount, initialLoad, roundContext]);
 
   const handleHoleCountChange = (value: string) => {
     const newHoleCount = parseInt(value);
     setHoleCount(newHoleCount);
+    
+    // Also update in round context if available
+    if (roundContext?.setHoleCount) {
+      roundContext.setHoleCount(newHoleCount);
+    }
+    
     console.log("Hole count changed to:", newHoleCount);
     
     // Update URL without navigation
