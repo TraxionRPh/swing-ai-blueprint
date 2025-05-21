@@ -49,17 +49,16 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-3 transition-colors cursor-pointer rounded-md mb-2 touch-course-item",
+                    "flex flex-col items-start p-3 rounded-md mb-2 hover:bg-secondary/20",
                     selectedCourseId === course.id 
-                      ? "bg-secondary/10 border border-primary shadow-sm" 
-                      : "hover:bg-secondary/20 active:bg-secondary/30"
+                      ? "bg-secondary border-l-4 border-primary" 
+                      : "bg-card"
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium text-foreground flex w-full justify-between items-center">
+                  <div className="font-medium text-foreground">
                     {course.name}
-                    <span className="text-primary text-xs font-bold">TAP TO SELECT</span>
                   </div>
                   <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
@@ -76,17 +75,16 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-3 transition-colors cursor-pointer rounded-md mb-2 touch-course-item",
+                    "flex flex-col items-start p-3 rounded-md mb-2 hover:bg-secondary/20",
                     selectedCourseId === course.id 
-                      ? "bg-secondary/10 border border-primary shadow-sm" 
-                      : "hover:bg-secondary/20 active:bg-secondary/30"
+                      ? "bg-secondary border-l-4 border-primary" 
+                      : "bg-card"
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium text-foreground flex w-full justify-between items-center">
+                  <div className="font-medium text-foreground">
                     {course.name}
-                    <span className="text-primary text-xs font-bold">TAP TO SELECT</span>
                   </div>
                   <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
