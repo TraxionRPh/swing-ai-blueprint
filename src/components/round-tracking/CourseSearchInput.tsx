@@ -49,13 +49,18 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-2 transition-colors cursor-pointer hover:bg-secondary/20 rounded-md mb-1",
-                    selectedCourseId === course.id ? "bg-transparent border border-primary/60" : ""
+                    "flex flex-col items-start p-3 transition-colors cursor-pointer rounded-md mb-2 touch-course-item",
+                    selectedCourseId === course.id 
+                      ? "bg-secondary/10 border border-primary shadow-sm" 
+                      : "hover:bg-secondary/20 active:bg-secondary/30"
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium text-foreground">{course.name}</div>
+                  <div className="font-medium text-foreground flex w-full justify-between items-center">
+                    {course.name}
+                    <span className="text-primary text-xs font-bold">TAP TO SELECT</span>
+                  </div>
                   <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
                   </div>
@@ -71,13 +76,18 @@ export const CourseSearchInput = ({
                   key={course.id}
                   onSelect={() => onCourseSelect(course)}
                   className={cn(
-                    "flex flex-col items-start p-2 transition-colors cursor-pointer hover:bg-secondary/20 rounded-md mb-1",
-                    selectedCourseId === course.id ? "bg-transparent border border-primary/60" : ""
+                    "flex flex-col items-start p-3 transition-colors cursor-pointer rounded-md mb-2 touch-course-item",
+                    selectedCourseId === course.id 
+                      ? "bg-secondary/10 border border-primary shadow-sm" 
+                      : "hover:bg-secondary/20 active:bg-secondary/30"
                   )}
                   value={`${course.name} ${course.city} ${course.state}`}
                   data-selected={selectedCourseId === course.id ? "true" : undefined}
                 >
-                  <div className="font-medium text-foreground">{course.name}</div>
+                  <div className="font-medium text-foreground flex w-full justify-between items-center">
+                    {course.name}
+                    <span className="text-primary text-xs font-bold">TAP TO SELECT</span>
+                  </div>
                   <div className="text-sm text-foreground/80">
                     {course.city}, {course.state}
                   </div>
