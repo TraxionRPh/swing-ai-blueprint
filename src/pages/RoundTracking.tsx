@@ -18,6 +18,23 @@ const RoundTracking = () => {
     navigate("/rounds");
   };
 
+  // Create a component that will render the RoundDetail with proper back navigation
+  const RoundDetailWithBackNav = () => {
+    return <RoundDetail onBack={handleBack} />;
+  };
+  
+  // Create a component that will render the HoleScoring with proper back navigation
+  const HoleScoringWithBackNav = () => {
+    const { roundId } = useParams();
+    return <HoleScoring onBack={() => navigate(`/rounds/${roundId}`)} />;
+  };
+  
+  // Create a component that will render the RoundReview with proper back navigation
+  const RoundReviewWithBackNav = () => {
+    const { roundId } = useParams();
+    return <RoundReview onBack={() => navigate(`/rounds/${roundId}`)} />;
+  };
+
   return (
     <ErrorBoundary>
       <RoundProvider>
@@ -31,13 +48,13 @@ const RoundTracking = () => {
           <Route path="/new/18" element={<RoundCreation onBack={handleBack} holeCount={18} />} />
           
           {/* Round detail page */}
-          <Route path="/:roundId/*" element={<RoundDetail onBack={handleBack} />} />
+          <Route path="/:roundId/*" element={<RoundDetailWithBackNav />} />
           
           {/* Round scoring page - hole by hole */}
-          <Route path="/:roundId/:holeNumber" element={<HoleScoring onBack={() => navigate(`/rounds/${useParams().roundId}`)} />} />
+          <Route path="/:roundId/:holeNumber" element={<HoleScoringWithBackNav />} />
           
           {/* Round review page */}
-          <Route path="/:roundId/review" element={<RoundReview onBack={() => navigate(`/rounds/${useParams().roundId}`)} />} />
+          <Route path="/:roundId/review" element={<RoundReviewWithBackNav />} />
           
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/rounds" replace />} />
