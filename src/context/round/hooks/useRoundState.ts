@@ -96,9 +96,6 @@ export const useRoundState = (initialRoundId: string | null) => {
         }
       }).catch(error => {
         console.error("Error fetching round data:", error);
-        if (fetchTries + 1 >= MAX_FETCH_ATTEMPTS) {
-          setIsLoading(false); // Stop loading after max attempts
-        }
       }).finally(() => {
         setFetchTries(prev => prev + 1);
       });

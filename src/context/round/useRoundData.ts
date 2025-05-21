@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { HoleData, Course } from "@/types/round-tracking";
 
+// Maximum number of fetch attempts before giving up
+const MAX_FETCH_ATTEMPTS = 3;
+
 export const useRoundData = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -37,19 +40,36 @@ export const useRoundData = () => {
   
   // Fetch round data from Supabase
   const fetchRoundData = useCallback(async (roundId: string) => {
-    if (!roundId) return null;
+    if (!roundId || roundId === 'new') return null;
     
-    // Don't attempt to fetch if we've already encountered errors
-    if (fetchAttempts > 2 && hasFetchError) {
-      console.log(`Skipping fetch attempt ${fetchAttempts} due to previous errors`);
+    // Don't attempt to fetch if we've already reached maximum attempts
+    if (fetchAttempts >= MAX_FETCH_ATTEMPTS) {
+      console.log(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached. Stopping.`);
+      setIsLoading(false);
       return null;
     }
     
     setIsLoading(true);
     setFetchAttempts(prev => prev + 1);
-    console.log(`Fetching round data for round ID: ${roundId} (attempt ${fetchAttempts + 1})`);
+    console.log(`Fetching round data for round ID: ${roundId} (attempt ${fetchAttempts + 1}/${MAX_FETCH_ATTEMPTS})`);
     
     try {
+      // First check if the round exists with a simpler query
+      const { count, error: countError } = await supabase
+        .from('rounds')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', roundId);
+      
+      if (countError) throw countError;
+      
+      // If no round exists with that ID, return early
+      if (count === 0) {
+        console.log(`No round found with ID: ${roundId}`);
+        setHasFetchError(true);
+        setIsLoading(false);
+        return null;
+      }
+      
       // Fetch round details
       const { data: roundData, error: roundError } = await supabase
         .from('rounds')
@@ -141,8 +161,8 @@ export const useRoundData = () => {
       console.error("Error fetching round data:", error);
       setHasFetchError(true);
       
-      // Only show toast on first few errors to avoid spamming
-      if (fetchAttempts <= 2) {
+      // Only show toast on first error to avoid spamming
+      if (fetchAttempts === 0) {
         toast({
           title: "Error loading round data",
           description: "Could not load round details. Please check your connection and try again.",
@@ -153,7 +173,7 @@ export const useRoundData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchAttempts, hasFetchError, toast]);
+  }, [fetchAttempts, toast]);
 
   return {
     isLoading,
