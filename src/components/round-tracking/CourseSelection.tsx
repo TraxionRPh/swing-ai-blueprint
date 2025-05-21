@@ -15,6 +15,8 @@ import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { TeeSelection } from "./TeeSelection";
 import { HoleCountSelection } from "./HoleCountSelection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TeesForm } from "./TeesForm";
 
 const CourseSelection = () => {
   const navigate = useNavigate();
@@ -28,6 +30,8 @@ const CourseSelection = () => {
   const [selectedTeeId, setSelectedTeeId] = useState<string | null>(null);
   const [selectedHoleCount, setSelectedHoleCount] = useState<number>(18);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [showTeeDialog, setShowTeeDialog] = useState(false);
+  const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   
   // Fetch courses on component mount
   useEffect(() => {
@@ -109,6 +113,73 @@ const CourseSelection = () => {
       } else {
         setSelectedTeeId(null);
       }
+    }
+  };
+  
+  // Handle adding a new tee
+  const handleAddTee = (course: Course) => {
+    setCurrentCourse(course);
+    setShowTeeDialog(true);
+  };
+  
+  // Handle tee submission
+  const handleTeeSubmit = async (teeData: any) => {
+    if (!currentCourse) return;
+    
+    try {
+      // Add loading state or toast notification here if desired
+      
+      // Insert new tee into database
+      const { data: newTee, error } = await supabase
+        .from("course_tees")
+        .insert({
+          course_id: currentCourse.id,
+          name: teeData[0].name,
+          color: teeData[0].color,
+          course_rating: teeData[0].courseRating || null,
+          slope_rating: teeData[0].slopeRating || null,
+          total_yards: teeData[0].totalYards || null
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update the course in the state with the new tee
+      if (newTee) {
+        const updatedCourses = courses.map(course => {
+          if (course.id === currentCourse.id) {
+            return {
+              ...course,
+              course_tees: [...course.course_tees, newTee]
+            };
+          }
+          return course;
+        });
+        
+        setCourses(updatedCourses);
+        setFilteredCourses(updatedCourses);
+        
+        // Auto select the newly created tee
+        if (expandedCourseId === currentCourse.id) {
+          setSelectedTeeId(newTee.id);
+        }
+        
+        toast({
+          title: "Tee added successfully",
+          description: `${newTee.name} tee has been added to ${currentCourse.name}`,
+        });
+      }
+      
+      // Close the dialog
+      setShowTeeDialog(false);
+    } catch (error) {
+      console.error("Error adding tee:", error);
+      toast({
+        title: "Failed to add tee",
+        description: "Please try again",
+        variant: "destructive"
+      });
     }
   };
   
@@ -241,9 +312,23 @@ const CourseSelection = () => {
                       selectedCourse={course}
                       selectedTeeId={selectedTeeId}
                       onTeeSelect={setSelectedTeeId}
+                      onAddTee={() => handleAddTee(course)}
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground mb-4">No tee information available</p>
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm text-muted-foreground">No tee information available</p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleAddTee(course)}
+                          className="p-1 h-auto"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Add Tee</span>
+                        </Button>
+                      </div>
+                    </div>
                   )}
                   
                   {/* Hole Count Selection - Added mt-6 for spacing */}
@@ -297,6 +382,16 @@ const CourseSelection = () => {
       
       {/* Course Cards */}
       {renderCourseCards()}
+      
+      {/* Add Tee Dialog */}
+      <Dialog open={showTeeDialog} onOpenChange={setShowTeeDialog}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Add New Tee for {currentCourse?.name}</DialogTitle>
+          </DialogHeader>
+          <TeesForm onTeesSubmit={handleTeeSubmit} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
