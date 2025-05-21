@@ -1,20 +1,21 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { HoleData } from "@/types/round-tracking";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loading } from "@/components/ui/loading";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { useRound } from "@/context/round";
 import { useHoleScores } from "@/hooks/round-tracking/score/useHoleScores";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+// Import the new components
+import { RoundStatsSummary } from "./hole/RoundStatsSummary";
+import { HoleHeader } from "./hole/HoleHeader";
+import { HoleInputForm } from "./hole/HoleInputForm";
+import { HoleFooterActions } from "./hole/HoleFooterActions";
 
 const HoleTracking = () => {
   const navigate = useNavigate();
@@ -344,161 +345,46 @@ const HoleTracking = () => {
       <Card>
         <CardContent className="pt-6 space-y-6">
           {/* Stat Tiles */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-muted/50">
-              <CardContent className="p-4 text-center">
-                <h3 className="text-sm font-medium mb-1">Total Strokes</h3>
-                <p className="text-2xl font-bold">{roundStats.totalStrokes || 0}</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-muted/50">
-              <CardContent className="p-4 text-center">
-                <h3 className="text-sm font-medium mb-1">Total Putts</h3>
-                <p className="text-2xl font-bold">{roundStats.totalPutts || 0}</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-muted/50">
-              <CardContent className="p-4 text-center">
-                <h3 className="text-sm font-medium mb-1">FIR</h3>
-                <p className="text-2xl font-bold">{roundStats.fairwaysHit || 0}/{roundStats.totalFairways}</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-muted/50">
-              <CardContent className="p-4 text-center">
-                <h3 className="text-sm font-medium mb-1">GIR</h3>
-                <p className="text-2xl font-bold">{roundStats.greensInRegulation || 0}/{roundStats.totalGreens}</p>
-              </CardContent>
-            </Card>
-          </div>
+          <RoundStatsSummary
+            totalStrokes={roundStats.totalStrokes}
+            totalPutts={roundStats.totalPutts}
+            fairwaysHit={roundStats.fairwaysHit}
+            totalFairways={roundStats.totalFairways}
+            greensInRegulation={roundStats.greensInRegulation}
+            totalGreens={roundStats.totalGreens}
+          />
           
           <Separator />
           
           <div className="grid grid-cols-1 gap-6">
             {/* Hole information */}
-            <div className="flex justify-between items-center">
-              <div className="flex flex-col space-y-2">
-                <h3 className="font-medium">Hole {currentHole}</h3>
-                <div>
-                  <Label htmlFor="par-selection" className="text-sm text-muted-foreground mb-1 block">Par</Label>
-                  <ToggleGroup 
-                    type="single" 
-                    variant="outline" 
-                    value={holeData.par.toString()} 
-                    onValueChange={handleParChange}
-                    className="justify-start"
-                  >
-                    <ToggleGroupItem value="3" className="w-12 h-8">3</ToggleGroupItem>
-                    <ToggleGroupItem value="4" className="w-12 h-8">4</ToggleGroupItem>
-                    <ToggleGroupItem value="5" className="w-12 h-8">5</ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={goToPreviousHole}
-                  disabled={currentHole <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div className="bg-muted text-center px-3 py-1 rounded-md">
-                  {currentHole} / {holeCount}
-                </div>
-              </div>
-            </div>
+            <HoleHeader
+              currentHole={currentHole}
+              holeCount={holeCount}
+              par={holeData.par}
+              onParChange={handleParChange}
+              goToPreviousHole={goToPreviousHole}
+            />
             
             {/* Hole Data Entry */}
-            <div className="space-y-4">
-              {/* Yardage Input */}
-              <div>
-                <Label htmlFor="distance">Distance (yards)</Label>
-                <Input
-                  id="distance"
-                  type="number"
-                  min="0"
-                  value={holeData.distance || ""}
-                  onChange={handleDistanceChange}
-                  className="mt-2"
-                  placeholder="Enter distance"
-                />
-              </div>
-              
-              {/* Score Input */}
-              <div>
-                <Label htmlFor="score">Score</Label>
-                <Input
-                  id="score"
-                  type="number"
-                  min="1"
-                  value={holeData.score || ""}
-                  onChange={handleScoreChange}
-                  className="mt-2"
-                  placeholder="Enter score"
-                />
-              </div>
-              
-              {/* Putts Input */}
-              <div>
-                <Label htmlFor="putts">Putts</Label>
-                <Input
-                  id="putts"
-                  type="number"
-                  min="0"
-                  value={holeData.putts || ""}
-                  onChange={handlePuttsChange}
-                  className="mt-2"
-                  placeholder="Enter putts"
-                />
-              </div>
-              
-              {/* Fairway and Green Regulation */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="fairway"
-                    checked={holeData.fairwayHit}
-                    onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
-                  />
-                  <Label htmlFor="fairway">Fairway Hit</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="gir"
-                    checked={holeData.greenInRegulation}
-                    onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
-                  />
-                  <Label htmlFor="gir">Green in Regulation</Label>
-                </div>
-              </div>
-            </div>
+            <HoleInputForm
+              holeData={holeData}
+              handleDistanceChange={handleDistanceChange}
+              handleScoreChange={handleScoreChange}
+              handlePuttsChange={handlePuttsChange}
+              handleInputChange={handleInputChange}
+            />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/rounds")}
-          >
-            {currentHole === 1 ? "Cancel Round" : "Previous Hole"}
-          </Button>
-          <Button 
-            onClick={saveHoleData} 
-            disabled={isSaving || !holeData.score}
-            className="min-w-[120px]"
-          >
-            {isSaving ? (
-              <Loading size="sm" message="Saving..." inline />
-            ) : currentHole === holeCount ? (
-              "Review Round"
-            ) : (
-              <span className="flex items-center">
-                Next <ChevronRight className="ml-1 h-4 w-4" />
-              </span>
-            )}
-          </Button>
+        <CardFooter>
+          <HoleFooterActions
+            isSaving={isSaving}
+            currentHole={currentHole}
+            holeCount={holeCount}
+            hasScore={!!holeData.score}
+            onCancel={() => navigate("/rounds")}
+            onSave={saveHoleData}
+          />
         </CardFooter>
       </Card>
     </div>
