@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { HoleData, Course } from "@/types/round-tracking";
@@ -10,6 +10,8 @@ export const useRoundData = () => {
   const [holeScores, setHoleScores] = useState<HoleData[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [holeCount, setHoleCount] = useState<number>(18);
+  const [fetchAttempts, setFetchAttempts] = useState<number>(0);
+  const [hasFetchError, setHasFetchError] = useState<boolean>(false);
 
   // Initialize hole scores when hole count changes
   useEffect(() => {
@@ -34,11 +36,18 @@ export const useRoundData = () => {
   };
   
   // Fetch round data from Supabase
-  const fetchRoundData = async (roundId: string) => {
+  const fetchRoundData = useCallback(async (roundId: string) => {
     if (!roundId) return null;
     
+    // Don't attempt to fetch if we've already encountered errors
+    if (fetchAttempts > 2 && hasFetchError) {
+      console.log(`Skipping fetch attempt ${fetchAttempts} due to previous errors`);
+      return null;
+    }
+    
     setIsLoading(true);
-    console.log(`Fetching round data for round ID: ${roundId}`);
+    setFetchAttempts(prev => prev + 1);
+    console.log(`Fetching round data for round ID: ${roundId} (attempt ${fetchAttempts + 1})`);
     
     try {
       // Fetch round details
@@ -116,6 +125,9 @@ export const useRoundData = () => {
             initializeHoleScores();
           }
           
+          // Reset error state on successful fetch
+          setHasFetchError(false);
+          
           return { 
             courseWithTees, 
             teeId: roundData.tee_id, 
@@ -127,16 +139,21 @@ export const useRoundData = () => {
       return null;
     } catch (error) {
       console.error("Error fetching round data:", error);
-      toast({
-        title: "Error loading round data",
-        description: "Could not load round details. Please try again.",
-        variant: "destructive"
-      });
+      setHasFetchError(true);
+      
+      // Only show toast on first few errors to avoid spamming
+      if (fetchAttempts <= 2) {
+        toast({
+          title: "Error loading round data",
+          description: "Could not load round details. Please check your connection and try again.",
+          variant: "destructive"
+        });
+      }
       return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchAttempts, hasFetchError, toast]);
 
   return {
     isLoading,
@@ -148,6 +165,7 @@ export const useRoundData = () => {
     holeCount,
     setHoleCount,
     initializeHoleScores,
-    fetchRoundData
+    fetchRoundData,
+    hasFetchError
   };
 };

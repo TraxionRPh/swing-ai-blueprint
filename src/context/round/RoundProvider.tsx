@@ -11,6 +11,7 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null);
   const [currentHoleNumber, setCurrentHoleNumber] = useState<number>(1);
   const [selectedTeeId, setSelectedTeeId] = useState<string | null>(null);
+  const [fetchTries, setFetchTries] = useState<number>(0);
   
   const {
     isLoading,
@@ -21,7 +22,8 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
     setSelectedCourse,
     holeCount,
     setHoleCount,
-    fetchRoundData
+    fetchRoundData,
+    hasFetchError
   } = useRoundData();
   
   const {
@@ -54,10 +56,22 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
   // Fetch hole scores when round ID changes
   useEffect(() => {
     if (currentRoundId && currentRoundId !== 'new') {
+      if (fetchTries > 3) {
+        console.log(`Stopping fetch attempts after ${fetchTries} tries`);
+        return; // Stop trying after multiple failures
+      }
+      
       console.log(`RoundProvider: Loading data for round ${currentRoundId}`);
-      fetchRoundData(currentRoundId);
+      fetchRoundData(currentRoundId).finally(() => {
+        setFetchTries(prev => prev + 1);
+      });
     }
-  }, [currentRoundId, fetchRoundData]);
+  }, [currentRoundId, fetchRoundData, fetchTries]);
+  
+  // Reset fetch tries if round ID changes
+  useEffect(() => {
+    setFetchTries(0);
+  }, [currentRoundId]);
   
   // Persist currentRoundId in both session and local storage to maintain state between page navigations
   useEffect(() => {
@@ -117,7 +131,8 @@ export const RoundProvider = ({ children }: { children: ReactNode }) => {
     finishRound,
     isLoading,
     setIsLoading,
-    saveInProgress
+    saveInProgress,
+    hasFetchError
   };
   
   return <RoundContext.Provider value={value}>{children}</RoundContext.Provider>;

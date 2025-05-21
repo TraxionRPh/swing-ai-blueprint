@@ -8,6 +8,7 @@ import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
 import { useResumeSession } from "@/hooks/round-tracking/useResumeSession";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
 
 interface RoundDetailProps {
   onBack: () => void;
@@ -25,7 +26,8 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
     holeCount,
     selectedCourse,
     isLoading,
-    setIsLoading
+    setIsLoading,
+    hasFetchError
   } = useRound();
   
   const { resumeHole, getSavedRoundId } = useResumeSession({
@@ -138,9 +140,46 @@ export const RoundDetail = ({ onBack }: RoundDetailProps) => {
     console.log(`Navigating to review for round ${roundId}`);
     navigate(`/rounds/${roundId}/review`);
   };
+
+  const handleRetryLoading = () => {
+    if (roundId) {
+      setIsLoading(true);
+      window.location.reload();
+    }
+  };
   
   if (isLoading) {
     return <LoadingState onBack={onBack} message="Loading round details..." />;
+  }
+
+  // Show error state if data failed to load
+  if (hasFetchError) {
+    return (
+      <div className="space-y-6">
+        <RoundHeader
+          title="Round Tracking"
+          subtitle="Connection Error"
+          onBack={onBack}
+        />
+        
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center text-destructive">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Unable to load round data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              There was a problem connecting to the server. Check your internet connection and try again.
+            </p>
+            <Button onClick={handleRetryLoading}>
+              Retry Loading
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
   
   // Calculate round statistics
