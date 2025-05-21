@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -73,23 +72,7 @@ const router = createBrowserRouter([
         element: <ChallengeHistory />,
       },
       {
-        path: "rounds",
-        element: <RoundTracking />,
-      },
-      {
-        path: "rounds/new/9",
-        element: <RoundTracking />,
-      },
-      {
-        path: "rounds/new/18",
-        element: <RoundTracking />,
-      },
-      {
-        path: "rounds/:roundId",
-        element: <RoundTracking />,
-      },
-      {
-        path: "rounds/:roundId/:holeNumber",
+        path: "rounds/*",
         element: <RoundTracking />,
       },
       {

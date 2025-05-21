@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,7 +86,8 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
 
   const handleCreateRound = () => {
     console.log("Creating new round...");
-    window.location.href = "/rounds/new";
+    // Use React Router's navigate function instead of window.location.href
+    navigate("/rounds/new");
   };
 
   const handleSelectRound = (roundId: string) => {
