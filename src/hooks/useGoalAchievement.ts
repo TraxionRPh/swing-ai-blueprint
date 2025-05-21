@@ -13,7 +13,7 @@ export const useGoalAchievement = () => {
   const navigate = useNavigate();
   const [achievedGoal, setAchievedGoal] = useState<AchievedGoal>(null);
 
-  const checkScoreGoal = useCallback((score: number, showAchievement: boolean = true) => {
+  const checkScoreGoal = useCallback((score: number, showAchievement: boolean = false) => {
     if (scoreGoal && score <= scoreGoal) {
       console.log(`Score goal achieved! ${score} <= ${scoreGoal}`);
       
@@ -26,7 +26,7 @@ export const useGoalAchievement = () => {
     return false;
   }, [scoreGoal]);
 
-  const checkHandicapGoal = useCallback((handicap: number, showAchievement: boolean = true) => {
+  const checkHandicapGoal = useCallback((handicap: number, showAchievement: boolean = false) => {
     if (handicapGoal && handicap <= handicapGoal) {
       console.log(`Handicap goal achieved! ${handicap} <= ${handicapGoal}`);
       

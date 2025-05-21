@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loading } from "@/components/ui/loading";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import Confetti from "react-confetti";
+import { useGoalAchievement } from "@/hooks/useGoalAchievement";
+import GoalAchievementModal from "@/components/goals/GoalAchievementModal";
 
 interface RoundStats {
   totalScore: number;
@@ -21,7 +23,7 @@ interface RoundStats {
   parTotal: number;
   courseName: string;
   date: string;
-  fairwayEligibleHoles: number; // Add this property to track holes eligible for FIR
+  fairwayEligibleHoles: number;
 }
 
 const RoundReview = () => {
@@ -43,8 +45,16 @@ const RoundReview = () => {
     parTotal: 0,
     courseName: "",
     date: new Date().toLocaleDateString(),
-    fairwayEligibleHoles: 0 // Initialize fairwayEligibleHoles
+    fairwayEligibleHoles: 0
   });
+  
+  // Import goal achievement hooks
+  const { 
+    achievedGoal, 
+    checkScoreGoal, 
+    resetAchievedGoal, 
+    navigateToSetNewGoal 
+  } = useGoalAchievement();
   
   // Load round review data
   useEffect(() => {
@@ -52,11 +62,6 @@ const RoundReview = () => {
       loadRoundData();
     }
   }, [roundId]);
-  
-  // Check if we should show congratulations
-  useEffect(() => {
-    checkForAchievements();
-  }, [roundStats]);
   
   // Load round data from database
   const loadRoundData = async () => {
@@ -154,45 +159,6 @@ const RoundReview = () => {
     }
   };
   
-  // Check if user has achieved their goal
-  const checkForAchievements = async () => {
-    if (!user || roundStats.totalHoles !== 18) return;
-    
-    try {
-      // Get user's score goal
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("score_goal")
-        .eq("id", user.id)
-        .single();
-      
-      // Get all previous rounds to compare
-      const { data: previousRounds } = await supabase
-        .from("rounds")
-        .select("total_score")
-        .eq("user_id", user.id)
-        .neq("id", roundId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      
-      // Check if this is a personal best
-      const previousBest = previousRounds?.length 
-        ? Math.min(...previousRounds.filter(r => r.total_score).map(r => r.total_score))
-        : 999;
-      
-      // If user has a score goal and achieved it, or if this is a personal best
-      if ((profileData?.score_goal && roundStats.totalScore <= profileData.score_goal) || 
-          (roundStats.totalScore < previousBest)) {
-        setShowConfetti(true);
-        setTimeout(() => {
-          setShowConfetti(false);
-        }, 5000);
-      }
-    } catch (error) {
-      console.error("Error checking achievements:", error);
-    }
-  };
-  
   // Submit and complete the round
   const completeRound = async () => {
     if (!roundId) return;
@@ -220,6 +186,18 @@ const RoundReview = () => {
         sessionStorage.removeItem("selected-hole-count");
       } catch (storageError) {
         console.error('Error clearing storage:', storageError);
+      }
+      
+      // Check for goal achievement AFTER round is confirmed
+      if (user && roundStats.totalHoles === 18) {
+        // Check if this is a personal best or meets the user's score goal
+        // Pass true to make the modal show
+        const goalAchieved = checkScoreGoal(roundStats.totalScore, true);
+        
+        if (goalAchieved) {
+          setShowConfetti(true);
+          // Confetti will stop automatically due to recycle=false in the component
+        }
       }
       
       toast({
@@ -361,18 +339,13 @@ const RoundReview = () => {
         </CardFooter>
       </Card>
       
-      {showConfetti && (
-        <Card className="border-green-500">
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="text-center">
-              <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
-              <h3 className="text-xl font-bold text-green-700">Congratulations!</h3>
-              <p className="mt-2">
-                You've achieved a new personal best score. Keep up the great work!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Goal achievement modal */}
+      {achievedGoal && (
+        <GoalAchievementModal 
+          achievedGoal={achievedGoal}
+          onClose={resetAchievedGoal}
+          onSetNewGoal={navigateToSetNewGoal}
+        />
       )}
     </div>
   );
