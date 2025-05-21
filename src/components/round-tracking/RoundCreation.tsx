@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { useRound } from "@/context/round"; // Fixed import path
+import { useRound } from "@/context/round"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,6 +14,7 @@ import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
 import { Course, CourseTee } from "@/types/round-tracking";
 import { Search } from "lucide-react";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 
 interface CourseCreationProps {
   onBack: () => void;
@@ -38,6 +39,7 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
   const [isSearching, setIsSearching] = useState(false);
   const [recentCourses, setRecentCourses] = useState<Course[]>([]);
   const [showRecentCourses, setShowRecentCourses] = useState(true);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Set the hole count from props
   useEffect(() => {
@@ -50,6 +52,31 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
       fetchRecentCourses();
     }
   }, [user]);
+
+  // Live search effect
+  useEffect(() => {
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setShowRecentCourses(true);
+      setSearchResults([]);
+      return;
+    }
+
+    // Set timeout for debounce
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch();
+    }, 300); // 300ms delay
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
 
   const fetchRecentCourses = async () => {
     try {
@@ -260,67 +287,67 @@ export const RoundCreation = ({ onBack, holeCount = 18 }: CourseCreationProps) =
           <CardTitle>Find a Course</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-6">
-            <Input
-              placeholder="Search for a course name, city, or state..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <Button onClick={handleSearch} disabled={isSearching}>
-              {isSearching ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : (
-                <Search className="h-4 w-4" />
+          {/* Replace basic Input with Command component for better search UX */}
+          <div className="relative w-full mb-6 border rounded-md">
+            <Command className="rounded-lg border shadow-md">
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <CommandInput
+                  placeholder="Search for a course name, city, or state..."
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              {isSearching && (
+                <div className="py-6 text-center">
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Searching courses...</p>
+                </div>
               )}
-            </Button>
+              {!isSearching && (
+                <CommandList>
+                  {searchResults.length > 0 && (
+                    <CommandGroup heading="Search Results">
+                      {searchResults.map((course) => (
+                        <CommandItem
+                          key={course.id}
+                          onSelect={() => handleCourseSelect(course)}
+                          className={`flex flex-col items-start p-2 cursor-pointer ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
+                        >
+                          <div className="font-medium">{course.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {course.city}, {course.state}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  
+                  {searchQuery.trim() === "" && showRecentCourses && recentCourses.length > 0 && (
+                    <CommandGroup heading="Recently Played">
+                      {recentCourses.map((course) => (
+                        <CommandItem
+                          key={course.id}
+                          onSelect={() => handleCourseSelect(course)}
+                          className={`flex flex-col items-start p-2 cursor-pointer ${selectedCourse?.id === course.id ? 'bg-accent' : ''}`}
+                        >
+                          <div className="font-medium">{course.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {course.city}, {course.state}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  
+                  {searchQuery.trim() !== "" && searchResults.length === 0 && !isSearching && (
+                    <CommandEmpty>No courses found. Try a different search.</CommandEmpty>
+                  )}
+                </CommandList>
+              )}
+            </Command>
           </div>
-          
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="space-y-2 mb-6">
-              <h3 className="text-sm font-medium">Search Results</h3>
-              {searchResults.map((course) => (
-                <Card 
-                  key={course.id} 
-                  className={`cursor-pointer hover:bg-accent ${selectedCourse?.id === course.id ? 'border-primary' : ''}`}
-                  onClick={() => handleCourseSelect(course)}
-                >
-                  <CardContent className="p-3">
-                    <div>
-                      <h4 className="font-medium">{course.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {course.city}, {course.state}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          
-          {/* Recent Courses */}
-          {showRecentCourses && recentCourses.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Recently Played</h3>
-              {recentCourses.map((course) => (
-                <Card 
-                  key={course.id} 
-                  className={`cursor-pointer hover:bg-accent ${selectedCourse?.id === course.id ? 'border-primary' : ''}`}
-                  onClick={() => handleCourseSelect(course)}
-                >
-                  <CardContent className="p-3">
-                    <div>
-                      <h4 className="font-medium">{course.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {course.city}, {course.state}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
       
