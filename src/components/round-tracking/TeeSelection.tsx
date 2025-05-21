@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Course, CourseTee } from "@/types/round-tracking";
 import { cn } from "@/lib/utils";
+import { Circle } from "lucide-react";
 
 interface TeeSelectionProps {
   selectedCourse: Course | null;
@@ -31,14 +32,16 @@ export const TeeSelection = ({
               variant="outline"
               onClick={() => onTeeSelect(tee.id)}
               className={cn(
-                isSelected ? "shadow-md" : ""
+                "relative flex items-center overflow-hidden transition-all",
+                isSelected ? "ring-2 ring-primary ring-offset-1 shadow-md" : ""
               )}
-              style={{
-                backgroundColor: tee.color || undefined,
-                color: tee.color ? (isLightColor ? 'black' : 'white') : undefined
-              }}
             >
-              {tee.color || tee.name}
+              <Circle 
+                fill={tee.color || "#888"} 
+                className="h-4 w-4 mr-2"
+                strokeWidth={isLightColor ? 1 : 0}
+              />
+              <span>{tee.color || tee.name}</span>
             </Button>
           );
         })}
