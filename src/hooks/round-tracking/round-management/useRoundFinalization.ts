@@ -37,10 +37,14 @@ export const useRoundFinalization = () => {
     try {
       console.log(`Finishing round ${roundId} with ${holeCount} holes`);
       
-      // Calculate totals
+      // Calculate totals, excluding par 3s from fairway counts
       const totalScore = holeScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
       const totalPutts = holeScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
-      const fairwaysHit = holeScores.filter(hole => hole.fairwayHit).length;
+      
+      // Only count fairways hit on non-par 3 holes
+      const fairwayEligibleHoles = holeScores.filter(hole => hole.par && hole.par > 3);
+      const fairwaysHit = fairwayEligibleHoles.filter(hole => hole.fairwayHit).length;
+      
       const greensInRegulation = holeScores.filter(hole => hole.greenInRegulation).length;
       
       // Update the round with calculated totals

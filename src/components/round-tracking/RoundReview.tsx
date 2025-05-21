@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ interface RoundStats {
   parTotal: number;
   courseName: string;
   date: string;
+  fairwayEligibleHoles: number; // Add this property to track holes eligible for FIR
 }
 
 const RoundReview = () => {
@@ -40,7 +42,8 @@ const RoundReview = () => {
     totalHoles: 0,
     parTotal: 0,
     courseName: "",
-    date: new Date().toLocaleDateString()
+    date: new Date().toLocaleDateString(),
+    fairwayEligibleHoles: 0 // Initialize fairwayEligibleHoles
   });
   
   // Load round review data
@@ -118,9 +121,12 @@ const RoundReview = () => {
       
       // Calculate stats
       if (holeDataWithScores.length > 0) {
+        // Filter out par 3s for fairway calculation
+        const fairwayEligibleHoles = holeDataWithScores.filter(h => h.par && h.par > 3);
+        const fairwaysHit = fairwayEligibleHoles.filter(h => h.fairwayHit).length;
+        const fairwayEligibleCount = fairwayEligibleHoles.length;
         const totalScore = holeDataWithScores.reduce((sum, hole) => sum + (hole.score || 0), 0);
         const totalPutts = holeDataWithScores.reduce((sum, hole) => sum + (hole.putts || 0), 0);
-        const fairwaysHit = holeDataWithScores.filter(h => h.fairwayHit).length;
         const greensInRegulation = holeDataWithScores.filter(h => h.greenInRegulation).length;
         const parTotal = holeDataWithScores.reduce((sum, hole) => sum + (hole.par || 0), 0);
         
@@ -132,7 +138,8 @@ const RoundReview = () => {
           totalHoles: holeDataWithScores.length,
           parTotal,
           courseName: courseData?.name || "Unknown Course",
-          date: new Date(roundData.date).toLocaleDateString()
+          date: new Date(roundData.date).toLocaleDateString(),
+          fairwayEligibleHoles: fairwayEligibleCount // Set the count of holes eligible for fairway stats
         });
       }
     } catch (error) {
@@ -269,7 +276,8 @@ const RoundReview = () => {
             <div className="text-center p-4 border rounded-md">
               <p className="text-muted-foreground text-sm">Fairways Hit</p>
               <p className="text-3xl font-bold">{roundStats.fairwaysHit}</p>
-              <p className="text-sm">{Math.round((roundStats.fairwaysHit / roundStats.totalHoles) * 100)}%</p>
+              <p className="text-sm">{roundStats.fairwayEligibleHoles > 0 ? 
+                Math.round((roundStats.fairwaysHit / roundStats.fairwayEligibleHoles) * 100) : 0}%</p>
             </div>
             <div className="text-center p-4 border rounded-md">
               <p className="text-muted-foreground text-sm">Greens in Reg.</p>
@@ -316,7 +324,11 @@ const RoundReview = () => {
                   </TableCell>
                   <TableCell>{hole.putts}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {hole.fairwayHit ? <CheckCircle className="h-4 w-4 text-green-500" /> : "-"}
+                    {hole.par > 3 ? 
+                      (hole.fairwayHit ? 
+                        <CheckCircle className="h-4 w-4 text-green-500" /> : 
+                        "-") : 
+                      "N/A"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {hole.greenInRegulation ? <CheckCircle className="h-4 w-4 text-green-500" /> : "-"}

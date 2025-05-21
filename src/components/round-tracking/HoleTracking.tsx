@@ -59,14 +59,18 @@ const HoleTracking = () => {
       allScores.push(holeData);
     }
     
-    // Calculate stats from all holes
+    // Calculate stats from all holes, excluding par 3s from fairway count
+    const fairwayEligibleHoles = allScores.filter(hole => hole.par && hole.par > 3);
+    const fairwaysHit = fairwayEligibleHoles.filter(hole => hole.fairwayHit).length;
+    const totalFairways = fairwayEligibleHoles.length;
+    
     return {
       totalStrokes: allScores.reduce((sum, hole) => sum + (hole.score || 0), 0),
       totalPutts: allScores.reduce((sum, hole) => sum + (hole.putts || 0), 0),
-      fairwaysHit: allScores.filter(hole => hole.fairwayHit).length,
-      totalFairways: Math.max(1, currentHole - 1), // Prevent divide by zero
+      fairwaysHit,
+      totalFairways,
       greensInRegulation: allScores.filter(hole => hole.greenInRegulation).length,
-      totalGreens: Math.max(1, currentHole - 1), // Prevent divide by zero
+      totalGreens: allScores.length,
     };
   }, [allHoleScores, holeData, currentHole]);
   
