@@ -38,6 +38,7 @@ export const useRoundData = () => {
     if (!roundId) return;
     
     setIsLoading(true);
+    console.log(`Fetching round data for round ID: ${roundId}`);
     
     try {
       // Fetch round details
@@ -59,6 +60,18 @@ export const useRoundData = () => {
       if (roundError) throw roundError;
       
       if (roundData) {
+        console.log('Round data fetched:', roundData);
+        
+        // Fetch hole scores for this round
+        const { data: holeData, error: holeError } = await supabase
+          .from('hole_scores')
+          .select('*')
+          .eq('round_id', roundId)
+          .order('hole_number');
+        
+        if (holeError) throw holeError;
+        console.log('Hole scores fetched:', holeData);
+        
         // Fetch course tees separately to avoid the error with course_tees relation
         const { data: courseTees, error: teesError } = await supabase
           .from('course_tees')
@@ -76,43 +89,36 @@ export const useRoundData = () => {
           
           setSelectedCourse(courseWithTees);
           setHoleCount(roundData.hole_count || 18);
-          return { courseWithTees, teeId: roundData.tee_id, holeCount: roundData.hole_count || 18 };
-        }
-        
-        // Fetch hole scores
-        const { data: holeData, error: holeError } = await supabase
-          .from('hole_scores')
-          .select('*')
-          .eq('round_id', roundId)
-          .order('hole_number');
-        
-        if (holeError) throw holeError;
-        
-        // Format hole scores
-        if (holeData) {
-          const formattedScores = Array.from({ length: roundData.hole_count || 18 }, (_, i) => {
-            const holeNumber = i + 1;
-            const existingScore = holeData.find(h => h.hole_number === holeNumber);
-            
-            // Create a default par value since it might not exist in the database
-            const defaultPar = 4;
-            const holePar = existingScore && 'par' in existingScore 
-              ? (existingScore as any).par 
-              : defaultPar;
-            
-            return {
-              holeNumber,
-              par: holePar,
-              distance: 0,
-              score: existingScore?.score || 0,
-              putts: existingScore?.putts || 0,
-              fairwayHit: existingScore?.fairway_hit || false,
-              greenInRegulation: existingScore?.green_in_regulation || false
-            };
-          });
           
-          setHoleScores(formattedScores);
-          return { formattedScores };
+          // Format hole scores
+          if (holeData && holeData.length > 0) {
+            const formattedScores = Array.from({ length: roundData.hole_count || 18 }, (_, i) => {
+              const holeNumber = i + 1;
+              const existingScore = holeData.find(h => h.hole_number === holeNumber);
+              
+              return {
+                holeNumber,
+                par: 4, // Default par since it's not stored in the database
+                distance: 0,
+                score: existingScore?.score || 0,
+                putts: existingScore?.putts || 0,
+                fairwayHit: existingScore?.fairway_hit || false,
+                greenInRegulation: existingScore?.green_in_regulation || false
+              };
+            });
+            
+            console.log('Formatted hole scores:', formattedScores);
+            setHoleScores(formattedScores);
+          } else {
+            // If no hole scores found, initialize with empty scores
+            initializeHoleScores();
+          }
+          
+          return { 
+            courseWithTees, 
+            teeId: roundData.tee_id, 
+            holeCount: roundData.hole_count || 18 
+          };
         }
       }
       

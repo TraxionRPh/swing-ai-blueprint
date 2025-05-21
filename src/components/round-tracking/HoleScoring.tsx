@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -49,17 +48,26 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
   // Initialize the component
   useEffect(() => {
     if (roundId && roundId !== 'new') {
+      console.log(`HoleScoring initialized with roundId: ${roundId}`);
       setCurrentRoundId(roundId);
+      
+      // Store the current round ID in session storage for persistence
+      try {
+        sessionStorage.setItem('current-round-id', roundId);
+      } catch (error) {
+        console.error('Error storing round ID:', error);
+      }
     }
     
     if (holeNumber) {
       const parsedHoleNumber = parseInt(holeNumber);
       if (!isNaN(parsedHoleNumber) && parsedHoleNumber > 0) {
+        console.log(`Setting current hole to ${parsedHoleNumber}`);
         setCurrentHole(parsedHoleNumber);
         setCurrentHoleNumber(parsedHoleNumber);
       }
     }
-  }, [roundId, holeNumber]);
+  }, [roundId, holeNumber, setCurrentRoundId, setCurrentHoleNumber]);
   
   // Update hole data when hole scores or current hole changes
   useEffect(() => {
