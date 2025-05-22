@@ -1,11 +1,13 @@
 
-import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CourseSelection from "@/components/round-tracking/CourseSelection";
 import HoleTracking from "@/components/round-tracking/HoleTracking";
 import RoundReview from "@/components/round-tracking/RoundReview";
 import { RoundProvider } from "@/context/round";
 import { RoundCreation } from "@/components/round-tracking/RoundCreation";
+import { RoundsList } from "@/components/round-tracking/RoundsList";
+import { RoundDetail } from "@/components/round-tracking/RoundDetail";
 
 // Route parameter extractor for hole count
 const RoundCreationWrapper = () => {
@@ -30,6 +32,24 @@ const RoundTracking = () => {
           element={
             <RoundProvider initialRoundId={null}>
               <CourseSelection />
+            </RoundProvider>
+          }
+        />
+        
+        {/* Round history list page */}
+        <Route 
+          path="/list" 
+          element={
+            <RoundsList onBack={() => window.history.back()} />
+          }
+        />
+        
+        {/* Round detail page */}
+        <Route 
+          path="/:roundId" 
+          element={
+            <RoundProvider>
+              <RoundDetail onBack={() => window.history.back()} />
             </RoundProvider>
           }
         />

@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter 
 } from "@/components/ui/sidebar";
-import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from "./icons/CustomIcons";
+import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User, FileText } from "./icons/CustomIcons";
 
 const AppSidebar = () => {
   return (
@@ -73,6 +73,14 @@ const AppSidebar = () => {
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
                     <span>Round Tracking</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/rounds/list">
+                    <FileText className="h-5 w-5" />
+                    <span>Round History</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

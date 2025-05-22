@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Plus, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
@@ -86,12 +86,11 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
 
   const handleCreateRound = () => {
     console.log("Creating new round...");
-    // Use React Router's navigate function instead of window.location.href
     navigate("/rounds/new");
   };
 
   const handleSelectRound = (roundId: string) => {
-    navigate(`/rounds/${roundId}`);
+    navigate(`/rounds/review/${roundId}`);
   };
 
   if (isLoading) {
@@ -101,7 +100,7 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="space-y-6">
       <RoundHeader
-        title="Round Tracking"
+        title="Round History"
         subtitle="View your past rounds or create a new one"
         onBack={onBack}
       />
@@ -146,8 +145,15 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
                       <Calendar className="h-4 w-4 mr-1" />
                       {format(new Date(round.date), "MMM d, yyyy")}
                     </div>
-                    <div className="font-medium">
-                      {round.total_score ? `${round.total_score} (${round.hole_count} holes)` : "In progress"}
+                    <div className="font-medium flex items-center">
+                      {round.total_score ? (
+                        <>
+                          <span>{round.total_score} ({round.hole_count} holes)</span>
+                          <ChevronRight className="h-4 w-4 ml-1 text-muted-foreground" />
+                        </>
+                      ) : (
+                        <span className="text-amber-600">In progress</span>
+                      )}
                     </div>
                   </div>
                 </div>
