@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { LucideGolf } from "@/components/icons/CustomIcons";
@@ -114,9 +115,9 @@ const Welcome = () => {
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">First Name (optional)</label>
-              <input
+              <Input
                 type="text"
-                className="w-full p-2 border rounded-md"
+                className="bg-secondary text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Enter your first name"
@@ -125,9 +126,9 @@ const Welcome = () => {
             
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Last Name (optional)</label>
-              <input
+              <Input
                 type="text"
-                className="w-full p-2 border rounded-md"
+                className="bg-secondary text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Enter your last name"
