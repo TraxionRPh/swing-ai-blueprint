@@ -117,7 +117,7 @@ const Welcome = () => {
               <label className="text-sm text-muted-foreground">First Name (optional)</label>
               <Input
                 type="text"
-                className="bg-secondary text-foreground placeholder:text-muted-foreground border-primary/20"
+                className="bg-[#111827] text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Enter your first name"
@@ -128,7 +128,7 @@ const Welcome = () => {
               <label className="text-sm text-muted-foreground">Last Name (optional)</label>
               <Input
                 type="text"
-                className="bg-secondary text-foreground placeholder:text-muted-foreground border-primary/20"
+                className="bg-[#111827] text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Enter your last name"

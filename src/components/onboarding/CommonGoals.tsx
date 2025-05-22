@@ -75,7 +75,7 @@ const CommonGoals = ({
                   type="number"
                   value={scoreGoal || ""}
                   onChange={(e) => onScoreGoalChange(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-24 mt-1"
+                  className="w-24 mt-1 bg-[#111827] text-foreground border-primary/20"
                   min={30}
                   max={150}
                 />
@@ -91,7 +91,7 @@ const CommonGoals = ({
                   type="number"
                   value={handicapGoal || ""}
                   onChange={(e) => onHandicapGoalChange(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-24 mt-1"
+                  className="w-24 mt-1 bg-[#111827] text-foreground border-primary/20"
                   min={0}
                   max={36}
                 />
