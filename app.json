@@ -10,7 +10,8 @@
     "sdkVersion": "49.0.0",
     "android": {
       "package": "com.yourcompany.swingai",
-      "versionCode": 1
+      "versionCode": 1,
+      "targetSdkVersion": 34
     },
     "extra": {
       "eas": {
