@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -10,11 +11,17 @@ import { CourseSelectionHeader } from "./CourseSelectionHeader";
 import { SearchBar } from "./SearchBar";
 import { CourseList } from "./CourseList";
 import { TeeDialog } from "./TeeDialog";
+import { CreateCourseDialog } from "./CreateCourseDialog";
+import { PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const CourseSelection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  // State for the create course dialog
+  const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   
   // Use context from Round provider
   const { 
@@ -123,17 +130,34 @@ const CourseSelection = () => {
   const handleClearSearch = () => {
     setSearchQuery("");
   };
+
+  // Handle course creation completion
+  const handleCourseCreated = () => {
+    refreshCourses();
+  };
   
   return (
     <div className="space-y-6">
       {/* Header */}
       <CourseSelectionHeader />
       
-      {/* Search Bar */}
-      <SearchBar 
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      {/* Search and Add Course */}
+      <div className="flex flex-col gap-3">
+        {/* Search Bar */}
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+        
+        {/* Add Course Button */}
+        <Button 
+          onClick={() => setShowCreateCourseDialog(true)} 
+          className="w-full sm:w-auto flex items-center gap-2"
+        >
+          <PlusCircle className="h-4 w-4" />
+          Add New Course
+        </Button>
+      </div>
       
       {/* Course Cards */}
       <CourseList
@@ -161,6 +185,13 @@ const CourseSelection = () => {
         showDialog={showTeeDialog}
         onOpenChange={setShowTeeDialog}
         onTeeSubmit={handleTeeSubmit}
+      />
+      
+      {/* Create Course Dialog */}
+      <CreateCourseDialog
+        open={showCreateCourseDialog}
+        onOpenChange={setShowCreateCourseDialog}
+        onCourseCreated={handleCourseCreated}
       />
     </div>
   );
