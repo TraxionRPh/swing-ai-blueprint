@@ -11,7 +11,6 @@ import { CommonProblem } from "@/types/practice-plan";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { ListTodo } from "lucide-react";
-import { PremiumFeature } from "@/components/PremiumFeature";
 
 const AIPracticePlans = () => {
   const navigate = useNavigate();
@@ -104,37 +103,35 @@ const AIPracticePlans = () => {
   };
 
   return (
-    <PremiumFeature>
-      <div className="container mx-auto space-y-6 p-4">
-        <div className="space-y-4">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
-            <p className="text-muted-foreground mb-4">
-              Get personalized practice plans based on your performance
-            </p>
-          </div>
-          
-          <Button variant="outline" asChild className="w-full">
-            <Link to="/my-practice-plans">
-              <ListTodo className="mr-2 h-4 w-4" />
-              My Plans
-            </Link>
-          </Button>
+    <div className="container mx-auto space-y-6 p-4">
+      <div className="space-y-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">AI Practice Plan Generator</h1>
+          <p className="text-muted-foreground mb-4">
+            Get personalized practice plans based on your performance
+          </p>
         </div>
         
-        <PracticePlanForm
-          inputValue={inputValue}
-          onInputChange={setInputValue}
-          onSubmit={(isAI) => generateAnalysis(isAI)}
-          onSelectProblem={handleSelectProblem}
-          isAiGenerating={isAiAnalyzing}
-          isManualGenerating={isManualAnalyzing}
-          commonProblems={commonProblems}
-          planDuration={planDuration}
-          onPlanDurationChange={handlePlanDurationChange}
-        />
+        <Button variant="outline" asChild className="w-full">
+          <Link to="/my-practice-plans">
+            <ListTodo className="mr-2 h-4 w-4" />
+            My Plans
+          </Link>
+        </Button>
       </div>
-    </PremiumFeature>
+      
+      <PracticePlanForm
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onSubmit={(isAI) => generateAnalysis(isAI)}
+        onSelectProblem={handleSelectProblem}
+        isAiGenerating={isAiAnalyzing}
+        isManualGenerating={isManualAnalyzing}
+        commonProblems={commonProblems}
+        planDuration={planDuration}
+        onPlanDurationChange={handlePlanDurationChange}
+      />
+    </div>
   );
 };
 

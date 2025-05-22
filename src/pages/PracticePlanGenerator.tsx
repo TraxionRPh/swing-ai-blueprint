@@ -11,7 +11,6 @@ import { PlanDurationDialog } from "@/components/practice-plans/PlanDurationDial
 import { usePracticePlanGeneration } from "@/hooks/usePracticePlanGeneration";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { PremiumFeature } from "@/components/PremiumFeature";
 
 const PracticePlanGenerator = () => {
   const location = useLocation();
@@ -224,100 +223,98 @@ const PracticePlanGenerator = () => {
   }
 
   return (
-    <PremiumFeature>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Practice Plan Generator</h1>
-          <p className="text-muted-foreground">
-            {problem ? 
-              `Creating a personalized practice plan to address: ${problem}` :
-              "Create a personalized practice plan based on these selected drills"
-            }
-          </p>
-          {focusArea && (
-            <p className="text-lg font-medium text-primary">Focus Area: {focusArea}</p>
-          )}
-        </div>
-
-        {!problem && selectedDrills.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No Drills Selected</CardTitle>
-              <CardDescription>
-                You need to select drills to generate a practice plan
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center pt-4 pb-6">
-              <Button onClick={goToDrillLibrary}>
-                Go to Drill Library
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {selectedDrills.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Selected Drills</CardTitle>
-                  <CardDescription>
-                    {selectedDrills.length} drill{selectedDrills.length !== 1 ? 's' : ''} selected for your practice plan
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedDrills.map(drill => (
-                      <DrillCard key={drill.id} drill={drill} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {problem && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Issue to Address</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{problem}</p>
-                </CardContent>
-              </Card>
-            )}
-            
-            <div className="flex justify-between">
-              {!problem && (
-                <Button variant="outline" onClick={goToDrillLibrary}>
-                  Select Different Drills
-                </Button>
-              )}
-              {problem && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/ai-analysis")}
-                >
-                  Back to Analysis
-                </Button>
-              )}
-              <Button 
-                onClick={generatePracticeIssue} 
-                disabled={isGenerating}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
-              >
-                {isGenerating ? "Generating Plan..." : "Generate Practice Plan"}
-              </Button>
-            </div>
-            
-            <PlanDurationDialog
-              isOpen={showDurationDialog}
-              onClose={() => setShowDurationDialog(false)}
-              planDuration={planDuration}
-              onPlanDurationChange={setPlanDuration}
-              onConfirm={handleConfirmDuration}
-            />
-          </>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Practice Plan Generator</h1>
+        <p className="text-muted-foreground">
+          {problem ? 
+            `Creating a personalized practice plan to address: ${problem}` :
+            "Create a personalized practice plan based on these selected drills"
+          }
+        </p>
+        {focusArea && (
+          <p className="text-lg font-medium text-primary">Focus Area: {focusArea}</p>
         )}
       </div>
-    </PremiumFeature>
+
+      {!problem && selectedDrills.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>No Drills Selected</CardTitle>
+            <CardDescription>
+              You need to select drills to generate a practice plan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center pt-4 pb-6">
+            <Button onClick={goToDrillLibrary}>
+              Go to Drill Library
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {selectedDrills.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Selected Drills</CardTitle>
+                <CardDescription>
+                  {selectedDrills.length} drill{selectedDrills.length !== 1 ? 's' : ''} selected for your practice plan
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {selectedDrills.map(drill => (
+                    <DrillCard key={drill.id} drill={drill} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {problem && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Issue to Address</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{problem}</p>
+              </CardContent>
+            </Card>
+          )}
+          
+          <div className="flex justify-between">
+            {!problem && (
+              <Button variant="outline" onClick={goToDrillLibrary}>
+                Select Different Drills
+              </Button>
+            )}
+            {problem && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/ai-analysis")}
+              >
+                Back to Analysis
+              </Button>
+            )}
+            <Button 
+              onClick={generatePracticeIssue} 
+              disabled={isGenerating}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
+            >
+              {isGenerating ? "Generating Plan..." : "Generate Practice Plan"}
+            </Button>
+          </div>
+          
+          <PlanDurationDialog
+            isOpen={showDurationDialog}
+            onClose={() => setShowDurationDialog(false)}
+            planDuration={planDuration}
+            onPlanDurationChange={setPlanDuration}
+            onConfirm={handleConfirmDuration}
+          />
+        </>
+      )}
+    </div>
   );
 };
 
