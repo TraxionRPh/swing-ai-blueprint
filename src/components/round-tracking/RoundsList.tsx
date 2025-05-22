@@ -55,6 +55,7 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
           )
         `)
         .eq("user_id", user.id)
+        .not('total_score', 'is', null) // Only fetch rounds with a total_score (completed rounds)
         .order("date", { ascending: false });
 
       if (error) throw error;
@@ -90,7 +91,7 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
   };
 
   const handleSelectRound = (roundId: string) => {
-    navigate(`/rounds/review/${roundId}`);
+    navigate(`/rounds/${roundId}`);
   };
 
   if (isLoading) {
@@ -101,7 +102,7 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
     <div className="space-y-6">
       <RoundHeader
         title="Round History"
-        subtitle="View your past rounds or create a new one"
+        subtitle="View your completed rounds"
         onBack={onBack}
       />
 
@@ -116,7 +117,7 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground mb-4">
-              You haven't recorded any rounds yet.
+              You haven't completed any rounds yet.
             </p>
             <Button onClick={handleCreateRound}>
               <Plus className="h-4 w-4 mr-2" />
@@ -146,14 +147,8 @@ export const RoundsList = ({ onBack }: { onBack: () => void }) => {
                       {format(new Date(round.date), "MMM d, yyyy")}
                     </div>
                     <div className="font-medium flex items-center">
-                      {round.total_score ? (
-                        <>
-                          <span>{round.total_score} ({round.hole_count} holes)</span>
-                          <ChevronRight className="h-4 w-4 ml-1 text-muted-foreground" />
-                        </>
-                      ) : (
-                        <span className="text-amber-600">In progress</span>
-                      )}
+                      <span>{round.total_score} ({round.hole_count} holes)</span>
+                      <ChevronRight className="h-4 w-4 ml-1 text-muted-foreground" />
                     </div>
                   </div>
                 </div>
