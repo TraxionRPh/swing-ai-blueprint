@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session } = useAuth();
@@ -59,23 +61,34 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
 
+      setSignupSuccess(true);
+      
       toast({
-        title: "Welcome to ChipAway!",
-        description: "Please check your email to confirm your account.",
+        title: "Account created successfully!",
+        description: "You can now sign in with your credentials.",
       });
     } catch (error: any) {
-      toast({
-        title: "Error creating account",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Handle cases where user is already registered
+      if (error.message.includes("already registered")) {
+        toast({
+          title: "Email already registered",
+          description: "Please sign in with your existing account or use a different email.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error creating account",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -129,34 +142,49 @@ const Auth = () => {
           </TabsContent>
           
           <TabsContent value="register">
-            <form onSubmit={handleSignUp}>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create Account"}
+            {signupSuccess ? (
+              <div className="p-6 text-center space-y-4">
+                <h3 className="font-medium text-lg">Registration successful!</h3>
+                <p className="text-muted-foreground">
+                  You can now sign in with your credentials to access your account.
+                </p>
+                <Button 
+                  onClick={() => document.querySelector('[data-value="login"]')?.dispatchEvent(new Event('click'))}
+                  className="mt-2"
+                >
+                  Go to Login
                 </Button>
-              </CardFooter>
-            </form>
+              </div>
+            ) : (
+              <form onSubmit={handleSignUp}>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Creating account..." : "Create Account"}
+                  </Button>
+                </CardFooter>
+              </form>
+            )}
           </TabsContent>
         </Tabs>
       </Card>
