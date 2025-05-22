@@ -22,9 +22,37 @@ const Auth = () => {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (session) {
-      navigate('/dashboard');
+      // Check if it's a first-time login
+      checkFirstTimeLogin();
     }
   }, [session, navigate]);
+
+  // Function to check if this is a first-time login
+  const checkFirstTimeLogin = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('has_onboarded')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData && profileData.has_onboarded === false) {
+        // First-time login, send to welcome/onboarding
+        navigate('/welcome');
+      } else {
+        // Returning user, send to dashboard
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      // Default to dashboard on error
+      navigate('/dashboard');
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +71,7 @@ const Auth = () => {
         description: "You've successfully signed in.",
       });
       
-      // Navigate to dashboard after successful login
-      navigate('/dashboard');
+      // Navigate happens in useEffect after session is updated
     } catch (error: any) {
       toast({
         title: "Error signing in",
