@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Course } from "@/types/round-tracking";
+import { Course, CourseTee } from "@/types/round-tracking";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,10 +41,39 @@ export function useCourseSelectionState() {
     setCurrentCourse(course);
     setShowTeeDialog(true);
   };
+
+  // Fetch a course with its tees by ID
+  const fetchCourseById = async (courseId: string): Promise<Course | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("golf_courses")
+        .select(`
+          id, 
+          name, 
+          city, 
+          state, 
+          total_par,
+          is_verified,
+          course_tees (*)
+        `)
+        .eq('id', courseId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching course:", error);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch course:", error);
+      return null;
+    }
+  };
   
   // Handle tee submission
   const handleTeeSubmit = async (teeData: any) => {
-    if (!currentCourse) return;
+    if (!currentCourse) return false;
     
     try {
       // Add loading state or toast notification here if desired
@@ -65,6 +94,25 @@ export function useCourseSelectionState() {
       
       if (error) throw error;
       
+      // After successfully adding the tee, refresh the course data
+      if (currentCourse.id) {
+        const updatedCourse = await fetchCourseById(currentCourse.id);
+        
+        // If the course is currently selected, update the selected course
+        if (selectedCourse && selectedCourse.id === currentCourse.id && updatedCourse) {
+          setSelectedCourse(updatedCourse);
+          // Auto-select the newly added tee
+          if (newTee && newTee.id) {
+            setSelectedTeeId(newTee.id);
+          }
+        }
+        
+        // Update current course reference too
+        if (updatedCourse) {
+          setCurrentCourse(updatedCourse);
+        }
+      }
+      
       toast({
         title: "Tee added successfully",
         description: `${newTee.name} tee has been added to ${currentCourse.name}`,
@@ -73,7 +121,7 @@ export function useCourseSelectionState() {
       // Close the dialog
       setShowTeeDialog(false);
       
-      return true;
+      return newTee;
     } catch (error) {
       console.error("Error adding tee:", error);
       toast({
@@ -110,6 +158,7 @@ export function useCourseSelectionState() {
     // Handlers
     handleCourseClick,
     handleAddTee,
-    handleTeeSubmit
+    handleTeeSubmit,
+    fetchCourseById
   };
 }

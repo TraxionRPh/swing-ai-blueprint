@@ -58,8 +58,21 @@ const CourseSelection = () => {
     handleTeeSubmit,
     setShowTeeDialog,
     setSelectedTeeId,
-    setSelectedHoleCount
+    setSelectedHoleCount,
+    fetchCourseById
   } = useCourseSelectionState();
+  
+  // Handler for after a new tee is successfully added
+  const handleTeeAdded = async (teeData: any) => {
+    const newTee = await handleTeeSubmit(teeData);
+    
+    if (newTee && expandedCourseId) {
+      // After successful tee addition, refresh the courses list to show the new tee
+      refreshCourses();
+    }
+    
+    return newTee;
+  };
   
   // Handle starting a round
   const handleStartRound = async () => {
@@ -184,7 +197,7 @@ const CourseSelection = () => {
         currentCourse={currentCourse}
         showDialog={showTeeDialog}
         onOpenChange={setShowTeeDialog}
-        onTeeSubmit={handleTeeSubmit}
+        onTeeSubmit={handleTeeAdded}
       />
       
       {/* Create Course Dialog */}
