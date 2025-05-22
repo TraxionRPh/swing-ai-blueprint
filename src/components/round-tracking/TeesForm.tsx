@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeeData {
   name: string;
@@ -21,6 +22,7 @@ interface TeesFormProps {
 }
 
 export const TeesForm = ({ onTeesSubmit, isSubmitting = false, onCancel }: TeesFormProps) => {
+  const { toast } = useToast();
   const [tees, setTees] = useState<TeeData[]>([
     { name: "", color: "", courseRating: "", slopeRating: "", totalYards: "" }
   ]);
@@ -39,8 +41,51 @@ export const TeesForm = ({ onTeesSubmit, isSubmitting = false, onCancel }: TeesF
     setTees(newTees);
   };
 
+  const validateTees = (): boolean => {
+    // Check if all required fields are filled
+    const hasEmptyRequiredFields = tees.some(tee => 
+      !tee.name || !tee.color || !tee.courseRating || !tee.slopeRating || !tee.totalYards
+    );
+    
+    if (hasEmptyRequiredFields) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all fields for each tee set",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    // Check if numeric fields contain valid numbers
+    const hasInvalidNumbers = tees.some(tee => {
+      const courseRating = parseFloat(tee.courseRating);
+      const slopeRating = parseInt(tee.slopeRating);
+      const totalYards = parseInt(tee.totalYards);
+      
+      return (
+        isNaN(courseRating) || 
+        isNaN(slopeRating) || 
+        isNaN(totalYards) ||
+        slopeRating < 55 || slopeRating > 155 // Standard range for slope ratings
+      );
+    });
+    
+    if (hasInvalidNumbers) {
+      toast({
+        title: "Invalid ratings",
+        description: "Please enter valid course rating, slope rating, and yardage values",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = () => {
-    onTeesSubmit(tees);
+    if (validateTees()) {
+      onTeesSubmit(tees);
+    }
   };
 
   return (

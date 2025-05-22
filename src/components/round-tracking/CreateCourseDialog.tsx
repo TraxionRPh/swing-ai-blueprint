@@ -24,14 +24,6 @@ interface CourseBasicInfo {
   totalPar: string;
 }
 
-interface CourseTee {
-  id?: string;
-  name: string;
-  color: string;
-  course_rating: string;
-  slope_rating: string;
-}
-
 export function CreateCourseDialog({ open, onOpenChange, onCourseCreated }: CreateCourseDialogProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -127,12 +119,18 @@ export function CreateCourseDialog({ open, onOpenChange, onCourseCreated }: Crea
         total_yards: parseInt(tee.totalYards)
       }));
       
+      console.log("Inserting tees:", teesToInsert);
+      console.log("User authenticated:", !!user);
+      
       // Insert the tees
       const { error: teesError } = await supabase
         .from("course_tees")
         .insert(teesToInsert);
       
-      if (teesError) throw teesError;
+      if (teesError) {
+        console.error("Error inserting tees:", teesError);
+        throw teesError;
+      }
       
       // Close the dialog and refresh the course list
       handleOpenChange(false);
