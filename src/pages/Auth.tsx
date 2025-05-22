@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LucideGolf } from "@/components/icons/CustomIcons";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +15,15 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
   
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (session) {
+      navigate('/dashboard');
+    }
+  }, [session, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -32,6 +40,9 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You've successfully signed in.",
       });
+      
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Error signing in",
