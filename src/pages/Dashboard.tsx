@@ -9,11 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
 const Dashboard = () => {
   return (
     <div className="h-[calc(100vh-theme(spacing.16))] flex flex-col">
       <div className="mb-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        
         <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
         <p className="text-muted-foreground">
           Welcome back! Here's an overview of your golf performance.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Shield } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
 const Profile = () => {
   const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl, scoreGoal, handicapGoal } = useProfile();
@@ -69,6 +70,20 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Profile Settings</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <h1 className="text-3xl font-bold">Profile Settings</h1>
 
       <Card>

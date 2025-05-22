@@ -21,6 +21,15 @@ const LayoutContent = () => {
     location.pathname === path || location.pathname.startsWith('/rounds/')
   );
 
+  const handleBackNavigation = () => {
+    // Custom back navigation based on current route
+    if (location.pathname === '/profile') {
+      navigate('/dashboard');
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <>
       <AppSidebar />
@@ -32,7 +41,7 @@ const LayoutContent = () => {
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={() => navigate(-1)}
+                onClick={handleBackNavigation}
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span className="sr-only">Go back</span>
