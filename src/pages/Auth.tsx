@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,51 +21,9 @@ const Auth = () => {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (session) {
-      console.log("Session detected, checking onboarding status...");
-      checkFirstTimeLogin();
+      navigate('/welcome');
     }
   }, [session, navigate]);
-
-  // Function to check if this is a first-time login
-  const checkFirstTimeLogin = async () => {
-    try {
-      console.log("Checking if this is a first-time login...");
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found");
-        return;
-      }
-
-      console.log("User found:", user.id);
-
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('has_onboarded')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        navigate('/dashboard');
-        return;
-      }
-
-      console.log("Profile data:", profileData);
-      
-      if (profileData && profileData.has_onboarded === false) {
-        console.log("First-time login detected, navigating to welcome page");
-        navigate('/welcome');
-      } else {
-        console.log("Returning user, navigating to dashboard");
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error("Error checking profile:", error);
-      // Default to dashboard on error
-      navigate('/dashboard');
-    }
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +59,7 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });
