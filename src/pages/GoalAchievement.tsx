@@ -17,6 +17,8 @@ const GoalAchievement = () => {
   const goalValue = location.state?.goalValue;
   const actualValue = location.state?.actualValue;
   
+  console.log("GoalAchievement render with state:", location.state);
+  
   // Stop confetti after 6 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -28,7 +30,8 @@ const GoalAchievement = () => {
   // If there's no goal data, redirect back to rounds
   useEffect(() => {
     if (!goalType || !goalValue) {
-      navigate('/rounds');
+      console.log("No goal data found, redirecting to rounds");
+      navigate('/rounds', { replace: true });
     }
   }, [goalType, goalValue, navigate]);
   
@@ -74,7 +77,7 @@ const GoalAchievement = () => {
         
         <p className="text-lg mb-6">
           You've reached your {goalType} goal of {goalValue}!
-          {actualValue && <span> Your actual score was {actualValue}.</span>}
+          {actualValue && actualValue !== goalValue && <span> Your actual score was {actualValue}.</span>}
         </p>
         
         <p className="text-muted-foreground mb-8">

@@ -53,19 +53,21 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
       // Check if this round meets the user's score goal (only for 18-hole rounds)
       let goalAchieved = false;
       if (totalHoles === 18) {
-        console.log("Checking if score goal achieved:", totalScore);
+        console.log("Checking if score goal achieved:", roundStats.totalScore);
         // Use true to ensure achievedGoal state is updated
-        goalAchieved = checkScoreGoal(totalScore, true);
+        goalAchieved = checkScoreGoal(roundStats.totalScore, true);
         
         if (goalAchieved) {
-          console.log("Goal achieved! Redirecting to achievement page");
-          // Navigate directly to achievement page with the necessary state
+          console.log("Goal achieved! Redirecting to achievement page with score:", roundStats.totalScore);
+          
+          // Navigate to achievement page with the necessary state
           navigate("/goal-achievement", {
             state: {
               goalType: "score",
-              goalValue: totalScore <= 0 ? 0 : totalScore,
-              actualValue: totalScore
-            }
+              goalValue: roundStats.totalScore,
+              actualValue: roundStats.totalScore
+            },
+            replace: true // Use replace to prevent going back to incomplete round
           });
           return; // Exit early after redirect
         }
@@ -79,7 +81,7 @@ export const useRoundCompletion = (roundId: string | undefined, totalScore: numb
         });
         
         // Navigate to rounds dashboard for normal completion
-        navigate("/rounds");
+        navigate("/rounds", { replace: true });
       }
     } catch (error) {
       console.error("Error completing round:", error);
