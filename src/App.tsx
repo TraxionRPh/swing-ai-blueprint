@@ -21,6 +21,7 @@ import AIAnalysis from "./pages/AIAnalysis";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import Auth from "./pages/Auth";
+import Welcome from "./pages/Welcome";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -100,6 +101,11 @@ const router = createBrowserRouter([
   {
     path: "/auth",
     element: <Auth />,
+    errorElement: <NotFound />,
+  },
+  {
+    path: "/welcome",
+    element: <Welcome />,
     errorElement: <NotFound />,
   },
   {

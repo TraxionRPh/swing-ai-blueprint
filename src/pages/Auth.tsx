@@ -22,7 +22,7 @@ const Auth = () => {
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (session) {
-      // Check if it's a first-time login
+      console.log("Session detected, checking onboarding status...");
       checkFirstTimeLogin();
     }
   }, [session, navigate]);
@@ -30,21 +30,35 @@ const Auth = () => {
   // Function to check if this is a first-time login
   const checkFirstTimeLogin = async () => {
     try {
+      console.log("Checking if this is a first-time login...");
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.log("No user found");
+        return;
+      }
 
-      const { data: profileData } = await supabase
+      console.log("User found:", user.id);
+
+      const { data: profileData, error } = await supabase
         .from('profiles')
         .select('has_onboarded')
         .eq('id', user.id)
         .single();
 
+      if (error) {
+        console.error("Error fetching profile:", error);
+        navigate('/dashboard');
+        return;
+      }
+
+      console.log("Profile data:", profileData);
+      
       if (profileData && profileData.has_onboarded === false) {
-        // First-time login, send to welcome/onboarding
+        console.log("First-time login detected, navigating to welcome page");
         navigate('/welcome');
       } else {
-        // Returning user, send to dashboard
+        console.log("Returning user, navigating to dashboard");
         navigate('/dashboard');
       }
     } catch (error) {
