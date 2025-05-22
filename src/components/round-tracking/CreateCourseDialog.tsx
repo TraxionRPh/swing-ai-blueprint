@@ -104,7 +104,7 @@ export function CreateCourseDialog({ open, onOpenChange, onCourseCreated }: Crea
     }
   };
   
-  const handleTeesSubmit = async (tees: CourseTee[]) => {
+  const handleTeesSubmit = async (tees: any[]) => {
     if (!newCourseId || !user) {
       toast({
         title: "Error",
@@ -122,8 +122,9 @@ export function CreateCourseDialog({ open, onOpenChange, onCourseCreated }: Crea
         course_id: newCourseId,
         name: tee.name,
         color: tee.color,
-        course_rating: parseFloat(tee.course_rating),
-        slope_rating: parseInt(tee.slope_rating)
+        course_rating: parseFloat(tee.courseRating),
+        slope_rating: parseInt(tee.slopeRating),
+        total_yards: parseInt(tee.totalYards)
       }));
       
       // Insert the tees
@@ -193,8 +194,7 @@ export function CreateCourseDialog({ open, onOpenChange, onCourseCreated }: Crea
           />
         ) : (
           <TeesForm 
-            courseId={newCourseId || ""}
-            onSubmit={handleTeesSubmit}
+            onTeesSubmit={handleTeesSubmit}
             onCancel={handleCancel}
             isSubmitting={isSubmitting}
           />

@@ -15,9 +15,12 @@ interface TeeData {
 
 interface TeesFormProps {
   onTeesSubmit: (tees: TeeData[]) => Promise<boolean | void> | void;
+  courseId?: string;
+  isSubmitting?: boolean;
+  onCancel?: () => void;
 }
 
-export const TeesForm = ({ onTeesSubmit }: TeesFormProps) => {
+export const TeesForm = ({ onTeesSubmit, isSubmitting = false, onCancel }: TeesFormProps) => {
   const [tees, setTees] = useState<TeeData[]>([
     { name: "", color: "", courseRating: "", slopeRating: "", totalYards: "" }
   ]);
@@ -129,9 +132,24 @@ export const TeesForm = ({ onTeesSubmit }: TeesFormProps) => {
           Add Another Tee
         </Button>
 
-        <Button onClick={handleSubmit}>
-          Save Tees
-        </Button>
+        <div className="space-x-2">
+          {onCancel && (
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Save Tees"}
+          </Button>
+        </div>
       </div>
     </div>
   );
