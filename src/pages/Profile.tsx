@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -109,16 +110,6 @@ const Profile = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        
-        <Button 
-          variant="outline"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex items-center gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-        </Button>
       </div>
 
       <h1 className="text-3xl font-bold">Profile Settings</h1>
@@ -254,6 +245,19 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Sign Out button moved to bottom of page */}
+      <div className="mt-8 pb-6">
+        <Button 
+          variant="destructive"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+        </Button>
+      </div>
     </div>
   );
 };
