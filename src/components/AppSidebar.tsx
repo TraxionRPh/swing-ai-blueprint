@@ -13,8 +13,18 @@ import {
   SidebarFooter 
 } from "@/components/ui/sidebar";
 import { LucideGolf, Home, Award, Dumbbell, Calendar, Clock, Brain, List, User, FileText } from "./icons/CustomIcons";
+import { Badge } from "./ui/badge";
+import { useProfile } from "@/hooks/useProfile";
 
 const AppSidebar = () => {
+  const { isPremium } = useProfile();
+
+  const PremiumBadge = () => (
+    <Badge variant="outline" className="ml-auto text-xs bg-primary/10 hover:bg-primary/10">
+      Premium
+    </Badge>
+  );
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -65,6 +75,7 @@ const AppSidebar = () => {
                   <Link to="/practice-plans">
                     <Calendar className="h-5 w-5" />
                     <span>Practice Plans</span>
+                    {!isPremium && <PremiumBadge />}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -73,6 +84,7 @@ const AppSidebar = () => {
                   <Link to="/rounds">
                     <List className="h-5 w-5" />
                     <span>Round Tracking</span>
+                    {!isPremium && <span className="ml-auto text-xs text-muted-foreground">Limited</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -97,6 +109,7 @@ const AppSidebar = () => {
                   <Link to="/ai-analysis">
                     <Brain className="h-5 w-5" />
                     <span>AI Analysis</span>
+                    {!isPremium && <PremiumBadge />}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -113,6 +126,14 @@ const AppSidebar = () => {
                   <Link to="/profile">
                     <User className="h-5 w-5" />
                     <span>Profile</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/subscription">
+                    <Clock className="h-5 w-5" />
+                    <span>Subscription</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -10,6 +10,7 @@ import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
 import { PlanCard } from "@/components/practice-plans/PlanCard";
 import { EmptyPlansState } from "@/components/practice-plans/EmptyPlansState";
 import { PlansLoadingState } from "@/components/practice-plans/PlansLoadingState";
+import { PremiumFeature } from "@/components/PremiumFeature";
 
 // Local storage key for deleted plan IDs
 const DELETED_PLANS_STORAGE_KEY = "golf-app-deleted-plan-ids";
@@ -168,32 +169,34 @@ const MyPracticePlans = () => {
   ), [plans, viewPlan, deletePracticePlan]);
 
   return (
-    <div className="container p-4 py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">My Practice Plans</h1>
-        <Button size="sm" variant="outline" onClick={loadPracticePlans}>
-          Refresh
-        </Button>
-      </div>
-      <p className="text-muted-foreground">Review your saved practice plans</p>
-
-      {selectedPlan ? (
-        <GeneratedPlan
-          plan={selectedPlan}
-          onClear={clearSelectedPlan}
-          planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
-          planId={selectedPlanId}
-        />
-      ) : (
-        <div className="space-y-6">
-          {isLoading ? (
-            <PlansLoadingState />
-          ) : plans.length === 0 ? (
-            <EmptyPlansState />
-          ) : planCards}
+    <PremiumFeature>
+      <div className="container p-4 py-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">My Practice Plans</h1>
+          <Button size="sm" variant="outline" onClick={loadPracticePlans}>
+            Refresh
+          </Button>
         </div>
-      )}
-    </div>
+        <p className="text-muted-foreground">Review your saved practice plans</p>
+
+        {selectedPlan ? (
+          <GeneratedPlan
+            plan={selectedPlan}
+            onClear={clearSelectedPlan}
+            planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
+            planId={selectedPlanId}
+          />
+        ) : (
+          <div className="space-y-6">
+            {isLoading ? (
+              <PlansLoadingState />
+            ) : plans.length === 0 ? (
+              <EmptyPlansState />
+            ) : planCards}
+          </div>
+        )}
+      </div>
+    </PremiumFeature>
   );
 };
 

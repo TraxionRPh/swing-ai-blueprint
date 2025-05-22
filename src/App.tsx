@@ -19,6 +19,7 @@ import MyPracticePlans from "./pages/MyPracticePlans";
 import PracticePlanGenerator from "./pages/PracticePlanGenerator";
 import AIAnalysis from "./pages/AIAnalysis";
 import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
@@ -88,6 +89,10 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
+      },
+      {
+        path: "subscription",
+        element: <Subscription />,
       },
     ],
     errorElement: <NotFound />,
