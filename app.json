@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "SwingAI",
+    "slug": "swing-ai-blueprint",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android"],
+    "sdkVersion": "49.0.0",
+    "android": {
+      "package": "com.yourcompany.swingai",
+      "versionCode": 1
+    }
+  }
+}
