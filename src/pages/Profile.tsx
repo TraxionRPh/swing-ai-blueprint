@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { LogOut, Shield } from "lucide-react";
+import { LogOut, Shield, Mail } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -22,6 +21,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   const [localHandicap, setLocalHandicap] = useState<HandicapLevel | null>(handicap);
   const [localGoals, setLocalGoals] = useState<string | null>(goals);
@@ -39,6 +39,16 @@ const Profile = () => {
     setLocalAvatarUrl(avatarUrl);
     setLocalScoreGoal(scoreGoal);
     setLocalHandicapGoal(handicapGoal);
+    
+    // Get user email
+    const getUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    
+    getUserEmail();
   }, [handicap, goals, firstName, lastName, avatarUrl, scoreGoal, handicapGoal]);
 
   const handleSave = async () => {
@@ -147,6 +157,20 @@ const Profile = () => {
                 placeholder="Enter your last name"
               />
             </div>
+          </div>
+          
+          {/* Add email display field */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" /> Email Address
+            </Label>
+            <Input
+              id="email"
+              value={userEmail || ''}
+              readOnly
+              disabled
+              className="bg-gray-50 cursor-not-allowed"
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
