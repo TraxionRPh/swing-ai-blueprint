@@ -1,79 +1,115 @@
-import * as React from "react"
 
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
-Card.displayName = "Card"
+interface CardProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}
 
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
-    {...props}
-  />
-))
-CardHeader.displayName = "CardHeader"
+export const Card = ({ children, style }: CardProps) => {
+  return (
+    <View style={[styles.card, style]}>
+      {children}
+    </View>
+  );
+};
 
-const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
-      className
-    )}
-    {...props}
-  />
-))
-CardTitle.displayName = "CardTitle"
+interface CardHeaderProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}
 
-const CardDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-))
-CardDescription.displayName = "CardDescription"
+export const CardHeader = ({ children, style }: CardHeaderProps) => {
+  return (
+    <View style={[styles.cardHeader, style]}>
+      {children}
+    </View>
+  );
+};
 
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-))
-CardContent.displayName = "CardContent"
+interface CardTitleProps {
+  children: React.ReactNode;
+  style?: TextStyle;
+}
 
-const CardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
-    {...props}
-  />
-))
-CardFooter.displayName = "CardFooter"
+export const CardTitle = ({ children, style }: CardTitleProps) => {
+  return (
+    <Text style={[styles.cardTitle, style]}>
+      {children}
+    </Text>
+  );
+};
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+interface CardDescriptionProps {
+  children: React.ReactNode;
+  style?: TextStyle;
+}
+
+export const CardDescription = ({ children, style }: CardDescriptionProps) => {
+  return (
+    <Text style={[styles.cardDescription, style]}>
+      {children}
+    </Text>
+  );
+};
+
+interface CardContentProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}
+
+export const CardContent = ({ children, style }: CardContentProps) => {
+  return (
+    <View style={[styles.cardContent, style]}>
+      {children}
+    </View>
+  );
+};
+
+interface CardFooterProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+}
+
+export const CardFooter = ({ children, style }: CardFooterProps) => {
+  return (
+    <View style={[styles.cardFooter, style]}>
+      {children}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#1A1F2C', // card background color
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#2A2F3C',
+    marginVertical: 8,
+  },
+  cardHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2F3C',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#9CA3AF', // muted-foreground
+  },
+  cardContent: {
+    padding: 16,
+  },
+  cardFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#2A2F3C',
+  },
+});

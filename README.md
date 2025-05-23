@@ -1,73 +1,66 @@
-# Welcome to your Lovable project
 
-## Project info
+# ChipAway - Golf Training App (React Native)
 
-**URL**: https://lovable.dev/projects/4d696576-7822-41e1-857f-0009ded09f4e
+This is the React Native version of the ChipAway golf training application.
 
-## How can I edit this code?
+## Setup Instructions
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/4d696576-7822-41e1-857f-0009ded09f4e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Install dependencies:
+```
+npm install
 ```
 
-**Edit a file directly in GitHub**
+2. Start the development server:
+```
+npx expo start
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Required Dependencies to Add
 
-**Use GitHub Codespaces**
+Please add the following dependencies manually to your package.json file:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```json
+"dependencies": {
+  "@expo/vector-icons": "^14.0.0",
+  "@react-navigation/bottom-tabs": "^6.5.11",
+  "@react-navigation/native": "^6.1.9",
+  "@react-navigation/stack": "^6.3.20",
+  "@react-native-async-storage/async-storage": "1.21.0",
+  "expo": "~50.0.0",
+  "expo-status-bar": "~1.11.1",
+  "lucide-react-native": "^0.358.0",
+  "react": "18.2.0",
+  "react-native": "0.73.4",
+  "react-native-gesture-handler": "~2.14.0",
+  "react-native-safe-area-context": "4.8.2",
+  "react-native-screens": "~3.29.0",
+  "react-native-svg": "14.1.0",
+  "react-native-url-polyfill": "^2.0.0"
+},
+"devDependencies": {
+  "@babel/core": "^7.20.0",
+  "@types/react": "~18.2.45",
+  "typescript": "^5.3.0"
+}
+```
 
-## What technologies are used for this project?
+Also make sure to add the `"build:dev"` script to package.json:
 
-This project is built with:
+```json
+"scripts": {
+  "build:dev": "vite build --mode development",
+  "start": "expo start",
+  "android": "expo start --android",
+  "ios": "expo start --ios",
+  "web": "expo start --web"
+}
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Project Structure
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4d696576-7822-41e1-857f-0009ded09f4e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `/src/screens` - Main app screens
+- `/src/components` - UI components
+- `/src/components/ui` - Shared UI components
+- `/src/navigation` - Navigation configuration
+- `/src/context` - Context providers (Auth, etc.)
+- `/src/integrations` - Third-party integrations (Supabase)

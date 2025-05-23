@@ -1,53 +1,33 @@
 
-import { LucideProps } from "lucide-react";
-import { forwardRef } from "react";
+import React from 'react';
+import { Svg, Path, SvgProps } from 'react-native-svg';
+import { Home as HomeIcon, Award as AwardIcon, Dumbbell as DumbbellIcon, Calendar as CalendarIcon, Clock as ClockIcon, Brain as BrainIcon, List as ListIcon, User as UserIcon } from 'lucide-react-native';
 
-export const LucideGolf = forwardRef<SVGSVGElement, LucideProps>((props, ref) => (
-  <svg
-    ref={ref}
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 18v-6" />
-    <path d="M8 18v-1" />
-    <path d="M16 18v-1" />
-    <path d="M12 12c-3 0-4.5-1.5-4.5-1.5L12 2l4.5 8.5c0 0-1.5 1.5-4.5 1.5z" />
-    <path d="M20 18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" />
-  </svg>
-));
+// Re-export Lucide icons that are already compatible with React Native
+export { HomeIcon as Home, AwardIcon as Award, DumbbellIcon as Dumbbell, CalendarIcon as Calendar, ClockIcon as Clock, BrainIcon as Brain, ListIcon as List, UserIcon as User };
 
-LucideGolf.displayName = "LucideGolf";
-
-// Re-export needed Lucide icons
-export { Home, Award, Calendar, Clock, Brain, List, User, FileText } from "lucide-react";
-
-// Custom Dumbbell icon for workouts/training
-export const Dumbbell = forwardRef<SVGSVGElement, LucideProps>((props, ref) => (
-  <svg
-    ref={ref}
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M6.5 6.5 17.5 17.5"></path>
-    <path d="M4 10h16"></path>
-    <path d="M10 4v16"></path>
-  </svg>
-));
-
-Dumbbell.displayName = "Dumbbell";
+// Custom LucideGolf Icon
+export const LucideGolf = (props: SvgProps) => {
+  return (
+    <Svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={props.color || 'currentColor'}
+      strokeWidth={props.strokeWidth || 2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <Path d="M12 18v-6" />
+      <Path d="M7 18v-8" />
+      <Path d="M17 18v-4" />
+      <Path d="M14 18v-4" />
+      <Path d="M10 18v-4" />
+      <Path d="M3 9v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9" />
+      <Path d="m9 8 3-6 3 6" />
+      <Path d="M9 7h6" />
+    </Svg>
+  );
+};
