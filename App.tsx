@@ -1,35 +1,26 @@
+import { registerRootComponent } from 'expo';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import React, { useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import AppNavigator from './src/navigation/AppNavigator';
-import { AuthProvider } from './src/context/AuthContext';
-import { ToastProvider } from './src/components/ui/toast';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// import your screens
+import Dashboard from './src/screens/Dashboard';
+import DrillLibrary from './src/screens/DrillLibrary';
+import ChallengeLibrary from './src/screens/ChallengeLibrary';
+// …and so on
 
-// Create a client for React Query
-const queryClient = new QueryClient();
+const Stack = createNativeStackNavigator();
 
-export default function App() {
-  // Initialize required libraries
-  useEffect(() => {
-    // This ensures that the gesture handler is properly initialized
-    require('react-native-gesture-handler');
-  }, []);
-  
+function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar style="light" />
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ToastProvider>
-              <AppNavigator />
-            </ToastProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Dashboard">
+        <Stack.Screen name="Dashboard" component={Dashboard} />
+        <Stack.Screen name="DrillLibrary" component={DrillLibrary} />
+        <Stack.Screen name="ChallengeLibrary" component={ChallengeLibrary} />
+        {/* add the rest of your src/screens/*.tsx here */}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
+
+export default registerRootComponent(App);
