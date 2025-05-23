@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PerformanceRadarChart } from "@/components/ai-analysis/PerformanceRadarChart";
 import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
@@ -37,8 +38,9 @@ const AIAnalysis = () => {
         if (planData && planData.length > 0) {
           setAnalysisData(planData[0]);
           
-          // Check if we have real performance data
-          const hasRealData = planData[0]?.practice_plan?.performanceInsights?.performance;
+          // Check if we have real performance data - using type assertions to access dynamically
+          const practiceData = planData[0].practice_plan as Record<string, any>;
+          const hasRealData = practiceData?.performanceInsights?.performance;
           setHasPerformanceData(!!hasRealData);
         }
       }
@@ -54,8 +56,8 @@ const AIAnalysis = () => {
           if (data) {
             setAnalysisData(data);
             
-            // Check if we have real performance data
-            const hasRealData = data?.practice_plan?.performanceInsights?.performance;
+            // Check if we have real performance data - need to use the correct property name from the type
+            const hasRealData = data?.practicePlan?.performanceInsights?.performance;
             setHasPerformanceData(!!hasRealData);
           }
         })
