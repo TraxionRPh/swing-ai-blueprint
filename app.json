@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "ChipAway",
-    "slug": "chipaway-expo",
+    "name": "SwingAI",
+    "slug": "swing-ai-blueprint",
     "version": "1.0.0",
-    "sdkVersion": "50.0.0",
     "orientation": "portrait",
     "platforms": ["android"],
+    "sdkVersion": "49.0.0",
     "android": {
-      "package": "com.brantmorton.chipaway",
-      "versionCode": 1,
+      "package": "com.chipaway.swingai",
+      "versionCode": 4,
       "targetSdkVersion": 34
     },
     "splash": {
@@ -16,7 +16,9 @@
     },
     "icon": "./assets/icon.png",
     "extra": {
-      "eas": { "projectId": "f5b91e6f-7003-4859-a1f4-e9c25f9c2fdb" }
+      "eas": {
+        "projectId": "f5b91e6f-7003-4859-a1f4-e9c25f9c2fdb"
+      }
     }
   }
 }
