@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -10,6 +10,7 @@ import {
   User, 
   LucideGolf
 } from '@/components/icons/CustomIcons';
+import { useAuth } from '@/context/AuthContext';
 
 // Screens
 import Auth from '@/screens/Auth';
@@ -19,6 +20,7 @@ import ChallengeHistory from '@/screens/ChallengeHistory';
 import RoundsList from '@/screens/RoundsList';
 import RoundTracking from '@/screens/RoundTracking';
 import AIAnalysis from '@/screens/AIAnalysis';
+import UserProfile from '@/screens/Profile';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -80,12 +82,9 @@ const MainTabs = () => {
   );
 };
 
-// Placeholder for user profile screen
-function UserProfile() {
-  return <AIAnalysis />;
-}
-
 const AppNavigator = () => {
+  const { user, session } = useAuth();
+  
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -94,44 +93,49 @@ const AppNavigator = () => {
           cardStyle: { backgroundColor: '#0F172A' },
         }}
       >
-        <Stack.Screen name="Auth" component={Auth} />
-        <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen 
-          name="ChallengeTracking" 
-          component={ChallengeTracking}
-          options={{
-            headerShown: true,
-            title: 'Challenge',
-            headerStyle: {
-              backgroundColor: '#0F172A',
-            },
-            headerTintColor: '#FFFFFF',
-          }}
-        />
-        <Stack.Screen 
-          name="ChallengeHistory" 
-          component={ChallengeHistory}
-          options={{
-            headerShown: true,
-            title: 'Challenge History',
-            headerStyle: {
-              backgroundColor: '#0F172A',
-            },
-            headerTintColor: '#FFFFFF',
-          }}
-        />
-        <Stack.Screen 
-          name="RoundTracking" 
-          component={RoundTracking}
-          options={{
-            headerShown: true,
-            title: 'Track Round',
-            headerStyle: {
-              backgroundColor: '#0F172A',
-            },
-            headerTintColor: '#FFFFFF',
-          }}
-        />
+        {!session ? (
+          <Stack.Screen name="Auth" component={Auth} />
+        ) : (
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen 
+              name="ChallengeTracking" 
+              component={ChallengeTracking}
+              options={{
+                headerShown: true,
+                title: 'Challenge',
+                headerStyle: {
+                  backgroundColor: '#0F172A',
+                },
+                headerTintColor: '#FFFFFF',
+              }}
+            />
+            <Stack.Screen 
+              name="ChallengeHistory" 
+              component={ChallengeHistory}
+              options={{
+                headerShown: true,
+                title: 'Challenge History',
+                headerStyle: {
+                  backgroundColor: '#0F172A',
+                },
+                headerTintColor: '#FFFFFF',
+              }}
+            />
+            <Stack.Screen 
+              name="RoundTracking" 
+              component={RoundTracking}
+              options={{
+                headerShown: true,
+                title: 'Track Round',
+                headerStyle: {
+                  backgroundColor: '#0F172A',
+                },
+                headerTintColor: '#FFFFFF',
+              }}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

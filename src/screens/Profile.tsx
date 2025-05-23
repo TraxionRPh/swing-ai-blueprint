@@ -1,63 +1,68 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../components/ui/button';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/components/ui/toast';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { User, Settings, LogOut } from 'lucide-react-native';
 
-const Profile = () => {
+const UserProfile = () => {
   const { user, signOut } = useAuth();
-
+  const { toast } = useToast();
+  
   const handleSignOut = async () => {
     try {
       await signOut();
+      toast({
+        title: 'Signed out successfully',
+        description: 'You have been signed out of your account.',
+        variant: 'success',
+      });
     } catch (error) {
-      console.error('Error signing out:', error);
+      toast({
+        title: 'Error signing out',
+        description: 'There was a problem signing you out.',
+        variant: 'destructive',
+      });
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Email</Text>
-            <Text style={styles.value}>{user?.email}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>Manage your account</Text>
+      </View>
+
+      <Card style={styles.card}>
+        <CardHeader>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatar}>
+              <User width={32} height={32} color="#FFFFFF" />
+            </View>
+            <CardTitle style={styles.userName}>
+              {user?.email || 'Golf Enthusiast'}
+            </CardTitle>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Name</Text>
-            <Text style={styles.value}>
-              {user?.user_metadata?.first_name || ''} {user?.user_metadata?.last_name || ''}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription</Text>
-          <View style={styles.subscriptionInfo}>
-            <Text style={styles.subscriptionStatus}>Free Plan</Text>
-            <Button onPress={() => {}} style={styles.upgradeButton}>
-              Upgrade to Premium
-            </Button>
-          </View>
-        </View>
-        
-        <View style={styles.actions}>
-          <Button 
-            variant="destructive" 
-            onPress={handleSignOut}
-            style={styles.signOutButton}
-          >
-            Sign Out
-          </Button>
-        </View>
-      </ScrollView>
+        </CardHeader>
+        <CardContent>
+          <TouchableOpacity style={styles.menuItem}>
+            <Settings size={20} color="#FFFFFF" />
+            <Text style={styles.menuItemText}>Account Settings</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <Settings size={20} color="#FFFFFF" />
+            <Text style={styles.menuItemText}>Notification Preferences</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <LogOut size={20} color="#FFFFFF" />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        </CardContent>
+      </Card>
     </SafeAreaView>
   );
 };
@@ -67,73 +72,65 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0F172A',
   },
-  scrollView: {
-    flex: 1,
-    padding: 16,
-  },
   header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  section: {
-    marginBottom: 24,
-    backgroundColor: '#1A1F2C',
-    borderRadius: 8,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#2A2F3C',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2A2F3C',
-  },
-  label: {
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  value: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  subscriptionInfo: {
     alignItems: 'center',
   },
-  subscriptionStatus: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 12,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#10B981',
+    marginBottom: 8,
   },
-  upgradeButton: {
-    width: '100%',
-  },
-  actions: {
-    marginTop: 12,
+  subtitle: {
+    fontSize: 16,
+    color: '#9CA3AF',
     marginBottom: 24,
   },
-  signOutButton: {
-    backgroundColor: '#EF4444',
+  card: {
+    marginHorizontal: 16,
   },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1E40AF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  userName: {
+    fontSize: 20,
+    color: '#FFFFFF',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E293B',
+  },
+  menuItemText: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  signOutText: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#EF4444',
+  }
 });
 
-export default Profile;
+export default UserProfile;

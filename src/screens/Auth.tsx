@@ -1,283 +1,225 @@
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { TextInput } from 'react-native';
 import { useToast } from '@/components/ui/toast';
 import { LucideGolf } from '@/components/icons/CustomIcons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-enum AuthMode {
-  SIGN_IN = "sign_in",
-  SIGN_UP = "sign_up"
-}
-
-const Auth = ({ navigation }: any) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [mode, setMode] = useState<AuthMode>(AuthMode.SIGN_IN);
-  const [loading, setLoading] = useState(false);
+const Auth = ({ navigation }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, session } = useAuth();
   const { toast } = useToast();
-
-  const isSignUp = mode === AuthMode.SIGN_UP;
-
-  const toggleMode = () => {
-    setMode(isSignUp ? AuthMode.SIGN_IN : AuthMode.SIGN_UP);
-    // Clear form fields when switching modes
-    setPassword("");
-    setConfirmPassword("");
-  };
-
-  const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) {
+  
+  useEffect(() => {
+    // Check if user is already logged in
+    if (session) {
+      navigation.replace('Main');
+    }
+  }, [session, navigation]);
+  
+  const handleSubmit = async () => {
+    if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
+        title: 'Missing fields',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
       });
       return;
     }
-
-    if (isSignUp) {
-      if (password !== confirmPassword) {
-        toast({
-          title: "Error",
-          description: "Passwords do not match.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    setLoading(true);
-
+    
+    setIsLoading(true);
+    
     try {
-      if (isSignUp) {
-        await signUp(email, password, firstName, lastName);
-        toast({
-          title: "Account created",
-          description: "You can now sign in to your account.",
-          variant: "success",
-        });
-        setMode(AuthMode.SIGN_IN);
-      } else {
+      if (isLogin) {
         await signIn(email, password);
+      } else {
+        if (!firstName || !lastName) {
+          toast({
+            title: 'Missing fields',
+            description: 'Please provide your first and last name.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        await signUp(email, password, firstName, lastName);
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "Error",
+        title: isLogin ? 'Login failed' : 'Registration failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
+  
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollView}>
-          <View style={styles.container}>
-            <View style={styles.header}>
-              <View style={styles.logoContainer}>
-                <LucideGolf width={40} height={40} color="#10B981" />
-              </View>
-              <Text style={styles.title}>ChipAway</Text>
-              <Text style={styles.subtitle}>
-                {isSignUp ? "Create an account to get started" : "Sign in to your account"}
-              </Text>
-            </View>
-
-            <View style={styles.form}>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#6B7280"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-
-              {isSignUp && (
-                <>
-                  <View style={styles.row}>
-                    <View style={[styles.formField, styles.halfWidth]}>
-                      <Text style={styles.label}>First Name</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={firstName}
-                        onChangeText={setFirstName}
-                        placeholder="First name"
-                        placeholderTextColor="#6B7280"
-                      />
-                    </View>
-
-                    <View style={[styles.formField, styles.halfWidth]}>
-                      <Text style={styles.label}>Last Name</Text>
-                      <TextInput
-                        style={styles.input}
-                        value={lastName}
-                        onChangeText={setLastName}
-                        placeholder="Last name"
-                        placeholderTextColor="#6B7280"
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-
-              <View style={styles.formField}>
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#6B7280"
-                  secureTextEntry
-                />
-              </View>
-
-              {isSignUp && (
-                <View style={styles.formField}>
-                  <Text style={styles.label}>Confirm Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Confirm your password"
-                    placeholderTextColor="#6B7280"
-                    secureTextEntry
-                  />
-                </View>
-              )}
-
-              <Button
-                onPress={handleAuth}
-                disabled={loading}
-                loading={loading}
-                style={styles.button}
-              >
-                {isSignUp ? "Create Account" : "Sign In"}
-              </Button>
-
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>
-                  {isSignUp ? "Already have an account?" : "Don't have an account?"}
-                </Text>
-                <TouchableOpacity onPress={toggleMode}>
-                  <Text style={styles.footerLink}>{isSignUp ? "Sign In" : "Sign Up"}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <LucideGolf width={60} height={60} color="#10B981" />
+          <Text style={styles.appTitle}>ChipAway</Text>
+          <Text style={styles.appDescription}>Elevate your golf game with AI-powered training</Text>
+        </View>
+        
+        <View style={styles.formContainer}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity 
+              style={[styles.tab, isLogin && styles.activeTab]} 
+              onPress={() => setIsLogin(true)}
+            >
+              <Text style={[styles.tabText, isLogin && styles.activeTabText]}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tab, !isLogin && styles.activeTab]} 
+              onPress={() => setIsLogin(false)}
+            >
+              <Text style={[styles.tabText, !isLogin && styles.activeTabText]}>Register</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          
+          <View style={styles.inputsContainer}>
+            {!isLogin && (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="First Name"
+                  placeholderTextColor="#6B7280"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Last Name"
+                  placeholderTextColor="#6B7280"
+                  value={lastName}
+                  onChangeText={setLastName}
+                />
+              </>
+            )}
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#6B7280"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#6B7280"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+            
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#0F172A', // background color
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollView: {
-    flexGrow: 1,
-  },
   container: {
     flex: 1,
-    padding: 16,
-    justifyContent: 'center',
+    backgroundColor: '#0F172A',
   },
-  header: {
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  logoContainer: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#1A1F2C',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  title: {
+  appTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginTop: 16,
   },
-  subtitle: {
+  appDescription: {
     fontSize: 16,
     color: '#9CA3AF',
     textAlign: 'center',
+    marginTop: 8,
   },
-  form: {
-    width: '100%',
+  formContainer: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  formField: {
-    marginBottom: 16,
-  },
-  row: {
+  tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D3748',
   },
-  halfWidth: {
-    width: '48%',
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#10B981',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  activeTabText: {
     color: '#FFFFFF',
-    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  inputsContainer: {
+    padding: 16,
   },
   input: {
-    backgroundColor: '#1A1F2C',
-    borderWidth: 1,
-    borderColor: '#2A2F3C',
-    borderRadius: 8,
+    backgroundColor: '#111827',
+    borderRadius: 4,
+    marginBottom: 12,
     padding: 12,
-    fontSize: 16,
     color: '#FFFFFF',
   },
   button: {
-    marginTop: 16,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+    padding: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 8,
   },
-  footerText: {
-    color: '#9CA3AF',
-    fontSize: 14,
-    marginRight: 4,
-  },
-  footerLink: {
-    color: '#10B981',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  }
 });
 
 export default Auth;
