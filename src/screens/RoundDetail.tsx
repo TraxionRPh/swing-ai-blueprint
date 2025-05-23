@@ -8,9 +8,7 @@ const RoundDetail = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Round Details</Text>
-        <Text style={styles.description}>
-          Detailed information about your golf round.
-        </Text>
+        <Text style={styles.subtitle}>Coming soon!</Text>
       </View>
     </SafeAreaView>
   );
@@ -30,13 +28,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#10B981',
-    marginBottom: 16,
+    color: '#FFFFFF',
+    marginBottom: 8,
   },
-  description: {
+  subtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
-    textAlign: 'center',
+    color: '#94A3B8',
   },
 });
 

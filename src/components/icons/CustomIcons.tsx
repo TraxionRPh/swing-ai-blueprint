@@ -2,32 +2,32 @@
 import React from 'react';
 import { Svg, Path, SvgProps } from 'react-native-svg';
 import { 
-  Home as HomeIcon, 
-  Award as AwardIcon, 
-  Dumbbell as DumbbellIcon, 
-  Calendar as CalendarIcon, 
-  Clock as ClockIcon, 
-  Brain as BrainIcon, 
-  List as ListIcon, 
-  User as UserIcon, 
-  FileText as FileTextIcon,
-  Trophy as TrophyIcon,
-  AlertCircle as AlertCircleIcon
+  Home, 
+  Award, 
+  Dumbbell, 
+  Calendar, 
+  Clock, 
+  Brain, 
+  List, 
+  User, 
+  FileText,
+  Trophy,
+  AlertCircle
 } from 'lucide-react-native';
 
 // Re-export Lucide icons that are already compatible with React Native
 export { 
-  HomeIcon as Home, 
-  AwardIcon as Award, 
-  DumbbellIcon as Dumbbell, 
-  CalendarIcon as Calendar, 
-  ClockIcon as Clock, 
-  BrainIcon as Brain, 
-  ListIcon as List, 
-  UserIcon as User, 
-  FileTextIcon as FileText,
-  TrophyIcon as Trophy,
-  AlertCircleIcon as AlertCircle
+  Home, 
+  Award, 
+  Dumbbell, 
+  Calendar, 
+  Clock, 
+  Brain, 
+  List, 
+  User, 
+  FileText,
+  Trophy,
+  AlertCircle
 };
 
 // Custom LucideGolf Icon
