@@ -38,7 +38,6 @@
     "@types/react-dom": "~18.2.0",
     "@types/react-native": "~0.72.6",
     "eslint": "^9.9.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "nativewind": "^2.0.14"
+    "eslint-plugin-react-hooks": "^5.1.0"
   }
 }
