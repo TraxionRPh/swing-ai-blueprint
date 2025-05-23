@@ -56,9 +56,12 @@ const AIAnalysis = () => {
           if (data) {
             setAnalysisData(data);
             
-            // Check if we have real performance data - need to use the correct property name from the type
-            const hasRealData = data?.practicePlan?.performanceInsights?.performance;
-            setHasPerformanceData(!!hasRealData);
+            // Fix: Access performance data differently based on the data structure
+            // We need to look at the data structure from the API response 
+            // which may differ from our TypeScript type definition
+            const performanceData = ((data as any)?.practicePlan as Record<string, any>)?.performanceInsights?.performance || 
+                                   ((data as any)?.practice_plan as Record<string, any>)?.performanceInsights?.performance;
+            setHasPerformanceData(!!performanceData);
           }
         })
         .catch(error => {
