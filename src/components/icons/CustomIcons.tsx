@@ -10,7 +10,9 @@ import {
   Brain as BrainIcon, 
   List as ListIcon, 
   User as UserIcon, 
-  FileText as FileTextIcon 
+  FileText as FileTextIcon,
+  Trophy as TrophyIcon,
+  AlertCircle as AlertCircleIcon
 } from 'lucide-react-native';
 
 // Re-export Lucide icons that are already compatible with React Native
@@ -23,7 +25,9 @@ export {
   BrainIcon as Brain, 
   ListIcon as List, 
   UserIcon as User, 
-  FileTextIcon as FileText 
+  FileTextIcon as FileText,
+  TrophyIcon as Trophy,
+  AlertCircleIcon as AlertCircle
 };
 
 // Custom LucideGolf Icon

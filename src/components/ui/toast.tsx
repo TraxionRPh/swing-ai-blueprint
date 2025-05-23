@@ -1,73 +1,78 @@
 
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, Easing } from 'react-native';
-import { X } from 'lucide-react-native';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AlertCircle } from '@/components/icons/CustomIcons';
 
-type ToastVariant = 'default' | 'destructive' | 'success';
+type ToastVariant = 'default' | 'success' | 'destructive' | 'warning';
 
-interface Toast {
-  id: string;
+type ToastProps = {
   title?: string;
   description?: string;
   variant?: ToastVariant;
   duration?: number;
-}
-
-interface ToastContextType {
-  toast: (props: Omit<Toast, 'id'>) => void;
-  dismissToast: (id: string) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
 };
 
-interface ToastProviderProps {
-  children: ReactNode;
-}
+type ToastContextType = {
+  toast: (props: ToastProps) => void;
+};
 
-export const ToastProvider = ({ children }: ToastProviderProps) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+const ToastContext = createContext<ToastContextType>({
+  toast: () => {},
+});
 
-  const toast = (props: Omit<Toast, 'id'>) => {
-    const id = Date.now().toString();
+export const useToast = () => useContext(ToastContext);
+
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [toasts, setToasts] = useState<(ToastProps & { id: number })[]>([]);
+  const [lastId, setLastId] = useState(0);
+
+  const toast = (props: ToastProps) => {
+    const id = lastId + 1;
+    setLastId(id);
+    
     const newToast = {
-      id,
-      variant: 'default',
-      duration: 2000, // Default to 2 seconds
       ...props,
+      id,
+      duration: props.duration || 3000,
     };
-
-    setToasts((prev) => [...prev, newToast]);
+    
+    setToasts(prev => [...prev, newToast]);
   };
-
-  const dismissToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  
+  const removeToast = (id: number) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   return (
-    <ToastContext.Provider value={{ toast, dismissToast }}>
+    <ToastContext.Provider value={{ toast }}>
       {children}
-      <ToastContainer toasts={toasts} dismissToast={dismissToast} />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            {...toast}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </SafeAreaView>
     </ToastContext.Provider>
   );
 };
 
-interface ToastComponentProps {
-  toast: Toast;
-  onDismiss: () => void;
-  onLayout?: (height: number) => void;
+interface ToastComponentProps extends ToastProps {
+  onClose: () => void;
 }
 
-const ToastComponent = ({ toast, onDismiss, onLayout }: ToastComponentProps) => {
-  const opacity = new Animated.Value(0);
-  const translateY = new Animated.Value(20);
+const Toast: React.FC<ToastComponentProps> = ({
+  title,
+  description,
+  variant = 'default',
+  duration = 3000,
+  onClose,
+}) => {
+  const opacity = React.useRef(new Animated.Value(0)).current;
+  const offset = React.useRef(new Animated.Value(-20)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -76,47 +81,43 @@ const ToastComponent = ({ toast, onDismiss, onLayout }: ToastComponentProps) => 
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.timing(translateY, {
+      Animated.timing(offset, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }),
+      })
     ]).start();
 
     const timer = setTimeout(() => {
-      handleDismiss();
-    }, toast.duration);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(offset, {
+          toValue: -20,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        onClose();
+      });
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [duration, onClose, opacity, offset]);
 
-  const handleDismiss = () => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 20,
-        duration: 200,
-        useNativeDriver: true,
-        easing: Easing.in(Easing.ease),
-      }),
-    ]).start(() => {
-      onDismiss();
-    });
-  };
-
-  const getVariantStyle = () => {
-    switch (toast.variant) {
-      case 'destructive':
-        return styles.toastDestructive;
+  const getVariantStyles = () => {
+    switch (variant) {
       case 'success':
-        return styles.toastSuccess;
+        return styles.success;
+      case 'destructive':
+        return styles.destructive;
+      case 'warning':
+        return styles.warning;
       default:
-        return {};
+        return styles.default;
     }
   };
 
@@ -124,65 +125,21 @@ const ToastComponent = ({ toast, onDismiss, onLayout }: ToastComponentProps) => 
     <Animated.View
       style={[
         styles.toast,
-        getVariantStyle(),
-        {
-          opacity,
-          transform: [{ translateY }],
-        },
+        getVariantStyles(),
+        { opacity, transform: [{ translateY: offset }] }
       ]}
-      onLayout={(event) => onLayout && onLayout(event.nativeEvent.layout.height)}
     >
-      <View style={styles.toastContent}>
-        {toast.title && <Text style={styles.toastTitle}>{toast.title}</Text>}
-        {toast.description && (
-          <Text style={styles.toastDescription}>{toast.description}</Text>
-        )}
+      <View style={styles.iconContainer}>
+        <AlertCircle width={20} height={20} color="#FFFFFF" />
       </View>
-      <TouchableOpacity onPress={handleDismiss} style={styles.closeButton}>
-        <X size={18} color="#9CA3AF" />
+      <View style={styles.content}>
+        {title && <Text style={styles.title}>{title}</Text>}
+        {description && <Text style={styles.description}>{description}</Text>}
+      </View>
+      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <Text style={styles.closeText}>×</Text>
       </TouchableOpacity>
     </Animated.View>
-  );
-};
-
-interface ToastContainerProps {
-  toasts: Toast[];
-  dismissToast: (id: string) => void;
-}
-
-const ToastContainer = ({ toasts, dismissToast }: ToastContainerProps) => {
-  const [heights, setHeights] = useState<Record<string, number>>({});
-
-  const handleLayout = (id: string, height: number) => {
-    setHeights((prev) => ({ ...prev, [id]: height }));
-  };
-
-  const getToastPosition = (index: number) => {
-    let position = 16; // Starting position (top margin)
-    for (let i = 0; i < index; i++) {
-      const id = toasts[i]?.id;
-      if (id && heights[id]) {
-        position += heights[id] + 8; // Add toast height + margin between toasts
-      }
-    }
-    return position;
-  };
-
-  return (
-    <View style={styles.container} pointerEvents="box-none">
-      {toasts.map((toast, index) => (
-        <View
-          key={toast.id}
-          style={[styles.toastWrapper, { top: getToastPosition(index) }]}
-        >
-          <ToastComponent
-            toast={toast}
-            onDismiss={() => dismissToast(toast.id)}
-            onLayout={(height) => handleLayout(toast.id, height)}
-          />
-        </View>
-      ))}
-    </View>
   );
 };
 
@@ -192,54 +149,66 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    zIndex: 9999,
-    pointerEvents: 'box-none',
-  },
-  toastWrapper: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    zIndex: 9999,
+    zIndex: 999,
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   toast: {
-    backgroundColor: '#1A1F2C',
-    borderRadius: 8,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
     padding: 16,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: '#2A2F3C',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  toastDestructive: {
-    backgroundColor: '#991B1B',
-    borderColor: '#7F1D1D',
+  default: {
+    backgroundColor: '#1E293B',
   },
-  toastSuccess: {
-    backgroundColor: '#065F46',
-    borderColor: '#064E3B',
+  success: {
+    backgroundColor: '#059669',
   },
-  toastContent: {
+  destructive: {
+    backgroundColor: '#DC2626',
+  },
+  warning: {
+    backgroundColor: '#D97706',
+  },
+  iconContainer: {
+    marginRight: 12,
+  },
+  content: {
     flex: 1,
-    marginRight: 8,
   },
-  toastTitle: {
+  title: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 4,
   },
-  toastDescription: {
-    color: '#D1D5DB',
+  description: {
+    color: '#E5E7EB',
     fontSize: 14,
   },
   closeButton: {
     padding: 4,
   },
+  closeText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
 });
+
+// Create a basic Button component for React Native
+export const Button = ({ children, ...props }) => {
+  return (
+    <TouchableOpacity style={styles.button} {...props}>
+      <Text style={styles.buttonText}>{children}</Text>
+    </TouchableOpacity>
+  );
+};
