@@ -1,25 +1,22 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 interface Drill {
   name: string;
   description: string;
   frequency: string;
 }
-
 interface Recommendations {
   weeklyFocus: string;
   primaryDrill: Drill;
   secondaryDrill: Drill;
   weeklyAssignment: string;
 }
-
 interface PracticeRecommendationsProps {
   recommendations?: Recommendations;
 }
-
-export const PracticeRecommendations = ({ recommendations }: PracticeRecommendationsProps) => {
+export const PracticeRecommendations = ({
+  recommendations
+}: PracticeRecommendationsProps) => {
   const defaultRecommendations = {
     weeklyFocus: "Driving Accuracy Improvement",
     primaryDrill: {
@@ -34,11 +31,8 @@ export const PracticeRecommendations = ({ recommendations }: PracticeRecommendat
     },
     weeklyAssignment: "Complete the \"100 Putts Challenge\" this week to improve your putting stroke consistency. Record your results in the Challenge Library."
   };
-
   const displayRecommendations = recommendations || defaultRecommendations;
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">AI Practice Recommendations</CardTitle>
         <CardDescription>
@@ -78,10 +72,7 @@ export const PracticeRecommendations = ({ recommendations }: PracticeRecommendat
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={() => window.location.href = '/practice-plans'}>
-          Generate Full Practice Plan
-        </Button>
+        
       </CardFooter>
-    </Card>
-  );
+    </Card>;
 };
