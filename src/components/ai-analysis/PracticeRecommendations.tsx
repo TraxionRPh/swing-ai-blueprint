@@ -21,15 +21,15 @@ interface PracticeRecommendationsProps {
 
 export const PracticeRecommendations = ({ recommendations }: PracticeRecommendationsProps) => {
   const defaultRecommendations = {
-    weeklyFocus: "Driver Path Correction",
+    weeklyFocus: "Driving Accuracy Improvement",
     primaryDrill: {
       name: "Alignment Stick Path",
-      description: "Place alignment sticks on the ground to visualize your swing path. This will help correct your out-to-in tendency and promote a more neutral or slightly in-to-out path.",
+      description: "Place alignment sticks on the ground to visualize and improve your swing path. This drill helps develop a more consistent and effective driving motion.",
       frequency: "3x weekly, 15 minutes each"
     },
     secondaryDrill: {
       name: "Half-Swing Power",
-      description: "Practice half swings with your driver, focusing on rotating through impact and finishing with the club face pointing at the target.",
+      description: "Practice half swings with your driver, focusing on rotating through impact and maintaining good balance throughout your swing motion.",
       frequency: "2x weekly, 20 minutes each"
     },
     weeklyAssignment: "Complete the \"100 Putts Challenge\" this week to improve your putting stroke consistency. Record your results in the Challenge Library."
