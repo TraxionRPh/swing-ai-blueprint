@@ -1,16 +1,41 @@
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ChallengeTracking = () => {
+  const [score, setScore] = useState('');
+  
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <View style={styles.header}>
         <Text style={styles.title}>Challenge Tracking</Text>
         <Text style={styles.description}>
           Track your progress on current challenges.
         </Text>
+      </View>
+      
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Putting Accuracy Challenge</Text>
+        <Text style={styles.cardDescription}>
+          Complete 20 putts from 6 feet distance. Record how many successful putts you made.
+        </Text>
+        
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Your Score (out of 20):</Text>
+          <TextInput
+            style={styles.input}
+            value={score}
+            onChangeText={setScore}
+            keyboardType="numeric"
+            placeholder="Enter score"
+            placeholderTextColor="#6B7280"
+          />
+        </View>
+        
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Submit Score</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -21,23 +46,66 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0F172A',
   },
-  content: {
-    flex: 1,
+  header: {
     padding: 16,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#10B981',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
     color: '#9CA3AF',
     textAlign: 'center',
+    marginBottom: 24,
   },
+  card: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 16,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 24,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#111827',
+    borderRadius: 4,
+    padding: 12,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  }
 });
 
 export default ChallengeTracking;
