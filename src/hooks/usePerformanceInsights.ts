@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { PerformanceInsight } from "@/types/practice-plan";
+import { PerformanceInsight, GeneratedPracticePlan } from "@/types/practice-plan";
 import { useToast } from "@/hooks/use-toast";
 
 interface UsePerformanceInsightsResult {
@@ -47,25 +47,31 @@ export const usePerformanceInsights = (): UsePerformanceInsightsResult => {
 
         // Extract performance insights from practice plan data
         if (practicePlan && practicePlan.length > 0 && practicePlan[0].practice_plan) {
-          const plan = practicePlan[0].practice_plan;
+          // Type check to ensure practice_plan is an object with the expected structure
+          const planData = practicePlan[0].practice_plan;
           
-          // Get performance insights if available
-          const insights = plan.performanceInsights || [];
-          
-          // Split insights into strengths and areas for improvement
-          const strengths: PerformanceInsight[] = [];
-          const improvements: PerformanceInsight[] = [];
-          
-          insights.forEach((insight: PerformanceInsight) => {
-            if (insight.priority === 'Low') {
-              strengths.push(insight);
-            } else {
-              improvements.push(insight);
-            }
-          });
+          if (typeof planData === 'object' && planData !== null) {
+            // Safely access performanceInsights if it exists in the object
+            const typedPlan = planData as Record<string, unknown>;
+            const insights = typedPlan.performanceInsights as PerformanceInsight[] || [];
+            
+            // Split insights into strengths and areas for improvement
+            const strengths: PerformanceInsight[] = [];
+            const improvements: PerformanceInsight[] = [];
+            
+            insights.forEach((insight: PerformanceInsight) => {
+              if (insight.priority === 'Low') {
+                strengths.push(insight);
+              } else {
+                improvements.push(insight);
+              }
+            });
 
-          setStrongPoints(strengths);
-          setAreasForImprovement(improvements);
+            setStrongPoints(strengths);
+            setAreasForImprovement(improvements);
+          } else {
+            console.log('Practice plan data is not in expected format');
+          }
         } else {
           console.log('No practice plans or insights found');
         }
