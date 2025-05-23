@@ -1,10 +1,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { usePerformanceInsights } from "@/hooks/usePerformanceInsights";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const PerformanceInsights = () => {
-  const { isLoading, error, strongPoints, areasForImprovement } = usePerformanceInsights();
+  const { isLoading, error, strongPoints, areasForImprovement, isUsingFallbackData } = usePerformanceInsights();
   
   // Fallback data for empty states
   const fallbackStrongPoints = [
@@ -41,6 +42,15 @@ export const PerformanceInsights = () => {
             </div>
           ) : (
             <>
+              {isUsingFallbackData && (
+                <Alert variant="warning" className="bg-amber-500/10 border border-amber-500/20 mb-4">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertDescription className="text-xs text-amber-500">
+                    Not enough round data to generate insights. Play more rounds to see personalized analysis.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <div className="p-4 bg-muted/20 rounded-lg border border-[#10B981]/20">
                 <h4 className="font-medium mb-2 text-[#10B981]">Strong Performance Areas</h4>
                 <ul className="text-sm text-muted-foreground space-y-2">
