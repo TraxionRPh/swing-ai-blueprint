@@ -38,9 +38,21 @@ export interface PlanDay {
   drills: any[];
 }
 
+export interface PerformanceData {
+  performance: {
+    driving: number;
+    ironPlay: number;
+    chipping: number;
+    bunker: number;
+    putting: number;
+  };
+  isPlaceholder?: boolean;
+}
+
 export interface PracticePlan {
   plan: PlanDay[];
   challenge?: any;
+  performanceInsights?: PerformanceData;
 }
 
 export interface PerformanceInsight {

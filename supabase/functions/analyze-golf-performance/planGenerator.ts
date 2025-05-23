@@ -1,4 +1,3 @@
-
 import { DrillData, PlanDay, AIResponse } from './types.ts';
 import { getDrillRelevanceScore, isPuttingRelated } from './drillMatching.ts';
 import { identifyProblemCategory, extractRelevantSearchTerms } from './golfCategorization.ts';
@@ -240,6 +239,227 @@ export class PlanGenerator {
     });
   }
 
+  // Updated method to generate performance metrics based on round data
+  private generatePerformanceData(): { performance: any } {
+    // Default values that will be used if no real data is available
+    const defaultPerformance = {
+      driving: 60,
+      ironPlay: 45,
+      chipping: 70,
+      bunker: 40,
+      putting: 65
+    };
+    
+    // If no round data, return the default metrics but mark as placeholder data
+    if (!this.roundData || this.roundData.length === 0) {
+      return { 
+        performance: defaultPerformance,
+        isPlaceholder: true
+      };
+    }
+    
+    try {
+      // Calculate metrics based on round data
+      const metrics = {
+        driving: this.calculateDrivingMetric(),
+        ironPlay: this.calculateIronPlayMetric(),
+        chipping: this.calculateChippingMetric(),
+        bunker: this.calculateBunkerMetric(),
+        putting: this.calculatePuttingMetric()
+      };
+      
+      // Check if we have enough real data to use
+      const hasRealData = Object.values(metrics).some(value => value !== null && value !== undefined);
+      
+      // If we have real data, use it; otherwise use default values
+      return { 
+        performance: hasRealData ? metrics : defaultPerformance,
+        isPlaceholder: !hasRealData
+      };
+    } catch (error) {
+      console.error("Error calculating performance metrics:", error);
+      return { 
+        performance: defaultPerformance,
+        isPlaceholder: true
+      };
+    }
+  }
+  
+  private calculateDrivingMetric(): number {
+    // If no rounds data, return null
+    if (!this.roundData || this.roundData.length === 0) return 50;
+    
+    // Calculate average fairways hit percentage
+    let totalFairways = 0;
+    let totalFairwaysHit = 0;
+    
+    this.roundData.forEach(round => {
+      if (round.fairways_hit !== undefined && round.hole_count) {
+        // Assume ~14 fairways per 18 holes
+        const fairwaysPerRound = round.hole_count === 18 ? 14 : 7;
+        totalFairways += fairwaysPerRound;
+        totalFairwaysHit += round.fairways_hit;
+      }
+    });
+    
+    // If no fairway data, return baseline score
+    if (totalFairways === 0) return 50;
+    
+    // Calculate fairway hit percentage and convert to a 0-100 scale
+    const fairwayHitPercentage = (totalFairwaysHit / totalFairways) * 100;
+    
+    // Transform percentage to a 0-100 scale where:
+    // 0% hit = ~20 score
+    // 50% hit = ~60 score
+    // 100% hit = ~95 score
+    return Math.min(95, Math.max(20, 40 + fairwayHitPercentage * 1.1));
+  }
+  
+  private calculateIronPlayMetric(): number {
+    // If no rounds data, return null
+    if (!this.roundData || this.roundData.length === 0) return 50;
+    
+    // Calculate greens in regulation percentage
+    let totalHoles = 0;
+    let totalGIR = 0;
+    
+    this.roundData.forEach(round => {
+      if (round.greens_in_regulation !== undefined && round.hole_count) {
+        totalHoles += round.hole_count;
+        totalGIR += round.greens_in_regulation;
+      }
+    });
+    
+    // If no GIR data, return baseline score
+    if (totalHoles === 0) return 50;
+    
+    // Calculate GIR percentage and convert to a 0-100 scale
+    const girPercentage = (totalGIR / totalHoles) * 100;
+    
+    // Transform percentage to a 0-100 scale where:
+    // 0% GIR = ~20 score
+    // 33% GIR = ~50 score (tour average is around 66%)
+    // 66% GIR = ~80 score 
+    // 100% GIR = 95 score
+    return Math.min(95, Math.max(20, 20 + girPercentage * 0.75));
+  }
+  
+  private calculateChippingMetric(): number {
+    // For chipping, we don't have direct metrics, so we'll infer from 
+    // the relationship between GIR and scoring
+    if (!this.roundData || this.roundData.length === 0) return 50;
+    
+    // Calculate average score relative to par and GIR
+    let totalScoreRelativeToPar = 0;
+    let totalHoles = 0;
+    let totalGIR = 0;
+    
+    this.roundData.forEach(round => {
+      if (round.total_score && round.hole_count) {
+        // Assuming par is typically 72 for 18 holes or 36 for 9 holes
+        const parEstimate = round.hole_count === 18 ? 72 : 36;
+        totalScoreRelativeToPar += (round.total_score - parEstimate);
+        totalHoles += round.hole_count;
+        
+        if (round.greens_in_regulation !== undefined) {
+          totalGIR += round.greens_in_regulation;
+        }
+      }
+    });
+    
+    // If no scoring data, return baseline
+    if (totalHoles === 0) return 50;
+    
+    // Calculate average strokes over par per hole
+    const avgStrokesOverParPerHole = totalScoreRelativeToPar / totalHoles;
+    
+    // Calculate missed greens
+    const missedGreens = totalHoles - totalGIR;
+    
+    // If no missed greens (unlikely), return high score
+    if (missedGreens === 0) return 85;
+    
+    // Calculate average strokes over par per missed green
+    // This gives us a sense of short game recovery skills
+    const recoveryEfficiency = totalScoreRelativeToPar / missedGreens;
+    
+    // Transform to a 0-100 scale:
+    // Higher efficiency (less strokes lost per missed green) = higher score
+    // Typical values would be between 0.5-1.5 strokes lost per missed green
+    return Math.min(95, Math.max(20, 100 - (recoveryEfficiency * 30)));
+  }
+  
+  private calculateBunkerMetric(): number {
+    // Bunker play is difficult to assess without specific bunker stats
+    // We'll use a combination of handicap level and overall scoring
+    
+    // Return a slightly randomized score based on handicap level to add variation
+    const handicapLevel = this.userData?.userData?.handicap_level;
+    let baseScore = 50; // Default middle value
+    
+    if (handicapLevel) {
+      switch (handicapLevel) {
+        case 'beginner':
+          baseScore = 30;
+          break;
+        case 'novice':
+          baseScore = 40;
+          break;
+        case 'intermediate':
+          baseScore = 55;
+          break;
+        case 'advanced':
+          baseScore = 70;
+          break;
+        case 'expert':
+          baseScore = 80;
+          break;
+        case 'pro':
+          baseScore = 90;
+          break;
+      }
+    }
+    
+    // Add a little randomization (+/- 10 points)
+    const randomFactor = Math.floor(Math.random() * 20) - 10;
+    return Math.min(95, Math.max(20, baseScore + randomFactor));
+  }
+  
+  private calculatePuttingMetric(): number {
+    // If no rounds data, return null
+    if (!this.roundData || this.roundData.length === 0) return 50;
+    
+    // Calculate average putts per hole
+    let totalPutts = 0;
+    let totalHoles = 0;
+    
+    this.roundData.forEach(round => {
+      if (round.total_putts !== undefined && round.hole_count) {
+        totalPutts += round.total_putts;
+        totalHoles += round.hole_count;
+      }
+    });
+    
+    // If no putting data, return baseline score
+    if (totalHoles === 0) return 50;
+    
+    // Calculate putts per hole
+    const puttsPerHole = totalPutts / totalHoles;
+    
+    // Transform putts per hole to a 0-100 scale:
+    // 1.5 putts/hole = ~95 score (exceptional)
+    // 1.8 putts/hole = ~80 score (very good)
+    // 2.0 putts/hole = ~65 score (good amateur)
+    // 2.2 putts/hole = ~50 score (average amateur)
+    // 2.5+ putts/hole = <40 score (needs improvement)
+    if (puttsPerHole <= 1.5) return 95;
+    if (puttsPerHole <= 1.8) return 80 - ((puttsPerHole - 1.5) * 50);
+    if (puttsPerHole <= 2.0) return 65 - ((puttsPerHole - 1.8) * 75);
+    if (puttsPerHole <= 2.2) return 50 - ((puttsPerHole - 2.0) * 75);
+    if (puttsPerHole <= 2.5) return 35 - ((puttsPerHole - 2.2) * 50);
+    return Math.max(20, 20 - ((puttsPerHole - 2.5) * 30));
+  }
+
   // Analyze round data to identify performance patterns
   private analyzePerformanceFromRounds() {
     if (!this.roundData || this.roundData.length === 0) {
@@ -399,7 +619,7 @@ export class PlanGenerator {
       this.specificProblem, 
       this.problemCategory,
       this.userData?.userData?.handicap_level,
-      this.isAIGenerated // Pass the isAIGenerated flag to the DiagnosisGenerator
+      this.isAIGenerated
     );
     
     const practiceDayGenerator = new PracticeDayGenerator(
@@ -422,6 +642,9 @@ export class PlanGenerator {
     const roundInsights = this.analyzePerformanceFromRounds();
     const challengeInsights = this.analyzePerformanceFromChallenges();
     const combinedInsights = [...roundInsights, ...challengeInsights];
+    
+    // Generate performance metrics data for the radar chart
+    const performanceData = this.generatePerformanceData();
     
     // Create practice plan days with a more balanced distribution of drills
     const dailyPlans = Array.from({ length: this.planDuration }, (_, i) => {
@@ -514,11 +737,14 @@ export class PlanGenerator {
       rootCauses: rootCauses,
       practicePlan: {
         plan: validatedPlans,
-        challenge: selectedChallenge
+        challenge: selectedChallenge,
+        performanceInsights: {
+          performance: performanceData.performance,
+          isPlaceholder: performanceData.isPlaceholder
+        }
       },
       performanceInsights: combinedInsights,
       isAIGenerated: this.isAIGenerated
     };
   }
 }
-

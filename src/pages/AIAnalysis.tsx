@@ -38,10 +38,13 @@ const AIAnalysis = () => {
         if (planData && planData.length > 0) {
           setAnalysisData(planData[0]);
           
-          // Check if we have real performance data - using type assertions to access dynamically
-          const practiceData = planData[0].practice_plan as Record<string, any>;
-          const hasRealData = practiceData?.performanceInsights?.performance;
-          setHasPerformanceData(!!hasRealData);
+          // Unified performance data check logic
+          const practicePlan = planData[0].practice_plan;
+          const performanceDataExists = practicePlan?.performanceInsights?.performance;
+          const isPlaceholder = practicePlan?.performanceInsights?.isPlaceholder;
+          
+          // We have real data if performance data exists and is not marked as placeholder
+          setHasPerformanceData(!!performanceDataExists && !isPlaceholder);
         }
       }
     };
@@ -56,12 +59,11 @@ const AIAnalysis = () => {
           if (data) {
             setAnalysisData(data);
             
-            // Fix: Access performance data differently based on the data structure
-            // We need to look at the data structure from the API response 
-            // which may differ from our TypeScript type definition
-            const performanceData = ((data as any)?.practicePlan as Record<string, any>)?.performanceInsights?.performance || 
-                                   ((data as any)?.practice_plan as Record<string, any>)?.performanceInsights?.performance;
-            setHasPerformanceData(!!performanceData);
+            // Update performance data flag using the isPlaceholder property
+            const performanceData = data?.practice_plan?.performanceInsights?.performance;
+            const isPlaceholder = data?.practice_plan?.performanceInsights?.isPlaceholder;
+            
+            setHasPerformanceData(!!performanceData && !isPlaceholder);
           }
         })
         .catch(error => {
@@ -105,47 +107,57 @@ const AIAnalysis = () => {
                 confidenceData={aiConfidenceHistory}
                 currentConfidence={currentConfidence}
               />
-              <IdentifiedIssues issues={analysisData?.rootCauses?.map((cause: string, i: number) => {
-                let area, description;
-                
-                if (i === 0) {
-                  area = "Driving Accuracy";
-                  description = "Improving your accuracy off the tee will set you up for more successful approach shots and lower scores overall.";
-                } else if (i === 1) {
-                  area = "Short Game";
-                  description = "Focus on your short game around the greens, especially chipping and bunker play. Consistent up-and-downs can significantly lower your scores.";
-                } else if (i === 2) {
-                  area = "Iron Play";
-                  description = "Work on consistent distance control with your irons to improve your approach shots and increase greens in regulation.";
-                } else if (i === 3) {
-                  area = "Putting";
-                  description = "Enhancing your putting skills, particularly with speed control and reading greens, can eliminate unnecessary strokes from your game.";
-                } else {
-                  area = "Course Management";
-                  description = "Developing better strategic decisions on the course can help you avoid trouble and play to your strengths.";
-                }
-              
-                return {
-                  area,
-                  description,
-                  priority: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low'
-                };
-              })} />
+              <IdentifiedIssues issues={
+                // Use real issues from the API if available
+                analysisData?.performanceInsights?.length > 0 ? 
+                  analysisData.performanceInsights.map((insight: any) => ({
+                    area: insight.area,
+                    description: insight.description,
+                    priority: insight.priority
+                  })) :
+                  // Fallback to root causes with default descriptions
+                  analysisData?.rootCauses?.map((cause: string, i: number) => {
+                    let area, description;
+                    
+                    if (i === 0) {
+                      area = "Driving Accuracy";
+                      description = "Improving your accuracy off the tee will set you up for more successful approach shots and lower scores overall.";
+                    } else if (i === 1) {
+                      area = "Short Game";
+                      description = "Focus on your short game around the greens, especially chipping and bunker play. Consistent up-and-downs can significantly lower your scores.";
+                    } else if (i === 2) {
+                      area = "Iron Play";
+                      description = "Work on consistent distance control with your irons to improve your approach shots and increase greens in regulation.";
+                    } else if (i === 3) {
+                      area = "Putting";
+                      description = "Enhancing your putting skills, particularly with speed control and reading greens, can eliminate unnecessary strokes from your game.";
+                    } else {
+                      area = "Course Management";
+                      description = "Developing better strategic decisions on the course can help you avoid trouble and play to your strengths.";
+                    }
+                  
+                    return {
+                      area,
+                      description,
+                      priority: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low'
+                    };
+                  })
+              } />
               <PracticeRecommendations 
                 recommendations={
-                  analysisData?.practicePlan?.plan?.[0] ? {
-                    weeklyFocus: analysisData.practicePlan.plan[0].focus || "Swing Fundamentals",
+                  analysisData?.practice_plan?.plan?.[0] ? {
+                    weeklyFocus: analysisData.practice_plan.plan[0].focus || "Swing Fundamentals",
                     primaryDrill: {
-                      name: analysisData.practicePlan.plan[0].drills?.[0]?.drill?.title || "Alignment Drill",
-                      description: analysisData.practicePlan.plan[0].drills?.[0]?.drill?.overview || "Basic alignment practice",
-                      frequency: `${analysisData.practicePlan.plan[0].drills?.[0]?.sets || 3}x sets, ${analysisData.practicePlan.plan[0].drills?.[0]?.reps || 10}x reps`
+                      name: analysisData.practice_plan.plan[0].drills?.[0]?.drill?.title || "Alignment Drill",
+                      description: analysisData.practice_plan.plan[0].drills?.[0]?.drill?.overview || "Basic alignment practice",
+                      frequency: `${analysisData.practice_plan.plan[0].drills?.[0]?.sets || 3}x sets, ${analysisData.practice_plan.plan[0].drills?.[0]?.reps || 10}x reps`
                     },
                     secondaryDrill: {
-                      name: analysisData.practicePlan.plan[0].drills?.[1]?.drill?.title || "Swing Path Drill",
-                      description: analysisData.practicePlan.plan[0].drills?.[1]?.drill?.overview || "Practice your swing path",
-                      frequency: `${analysisData.practicePlan.plan[0].drills?.[1]?.sets || 2}x sets, ${analysisData.practicePlan.plan[0].drills?.[1]?.reps || 10}x reps`
+                      name: analysisData.practice_plan.plan[0].drills?.[1]?.drill?.title || "Swing Path Drill",
+                      description: analysisData.practice_plan.plan[0].drills?.[1]?.drill?.overview || "Practice your swing path",
+                      frequency: `${analysisData.practice_plan.plan[0].drills?.[1]?.sets || 2}x sets, ${analysisData.practice_plan.plan[0].drills?.[1]?.reps || 10}x reps`
                     },
-                    weeklyAssignment: analysisData.practicePlan.challenge?.description || "Complete a practice challenge this week"
+                    weeklyAssignment: analysisData.practice_plan.challenge?.description || "Complete a practice challenge this week"
                   } : undefined
                 }
               />

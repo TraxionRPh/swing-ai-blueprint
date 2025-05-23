@@ -30,7 +30,7 @@ interface PerformanceRadarChartProps {
 export const PerformanceRadarChart = ({ data, isPlaceholder = false }: PerformanceRadarChartProps) => {
   const isMobile = useIsMobile();
 
-  // Format data for the chart
+  // Format data for the chart - use available data or fallback values
   const formattedData = data ? [
     { area: "Driving", value: data.driving },
     { area: "Iron Play", value: data.ironPlay },
@@ -45,7 +45,7 @@ export const PerformanceRadarChart = ({ data, isPlaceholder = false }: Performan
     { area: "Putting", value: 65 },
   ];
 
-  // Determine if we're using placeholder data based on props or missing data
+  // Determine if we're using placeholder data based on explicit props flag
   const usingPlaceholderData = isPlaceholder || !data;
 
   return (
