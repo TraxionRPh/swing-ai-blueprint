@@ -39,8 +39,8 @@ const AIAnalysis = () => {
         if (planData && planData.length > 0) {
           setAnalysisData(planData[0]);
           
-          // Properly access performance data with type safety
-          const practicePlan = planData[0].practice_plan;
+          // Type checking for practice_plan as any type since it comes from database as JSON
+          const practicePlan = planData[0].practice_plan as any;
           
           // Check if practicePlan is an object and has performanceInsights
           if (practicePlan && 
@@ -65,12 +65,12 @@ const AIAnalysis = () => {
   const handleRefreshAnalysis = () => {
     try {
       generatePlan(userId, "", "beginner", "1")
-        .then((data) => {
+        .then((data: GeneratedPracticePlan) => {
           if (data) {
             setAnalysisData(data);
             
-            // Properly access updated performance data
-            const practicePlanData = data.practice_plan;
+            // Access practicePlan (not practice_plan) from GeneratedPracticePlan type
+            const practicePlanData = data.practicePlan;
             
             if (practicePlanData && 
                 typeof practicePlanData === 'object' && 
