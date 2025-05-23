@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PerformanceRadarChart } from "@/components/ai-analysis/PerformanceRadarChart";
 import { ConfidenceChart } from "@/components/ai-analysis/ConfidenceChart";
@@ -18,6 +17,7 @@ const AIAnalysis = () => {
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [analysisData, setAnalysisData] = useState<any>(null);
   const { aiConfidenceHistory, updateConfidence } = useAIConfidence();
+  const [hasPerformanceData, setHasPerformanceData] = useState<boolean>(false);
   
   // Get current user ID
   useEffect(() => {
@@ -36,6 +36,10 @@ const AIAnalysis = () => {
           
         if (planData && planData.length > 0) {
           setAnalysisData(planData[0]);
+          
+          // Check if we have real performance data
+          const hasRealData = planData[0]?.practice_plan?.performanceInsights?.performance;
+          setHasPerformanceData(!!hasRealData);
         }
       }
     };
@@ -49,6 +53,10 @@ const AIAnalysis = () => {
         .then((data) => {
           if (data) {
             setAnalysisData(data);
+            
+            // Check if we have real performance data
+            const hasRealData = data?.practice_plan?.performanceInsights?.performance;
+            setHasPerformanceData(!!hasRealData);
           }
         })
         .catch(error => {
@@ -84,7 +92,10 @@ const AIAnalysis = () => {
         <>
           {analysisData ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <PerformanceRadarChart data={analysisData?.practice_plan?.performanceInsights?.performance} />
+              <PerformanceRadarChart 
+                data={analysisData?.practice_plan?.performanceInsights?.performance}
+                isPlaceholder={!hasPerformanceData} 
+              />
               <ConfidenceChart 
                 confidenceData={aiConfidenceHistory}
                 currentConfidence={currentConfidence}

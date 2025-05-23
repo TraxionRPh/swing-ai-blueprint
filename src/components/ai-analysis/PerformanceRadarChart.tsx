@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface PerformanceData {
   driving: number;
@@ -22,9 +24,10 @@ interface PerformanceData {
 
 interface PerformanceRadarChartProps {
   data?: PerformanceData;
+  isPlaceholder?: boolean;
 }
 
-export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
+export const PerformanceRadarChart = ({ data, isPlaceholder = false }: PerformanceRadarChartProps) => {
   const isMobile = useIsMobile();
 
   // Format data for the chart
@@ -42,6 +45,9 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
     { area: "Putting", value: 65 },
   ];
 
+  // Determine if we're using placeholder data based on props or missing data
+  const usingPlaceholderData = isPlaceholder || !data;
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -54,6 +60,14 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
+        {usingPlaceholderData && (
+          <Alert variant="warning" className="bg-amber-500/10 border border-amber-500/20 mb-4">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-xs text-amber-500">
+              Using sample data. Play more rounds to see your actual performance analysis.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="h-[300px] md:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "65%" : "80%"} data={formattedData}>
