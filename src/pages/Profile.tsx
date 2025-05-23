@@ -159,18 +159,15 @@ const Profile = () => {
             </div>
           </div>
           
-          {/* Add email display field */}
+          {/* Email display as text */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" /> Email Address
-            </Label>
-            <Input
-              id="email"
-              value={userEmail || ''}
-              readOnly
-              disabled
-              className="bg-gray-50 cursor-not-allowed"
-            />
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="h-4 w-4" />
+              <Label>Email Address</Label>
+            </div>
+            <div className="px-3 py-2 rounded-md border border-input bg-background text-sm">
+              {userEmail || 'Loading email...'}
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
