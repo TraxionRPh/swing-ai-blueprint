@@ -10,12 +10,14 @@ import { AIAnalysisHeader } from "@/components/ai-analysis/AIAnalysisHeader";
 import { AIAnalysisInfoBanner } from "@/components/ai-analysis/AIAnalysisInfoBanner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAIConfidence } from "@/hooks/useAIConfidence";
 
 const AIAnalysis = () => {
   const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const { aiConfidenceHistory, updateConfidence } = useAIConfidence();
   
   // Get current user ID
   useEffect(() => {
@@ -58,6 +60,11 @@ const AIAnalysis = () => {
     }
   };
 
+  // Calculate the current confidence level (most recent value)
+  const currentConfidence = aiConfidenceHistory.length > 0 
+    ? aiConfidenceHistory[aiConfidenceHistory.length - 1].confidence 
+    : 35; // Default starting confidence for brand new users
+
   return (
     <div className="space-y-4 max-w-full overflow-x-hidden">
       <AIAnalysisHeader 
@@ -79,11 +86,8 @@ const AIAnalysis = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <PerformanceRadarChart data={analysisData?.practice_plan?.performanceInsights?.performance} />
               <ConfidenceChart 
-                confidenceData={[
-                  { date: "Last Week", confidence: 75 },
-                  { date: "Today", confidence: 85 }
-                ]} 
-                currentConfidence={85}
+                confidenceData={aiConfidenceHistory}
+                currentConfidence={currentConfidence}
               />
               <IdentifiedIssues issues={analysisData?.rootCauses?.map((cause: string, i: number) => {
                 let area, description;
