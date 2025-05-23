@@ -1,23 +1,22 @@
 {
   "expo": {
-    "name": "SwingAI",
-    "slug": "swing-ai-blueprint",
+    "name": "ChipAway",
+    "slug": "chipaway-expo",
     "version": "1.0.0",
+    "sdkVersion": "50.0.0",
     "orientation": "portrait",
     "platforms": ["android"],
-    "sdkVersion": "49.0.0",
     "android": {
-      "package": "com.chipaway.swingai",
-      "versionCode": 4,
+      "package": "com.brantmorton.chipaway",
+      "versionCode": 1,
       "targetSdkVersion": 34
     },
     "splash": {
-      "backgroundColor": "#0F172A"  // This is Tailwind slate-900 (your app's dark blue)
+      "backgroundColor": "#0F172A"
     },
+    "icon": "./assets/icon.png",
     "extra": {
-      "eas": {
-        "projectId": "f5b91e6f-7003-4859-a1f4-e9c25f9c2fdb"
-      }
+      "eas": { "projectId": "f5b91e6f-7003-4859-a1f4-e9c25f9c2fdb" }
     }
   }
 }
