@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Dummy data for challenge history
@@ -28,24 +28,34 @@ const dummyChallengeHistory = [
   }
 ];
 
-const HistoryItem = ({ title, date, score, performance }) => (
-  <View style={styles.historyCard}>
-    <Text style={styles.historyTitle}>{title}</Text>
-    <View style={styles.historyDetails}>
-      <Text style={styles.historyDate}>{date}</Text>
-      <Text style={styles.historyScore}>{score}</Text>
+const HistoryItem = ({ title, date, score, performance }) => {
+  // Determine badge style based on performance
+  const getBadgeStyle = () => {
+    switch (performance) {
+      case 'Great':
+        return styles.greatBadge;
+      case 'Good':
+        return styles.goodBadge;
+      default:
+        return styles.averageBadge;
+    }
+  };
+  
+  return (
+    <View style={styles.historyCard}>
+      <Text style={styles.historyTitle}>{title}</Text>
+      <View style={styles.historyDetails}>
+        <Text style={styles.historyDate}>{date}</Text>
+        <Text style={styles.historyScore}>{score}</Text>
+      </View>
+      <View style={[styles.performanceBadge, getBadgeStyle()]}>
+        <Text style={styles.performanceText}>{performance}</Text>
+      </View>
     </View>
-    <View style={[
-      styles.performanceBadge,
-      performance === 'Great' ? styles.greatBadge : 
-      performance === 'Good' ? styles.goodBadge : styles.averageBadge
-    ]}>
-      <Text style={styles.performanceText}>{performance}</Text>
-    </View>
-  </View>
-);
+  );
+};
 
-const ChallengeHistory = () => {
+const ChallengeHistory = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>

@@ -3,8 +3,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const ChallengeTracking = () => {
+const ChallengeTracking = ({ route, navigation }) => {
   const [score, setScore] = useState('');
+  const challengeId = route.params?.challengeId;
+  
+  const handleSubmit = () => {
+    // Here you would submit the score to your backend
+    console.log(`Submitting score: ${score} for challenge ID: ${challengeId}`);
+    
+    // Navigate to history after submission
+    navigation.navigate('ChallengeHistory');
+  };
   
   return (
     <SafeAreaView style={styles.container}>
@@ -33,7 +42,7 @@ const ChallengeTracking = () => {
           />
         </View>
         
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Submit Score</Text>
         </TouchableOpacity>
       </View>
