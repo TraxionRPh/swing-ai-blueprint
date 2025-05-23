@@ -9,9 +9,10 @@
     ],
     "sdkVersion": "49.0.0",
     "android": {
-      "package": "com.yourcompany.swingai",
-      "versionCode": 3,
-      "targetSdkVersion": 34
+  "package": "com.chipaway.swingai",
+  "versionCode": 4,
+  "targetSdkVersion": 34
+}
     },
     "extra": {
       "eas": {
