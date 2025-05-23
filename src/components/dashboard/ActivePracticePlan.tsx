@@ -1,34 +1,96 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { ListTodo } from "lucide-react";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ListTodo } from 'lucide-react-native';
 
-export const ActivePracticePlan = () => {
+export const ActivePracticePlan = ({ navigation }) => {
   return (
-    <Card className="mb-4 bg-[#1A1F2C] text-white border border-primary/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-2xl font-bold">Active Practice Plan</CardTitle>
-        <CardDescription className="text-gray-400">
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Active Practice Plan</Text>
+        <Text style={styles.description}>
           Continue with your personalized practice plan
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold">Improving Your Golf Game</h3>
-            <p className="text-sm text-gray-400">
+        </Text>
+      </View>
+      <View style={styles.content}>
+        <View style={styles.infoContainer}>
+          <View style={styles.textContainer}>
+            <Text style={styles.planTitle}>Improving Your Golf Game</Text>
+            <Text style={styles.planDescription}>
               Follow your custom practice plan to enhance your skills
-            </p>
-          </div>
-          <Button asChild size="lg" className="bg-[#10B981] hover:bg-[#10B981]/90 text-white">
-            <Link to="/my-practice-plans" className="flex items-center gap-2">
-              <ListTodo className="h-5 w-5" />
-              View Plan
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={() => navigation.navigate('MyPracticePlans')}
+          >
+            <ListTodo width={20} height={20} color="#FFFFFF" />
+            <Text style={styles.buttonText}>View Plan</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#1A1F2C',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3A50',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  description: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  content: {
+    padding: 16,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  planDescription: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  button: {
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+});
+
+export default ActivePracticePlan;

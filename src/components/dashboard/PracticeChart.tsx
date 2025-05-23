@@ -1,90 +1,120 @@
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
-import { startOfMonth, endOfMonth } from "date-fns";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 interface PracticeData {
   name: string;
   hours: number;
 }
 
-export const PracticeChart = () => {
-  const [practiceData, setPracticeData] = useState<PracticeData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchPracticeData = async () => {
-      if (!user) return;
-
-      try {
-        const monthStart = startOfMonth(new Date());
-        const monthEnd = endOfMonth(new Date());
-
-        const { data, error } = await supabase
-          .from('practice_sessions')
-          .select('focus_area, duration_minutes')
-          .eq('user_id', user.id)
-          .gte('date', monthStart.toISOString())
-          .lte('date', monthEnd.toISOString());
-
-        if (error) throw error;
-
-        // Aggregate practice time by focus area
-        const practiceByArea = data.reduce((acc, session) => {
-          const hours = session.duration_minutes / 60;
-          acc[session.focus_area] = (acc[session.focus_area] || 0) + hours;
-          return acc;
-        }, {} as Record<string, number>);
-
-        // Convert to chart data format
-        const formattedData = Object.entries(practiceByArea).map(([name, hours]) => ({
-          name,
-          hours: Math.round(hours),
-        }));
-
-        setPracticeData(formattedData);
-      } catch (error) {
-        console.error('Error fetching practice data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPracticeData();
-  }, [user]);
-
+// A simple bar representation for React Native
+const SimpleBarChart = ({ data }: { data: PracticeData[] }) => {
+  const maxHours = Math.max(...data.map(item => item.hours), 1);
+  
   return (
-    <Card className="flex flex-col h-[400px]">
-      <CardHeader className="pb-2">
-        <CardTitle>Practice Focus</CardTitle>
-        <CardDescription>Hours spent by category</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">Loading practice data...</p>
-          </div>
-        ) : practiceData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={practiceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="hours" fill="#10B981" />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">No practice data recorded this month</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <View style={styles.chartContainer}>
+      {data.map((item, index) => (
+        <View key={index} style={styles.barGroup}>
+          <Text style={styles.barLabel}>{item.name}</Text>
+          <View style={styles.barContainer}>
+            <View 
+              style={[
+                styles.bar, 
+                { 
+                  width: `${(item.hours / maxHours) * 100}%`,
+                  backgroundColor: '#10B981' 
+                }
+              ]}
+            />
+            <Text style={styles.barValue}>{item.hours}h</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 };
+
+export const PracticeChart = () => {
+  // Sample data for demonstration
+  const samplePracticeData = [
+    { name: 'Putting', hours: 5 },
+    { name: 'Driving', hours: 3 },
+    { name: 'Approach', hours: 2 },
+    { name: 'Chipping', hours: 4 },
+  ];
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Practice Focus</Text>
+        <Text style={styles.description}>Hours spent by category</Text>
+      </View>
+      
+      <View style={styles.content}>
+        <SimpleBarChart data={samplePracticeData} />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    marginBottom: 16,
+    height: 400,
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3A50',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  description: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+  },
+  chartContainer: {
+    gap: 16,
+  },
+  barGroup: {
+    marginBottom: 12,
+  },
+  barLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  barContainer: {
+    height: 24,
+    backgroundColor: '#0F172A',
+    borderRadius: 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  bar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+  },
+  barValue: {
+    position: 'absolute',
+    right: 8,
+    top: 3,
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+});
+
+export default PracticeChart;

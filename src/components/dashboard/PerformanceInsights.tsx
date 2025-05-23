@@ -1,11 +1,28 @@
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, AlertCircle } from "lucide-react";
-import { usePerformanceInsights } from "@/hooks/usePerformanceInsights";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { AlertCircle, Loader2 } from 'lucide-react-native';
 
-export const PerformanceInsights = () => {
-  const { isLoading, error, strongPoints, areasForImprovement, isUsingFallbackData } = usePerformanceInsights();
+type InsightPoint = {
+  area: string;
+  description: string;
+};
+
+type PerformanceInsightsProps = {
+  isLoading?: boolean;
+  error?: string | null;
+  strongPoints?: InsightPoint[];
+  areasForImprovement?: InsightPoint[];
+  isUsingFallbackData?: boolean;
+};
+
+export const PerformanceInsights = ({
+  isLoading = false,
+  error = null,
+  strongPoints = [],
+  areasForImprovement = [],
+  isUsingFallbackData = true
+}: PerformanceInsightsProps) => {
   
   // Fallback data for empty states
   const fallbackStrongPoints = [
@@ -23,55 +40,146 @@ export const PerformanceInsights = () => {
   const displayAreasForImprovement = areasForImprovement.length > 0 ? areasForImprovement : fallbackAreasForImprovement;
 
   return (
-    <Card className="border border-transparent bg-gradient-to-r p-[1px] from-[#9b87f5] to-[#D946EF]">
-      <div className="bg-card h-full rounded-lg">
-        <CardHeader className="pb-2 text-foreground rounded-t-lg border-b border-purple-500/20">
-          <CardTitle>Performance Insights</CardTitle>
-          <CardDescription>Analysis based on recent rounds</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : error ? (
-            <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-              <p className="text-sm text-destructive">
-                {error}. Showing sample data instead.
-              </p>
-            </div>
-          ) : (
-            <>
-              {isUsingFallbackData && (
-                <Alert variant="warning" className="bg-amber-500/10 border border-amber-500/20 mb-4">
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <AlertDescription className="text-xs text-amber-500">
-                    Not enough round data to generate insights. Play more rounds to see personalized analysis.
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="p-4 bg-muted/20 rounded-lg border border-[#10B981]/20">
-                <h4 className="font-medium mb-2 text-[#10B981]">Strong Performance Areas</h4>
-                <ul className="text-sm text-muted-foreground space-y-2">
-                  {displayStrongPoints.map((point, index) => (
-                    <li key={`strength-${index}`}>• {point.description}</li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div className="p-4 bg-muted/20 rounded-lg border border-[#FFC300]/20">
-                <h4 className="font-medium mb-2 text-[#FFC300]">Areas for Focus</h4>
-                <ul className="text-sm text-muted-foreground space-y-2">
-                  {displayAreasForImprovement.map((point, index) => (
-                    <li key={`improvement-${index}`}>• {point.description}</li>
-                  ))}
-                </ul>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </div>
-    </Card>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Performance Insights</Text>
+        <Text style={styles.description}>Analysis based on recent rounds</Text>
+      </View>
+      
+      <View style={styles.content}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Loader2 width={24} height={24} color="#10B981" />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>
+              {error}. Showing sample data instead.
+            </Text>
+          </View>
+        ) : (
+          <>
+            {isUsingFallbackData && (
+              <View style={styles.alert}>
+                <AlertCircle width={16} height={16} color="#F59E0B" />
+                <Text style={styles.alertText}>
+                  Not enough round data to generate insights. Play more rounds to see personalized analysis.
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.insightSection}>
+              <Text style={styles.sectionTitle}>Strong Performance Areas</Text>
+              <View style={styles.insightList}>
+                {displayStrongPoints.map((point, index) => (
+                  <Text key={`strength-${index}`} style={styles.insightItem}>
+                    • {point.description}
+                  </Text>
+                ))}
+              </View>
+            </View>
+            
+            <View style={styles.insightSection}>
+              <Text style={styles.improvementTitle}>Areas for Focus</Text>
+              <View style={styles.insightList}>
+                {displayAreasForImprovement.map((point, index) => (
+                  <Text key={`improvement-${index}`} style={styles.insightItem}>
+                    • {point.description}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    borderWidth: 1,
+    borderColor: '#6366F1',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#1A1F2C',
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  description: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  content: {
+    padding: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  errorContainer: {
+    padding: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#EF4444',
+  },
+  alert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.2)',
+    marginBottom: 16,
+  },
+  alertText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    marginLeft: 8,
+    flex: 1,
+  },
+  insightSection: {
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10B981',
+    marginBottom: 8,
+  },
+  improvementTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFC300',
+    marginBottom: 8,
+  },
+  insightList: {
+    gap: 8,
+  },
+  insightItem: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+});
+
+export default PerformanceInsights;

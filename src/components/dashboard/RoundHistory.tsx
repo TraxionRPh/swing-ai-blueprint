@@ -1,90 +1,183 @@
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import React from 'react';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+
+interface Round {
+  id: string;
+  date: string;
+  total_score: number;
+  golf_courses: {
+    name: string;
+    city: string;
+    state: string;
+  };
+}
 
 export const RoundHistory = () => {
-  const [rounds, setRounds] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchRounds = async () => {
-      if (!user) return;
-      
-      console.log("RoundHistory: Fetching rounds for user:", user.id);
-      
-      const { data, error } = await supabase
-        .from('rounds')
-        .select(`
-          id,
-          total_score,
-          date,
-          hole_count,
-          golf_courses (
-            name,
-            city,
-            state
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(5);
-
-      console.log("RoundHistory: Rounds data received:", data, "Error:", error);
-
-      if (!error && data) {
-        setRounds(data);
+  // Sample data for demonstration
+  const rounds = [
+    {
+      id: '1',
+      date: '2025-05-15',
+      total_score: 82,
+      golf_courses: {
+        name: 'Pine Valley Golf Club',
+        city: 'Pine Valley',
+        state: 'NJ'
       }
-      setLoading(false);
-    };
+    },
+    {
+      id: '2',
+      date: '2025-05-08',
+      total_score: 85,
+      golf_courses: {
+        name: 'Augusta National',
+        city: 'Augusta',
+        state: 'GA'
+      }
+    },
+    {
+      id: '3',
+      date: '2025-05-01',
+      total_score: 79,
+      golf_courses: {
+        name: 'Pebble Beach',
+        city: 'Pebble Beach',
+        state: 'CA'
+      }
+    }
+  ];
 
-    fetchRounds();
-  }, [user]);
+  const renderRound = ({ item }: { item: Round }) => (
+    <View style={styles.roundRow}>
+      <View style={styles.dateCol}>
+        <Text style={styles.dateText}>
+          {new Date(item.date).toLocaleDateString()}
+        </Text>
+      </View>
+      <View style={styles.courseCol}>
+        <Text style={styles.courseText}>
+          {item.golf_courses.name} - {item.golf_courses.city}
+        </Text>
+      </View>
+      <View style={styles.scoreCol}>
+        <Text style={styles.scoreText}>{item.total_score || '-'}</Text>
+      </View>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.headerRow}>
+      <View style={styles.dateCol}>
+        <Text style={styles.headerText}>Date</Text>
+      </View>
+      <View style={styles.courseCol}>
+        <Text style={styles.headerText}>Course</Text>
+      </View>
+      <View style={styles.scoreCol}>
+        <Text style={styles.headerText}>Score</Text>
+      </View>
+    </View>
+  );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Rounds</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="text-center py-4">
-            <p className="text-muted-foreground">Loading rounds...</p>
-          </div>
-        ) : rounds.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead className="text-right">Score</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rounds.map((round) => (
-                <TableRow key={round.id}>
-                  <TableCell>
-                    {new Date(round.date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {round.golf_courses?.name} - {round.golf_courses?.city}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {round.total_score || '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Recent Rounds</Text>
+      </View>
+      <View style={styles.content}>
+        {rounds.length > 0 ? (
+          <FlatList
+            data={rounds}
+            keyExtractor={(item) => item.id}
+            renderItem={renderRound}
+            ListHeaderComponent={renderHeader}
+            contentContainerStyle={styles.listContent}
+          />
         ) : (
-          <div className="text-center py-4">
-            <p className="text-muted-foreground">No rounds found</p>
-          </div>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No rounds found</Text>
+          </View>
         )}
-      </CardContent>
-    </Card>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3A50',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  content: {
+    padding: 8,
+  },
+  listContent: {
+    paddingBottom: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3A50',
+  },
+  headerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  roundRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A3A50',
+  },
+  dateCol: {
+    flex: 1,
+  },
+  courseCol: {
+    flex: 2,
+  },
+  scoreCol: {
+    width: 60,
+    alignItems: 'flex-end',
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  courseText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  scoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  emptyState: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+});
+
+export default RoundHistory;

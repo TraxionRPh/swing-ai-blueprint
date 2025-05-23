@@ -1,36 +1,90 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-interface ScoreChartTooltipProps {
+interface TooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: Array<{
+    value: number;
+    payload: {
+      courseName: string;
+      date: string;
+      score: number;
+      totalPar: number;
+      location: string;
+    };
+  }>;
   label?: string;
 }
 
-export const ScoreChartTooltip = ({ active, payload, label }: ScoreChartTooltipProps) => {
-  if (!active || !payload?.length) return null;
+export const ScoreChartTooltip = ({ active, payload }: TooltipProps) => {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
 
-  const dataPoint = payload[0].payload;
-  const overUnder = dataPoint.score - dataPoint.totalPar;
-  const overUnderText = overUnder === 0 ? 'E' : overUnder > 0 ? `+${overUnder}` : overUnder;
+  const data = payload[0].payload;
+  const score = data.score;
+  const totalPar = data.totalPar || 72;
+  const toPar = score - totalPar;
+  const toParText = toPar > 0 ? `+${toPar}` : toPar === 0 ? 'E' : toPar.toString();
 
   return (
-    <Card className="bg-card border-primary/20 shadow-lg">
-      <CardContent className="p-3 space-y-2">
-        <div className="text-sm font-medium text-foreground">
-          {dataPoint.courseName}
-        </div>
-        <div className="text-xs text-muted-foreground">
-          {dataPoint.location}
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-primary">{dataPoint.score}</span>
-          <span className="text-sm text-muted-foreground">({overUnderText})</span>
-        </div>
-        <div className="text-xs text-muted-foreground">
-          {dataPoint.date}
-        </div>
-      </CardContent>
-    </Card>
+    <View style={styles.tooltip}>
+      <Text style={styles.courseName}>{data.courseName}</Text>
+      <Text style={styles.location}>{data.location}</Text>
+      <Text style={styles.date}>{data.date}</Text>
+      <View style={styles.scoreContainer}>
+        <Text style={styles.scoreLabel}>Score:</Text>
+        <Text style={styles.scoreValue}>{score}</Text>
+        <Text style={styles.toPar}>({toParText})</Text>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  tooltip: {
+    backgroundColor: '#1A2234',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#2A3A50',
+  },
+  courseName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  location: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 8,
+  },
+  date: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 8,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginRight: 8,
+  },
+  scoreValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#10B981',
+    marginRight: 4,
+  },
+  toPar: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+});
+
+export default ScoreChartTooltip;

@@ -1,8 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { getDifficultyBadgeClass } from "@/utils/challengeUtils";
+
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export type Challenge = {
   id: string;
@@ -22,89 +20,233 @@ export type UserProgress = {
 interface ChallengeCardProps {
   challenge: Challenge;
   progress?: UserProgress;
+  navigation: any;
 }
 
-export const ChallengeCard = ({ challenge, progress }: ChallengeCardProps) => {
-  const navigate = useNavigate();
-
+export const ChallengeCard = ({ challenge, progress, navigation }: ChallengeCardProps) => {
   const handleStartChallenge = () => {
-    navigate(`/challenge-tracking/${challenge.id}`);
+    navigation.navigate('ChallengeTracking', { challengeId: challenge.id });
   };
 
   const handleViewHistory = () => {
-    navigate(`/challenge-history/${challenge.id}`);
+    navigation.navigate('ChallengeHistory', { challengeId: challenge.id });
   };
 
-  const getScoreBackgroundClass = (score: string | null) => {
-    if (!score) return '';
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return '#10B981'; // green
+      case 'Intermediate': return '#F59E0B'; // amber
+      case 'Advanced': return '#EF4444'; // red
+      default: return '#64748B'; // gray
+    }
+  };
+
+  const getScoreBackgroundColor = (score: string | null) => {
+    if (!score) return '#64748B';
     const numScore = Number(score);
     
-    if (numScore >= 8) return 'bg-green-500 hover:bg-green-600 text-white border-0'; // Good score
-    if (numScore >= 5) return 'bg-amber-500 hover:bg-amber-600 text-white border-0'; // Okay score
-    return 'bg-rose-500 hover:bg-rose-600 text-white border-0'; // Bad score
+    if (numScore >= 8) return '#10B981'; // Good score (green)
+    if (numScore >= 5) return '#F59E0B'; // Okay score (amber)
+    return '#EF4444'; // Bad score (red)
   };
 
   const hasProgress = progress && (progress.best_score || progress.recent_score);
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle>{challenge.title}</CardTitle>
-          <Badge className={getDifficultyBadgeClass(challenge.difficulty)}>
-            {challenge.difficulty}
-          </Badge>
-        </div>
-        <CardDescription>Challenge Results</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">{challenge.description}</p>
-        <div className="space-y-2">
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{challenge.title}</Text>
+        <View style={[styles.badge, { backgroundColor: getDifficultyColor(challenge.difficulty) }]}>
+          <Text style={styles.badgeText}>{challenge.difficulty}</Text>
+        </View>
+      </View>
+      <Text style={styles.cardDescription}>Challenge Results</Text>
+      
+      <View style={styles.content}>
+        <Text style={styles.description}>{challenge.description}</Text>
+        <View style={styles.progressContainer}>
           {hasProgress ? (
             <>
               {progress?.best_score && (
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">Best Score:</span>
-                  <Badge 
-                    variant="secondary" 
-                    className={`ml-2 ${getScoreBackgroundClass(progress.best_score)}`}
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreName}>Best Score:</Text>
+                  <View 
+                    style={[
+                      styles.scoreBadge, 
+                      { backgroundColor: getScoreBackgroundColor(progress.best_score) }
+                    ]}
                   >
-                    {progress.best_score}
-                  </Badge>
-                </div>
+                    <Text style={styles.scoreText}>{progress.best_score}</Text>
+                  </View>
+                </View>
               )}
               {progress?.recent_score && (
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">Recent Score:</span>
-                  <Badge 
-                    variant="outline" 
-                    className={`ml-2 ${getScoreBackgroundClass(progress.recent_score)}`}
+                <View style={styles.scoreRow}>
+                  <Text style={styles.scoreName}>Recent Score:</Text>
+                  <View 
+                    style={[
+                      styles.scoreBadge, 
+                      { backgroundColor: getScoreBackgroundColor(progress.recent_score) }
+                    ]}
                   >
-                    {progress.recent_score}
-                  </Badge>
-                </div>
+                    <Text style={styles.scoreText}>{progress.recent_score}</Text>
+                  </View>
+                </View>
               )}
             </>
           ) : (
-            <div className="text-sm text-muted-foreground">
-              No attempts yet
-            </div>
+            <Text style={styles.noAttempts}>No attempts yet</Text>
           )}
-        </div>
-        <div className="flex flex-wrap gap-2 pt-2">
+        </View>
+        <View style={styles.metricsContainer}>
           {challenge.metrics && challenge.metrics.map((metric: string) => (
-            <Badge key={metric} variant="outline">{metric}</Badge>
+            <View key={metric} style={styles.metricBadge}>
+              <Text style={styles.metricText}>{metric}</Text>
+            </View>
           ))}
-        </div>
-      </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button variant="default" size="sm" className="flex-1" onClick={handleStartChallenge}>
-          Start Challenge
-        </Button>
-        <Button variant="outline" size="sm" className="flex-1" onClick={handleViewHistory}>
-          View History
-        </Button>
-      </CardFooter>
-    </Card>
+        </View>
+      </View>
+      
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.startButton}
+          onPress={handleStartChallenge}
+        >
+          <Text style={styles.startButtonText}>Start Challenge</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.historyButton}
+          onPress={handleViewHistory}
+        >
+          <Text style={styles.historyButtonText}>View History</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 16,
+    paddingBottom: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  badge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginLeft: 16,
+    marginBottom: 8,
+  },
+  content: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  description: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginBottom: 16,
+  },
+  progressContainer: {
+    marginBottom: 16,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  scoreName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  scoreBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  scoreText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  noAttempts: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  metricsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  metricBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  metricText: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#2A3A50',
+  },
+  startButton: {
+    flex: 1,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  startButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  historyButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#64748B',
+    marginLeft: 8,
+  },
+  historyButtonText: {
+    color: '#FFFFFF',
+  },
+});
+
+export default ChallengeCard;

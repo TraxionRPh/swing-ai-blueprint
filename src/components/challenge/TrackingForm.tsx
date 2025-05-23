@@ -1,79 +1,155 @@
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Trophy } from 'lucide-react';
-import { Loading } from '@/components/ui/loading';
-import { formSchema, FormSchema } from '@/hooks/useSubmitChallenge';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Trophy } from 'lucide-react-native';
 
 type TrackingFormProps = {
-  onSubmit: (values: FormSchema) => Promise<void>;
+  onSubmit: (values: { score: string }) => Promise<void>;
   isPersisting: boolean;
   totalAttempts?: number;
 };
 
 export const TrackingForm = ({ onSubmit, isPersisting, totalAttempts }: TrackingFormProps) => {
-  const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      score: '',
-    },
-  });
+  const [score, setScore] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const currentScore = form.watch('score');
-  const scoreNum = parseInt(currentScore, 10);
-  const successPercentage = !isNaN(scoreNum) && totalAttempts 
-    ? Math.round((scoreNum / totalAttempts) * 100) 
+  const handleSubmit = () => {
+    const scoreNum = parseInt(score, 10);
+    
+    if (isNaN(scoreNum)) {
+      setError('Please enter a valid number');
+      return;
+    }
+    
+    if (totalAttempts && scoreNum > totalAttempts) {
+      setError(`Score cannot be higher than ${totalAttempts}`);
+      return;
+    }
+    
+    if (scoreNum < 0) {
+      setError('Score cannot be negative');
+      return;
+    }
+    
+    setError(null);
+    onSubmit({ score });
+  };
+
+  const successPercentage = score && !isNaN(parseInt(score, 10)) && totalAttempts 
+    ? Math.round((parseInt(score, 10) / totalAttempts) * 100) 
     : null;
 
+  const isDisabled = isPersisting || 
+    !score || 
+    isNaN(parseInt(score, 10)) || 
+    (totalAttempts ? parseInt(score, 10) > totalAttempts : false);
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
-        <FormField
-          control={form.control}
-          name="score"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your Score (out of {totalAttempts || '?'})</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number"
-                  min="0"
-                  max={totalAttempts}
-                  placeholder={`Enter score (0-${totalAttempts || '?'})`}
-                  {...field} 
-                />
-              </FormControl>
-              <FormDescription className="flex justify-between">
-                <span>Enter how many successful attempts you had</span>
-                {successPercentage !== null && (
-                  <span className="font-medium">
-                    Success rate: {successPercentage}%
-                  </span>
-                )}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+    <View style={styles.container}>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Your Score (out of {totalAttempts || '?'})</Text>
+        <TextInput 
+          style={styles.input}
+          value={score}
+          onChangeText={setScore}
+          keyboardType="numeric"
+          placeholder={`Enter score (0-${totalAttempts || '?'})`}
+          placeholderTextColor="#64748B"
         />
-        
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={isPersisting || (totalAttempts ? parseInt(form.watch('score'), 10) > totalAttempts : false)}
-        >
-          {isPersisting ? (
-            <Loading message="Saving..." />
-          ) : (
-            <>
-              <Trophy className="mr-2 h-4 w-4" />
-              Complete Challenge
-            </>
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.description}>Enter how many successful attempts you had</Text>
+          {successPercentage !== null && (
+            <Text style={styles.successRate}>
+              Success rate: {successPercentage}%
+            </Text>
           )}
-        </Button>
-      </form>
-    </Form>
+        </View>
+        {error && <Text style={styles.errorMessage}>{error}</Text>}
+      </View>
+      
+      <TouchableOpacity 
+        style={[
+          styles.submitButton,
+          isDisabled ? styles.disabledButton : {}
+        ]}
+        onPress={handleSubmit}
+        disabled={isDisabled}
+      >
+        {isPersisting ? (
+          <Text style={styles.buttonText}>Saving...</Text>
+        ) : (
+          <View style={styles.buttonContent}>
+            <Trophy width={16} height={16} color="#FFFFFF" />
+            <Text style={styles.buttonText}>Complete Challenge</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingTop: 16,
+    gap: 24,
+  },
+  formGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  input: {
+    backgroundColor: '#1A2234',
+    borderWidth: 1,
+    borderColor: '#2A3A50',
+    borderRadius: 4,
+    padding: 12,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  descriptionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  description: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  successRate: {
+    color: '#10B981',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  errorMessage: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  submitButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 4,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#1E293B',
+    opacity: 0.6,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginLeft: 8,
+    fontSize: 16,
+  },
+});
+
+export default TrackingForm;
