@@ -13,6 +13,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAIConfidence } from "@/hooks/useAIConfidence";
 import { GeneratedPracticePlan } from "@/types/practice-plan";
 
+interface PerformanceInsights {
+  performance?: {
+    driving: number;
+    ironPlay: number;
+    chipping: number;
+    bunker: number;
+    putting: number;
+  };
+  isPlaceholder?: boolean;
+}
+
 const AIAnalysis = () => {
   const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
   const { toast } = useToast();
@@ -47,8 +58,9 @@ const AIAnalysis = () => {
               typeof practicePlan === 'object' && 
               'performanceInsights' in practicePlan) {
             
-            const performanceData = practicePlan.performanceInsights?.performance;
-            const isPlaceholder = practicePlan.performanceInsights?.isPlaceholder;
+            const performanceInsights = practicePlan.performanceInsights as PerformanceInsights;
+            const performanceData = performanceInsights?.performance;
+            const isPlaceholder = performanceInsights?.isPlaceholder;
             
             // We have real data if performance data exists and is not marked as placeholder
             setHasPerformanceData(!!performanceData && !isPlaceholder);
@@ -76,8 +88,9 @@ const AIAnalysis = () => {
                 typeof practicePlanData === 'object' && 
                 'performanceInsights' in practicePlanData) {
               
-              const performanceData = practicePlanData.performanceInsights?.performance;
-              const isPlaceholder = practicePlanData.performanceInsights?.isPlaceholder;
+              const performanceInsights = practicePlanData.performanceInsights as PerformanceInsights;
+              const performanceData = performanceInsights?.performance;
+              const isPlaceholder = performanceInsights?.isPlaceholder;
               
               setHasPerformanceData(!!performanceData && !isPlaceholder);
             } else {
