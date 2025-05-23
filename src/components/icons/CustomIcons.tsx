@@ -12,7 +12,10 @@ import {
   User, 
   FileText,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Settings,
+  LogOut
 } from 'lucide-react-native';
 
 // Re-export Lucide icons that are already compatible with React Native
@@ -27,15 +30,18 @@ export {
   User, 
   FileText,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Settings,
+  LogOut
 };
 
 // Custom LucideGolf Icon
 export const LucideGolf = (props: SvgProps) => {
   return (
     <Svg
-      width={24}
-      height={24}
+      width={props.width || 24}
+      height={props.height || 24}
       viewBox="0 0 24 24"
       fill="none"
       stroke={props.color || 'currentColor'}
