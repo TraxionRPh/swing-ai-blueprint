@@ -1,18 +1,15 @@
 {
   "expo": {
-    "name": "SwingAI",
-    "slug": "swing-ai-blueprint",
+    "name": "ChipAway",
+    "slug": "chipaway-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "platforms": [
-      "android"
-    ],
-    "sdkVersion": "49.0.0",
+    "platforms": ["android"],
+    "sdkVersion": "53.0.0",
     "android": {
-  "package": "com.chipaway.swingai",
-  "versionCode": 4,
-  "targetSdkVersion": 34
-}
+      "package": "com.chipaway.swingai",
+      "versionCode": 4,
+      "targetSdkVersion": 34
     },
     "extra": {
       "eas": {
@@ -20,3 +17,4 @@
       }
     }
   }
+}
