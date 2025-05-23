@@ -39,20 +39,20 @@ export interface PlanDay {
 }
 
 export interface PerformanceData {
-  performance: {
-    driving: number;
-    ironPlay: number;
-    chipping: number;
-    bunker: number;
-    putting: number;
-  };
-  isPlaceholder?: boolean;
+  driving: number;
+  ironPlay: number;
+  chipping: number;
+  bunker: number;
+  putting: number;
 }
 
 export interface PracticePlan {
   plan: PlanDay[];
   challenge?: any;
-  performanceInsights?: PerformanceData;
+  performanceInsights?: {
+    performance: PerformanceData;
+    isPlaceholder?: boolean;
+  };
 }
 
 export interface PerformanceInsight {

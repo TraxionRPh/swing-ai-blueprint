@@ -11,6 +11,7 @@ import { AIAnalysisInfoBanner } from "@/components/ai-analysis/AIAnalysisInfoBan
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIConfidence } from "@/hooks/useAIConfidence";
+import { GeneratedPracticePlan } from "@/types/practice-plan";
 
 const AIAnalysis = () => {
   const { generatePlan, isGenerating, apiUsageInfo } = useAIAnalysis();
@@ -38,13 +39,22 @@ const AIAnalysis = () => {
         if (planData && planData.length > 0) {
           setAnalysisData(planData[0]);
           
-          // Unified performance data check logic
+          // Properly access performance data with type safety
           const practicePlan = planData[0].practice_plan;
-          const performanceDataExists = practicePlan?.performanceInsights?.performance;
-          const isPlaceholder = practicePlan?.performanceInsights?.isPlaceholder;
           
-          // We have real data if performance data exists and is not marked as placeholder
-          setHasPerformanceData(!!performanceDataExists && !isPlaceholder);
+          // Check if practicePlan is an object and has performanceInsights
+          if (practicePlan && 
+              typeof practicePlan === 'object' && 
+              'performanceInsights' in practicePlan) {
+            
+            const performanceData = practicePlan.performanceInsights?.performance;
+            const isPlaceholder = practicePlan.performanceInsights?.isPlaceholder;
+            
+            // We have real data if performance data exists and is not marked as placeholder
+            setHasPerformanceData(!!performanceData && !isPlaceholder);
+          } else {
+            setHasPerformanceData(false);
+          }
         }
       }
     };
@@ -59,16 +69,24 @@ const AIAnalysis = () => {
           if (data) {
             setAnalysisData(data);
             
-            // Update performance data flag using the isPlaceholder property
-            const performanceData = data?.practice_plan?.performanceInsights?.performance;
-            const isPlaceholder = data?.practice_plan?.performanceInsights?.isPlaceholder;
+            // Properly access updated performance data
+            const practicePlanData = data.practice_plan;
             
-            setHasPerformanceData(!!performanceData && !isPlaceholder);
+            if (practicePlanData && 
+                typeof practicePlanData === 'object' && 
+                'performanceInsights' in practicePlanData) {
+              
+              const performanceData = practicePlanData.performanceInsights?.performance;
+              const isPlaceholder = practicePlanData.performanceInsights?.isPlaceholder;
+              
+              setHasPerformanceData(!!performanceData && !isPlaceholder);
+            } else {
+              setHasPerformanceData(false);
+            }
           }
         })
         .catch(error => {
           console.error("Error refreshing analysis:", error);
-          // Additional error is already shown by the toast in useAIAnalysis
         });
     } catch (error) {
       console.error("Error in refresh analysis handler:", error);
