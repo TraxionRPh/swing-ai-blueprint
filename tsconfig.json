@@ -1,34 +1,29 @@
 {
-  "files": [],
+  "extends": "expo/tsconfig.base",
   "references": [
-    { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
     "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020","DOM","DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "node",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react-jsx",
     "strict": false,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
     "noUnusedLocals": false,
-    "strictNullChecks": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "types": [
-      "react",
-      "react-native",
-      "node",
-      "lucide-react-native"
-    ]
+    "paths": { "@/*": ["./src/*"] },
+    "types": ["react","react-native","node","lucide-react-native"]
   },
   "include": ["src"]
 }
