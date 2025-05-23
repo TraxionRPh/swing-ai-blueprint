@@ -3,28 +3,27 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 // Screens
-import Dashboard from '@/screens/Dashboard';
-import DrillLibrary from '@/screens/DrillLibrary';
-import ChallengeLibrary from '@/screens/ChallengeLibrary';
-import ChallengeTracking from '@/screens/ChallengeTracking';
-import ChallengeHistory from '@/screens/ChallengeHistory';
-import AIPracticePlans from '@/screens/AIPracticePlans';
-import MyPracticePlans from '@/screens/MyPracticePlans';
-import RoundTracking from '@/screens/RoundTracking';
-import RoundsList from '@/screens/RoundsList';
-import RoundDetail from '@/screens/RoundDetail';
-import AIAnalysis from '@/screens/AIAnalysis';
-import Profile from '@/screens/Profile';
-import Subscription from '@/screens/Subscription';
-import Auth from '@/screens/Auth';
-import Welcome from '@/screens/Welcome';
+import Dashboard from '../screens/Dashboard';
+import DrillLibrary from '../screens/DrillLibrary';
+import ChallengeLibrary from '../screens/ChallengeLibrary';
+import ChallengeTracking from '../screens/ChallengeTracking';
+import ChallengeHistory from '../screens/ChallengeHistory';
+import AIPracticePlans from '../screens/AIPracticePlans';
+import MyPracticePlans from '../screens/MyPracticePlans';
+import RoundTracking from '../screens/RoundTracking';
+import RoundsList from '../screens/RoundsList';
+import RoundDetail from '../screens/RoundDetail';
+import AIAnalysis from '../screens/AIAnalysis';
+import Profile from '../screens/Profile';
+import Subscription from '../screens/Subscription';
+import Auth from '../screens/Auth';
+import Welcome from '../screens/Welcome';
 
 // Icons
-import { Home, Award, Dumbbell, Calendar, Clock, Brain, List, User } from '@/components/icons/CustomIcons';
-import { Ionicons } from '@expo/vector-icons';
+import { Home, Award, Dumbbell, Calendar, User } from '../components/icons/CustomIcons';
 
 // Create navigators
 const Stack = createStackNavigator();

@@ -10,42 +10,7 @@ This is the React Native version of the ChipAway golf training application.
 npm install
 ```
 
-2. Start the development server:
-```
-npx expo start
-```
-
-## Required Dependencies to Add
-
-Please add the following dependencies manually to your package.json file:
-
-```json
-"dependencies": {
-  "@expo/vector-icons": "^14.0.0",
-  "@react-navigation/bottom-tabs": "^6.5.11",
-  "@react-navigation/native": "^6.1.9",
-  "@react-navigation/stack": "^6.3.20",
-  "@react-native-async-storage/async-storage": "1.21.0",
-  "expo": "~50.0.0",
-  "expo-status-bar": "~1.11.1",
-  "lucide-react-native": "^0.358.0",
-  "react": "18.2.0",
-  "react-native": "0.73.4",
-  "react-native-gesture-handler": "~2.14.0",
-  "react-native-safe-area-context": "4.8.2",
-  "react-native-screens": "~3.29.0",
-  "react-native-svg": "14.1.0",
-  "react-native-url-polyfill": "^2.0.0"
-},
-"devDependencies": {
-  "@babel/core": "^7.20.0",
-  "@types/react": "~18.2.45",
-  "typescript": "^5.3.0"
-}
-```
-
-Also make sure to add the `"build:dev"` script to package.json:
-
+2. Add the `build:dev` script to package.json file manually (this is required for Lovable to build the project):
 ```json
 "scripts": {
   "build:dev": "vite build --mode development",
@@ -54,6 +19,19 @@ Also make sure to add the `"build:dev"` script to package.json:
   "ios": "expo start --ios",
   "web": "expo start --web"
 }
+```
+
+3. Start the development server:
+```
+npx expo start
+```
+
+## Required Dependencies
+
+Please install the following dependencies:
+
+```bash
+npx expo install @expo/vector-icons @react-navigation/bottom-tabs @react-navigation/native @react-navigation/stack @react-native-async-storage/async-storage expo expo-status-bar lucide-react-native react react-native react-native-gesture-handler react-native-safe-area-context react-native-screens react-native-svg react-native-url-polyfill @supabase/supabase-js @tanstack/react-query
 ```
 
 ## Project Structure
