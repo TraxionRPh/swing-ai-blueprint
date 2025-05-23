@@ -41,7 +41,7 @@ export const StatCards = () => {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle>Best Round</CardTitle>
-          <CardDescription>Your lowest round in past 90 days</CardDescription>
+          <CardDescription>Your lowest 18-hole round in past 90 days</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-4xl font-bold text-[#10B981]">

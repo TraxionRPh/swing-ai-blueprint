@@ -21,7 +21,7 @@ export const useGolfStats = () => {
           .rpc('calculate_user_handicap', { user_uuid: user.id });
         setHandicap(handicapData);
 
-        // Fetch best round from last 90 days
+        // Fetch best round from last 90 days (only 18-hole rounds)
         const ninetyDaysAgo = new Date();
         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
         
@@ -29,6 +29,7 @@ export const useGolfStats = () => {
           .from('rounds')
           .select('total_score')
           .eq('user_id', user.id)
+          .eq('hole_count', 18) // Only get 18-hole rounds
           .gte('date', ninetyDaysAgo.toISOString())
           .order('total_score', { ascending: true })
           .limit(1);
