@@ -20,7 +20,6 @@
     "nativewind": "^2.0.11",
     "tailwindcss-react-native": "^0.3.0",
     "@supabase/supabase-js": "^2.49.4"
-    /* add any other RN-compatible libraries here, as valid JSON entries */
   },
   "devDependencies": {
     "typescript": "^5.5.3",
