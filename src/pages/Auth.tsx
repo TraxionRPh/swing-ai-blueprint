@@ -18,9 +18,10 @@ const Auth = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   
-  // Redirect to dashboard if already authenticated
+  // Redirect to welcome if already authenticated
   useEffect(() => {
     if (session) {
+      // Navigate to welcome page first - it will redirect to dashboard if onboarding is done
       navigate('/welcome');
     }
   }, [session, navigate]);
