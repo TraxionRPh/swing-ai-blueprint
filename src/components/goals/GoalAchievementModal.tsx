@@ -34,7 +34,7 @@ const GoalAchievementModal = ({
       toast({
         title: "Congratulations! 🎉",
         description: `You've reached your ${achievedGoal.type} goal of ${achievedGoal.value}!`,
-        duration: 5000,
+        duration: 2000, // Reduced to 2 seconds
       });
 
       // Stop confetti after 5 seconds

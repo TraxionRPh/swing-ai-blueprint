@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,13 +70,15 @@ export const IdentifiedIssues = ({
       });
       toast({
         title: `Creating plan for ${highestPriorityIssue.area}`,
-        description: "Generating a practice plan to address your highest priority issue."
+        description: "Generating a practice plan to address your highest priority issue.",
+        duration: 2000, // Set toast to 2 seconds
       });
     } else {
       toast({
         title: "No issues found",
         description: "Could not find any issues to generate a practice plan for.",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 2000, // Set toast to 2 seconds
       });
     }
   };
