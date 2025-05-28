@@ -1,14 +1,26 @@
 
 import { useRouter } from 'expo-router';
-import { ListTodo } from 'lucide-react-native';
-import React from 'react';
+import { ListTodo, LoadingSpinner } from 'lucide-react-native';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Dashboard() {
+  const { session, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+      if (!loading && !session) {
+        router.replace('/Auth');
+      }
+    }, [session, loading]);
+
+    if (loading) {
+      return <LoadingSpinner />;
+    }
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
@@ -93,7 +105,7 @@ export default function Dashboard() {
           <Card style={styles.navigationCard}>
             <CardContent style={styles.navigationContent}>
               <Text style={styles.navigationTitle}>Challenges</Text>
-              <Button size="sm" onPress={() => navigateToScreen('ChallengesTab')}>
+              <Button size="sm" onPress={() => router.push('/ChallengeLibrary')}>
                 View Challenges
               </Button>
             </CardContent>

@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
-const RoundTracking = ({ navigation }) => {
+export default function RoundTracking() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [courseInfo, setCourseInfo] = useState({
     name: '',
@@ -13,20 +15,23 @@ const RoundTracking = ({ navigation }) => {
   
   const handleNext = () => {
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((s) => s + 1);
     } else {
-      // In a real app, we would save the round data here
-      navigation.navigate('RoundDetail', { isNewRound: true });
+      router.push({
+        pathname: '/RoundDetail',
+        params: { isNewRound: 'true' },
+      });
     }
   };
   
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((s) => s - 1);
     } else {
-      navigation.goBack();
+      router.back();
     }
   };
+
   
   const renderCourseSelection = () => (
     <View style={styles.stepContent}>
@@ -355,5 +360,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-export default RoundTracking;

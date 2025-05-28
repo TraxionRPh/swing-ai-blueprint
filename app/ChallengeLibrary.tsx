@@ -1,93 +1,118 @@
-
-import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LucideGolf } from '@/components/icons/CustomIcons';
 import { useRouter } from 'expo-router';
+import { supabase } from '../integrations/supabase/client';
 
-// Sample data for challenges
-const challenges = [
-  {
-    id: '1',
-    title: 'Putting Precision',
-    description: 'Complete 10 putts from different distances with accuracy',
-    difficulty: 'Beginner',
-    category: 'Putting',
-    metrics: ['Accuracy', 'Consistency']
-  },
-  {
-    id: '2',
-    title: 'Drive for Show',
-    description: 'Hit 10 drives with focus on distance and accuracy',
-    difficulty: 'Intermediate',
-    category: 'Driving',
-    metrics: ['Distance', 'Accuracy']
-  },
-  {
-    id: '3',
-    title: 'Bunker Escape Master',
-    description: 'Successfully exit sand traps in under 2 shots',
-    difficulty: 'Advanced',
-    category: 'Sand Play',
-    metrics: ['Technique', 'Consistency']
-  },
-];
+type Challenge = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  category: string;
+  metrics: string[];
+};
 
-const ChallengeLibrary: React.FC = () => {
+export default function ChallengeLibrary() {
   const router = useRouter();
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Beginner': return '#10B981'; // green
-      case 'Intermediate': return '#F59E0B'; // amber
-      case 'Advanced': return '#EF4444'; // red
-      default: return '#64748B'; // gray
+      case 'Beginner':
+        return '#10B981';
+      case 'Intermediate':
+        return '#F59E0B';
+      case 'Advanced':
+        return '#EF4444';
+      default:
+        return '#64748B';
     }
   };
+
+  useEffect(() => {
+    supabase
+      .from('challenges')
+      .select('id, title, description, difficulty, category, metrics')
+      .order('title', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Error loading challenges:', error);
+        } else {
+          setChallenges(data ?? []);
+        }
+        setLoading(false);
+      });
+  }, []);
   
-  const renderChallenge = ({ item }: { item: typeof challenges[0] }) => (
-    <TouchableOpacity 
-      style={styles.challengeCard}
-      onPress={() => navigation.navigate('ChallengeTracking', { challengeId: item.id })}
-    >
+  const renderChallenge = ({ item }: { item: Challenge }) => (
+    <View style={styles.challengeCard}>
       <View style={styles.challengeHeader}>
         <Text style={styles.challengeTitle}>{item.title}</Text>
-        <View 
+        <View
           style={[
-            styles.difficultyBadge, 
-            { backgroundColor: getDifficultyColor(item.difficulty) }
+            styles.difficultyBadge,
+            { backgroundColor: getDifficultyColor(item.difficulty) },
           ]}
         >
           <Text style={styles.difficultyText}>{item.difficulty}</Text>
         </View>
       </View>
-      
+
       <Text style={styles.challengeDescription}>{item.description}</Text>
-      
+
       <View style={styles.metricsContainer}>
-        {item.metrics.map((metric) => (
+        {item.metrics?.map((metric) => (
           <View key={metric} style={styles.metricBadge}>
             <Text style={styles.metricText}>{metric}</Text>
           </View>
         ))}
       </View>
-      
+
       <View style={styles.challengeFooter}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.startButton}
-          onPress={() => navigation.navigate('ChallengeTracking', { challengeId: item.id })}
+          onPress={() =>
+            router.push({
+              pathname: '/ChallengeTracking',
+              params: { id: item.id },
+            })
+          }
         >
           <Text style={styles.startButtonText}>Start Challenge</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.historyButton}
-          onPress={() => navigation.navigate('ChallengeHistory', { challengeId: item.id })}
+          onPress={() =>
+            router.push({
+              pathname: '/ChallengeHistory',
+              params: { id: item.id },
+            })
+          }
         >
           <Text style={styles.historyButtonText}>View History</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,8 +137,15 @@ const ChallengeLibrary: React.FC = () => {
       <FlatList
         data={challenges}
         renderItem={renderChallenge}
-        keyExtractor={item => item.id}
+        keyExtractor={(item: { id: any; }) => item.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No challenges available yet.
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -261,6 +293,7 @@ const styles = StyleSheet.create({
   historyButtonText: {
     color: '#FFFFFF',
   },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
+  emptyStateText: { fontSize: 16, color: '#94A3B8' },
 });
-
-export default ChallengeLibrary;

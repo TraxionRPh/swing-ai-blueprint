@@ -77,59 +77,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
   
-  const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    } finally {
-      setLoading(false);
-    }
+  const signIn = async (email, password) => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    setLoading(false);
   };
   
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    try {
-      setLoading(true);
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          }
-        }
-      });
-      
-      if (error) throw error;
-      
-      // Create user profile after successful signup
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: data.user.id,
-            first_name: firstName,
-            last_name: lastName,
-          });
-          
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
+  const signUp = async (email, password, firstName, lastName) => {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { first_name: firstName, last_name: lastName },
+      },
+    });
+    if (error) throw error;
+    // …insert into your `user_profiles` table…
+    setLoading(false);
   };
   
   const signOut = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setLoading(false);
   };
   
   return (

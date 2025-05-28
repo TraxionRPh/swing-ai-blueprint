@@ -1,40 +1,69 @@
-
-import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Award } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { supabase } from '../integrations/supabase/client';
 
-const ChallengeHistory = ({ route }) => {
-  const { challengeId } = route.params || { challengeId: '1' };
+interface HistoryItem {
+  id: string;
+  date: string;
+  score: number;
+  total_attempts: number;
+}
+
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  total_attempts: number;
+}
+
+export default function ChallengeHistory() {
+  const { id: challengeId } = useLocalSearchParams<{ id: string }>();
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!challengeId) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+
+      // fetch challenge metadata
+      const { data: chData, error: chError } = await supabase
+        .from('challenges')
+        .select('id, title, description, difficulty, total_attempts')
+        .eq('id', challengeId)
+        .single();
+      if (chError) console.error('Error loading challenge:', chError);
+      else setChallenge(chData);
+
+      // fetch attempt history
+      const { data: histData, error: histError } = await supabase
+        .from('challenge_history')
+        .select('id, date, score, total_attempts')
+        .eq('challenge_id', challengeId)
+        .order('date', { ascending: false });
+      if (histError) console.error('Error loading history:', histError);
+      else setHistory(histData);
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [challengeId]);
   
-  // Sample challenge data - in a real app this would be fetched based on challengeId
-  const challenge = {
-    id: challengeId,
-    title: 'Putting Precision',
-    description: 'Complete 10 putts from different distances with accuracy.',
-    difficulty: 'Beginner',
-    totalAttempts: 10,
-  };
-  
-  // Sample history data - in a real app this would be fetched from a database
-  const history = [
-    { id: '1', date: 'May 22, 2025', score: 7, totalAttempts: 10 },
-    { id: '2', date: 'May 15, 2025', score: 6, totalAttempts: 10 },
-    { id: '3', date: 'May 8, 2025', score: 5, totalAttempts: 10 },
-    { id: '4', date: 'May 1, 2025', score: 4, totalAttempts: 10 },
-  ];
-  
-  const getBestScore = () => {
-    if (history.length === 0) return 0;
-    return Math.max(...history.map(item => item.score));
-  };
-  
-  const getAverageScore = () => {
-    if (history.length === 0) return 0;
-    const sum = history.reduce((acc, item) => acc + item.score, 0);
-    return (sum / history.length).toFixed(1);
-  };
-  
+    const getBestScore = () =>
+    history.length ? Math.max(...history.map(i => i.score)) : 0;
+
+  const getAverageScore = () =>
+    history.length
+      ? (history.reduce((sum, i) => sum + i.score, 0) / history.length).toFixed(1)
+      : '0.0';
+
   const getProgressTrend = () => {
     if (history.length < 2) return 'neutral';
     const first = history[history.length - 1].score;
@@ -42,19 +71,33 @@ const ChallengeHistory = ({ route }) => {
     return last > first ? 'improving' : last < first ? 'declining' : 'neutral';
   };
   
-  const renderHistoryItem = ({ item }) => (
+  const renderHistoryItem = ({ item }: { item: HistoryItem }) => (
     <View style={styles.historyItem}>
       <View style={styles.historyDate}>
         <Text style={styles.dateText}>{item.date}</Text>
       </View>
       <View style={styles.historyScore}>
-        <Text style={styles.scoreText}>{item.score} / {item.totalAttempts}</Text>
+        <Text style={styles.scoreText}>{item.score} / {item.total_attempts}</Text>
         <Text style={styles.percentageText}>
-          {Math.round((item.score / item.totalAttempts) * 100)}%
+          {Math.round((item.score / item.total_attempts) * 100)}%
         </Text>
       </View>
     </View>
   );
+
+  if (loading)
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+
+  if (!challenge)
+    return (
+      <View style={styles.loading}>
+        <Text style={{ color: '#fff' }}>Challenge not found.</Text>
+      </View>
+    );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,11 +140,11 @@ const ChallengeHistory = ({ route }) => {
       <View style={styles.historySection}>
         <Text style={styles.sectionTitle}>Attempt History</Text>
         
-        {history.length > 0 ? (
+        {history.length ? (
           <FlatList
             data={history}
             renderItem={renderHistoryItem}
-            keyExtractor={item => item.id}
+            keyExtractor={(item: { id: any; }) => item.id}
             contentContainerStyle={styles.historyList}
           />
         ) : (
@@ -227,6 +270,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
   },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
-
-export default ChallengeHistory;

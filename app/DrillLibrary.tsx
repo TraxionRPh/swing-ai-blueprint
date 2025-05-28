@@ -1,10 +1,17 @@
-
 import { Search } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'expo-router';
 
 
 // Mock drill data
@@ -51,20 +58,21 @@ const mockDrills = [
   }
 ];
 
-const DrillLibrary = ({ navigation }: any) => {
+export default function DrillLibrary() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [drills, setDrills] = useState(mockDrills);
+  const [drills] = useState(mockDrills);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  
+
   const categories = ['All', 'Putting', 'Driving', 'Iron Play', 'Short Game'];
-  
-  const filteredDrills = drills.filter(drill => {
-    const matchesSearch = drill.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          drill.overview.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'All' || drill.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
+
+  const filteredDrills = drills.filter((drill) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (drill.title.toLowerCase().includes(q) ||
+        drill.overview.toLowerCase().includes(q)) &&
+      (selectedCategory === 'All' || drill.category === selectedCategory)
+    );
   });
   
   const getDifficultyColor = (difficulty: string) => {
@@ -140,7 +148,7 @@ const DrillLibrary = ({ navigation }: any) => {
         <FlatList
           horizontal
           data={categories}
-          keyExtractor={(item) => item}
+          keyExtractor={(item: any) => item}
           showsHorizontalScrollIndicator={false}
           style={styles.categoryList}
           renderItem={({ item }) => (
@@ -164,7 +172,7 @@ const DrillLibrary = ({ navigation }: any) => {
         {/* Drills List */}
         <FlatList
           data={filteredDrills}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: { id: any; }) => item.id}
           renderItem={renderDrillCard}
           contentContainerStyle={styles.drillsList}
           ListEmptyComponent={
@@ -288,5 +296,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-export default DrillLibrary;

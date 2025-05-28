@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 const sampleRounds = [
   { id: '1', date: 'May 20, 2025', course: 'Pine Valley Golf Club', score: 82 },
@@ -10,11 +11,17 @@ const sampleRounds = [
   { id: '3', date: 'May 8, 2025', course: 'Pebble Beach Golf Links', score: 84 },
 ];
 
-const RoundsList = ({ navigation }) => {
+export default function RoundsList() {
+  const router = useRouter();
   const renderRoundItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.roundCard}
-      onPress={() => navigation.navigate('RoundDetail', { roundId: item.id })}
+      onPress={() =>
+        router.push({
+          pathname: '/RoundDetail',
+          params: { roundId: item.id },
+        })
+      }
     >
       <View style={styles.roundHeader}>
         <Text style={styles.courseName}>{item.course}</Text>
@@ -23,7 +30,6 @@ const RoundsList = ({ navigation }) => {
       <Text style={styles.roundDate}>{item.date}</Text>
     </TouchableOpacity>
   );
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -35,7 +41,7 @@ const RoundsList = ({ navigation }) => {
         {sampleRounds.length > 0 ? (
           <FlatList
             data={sampleRounds}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: { id: any; }) => item.id}
             renderItem={renderRoundItem}
             contentContainerStyle={styles.listContainer}
           />
@@ -45,7 +51,7 @@ const RoundsList = ({ navigation }) => {
             <Text style={styles.emptyStateText}>No rounds recorded yet</Text>
             <TouchableOpacity 
               style={styles.addRoundButton}
-              onPress={() => navigation.navigate('RoundTracking')}
+              onPress={() => router.push('/RoundTracking')}
             >
               <Text style={styles.addRoundButtonText}>Track New Round</Text>
             </TouchableOpacity>
@@ -56,7 +62,7 @@ const RoundsList = ({ navigation }) => {
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.floatingButton}
-          onPress={() => navigation.navigate('RoundTracking')}
+          onPress={() => router.push('/RoundTracking')}
         >
           <Text style={styles.floatingButtonText}>+ New Round</Text>
         </TouchableOpacity>
@@ -157,5 +163,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   }
 });
-
-export default RoundsList;
