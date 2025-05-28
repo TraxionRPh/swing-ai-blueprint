@@ -8,6 +8,7 @@ export default ({ config }) => ({
     version: "1.0.0",
     scheme: "swingaiblueprint",
     orientation: "portrait",
+    owner: "gskaff",
     android: {
       package: "com.chipaway.swingai",
       adaptiveIcon: {
