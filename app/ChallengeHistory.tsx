@@ -33,7 +33,7 @@ export default function ChallengeHistory() {
     // 2) load history rows:
     supabase
       .from('challenge_history')
-      .select('id, date, score, totalAttempts')
+      .select('id, date, score')
       .eq('id', challengeId)
       .order('date', { ascending: false })
       .then(({ data, error }) => {
@@ -63,9 +63,9 @@ export default function ChallengeHistory() {
         <Text style={styles.dateText}>{item.date}</Text>
       </View>
       <View style={styles.historyScore}>
-        <Text style={styles.scoreText}>{item.score} / {item.totalAttempts}</Text>
+        <Text style={styles.scoreText}>{item.score} / {challenge.totalAttempts}</Text>
         <Text style={styles.percentageText}>
-          {Math.round((item.score / item.totalAttempts) * 100)}%
+          {Math.round((item.score / challenge.totalAttempts) * 100)}%
         </Text>
       </View>
     </View>

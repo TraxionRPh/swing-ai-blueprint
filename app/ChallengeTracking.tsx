@@ -55,8 +55,23 @@ export default function ChallengeTracking() {
     // Start a timer in a real app
   };
   
-  const completeChallenge = () => {
-    // TODO: save score
+  const completeChallenge = async () => {
+    if (!id || !challenge) return
+
+    const parsedScore = parseInt(score, 0);
+    const total = challenge.totalAttempts
+
+    const { error } = await supabase
+      .from('challenge_history')
+      .insert([{
+        challenge_id: id,
+        score: parsedScore,
+      }])
+
+    if (error) {
+      console.error('Failed to save attempt:', error);
+      return
+    }
     router.push({
       pathname: '/ChallengeHistory',
       params: { id },
