@@ -11,15 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LucideGolf } from '@/components/icons/CustomIcons';
 import { useRouter } from 'expo-router';
 import { supabase } from '../integrations/supabase/client';
-
-type Challenge = {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  category: string;
-  metrics: string[];
-};
+import type { Challenge } from '@/types/challenge';
 
 export default function ChallengeLibrary() {
   const router = useRouter();
@@ -42,7 +34,7 @@ export default function ChallengeLibrary() {
   useEffect(() => {
     supabase
       .from('challenges')
-      .select('id, title, description, difficulty, category, metrics')
+      .select('id, title, description, difficulty, category, metrics, instructions, totalAttempts')
       .order('title', { ascending: true })
       .then(({ data, error }) => {
         if (error) {

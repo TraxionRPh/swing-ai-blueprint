@@ -1,15 +1,10 @@
-
-export type Challenge = {
+export interface Challenge {
   id: string;
   title: string;
   description: string;
   difficulty: string;
-  category: string;
-  metrics: string[];
-  metric: string;
-  instruction1?: string;
-  instruction2?: string;
-  instruction3?: string;
-  attempts?: number; // Calculated field based on instructions
-};
-
+  category?: string;
+  metrics?: string[];
+  totalAttempts?: number;
+  instructions?: string[];
+}

@@ -3,57 +3,43 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Award } from 'lucide-react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { supabase } from '../integrations/supabase/client';
-
-interface HistoryItem {
-  id: string;
-  date: string;
-  score: number;
-  total_attempts: number;
-}
-
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  total_attempts: number;
-}
+import { supabase } from '@/integrations/supabase/client';
+import type { Challenge } from '@/types/challenge';
+import type { HistoryItem } from '@/types/history-item';
 
 export default function ChallengeHistory() {
-  const { id: challengeId } = useLocalSearchParams<{ id: string }>();
+  const { challengeId } = useLocalSearchParams<{ challengeId: string }>();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!challengeId) return;
+    if (!challengeId) return;  
+    supabase
+      .from('challenges')
+      .select(`
+        id,
+        title,
+        description,
+        difficulty,
+        totalAttempts,
+        metrics,
+        instructions
+      `)
+      .eq('id', challengeId)
+      .single()
+      .then(({ data }) => setChallenge(data ?? null));
 
-    const fetchData = async () => {
-      setLoading(true);
-
-      // fetch challenge metadata
-      const { data: chData, error: chError } = await supabase
-        .from('challenges')
-        .select('id, title, description, difficulty, total_attempts')
-        .eq('id', challengeId)
-        .single();
-      if (chError) console.error('Error loading challenge:', chError);
-      else setChallenge(chData);
-
-      // fetch attempt history
-      const { data: histData, error: histError } = await supabase
-        .from('challenge_history')
-        .select('id, date, score, total_attempts')
-        .eq('challenge_id', challengeId)
-        .order('date', { ascending: false });
-      if (histError) console.error('Error loading history:', histError);
-      else setHistory(histData);
-
-      setLoading(false);
-    };
-
-    fetchData();
+    // 2) load history rows:
+    supabase
+      .from('challenge_history')
+      .select('id, date, score, totalAttempts')
+      .eq('id', challengeId)
+      .order('date', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error(error);
+        else setHistory(data ?? []);
+      });
   }, [challengeId]);
   
     const getBestScore = () =>
@@ -77,9 +63,9 @@ export default function ChallengeHistory() {
         <Text style={styles.dateText}>{item.date}</Text>
       </View>
       <View style={styles.historyScore}>
-        <Text style={styles.scoreText}>{item.score} / {item.total_attempts}</Text>
+        <Text style={styles.scoreText}>{item.score} / {item.totalAttempts}</Text>
         <Text style={styles.percentageText}>
-          {Math.round((item.score / item.total_attempts) * 100)}%
+          {Math.round((item.score / item.totalAttempts) * 100)}%
         </Text>
       </View>
     </View>

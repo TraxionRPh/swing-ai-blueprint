@@ -11,20 +11,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, Trophy } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { supabase } from '../integrations/supabase/client';
-
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: string;
-  totalAttempts: number;
-  instructions: string[];
-}
+import { supabase } from '@/integrations/supabase/client';
+import type { Challenge } from '@/types/challenge';
 
 export default function ChallengeTracking() {
   const router = useRouter();
-  const { id: challengeId } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [score, setScore] = useState('');
@@ -32,26 +24,31 @@ export default function ChallengeTracking() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!challengeId) return;
-
-    const load = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('id', challengeId)
-        .single();
-
-      if (error) {
-        console.error('Error loading challenge:', error);
-      } else {
-        setChallenge(data);
-      }
+    if (!id) return;
+    setLoading(true);
+    supabase
+      .from('challenges')
+      .select(`
+        id,
+        title,
+        description,
+        difficulty,
+        totalAttempts,
+        metrics,
+        instructions
+      `)
+      .eq('id', id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) console.error(error);
+        else setChallenge(data);
+      });
       setLoading(false);
-    };
+  }, [id]);
 
-    load();
-  }, [challengeId]);
+  if (!challenge) {
+    return <Text>Loading…</Text>;
+  }
   
   const startChallenge = () => {
     setIsInProgress(true);
@@ -62,7 +59,7 @@ export default function ChallengeTracking() {
     // TODO: save score
     router.push({
       pathname: '/ChallengeHistory',
-      params: { challengeId },
+      params: { id },
     });
   };
 
@@ -83,10 +80,14 @@ export default function ChallengeTracking() {
       </SafeAreaView>
     );
   }
+
+  const total =
+    challenge.totalAttempts ?? challenge.totalAttempts ?? 0;
   
-  const successPercentage = score
-    ? Math.round((parseInt(score, 10) / challenge.totalAttempts) * 100)
-    : 0;
+  const successPercentage =
+    total > 0
+      ? Math.round((parseInt(score, 10) / total) * 100)
+      : 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -104,7 +105,7 @@ export default function ChallengeTracking() {
         
         <View style={styles.instructionsCard}>
           <Text style={styles.sectionTitle}>Instructions</Text>
-          {challenge.instructions.map((instruction, index) => (
+          {challenge.instructions?.map((instruction, index) => (
             <View key={index} style={styles.instructionItem}>
               <Text style={styles.instructionNumber}>{index + 1}</Text>
               <Text style={styles.instructionText}>{instruction}</Text>
@@ -142,9 +143,9 @@ export default function ChallengeTracking() {
               <TouchableOpacity 
                 style={[
                   styles.completeButton,
-                  (!score || parseInt(score, 10) > challenge.totalAttempts) && styles.disabledButton
+                  (!score || parseInt(score, 10) > total) && styles.disabledButton
                 ]}
-                disabled={!score || parseInt(score, 10) > challenge.totalAttempts}
+                disabled={!score || parseInt(score, 10) > total}
                 onPress={completeChallenge}
               >
                 <Trophy width={16} height={16} color="#FFFFFF" />
