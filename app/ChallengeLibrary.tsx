@@ -88,7 +88,7 @@ export default function ChallengeLibrary() {
           onPress={() =>
             router.push({
               pathname: '/ChallengeHistory',
-              params: { id: item.id },
+              params: { challengeId: item.id },
             })
           }
         >

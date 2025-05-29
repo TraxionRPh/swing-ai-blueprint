@@ -16,7 +16,7 @@ import type { Challenge } from '@/types/challenge';
 
 export default function ChallengeTracking() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: challengeId } = useLocalSearchParams<{ id: string }>();
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [score, setScore] = useState('');
@@ -24,7 +24,10 @@ export default function ChallengeTracking() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!challengeId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     supabase
       .from('challenges')
@@ -37,14 +40,14 @@ export default function ChallengeTracking() {
         metrics,
         instructions
       `)
-      .eq('id', id)
+      .eq('id', challengeId)
       .single()
       .then(({ data, error }) => {
         if (error) console.error(error);
         else setChallenge(data);
       });
       setLoading(false);
-  }, [id]);
+  }, [challengeId]);
 
   if (!challenge) {
     return <Text>Loading…</Text>;
@@ -56,15 +59,14 @@ export default function ChallengeTracking() {
   };
   
   const completeChallenge = async () => {
-    if (!id || !challenge) return
+    if (!challengeId || !challenge) return
 
     const parsedScore = parseInt(score, 0);
-    const total = challenge.totalAttempts
 
     const { error } = await supabase
       .from('challenge_history')
       .insert([{
-        challenge_id: id,
+        challenge_id: challengeId,
         score: parsedScore,
       }])
 
@@ -74,7 +76,7 @@ export default function ChallengeTracking() {
     }
     router.push({
       pathname: '/ChallengeHistory',
-      params: { id },
+      params: { challengeId: challengeId },
     });
   };
 
@@ -97,7 +99,7 @@ export default function ChallengeTracking() {
   }
 
   const total =
-    challenge.totalAttempts ?? challenge.totalAttempts ?? 0;
+    challenge.totalAttempts ?? 0;
   
   const successPercentage =
     total > 0
@@ -139,7 +141,7 @@ export default function ChallengeTracking() {
             </View>
             
             <View style={styles.scoreInputSection}>
-              <Text style={styles.scoreInputLabel}>Your Score (out of {challenge.totalAttempts})</Text>
+              <Text style={styles.scoreInputLabel}>Your Score (out of {total})</Text>
               <TextInput
                 style={styles.scoreInput}
                 placeholder="Enter your score"

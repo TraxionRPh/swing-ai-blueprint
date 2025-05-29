@@ -15,7 +15,10 @@ export default function ChallengeHistory() {
 
   useEffect(() => {
     if (!challengeId) return;  
-    supabase
+    const loadAll = async () => {
+    setLoading(true);
+
+    const { data: challengeData, error: challengeError } = await supabase
       .from('challenges')
       .select(`
         id,
@@ -27,20 +30,33 @@ export default function ChallengeHistory() {
         instructions
       `)
       .eq('id', challengeId)
-      .single()
-      .then(({ data }) => setChallenge(data ?? null));
+      .single();
 
-    // 2) load history rows:
-    supabase
+    if (challengeError) {
+      console.error('Error loading challenge:', challengeError);
+      setChallenge(null);
+    } else {
+      setChallenge(challengeData);
+    }
+
+    const { data: historyData, error: historyError } = await supabase
       .from('challenge_history')
       .select('id, date, score')
-      .eq('id', challengeId)
-      .order('date', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error(error);
-        else setHistory(data ?? []);
-      });
-  }, [challengeId]);
+      .eq('challenge_id', challengeId)
+      .order('date', { ascending: false });
+
+    if (historyError) {
+      console.error('Error loading history:', historyError);
+      setHistory([]);
+    } else {
+      setHistory(historyData || []);
+    }
+
+    setLoading(false);
+  };
+
+  loadAll();
+}, [challengeId]);
   
     const getBestScore = () =>
     history.length ? Math.max(...history.map(i => i.score)) : 0;
@@ -63,9 +79,9 @@ export default function ChallengeHistory() {
         <Text style={styles.dateText}>{item.date}</Text>
       </View>
       <View style={styles.historyScore}>
-        <Text style={styles.scoreText}>{item.score} / {challenge.totalAttempts}</Text>
+        <Text style={styles.scoreText}>{item.score} / {challenge!.totalAttempts!}</Text>
         <Text style={styles.percentageText}>
-          {Math.round((item.score / challenge.totalAttempts) * 100)}%
+          {Math.round((item.score / challenge!.totalAttempts!) * 100)}%
         </Text>
       </View>
     </View>
