@@ -1,64 +1,16 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import * as Location from 'expo-location';
-import { Mapbox } from '@/types/mapbox';
-import Constants from 'expo-constants';
-
-const { mapbox_token } = Constants.expoConfig!.extra!
 
 export default function RoundTracking() {
   const router = useRouter();
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [suggestions, setSuggestions] = useState<Array<Mapbox>>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [courseInfo, setCourseInfo] = useState({
     name: '',
     city: '',
     state: '',
-    place_id: 0,
-    type: '',
   });
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync()
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({})
-        setLocation(loc)
-      }
-    })()
-  }, [])
-
-  useEffect(() => {
-    if (!location || !courseInfo.name || courseInfo.name.length < 3 || courseInfo.place_id != 0) {
-      setSuggestions([])
-      return;
-    }
-
-    const handler = setTimeout(async () => {
-      if (courseInfo.name.length < 3) return
-      const url = [
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/`,
-        encodeURIComponent(courseInfo.name),
-        `.json?`,
-        `proximity=${location.coords.longitude},${location.coords.latitude}`,
-        `&types=place`,
-        `&limit=10`,
-        `&access_token=${mapbox_token}`,
-      ].join('')
-
-      const res = await fetch(url)
-      console.log(res)
-      const data = (await res.json()) as { features: Mapbox[] }
-      const golfCourses = data.features.filter(item => item.type === 'golf_course').slice(0, 5)
-      setSuggestions(golfCourses)
-    }, 300)
-
-    return () => clearTimeout(handler)
-  }, [courseInfo.name, location])
   
   const handleNext = () => {
     if (currentStep < 3) {
@@ -94,31 +46,8 @@ export default function RoundTracking() {
           placeholder="e.g., Pine Valley Golf Club"
           placeholderTextColor="#64748B"
           value={courseInfo.name}
-          onChangeText={(text) => setCourseInfo({...courseInfo, name: text, place_id: 0})}
+          onChangeText={(text) => setCourseInfo({...courseInfo, name: text})}
         />
-        {suggestions.length >= 0 && (
-            <View style={styles.autocompleteDropdown}>
-              {suggestions.map((s, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={styles.suggestionItem}
-                  onPress={() => {
-                    const { display_name, address, place_id, type } = s;
-                    setCourseInfo({
-                      name:  display_name.split(',')[0],
-                      city:  address.town    || '',
-                      state: address.state   || '',
-                      place_id: place_id,
-                      type: type,
-                    })
-                    setSuggestions([])
-                  }}
-                >
-                  <Text style={styles.suggestionText}>{s.display_name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
       </View>
       
       <View style={styles.inputContainer}>
@@ -128,7 +57,7 @@ export default function RoundTracking() {
           placeholder="e.g., Pine Valley"
           placeholderTextColor="#64748B"
           value={courseInfo.city}
-          onChangeText={(text) => setCourseInfo({...courseInfo, city: text, place_id: 0})}
+          onChangeText={(text) => setCourseInfo({...courseInfo, city: text})}
         />
       </View>
       
@@ -139,7 +68,7 @@ export default function RoundTracking() {
           placeholder="e.g., NJ"
           placeholderTextColor="#64748B"
           value={courseInfo.state}
-          onChangeText={(text) => setCourseInfo({...courseInfo, state: text, place_id: 0})}
+          onChangeText={(text) => setCourseInfo({...courseInfo, state: text})}
         />
       </View>
     </View>
@@ -318,8 +247,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
-    position: 'relative',
-    zIndex: 1,
   },
   label: {
     fontSize: 14,
@@ -429,31 +356,6 @@ const styles = StyleSheet.create({
   },
   nextButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontWeight: 'bold',
   },
-  suggestionItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0F172A',
-  },
-  suggestionText: {
-    fontSize: 14,
-    color: '#94A3B8',
-  },
-  autocompleteDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#1E293B',
-    borderRadius: 8,
-    maxHeight: 200,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-  }
 });

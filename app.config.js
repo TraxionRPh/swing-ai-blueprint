@@ -44,7 +44,6 @@ export default ({ config }) => ({
       },
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseKey: process.env.SUPABASE_KEY,
-      mapbox_token: process.env.MAPBOX_TOKEN,
     },
   },
 });
