@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { supabase } from '@/integrations/supabase/client';
+
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
+];
 
 export default function RoundTracking() {
   const router = useRouter();
@@ -11,14 +21,124 @@ export default function RoundTracking() {
     city: '',
     state: '',
   });
+  const [holes, setHoles] = useState(
+    Array.from({ length: 18 }, () => ({ par: '4', score: '', putts: '', fir: false, gir: false }))
+  );
+  const [suggestions, setSuggestions] = useState<Array<{ name: string; city: string; state: string }>>([]);
+  const [allowSuggestions, setAllowSuggestions] = useState(true);
+
+  useEffect(() => {
+    if (!courseInfo.name || !allowSuggestions) {
+      setSuggestions([]);
+      return;
+    }
+    const handler = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('name, city, state')
+        .ilike('name', `%${courseInfo.name}%`)
+        .limit(5);
+      if (!error && data) setSuggestions(data);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [courseInfo.name, allowSuggestions]);
   
-  const handleNext = () => {
+  const handleHoleChange = (idx: number, field: 'par'|'score'|'putts', val: string) => {
+    setHoles(h =>
+      h.map((hole, i) =>
+        i === idx ? { ...hole, [field]: val } : hole
+      )
+    );
+  }
+
+  const handleCheckboxChange = (
+    idx: number,
+    field: 'fir' | 'gir',
+    val: boolean
+  ) => {
+    setHoles((h) => 
+      h.map((hole, i) =>
+        i === idx ? { ...hole, [field]: val } : hole
+      )
+    );
+  };
+
+  const handleNext = async () => {
     if (currentStep < 3) {
       setCurrentStep((s) => s + 1);
     } else {
+      const {
+        data: { user },
+        error: userErr,
+      } = await supabase.auth.getUser();
+      if (userErr || !user) {
+        Alert.alert('Not signed in');
+        return;
+      }
+      let { data: course, error: findErr } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('name', courseInfo.name)
+        .eq('city', courseInfo.city)
+        .eq('state', courseInfo.state)
+        .single();
+
+      if (findErr || !course) {
+        const { data: newCourse, error: insErr } = await supabase
+          .from('courses')
+          .insert({
+            name:  courseInfo.name,
+            city:  courseInfo.city,
+            state: courseInfo.state,
+          })
+          .select('id')
+          .single();
+        if (insErr) {
+          Alert.alert('Error saving course', insErr.message);
+          return;
+        }
+        course = newCourse!;
+      }
+      const courseId = course.id;
+
+      const totalScore = holes.reduce((sum, h) => sum + Number(h.score || 0), 0);
+      const holeCount = holes.length;
+      const date = new Date().toISOString().split('T')[0];
+
+      const { data: round, error: roundErr } = await supabase
+        .from('rounds')
+        .insert({
+          course_id:   courseId,
+          user_id:     user.id,
+          date,
+          hole_count:  holeCount,
+          total_score: totalScore,
+        })
+        .select('id')
+        .single();
+      if (roundErr) {
+        Alert.alert('Error saving round', roundErr.message);
+        return;
+      }
+      const holeRows = holes.map((h, i) => ({
+        round_id:    round.id,
+        hole_number: i + 1,
+        par:         Number(h.par),
+        score:       Number(h.score),
+        putts:       Number(h.putts),
+        fir: h.fir,
+        gir: h.gir,
+      }));
+      const { error: holesErr } = await supabase
+        .from('round_holes')
+        .insert(holeRows);
+      if (holesErr) {
+        Alert.alert('Error saving holes', holesErr.message);
+        return
+      }
       router.push({
         pathname: '/RoundDetail',
-        params: { isNewRound: 'true' },
+        params: { roundId: round.id },
       });
     }
   };
@@ -30,6 +150,48 @@ export default function RoundTracking() {
       router.back();
     }
   };
+
+  const summary = useMemo(() => {
+      const totalScore = holes.reduce(
+        (sum, h) => sum + (parseInt(h.score, 0)),
+        0
+      );
+      const totalPutts = holes.reduce(
+        (sum, h) => sum + (parseInt(h.putts, 0)),
+        0
+      );
+
+      const nonPar3Count = holes.filter(
+        (h) => parseInt(h.par, 0) !== 3
+      ).length;
+
+      const fairwayHits = holes.reduce(
+        (sum, h) => sum + (h.fir ? 1 : 0),
+        0
+      );
+      const girHits = holes.reduce(
+        (sum, h) => sum + (h.gir ? 1 : 0),
+        0
+      );
+
+      const fairwayPct =
+        nonPar3Count > 0
+          ? Math.round((fairwayHits / nonPar3Count) * 100)
+          : 0;
+      const girPct =
+        holes.length > 0 ? Math.round((girHits / holes.length) * 100) : 0;
+
+      return {
+        totalScore,
+        totalPutts,
+        nonPar3Count,
+        holeCount: holes.length,
+        fairwayHits,
+        fairwayPct,
+        girHits,
+        girPct,
+      };
+    }, [holes]);
 
   
   const renderCourseSelection = () => (
@@ -46,9 +208,30 @@ export default function RoundTracking() {
           placeholder="e.g., Pine Valley Golf Club"
           placeholderTextColor="#64748B"
           value={courseInfo.name}
-          onChangeText={(text) => setCourseInfo({...courseInfo, name: text})}
+          onChangeText={text => {
+            setAllowSuggestions(true);
+            setCourseInfo(ci => ({ ...ci, name: text }));
+          }}
         />
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            {suggestions.map((c, i) => (
+              <TouchableOpacity
+                key={i}
+                style={styles.suggestionItem}
+                onPress={() => {
+                  setCourseInfo({ name: c.name, city: c.city, state: c.state });
+                  setAllowSuggestions(false);
+                  setSuggestions([]);
+                }}
+              >
+                <Text style={styles.suggestionText}>{c.name} — {c.city}, {c.state}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
+
       
       <View style={styles.inputContainer}>
         <Text style={styles.label}>City</Text>
@@ -63,13 +246,21 @@ export default function RoundTracking() {
       
       <View style={styles.inputContainer}>
         <Text style={styles.label}>State</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., NJ"
-          placeholderTextColor="#64748B"
-          value={courseInfo.state}
-          onChangeText={(text) => setCourseInfo({...courseInfo, state: text})}
-        />
+        <View style={styles.input}>
+          <Picker
+            mode="dropdown"
+            style={styles.picker}
+            dropdownIconColor="#FFFFFF"
+            itemStyle={styles.pickerItem}
+            selectedValue={courseInfo.state}
+            onValueChange={(val) => setCourseInfo({ ...courseInfo, state: val })}
+          >
+            <Picker.Item label="Select state..." value="" />
+            {US_STATES.map((st) => (
+              <Picker.Item key={st} label={st} value={st} />
+            ))}
+          </Picker>
+        </View>
       </View>
     </View>
   );
@@ -82,7 +273,7 @@ export default function RoundTracking() {
       </Text>
       
       <ScrollView style={styles.holesList}>
-        {Array.from({length: 18}).map((_, index) => (
+        {holes.map((hole, index) => (
           <View key={index} style={styles.holeRow}>
             <View style={styles.holeNumber}>
               <Text style={styles.holeNumberText}>{index + 1}</Text>
@@ -94,7 +285,8 @@ export default function RoundTracking() {
                   style={styles.holeInput}
                   keyboardType="number-pad"
                   maxLength={1}
-                  defaultValue="4"
+                  value={holes[index].par}
+                  onChangeText={text => handleHoleChange(index, 'par', text)}
                 />
               </View>
               <View style={styles.holeInputGroup}>
@@ -103,6 +295,8 @@ export default function RoundTracking() {
                   style={styles.holeInput}
                   keyboardType="number-pad"
                   maxLength={2}
+                  value={holes[index].score}
+                  onChangeText={text => handleHoleChange(index, 'score', text)}
                 />
               </View>
               <View style={styles.holeInputGroup}>
@@ -111,6 +305,22 @@ export default function RoundTracking() {
                   style={styles.holeInput}
                   keyboardType="number-pad"
                   maxLength={1}
+                  value={holes[index].putts}
+                  onChangeText={text => handleHoleChange(index, 'putts', text)}
+                />
+              </View>
+              <View style={styles.checkboxGroup}>
+                <Text style={styles.holeInputLabel}>FIR</Text>
+                <Switch
+                  value={hole.fir}
+                  onValueChange={(val: boolean) => handleCheckboxChange(index, 'fir', val)}
+                />
+              </View>
+              <View style={styles.checkboxGroup}>
+                <Text style={styles.holeInputLabel}>GIR</Text>
+                <Switch
+                  value={hole.gir}
+                  onValueChange={(val: boolean) => handleCheckboxChange(index, 'gir', val)}
                 />
               </View>
             </View>
@@ -143,19 +353,23 @@ export default function RoundTracking() {
         <Text style={styles.summaryTitle}>Round Statistics</Text>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Total Score:</Text>
-          <Text style={styles.summaryValue}>82</Text>
+          <Text style={styles.summaryValue}>{summary.totalScore}</Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Total Putts:</Text>
-          <Text style={styles.summaryValue}>34</Text>
+          <Text style={styles.summaryValue}>{summary.totalPutts}</Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Fairways Hit:</Text>
-          <Text style={styles.summaryValue}>9/14 (64%)</Text>
+          <Text style={styles.summaryValue}>
+            {summary.fairwayHits}/{summary.nonPar3Count} ({summary.fairwayPct}%)
+          </Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Greens in Regulation:</Text>
-          <Text style={styles.summaryValue}>10/18 (56%)</Text>
+          <Text style={styles.summaryValue}>
+            {summary.girHits}/{summary.holeCount} ({summary.girPct}%)
+          </Text>
         </View>
       </View>
     </View>
@@ -200,7 +414,7 @@ export default function RoundTracking() {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.nextButton} 
-          onPress={handleNext}
+          onPress={() => handleNext()}
         >
           <Text style={styles.nextButtonText}>
             {currentStep < 3 ? 'Next' : 'Save Round'}
@@ -302,6 +516,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#FFFFFF',
   },
+  checkboxGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
   summaryCard: {
     backgroundColor: '#1E293B',
     borderRadius: 8,
@@ -357,5 +576,36 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+  },
+  picker: {
+    backgroundColor: "#1E293B",
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    color: '#FFFFFF',
+  },
+  pickerItem: {
+    backgroundColor: '#1E293B',
+    color: '#FFFFFF',
+    height: 48,
+    fontSize: 14,
+  },
+    suggestionsContainer: {
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    marginTop: 4,
+    maxHeight: 150,
+  },
+  suggestionItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0F172A',
+  },
+  suggestionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
 });

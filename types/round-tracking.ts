@@ -25,13 +25,13 @@ export interface CourseHole {
   course_id: string;
   hole_number: number;
   par: number;
-  distance_yards: number;
+  //distance_yards: number;
 }
 
 export interface HoleData {
   holeNumber: number;
   par: number;
-  distance: number;
+  //distance: number;
   score: number;
   putts: number;
   fairwayHit?: boolean;
@@ -47,4 +47,11 @@ export interface RoundData {
   totalScore?: number;
   holeCount: number;
   userId: string;
+}
+
+export interface RoundWithCourse extends RoundData {
+  holes: HoleData[];
+  courseName:   string;
+  courseCity:   string;
+  courseState:  string;
 }
