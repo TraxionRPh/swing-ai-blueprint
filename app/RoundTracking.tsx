@@ -4,6 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/integrations/supabase/client';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
@@ -15,6 +16,9 @@ const US_STATES = [
 
 export default function RoundTracking() {
   const router = useRouter();
+  const [courseId, setCourseId] = useState<string | null>(null);
+  const [roundDate, setRoundDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [courseInfo, setCourseInfo] = useState({
     name: '',
@@ -50,6 +54,41 @@ export default function RoundTracking() {
       )
     );
   }
+
+  const onSelectSuggestion = async (c: { name: string; city: string; state: string }) => {
+    setCourseInfo({ name: c.name, city: c.city, state: c.state });
+    setAllowSuggestions(false);
+    setSuggestions([]);
+
+    const { data: course, error: courseErr } = await supabase
+      .from('courses')
+      .select('id')
+      .eq('name', c.name)
+      .eq('city', c.city)
+      .eq('state', c.state)
+      .single();
+    if (courseErr) return Alert.alert("Couldn't find course");
+    setCourseId(course.id);
+
+    const { data: pars } = await supabase
+      .from('course_holes')
+      .select('hole_number, par')
+      .eq('course_id', course.id);
+
+    if (pars && pars.length > 0) {
+      const newHoles = Array.from({ length: 18 }, (_, i) => {
+        const p = pars.find(x => x.hole_number === i + 1);
+        return {
+          par: p ? String(p.par) : '4',
+          score: '',
+          putts: '',
+          fir: false,
+          gir: false,
+        };
+      });
+      setHoles(newHoles);
+    }
+  };
 
   const handleCheckboxChange = (
     idx: number,
@@ -103,7 +142,7 @@ export default function RoundTracking() {
 
       const totalScore = holes.reduce((sum, h) => sum + Number(h.score || 0), 0);
       const holeCount = holes.length;
-      const date = new Date().toISOString().split('T')[0];
+      const date = roundDate.toISOString().split('T')[0];
 
       const { data: round, error: roundErr } = await supabase
         .from('rounds')
@@ -120,6 +159,20 @@ export default function RoundTracking() {
         Alert.alert('Error saving round', roundErr.message);
         return;
       }
+
+      const { data: existing } = await supabase
+        .from('course_holes')
+        .select('hole_number')
+        .eq('course_id', courseId);
+      if (!existing?.length) {
+        const coursePars = holes.map((h, i) => ({
+          course_id: courseId,
+          hole_number: i + 1,
+          par: Number(h.par),
+        }));
+        await supabase.from('course_holes').insert(coursePars);
+      }
+      
       const holeRows = holes.map((h, i) => ({
         round_id:    round.id,
         hole_number: i + 1,
@@ -200,6 +253,29 @@ export default function RoundTracking() {
       <Text style={styles.stepDescription}>
         Enter details about the course you played
       </Text>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Round Date</Text>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={{ color: '#FFFFFF' }}>
+            {roundDate.toLocaleDateString()}
+          </Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={roundDate}
+            mode="date"
+            display="default"
+            onChange={(_, selected) => {
+              setShowDatePicker(false);
+              if (selected) setRoundDate(selected);
+            }}
+          />
+        )}
+      </View>
       
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Course Name</Text>
@@ -219,11 +295,7 @@ export default function RoundTracking() {
               <TouchableOpacity
                 key={i}
                 style={styles.suggestionItem}
-                onPress={() => {
-                  setCourseInfo({ name: c.name, city: c.city, state: c.state });
-                  setAllowSuggestions(false);
-                  setSuggestions([]);
-                }}
+                onPress={() => onSelectSuggestion(c)}
               >
                 <Text style={styles.suggestionText}>{c.name} — {c.city}, {c.state}</Text>
               </TouchableOpacity>
