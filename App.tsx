@@ -9,7 +9,7 @@ import ChallengeLibrary from './src/pages/ChallengeLibrary';
 
 const Stack = createNativeStackNavigator();
 
-function App() {
+export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Dashboard">
@@ -20,6 +20,4 @@ function App() {
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
-
-export default registerRootComponent(App);
+} 
