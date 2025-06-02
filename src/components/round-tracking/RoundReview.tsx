@@ -1,5 +1,5 @@
 
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-native";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { RoundSummaryCard, HoleDetailsTable } from "@/components/round-tracking/review";

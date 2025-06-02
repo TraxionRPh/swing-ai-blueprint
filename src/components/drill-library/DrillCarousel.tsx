@@ -2,7 +2,7 @@
 import { Drill } from "@/types/drill";
 import { DrillCard } from "./DrillCard";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-native";
 import {
   Card,
   CardContent

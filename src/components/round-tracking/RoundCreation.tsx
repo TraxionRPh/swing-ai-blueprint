@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
 import { useRound } from "@/context/round";
 import { Course } from "@/types/round-tracking";

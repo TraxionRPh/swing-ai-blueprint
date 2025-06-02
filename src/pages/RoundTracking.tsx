@@ -1,5 +1,5 @@
 
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-native";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import CourseSelection from "@/components/round-tracking/CourseSelection";
 import HoleTracking from "@/components/round-tracking/HoleTracking";

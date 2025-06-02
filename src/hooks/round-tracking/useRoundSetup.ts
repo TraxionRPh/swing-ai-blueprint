@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
 import type { Course } from "@/types/round-tracking";
 

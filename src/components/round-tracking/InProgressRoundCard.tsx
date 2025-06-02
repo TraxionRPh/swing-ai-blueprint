@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-native";
 import { PlayCircle, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {

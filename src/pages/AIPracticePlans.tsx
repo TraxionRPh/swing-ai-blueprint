@@ -9,7 +9,7 @@ import { useAIAnalysis } from "@/hooks/useAIAnalysis";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
 import { CommonProblem } from "@/types/practice-plan";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-native";
 import { ListTodo } from "lucide-react";
 
 const AIPracticePlans = () => {

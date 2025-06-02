@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
 import { useRound } from "@/context/round"; // Updated import path
 import { Button } from "@/components/ui/button";

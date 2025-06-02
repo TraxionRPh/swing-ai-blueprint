@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-native";
 import { useRound } from "@/context/round";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,6 @@ import { RoundSummaryCard } from "./review/RoundSummaryCard";
 import { useRoundReviewData } from "@/hooks/round-tracking/useRoundReviewData";
 import { useRoundLimit } from "@/hooks/useRoundLimit";
 import { useProfile } from "@/hooks/useProfile";
-import { Link } from "react-router-dom";
 
 interface RoundDetailProps {
   onBack: () => void;

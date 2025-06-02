@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-native";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
