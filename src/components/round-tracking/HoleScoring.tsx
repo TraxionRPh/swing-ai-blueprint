@@ -1,38 +1,53 @@
-
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Switch as RNSwitch,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { useNavigate, useLocation } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
-import { useRound } from "@/context/round"; // Updated import path
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, AlertCircle } from "lucide-react";
+import { useRound } from "@/context/round";
+import { Check, Loader2, AlertCircle } from "lucide-react-native";
 import { RoundHeader } from "./RoundHeader";
 import { LoadingState } from "./LoadingState";
 import { HoleData } from "@/types/round-tracking";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface HoleScoringProps {
   onBack: () => void;
 }
 
 export const HoleScoring = ({ onBack }: HoleScoringProps) => {
-  const { roundId, holeNumber } = useParams();
+  const { roundId, holeNumber } = useLocation().pathname
+    .split("/")
+    .slice(-2)
+    .reduce<{ roundId: string; holeNumber: string }>(
+      (acc, segment, idx, arr) =>
+        idx === arr.length - 2
+          ? { ...acc, roundId: segment }
+          : { ...acc, holeNumber: segment },
+      { roundId: "", holeNumber: "" }
+    );
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    currentRoundId, 
+  const {
+    currentRoundId,
     setCurrentRoundId,
-    holeScores, 
+    holeScores,
     setCurrentHoleNumber,
     holeCount,
     updateHoleScore,
     isLoading,
-    saveInProgress
+    saveInProgress,
   } = useRound();
-  
+
   const [currentHole, setCurrentHole] = useState<number>(1);
   const [holeData, setHoleData] = useState<HoleData>({
     holeNumber: 1,
@@ -41,55 +56,44 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
     score: 0,
     putts: 0,
     fairwayHit: false,
-    greenInRegulation: false
+    greenInRegulation: false,
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  
-  // Initialize the component
+
+  // Initialize
   useEffect(() => {
-    if (roundId && roundId !== 'new') {
-      console.log(`HoleScoring initialized with roundId: ${roundId}`);
+    if (roundId && roundId !== "new") {
       setCurrentRoundId(roundId);
-      
-      // Store the current round ID in session storage for persistence
       try {
-        sessionStorage.setItem('current-round-id', roundId);
-        localStorage.setItem('current-round-id', roundId);
-      } catch (error) {
-        console.error('Error storing round ID:', error);
+        sessionStorage.setItem("current-round-id", roundId);
+        localStorage.setItem("current-round-id", roundId);
+      } catch {
+        // ignore
       }
     }
-    
     if (holeNumber) {
-      const parsedHoleNumber = parseInt(holeNumber);
-      if (!isNaN(parsedHoleNumber) && parsedHoleNumber > 0) {
-        console.log(`Setting current hole to ${parsedHoleNumber}`);
-        setCurrentHole(parsedHoleNumber);
-        setCurrentHoleNumber(parsedHoleNumber);
-        
-        // Also save the current hole number for resuming later
+      const parsed = parseInt(holeNumber, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        setCurrentHole(parsed);
+        setCurrentHoleNumber(parsed);
         try {
-          sessionStorage.setItem('current-hole-number', parsedHoleNumber.toString());
-          localStorage.setItem('current-hole-number', parsedHoleNumber.toString());
-        } catch (error) {
-          console.error('Error storing current hole:', error);
+          sessionStorage.setItem("current-hole-number", parsed.toString());
+          localStorage.setItem("current-hole-number", parsed.toString());
+        } catch {
+          // ignore
         }
       }
     }
-  }, [roundId, holeNumber, setCurrentRoundId, setCurrentHoleNumber]);
-  
-  // Update hole data when hole scores or current hole changes
+  }, [roundId, holeNumber]);
+
+  // Update holeData when scores or hole changes
   useEffect(() => {
     if (holeScores.length > 0 && currentHole > 0) {
-      const hole = holeScores.find(h => h.holeNumber === currentHole);
-      
+      const hole = holeScores.find((h) => h.holeNumber === currentHole);
       if (hole) {
-        console.log(`Found existing data for hole ${currentHole}:`, hole);
         setHoleData(hole);
       } else {
-        // Create default data for this hole
-        console.log(`No existing data for hole ${currentHole}, creating default`);
         setHoleData({
           holeNumber: currentHole,
           par: 4,
@@ -97,269 +101,495 @@ export const HoleScoring = ({ onBack }: HoleScoringProps) => {
           score: 0,
           putts: 0,
           fairwayHit: false,
-          greenInRegulation: false
+          greenInRegulation: false,
         });
       }
     }
   }, [holeScores, currentHole]);
-  
-  // Handle field updates
+
   const handleFieldUpdate = (field: keyof HoleData, value: any) => {
-    setHoleData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setHoleData((prev) => ({ ...prev, [field]: value }));
   };
-  
-  // Save current hole and navigate to next
-  const handleNext = async () => {
-    // Save current hole
-    const success = await handleSave();
-    if (!success) return;
-    
-    // Navigate to next hole if not at the end
-    if (currentHole < holeCount) {
-      navigate(`/rounds/${roundId}/${currentHole + 1}`);
-    } else {
-      // At the last hole, go to review
-      navigate(`/rounds/${roundId}/review`);
-    }
-  };
-  
-  // Save current hole and navigate to previous
-  const handlePrevious = async () => {
-    // Save current hole
-    const success = await handleSave();
-    if (!success) return;
-    
-    // Navigate to previous hole if not at the beginning
-    if (currentHole > 1) {
-      navigate(`/rounds/${roundId}/${currentHole - 1}`);
-    }
-  };
-  
-  // Save the current hole data
+
   const handleSave = async () => {
-    // Reset save status
     setSaveSuccess(false);
     setSaveError(null);
-    
-    console.log(`Saving hole ${currentHole} data:`, holeData);
-    
     try {
       const success = await updateHoleScore(holeData);
-      
       if (success) {
-        console.log(`Successfully saved hole ${currentHole} data`);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
         return true;
       } else {
-        console.error(`Failed to save hole ${currentHole} data`);
         setSaveError("Failed to save score");
         return false;
       }
-    } catch (error) {
-      console.error("Error saving hole data:", error);
+    } catch {
       setSaveError("Error saving score");
       return false;
     }
   };
-  
-  // Go to review screen
+
+  const handleNext = async () => {
+    const ok = await handleSave();
+    if (!ok) return;
+    if (currentHole < holeCount) {
+      navigate(`/rounds/${roundId}/${currentHole + 1}`);
+    } else {
+      navigate(`/rounds/${roundId}/review`);
+    }
+  };
+
+  const handlePrevious = async () => {
+    const ok = await handleSave();
+    if (!ok) return;
+    if (currentHole > 1) {
+      navigate(`/rounds/${roundId}/${currentHole - 1}`);
+    }
+  };
+
   const handleReview = async () => {
-    // Save current hole
-    const success = await handleSave();
-    if (!success) return;
-    
-    // Navigate to review screen
+    const ok = await handleSave();
+    if (!ok) return;
     navigate(`/rounds/${roundId}/review`);
   };
-  
-  // Calculate the relation to par
+
   const getRelationToPar = () => {
     const diff = holeData.score - holeData.par;
     if (diff === 0) return "Even";
     if (diff > 0) return `+${diff}`;
-    return diff.toString(); // Already has the minus sign
+    return diff.toString();
   };
 
-  // Get color class based on relation to par
-  const getScoreColorClass = () => {
-    if (!holeData.score) return "bg-gray-200 text-gray-700";
-    
+  const getScoreColors = () => {
     const diff = holeData.score - holeData.par;
-    if (diff === 0) return "bg-gray-200 text-gray-700"; // Even
-    if (diff < 0) return "bg-green-100 text-green-800"; // Under par
-    if (diff === 1) return "bg-yellow-100 text-yellow-800"; // Bogey
-    return "bg-red-100 text-red-800"; // Over par
+    if (!holeData.score) return styles.scoreEven;
+    if (diff === 0) return styles.scoreEven;
+    if (diff < 0) return styles.scoreUnder;
+    if (diff === 1) return styles.scoreBogey;
+    return styles.scoreOver;
   };
-  
-  // Auto-save when user makes changes after a short delay
+
   useEffect(() => {
-    const saveTimer = setTimeout(() => {
-      // Only auto-save if we have actual data
-      if (holeData.score > 0 || holeData.putts > 0 || holeData.fairwayHit || holeData.greenInRegulation) {
+    const timer = setTimeout(() => {
+      if (
+        holeData.score > 0 ||
+        holeData.putts > 0 ||
+        holeData.fairwayHit ||
+        holeData.greenInRegulation
+      ) {
         handleSave();
       }
-    }, 1500); // 1.5 second delay
-    
-    return () => clearTimeout(saveTimer);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [holeData]);
-  
+
   if (isLoading) {
-    return <LoadingState onBack={onBack} message={`Loading hole ${currentHole}...`} />;
+    return (
+      <LoadingState
+        onBack={onBack}
+        message={`Loading hole ${currentHole}...`}
+      />
+    );
   }
-  
-  // Check if this is the first or last hole
+
   const isFirstHole = currentHole === 1;
   const isLastHole = currentHole === holeCount;
-  
+
   return (
-    <div className="space-y-6">
+    <ScrollView contentContainerStyle={styles.container}>
       <RoundHeader
         title={`Hole ${currentHole}`}
-        subtitle={`Par ${holeData.par} • ${holeData.distance > 0 ? `${holeData.distance} yards` : 'Distance not available'}`}
+        subtitle={`Par ${holeData.par} • ${
+          holeData.distance > 0
+            ? `${holeData.distance} yards`
+            : "Distance not available"
+        }`}
         onBack={onBack}
       />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Enter Score</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Hole info and navigation */}
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
+
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Enter Score</Text>
+        </View>
+        <View style={styles.cardContent}>
+          <View style={styles.holeInfoRow}>
+            <Text style={styles.holeInfoText}>
               Hole {currentHole} of {holeCount}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className={getScoreColorClass()}>
-                {holeData.score ? `${getRelationToPar()} (${holeData.score})` : "No score"}
-              </Badge>
-            </div>
-          </div>
-          
-          {/* Score and putts input */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="score" className="text-sm">Score</Label>
-              <Input
-                id="score"
-                type="number"
-                value={holeData.score || ""}
-                onChange={(e) => handleFieldUpdate('score', parseInt(e.target.value) || 0)}
-                min={1}
-                className="mt-1"
+            </Text>
+            <View style={[styles.badge, getScoreColors()]}>
+              <Text style={styles.badgeText}>
+                {holeData.score
+                  ? `${getRelationToPar()} (${holeData.score})`
+                  : "No score"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.inputRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Score</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={holeData.score ? holeData.score.toString() : ""}
+                onChangeText={(text) =>
+                  handleFieldUpdate("score", parseInt(text, 10) || 0)
+                }
+                placeholder="0"
               />
-            </div>
-            <div>
-              <Label htmlFor="putts" className="text-sm">Putts</Label>
-              <Input
-                id="putts"
-                type="number"
-                value={holeData.putts || ""}
-                onChange={(e) => handleFieldUpdate('putts', parseInt(e.target.value) || 0)}
-                min={0}
-                className="mt-1"
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Putts</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={holeData.putts ? holeData.putts.toString() : ""}
+                onChangeText={(text) =>
+                  handleFieldUpdate("putts", parseInt(text, 10) || 0)
+                }
+                placeholder="0"
               />
-            </div>
-          </div>
-          
-          {/* Par selector */}
-          <div>
-            <Label className="text-sm">Par</Label>
-            <div className="flex space-x-2 mt-1">
+            </View>
+          </View>
+
+          <View style={styles.parSelector}>
+            <Text style={styles.label}>Par</Text>
+            <View style={styles.parButtons}>
               {[3, 4, 5].map((par) => (
-                <Button
+                <TouchableOpacity
                   key={par}
-                  type="button"
-                  variant={holeData.par === par ? "default" : "outline"}
-                  onClick={() => handleFieldUpdate('par', par)}
-                  className="flex-1"
+                  style={[
+                    styles.parButton,
+                    holeData.par === par && styles.parButtonSelected,
+                  ]}
+                  onPress={() => handleFieldUpdate("par", par)}
                 >
-                  Par {par}
-                </Button>
+                  <Text
+                    style={[
+                      styles.parButtonText,
+                      holeData.par === par && styles.parButtonTextSelected,
+                    ]}
+                  >
+                    Par {par}
+                  </Text>
+                </TouchableOpacity>
               ))}
-            </div>
-          </div>
-          
-          {/* Performance toggles */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="fairway" className="text-sm">Fairway Hit</Label>
-              <Switch
-                id="fairway"
-                checked={holeData.fairwayHit}
-                onCheckedChange={(checked) => handleFieldUpdate('fairwayHit', checked)}
+            </View>
+          </View>
+
+          <View style={styles.toggleGroup}>
+            <View style={styles.toggleRow}>
+              <Text style={styles.label}>Fairway Hit</Text>
+              <RNSwitch
+                value={holeData.fairwayHit}
+                onValueChange={(val) =>
+                  handleFieldUpdate("fairwayHit", val)
+                }
               />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="gir" className="text-sm">Green in Regulation</Label>
-              <Switch
-                id="gir"
-                checked={holeData.greenInRegulation}
-                onCheckedChange={(checked) => handleFieldUpdate('greenInRegulation', checked)}
+            </View>
+            <View style={styles.toggleRow}>
+              <Text style={styles.label}>Green in Regulation</Text>
+              <RNSwitch
+                value={holeData.greenInRegulation}
+                onValueChange={(val) =>
+                  handleFieldUpdate("greenInRegulation", val)
+                }
               />
-            </div>
-          </div>
-          
-          {/* Navigation buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
+            </View>
+          </View>
+
+          <View style={styles.navigationRow}>
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                (isFirstHole || saveInProgress) && styles.disabledButton,
+              ]}
+              onPress={handlePrevious}
               disabled={isFirstHole || saveInProgress}
             >
-              Previous
-            </Button>
-            <Button
-              variant={isLastHole ? "secondary" : "default"}
-              onClick={isLastHole ? handleReview : handleNext}
+              <Text
+                style={[
+                  styles.navButtonText,
+                  (isFirstHole || saveInProgress) && styles.disabledText,
+                ]}
+              >
+                Previous
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                styles.nextButton,
+                (isLastHole || saveInProgress) && styles.disabledButton,
+              ]}
+              onPress={isLastHole ? handleReview : handleNext}
               disabled={saveInProgress}
             >
-              {isLastHole ? "Review Round" : "Next"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleReview}
+              <Text
+                style={[
+                  styles.navButtonText,
+                  styles.nextButtonText,
+                  saveInProgress && styles.disabledText,
+                ]}
+              >
+                {isLastHole ? "Review Round" : "Next"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                (saveInProgress) && styles.disabledButton,
+              ]}
+              onPress={handleReview}
               disabled={saveInProgress}
             >
-              Review All
-            </Button>
-          </div>
-          
-          {/* Saving indicator */}
+              <Text
+                style={[
+                  styles.navButtonText,
+                  saveInProgress && styles.disabledText,
+                ]}
+              >
+                Review All
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {(saveInProgress || saveSuccess || saveError) && (
-            <div className={`flex items-center justify-center p-2 mt-4 rounded-md transition-all duration-300 animate-in fade-in ${
-              saveInProgress ? "bg-amber-50 text-amber-700" : 
-              saveError ? "bg-red-50 text-red-700" : 
-              "bg-green-50 text-green-700"
-            }`}>
+            <View
+              style={[
+                styles.saveStatus,
+                saveInProgress
+                  ? styles.statusSaving
+                  : saveError
+                  ? styles.statusError
+                  : styles.statusSuccess,
+              ]}
+            >
               {saveInProgress && (
                 <>
-                  <Loader2 className="animate-spin h-4 w-4 mr-2 text-amber-600" />
-                  <span className="text-sm">Saving your score...</span>
+                  <Loader2
+                    size={18}
+                    color="#b45309"
+                    style={styles.statusIcon}
+                  />
+                  <Text style={styles.statusText}>Saving your score...</Text>
                 </>
               )}
-              
               {saveError && (
                 <>
-                  <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
-                  <span className="text-sm">{saveError}</span>
+                  <AlertCircle
+                    size={18}
+                    color="#b91c1c"
+                    style={styles.statusIcon}
+                  />
+                  <Text style={styles.statusText}>{saveError}</Text>
                 </>
               )}
-              
               {saveSuccess && !saveInProgress && !saveError && (
                 <>
-                  <Check className="h-4 w-4 mr-2 text-green-600" />
-                  <span className="text-sm">Score saved successfully</span>
+                  <Check
+                    size={18}
+                    color="#15803d"
+                    style={styles.statusIcon}
+                  />
+                  <Text style={styles.statusText}>
+                    Score saved successfully
+                  </Text>
                 </>
               )}
-            </div>
+            </View>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    flexGrow: 1,
+    backgroundColor: "#f9f9f9",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginVertical: 12,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    overflow: "hidden",
+  },
+  cardHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  cardContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  holeInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  holeInfoText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  badge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  scoreEven: {
+    backgroundColor: "#e5e7eb",
+  },
+  scoreUnder: {
+    backgroundColor: "#d1fae5",
+  },
+  scoreBogey: {
+    backgroundColor: "#fef3c7",
+  },
+  scoreOver: {
+    backgroundColor: "#fee2e2",
+  },
+  inputRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  inputGroup: {
+    flex: 1,
+    marginRight: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 4,
+  },
+  input: {
+    height: 44,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    backgroundColor: "#fff",
+  },
+  parSelector: {
+    marginBottom: 12,
+  },
+  parButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  parButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    marginRight: 8,
+    alignItems: "center",
+  },
+  parButtonSelected: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  parButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  parButtonTextSelected: {
+    color: "#fff",
+    fontWeight: "500",
+  },
+  toggleGroup: {
+    marginBottom: 12,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  navigationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  nextButton: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  nextButtonText: {
+    color: "#fff",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  disabledText: {
+    color: "#999",
+  },
+  saveStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  statusIcon: {
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  statusSaving: {
+    backgroundColor: "#fef3c7",
+  },
+  statusError: {
+    backgroundColor: "#fee2e2",
+  },
+  statusSuccess: {
+    backgroundColor: "#d1fae5",
+  },
+});

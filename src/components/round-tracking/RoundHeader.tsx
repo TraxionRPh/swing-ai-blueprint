@@ -1,6 +1,6 @@
-
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 
 interface RoundHeaderProps {
   title: string;
@@ -13,25 +13,49 @@ export const RoundHeader = ({
   title,
   subtitle,
   onBack,
-  hideBackButton = false
+  hideBackButton = false,
 }: RoundHeaderProps) => {
   return (
-    <div className="flex items-center space-x-4 mb-6">
+    <View style={styles.container}>
       {!hideBackButton && onBack && (
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={onBack}
-          className="text-muted-foreground hover:bg-secondary"
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backButton}
+          activeOpacity={0.7}
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="sr-only">Go back</span>
-        </Button>
+          <ArrowLeft size={24} color="#6B7280" />
+        </TouchableOpacity>
       )}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
-      </div>
-    </div>
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{title}</Text>
+        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  textContainer: {
+    flexShrink: 1,
+  },
+  title: {
+    fontSize: 28, // equivalent to text-3xl
+    fontWeight: "700", // equivalent to font-bold
+    letterSpacing: -0.5, // approximates tracking-tight
+    color: "#111827",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6B7280", // muted-foreground
+    marginTop: 4,
+  },
+});

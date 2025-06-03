@@ -1,13 +1,18 @@
-
-import { useState, useEffect, useMemo } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { DayPlan } from "@/types/practice-plan";
+// src/components/DailyPlanCard.tsx
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Checkbox } from "@/components/ui/Checkbox"; // RN-compatible Checkbox
+import { Button } from "@/components/ui/Button"; // RN-compatible Button
 import { useToast } from "@/hooks/use-toast";
 import { DrillDetailsDialog } from "./DrillDetailsDialog";
+import { DayPlan } from "@/types/practice-plan";
 import { Drill } from "@/types/drill";
 
 interface DailyPlanCardProps {
@@ -18,89 +23,136 @@ interface DailyPlanCardProps {
   planId?: string;
 }
 
-export const DailyPlanCard = ({ 
-  dayPlan, 
+export const DailyPlanCard = ({
+  dayPlan,
   dayNumber,
   completedDrills,
   onDrillComplete,
-  planId
+  planId,
 }: DailyPlanCardProps) => {
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null);
+  const [savedCompleted, setSavedCompleted] = useState<Record<string, boolean>>(
+    completedDrills
+  );
   const { toast } = useToast();
 
-  const savedCompletedDrills = useMemo(() => {
-    if (!planId) return completedDrills;
-    const saved = localStorage.getItem(`completed-drills-${planId}`);
-    return saved ? JSON.parse(saved) : completedDrills;
-  }, [planId, completedDrills]);
+  // Load saved state from AsyncStorage
+  useEffect(() => {
+    if (!planId) return;
+    const load = async () => {
+      try {
+        const key = `completed-drills-${planId}`;
+        const json = await AsyncStorage.getItem(key);
+        if (json) {
+          setSavedCompleted(JSON.parse(json));
+        }
+      } catch (e) {
+        console.error("Error loading completed drills:", e);
+      }
+    };
+    load();
+  }, [planId]);
 
-  const handleDrillComplete = (drillTitle: string) => {
-    onDrillComplete(drillTitle);
-    if (planId) {
-      const newState = { ...savedCompletedDrills, [drillTitle]: !savedCompletedDrills[drillTitle] };
-      localStorage.setItem(`completed-drills-${planId}`, JSON.stringify(newState));
-    }
-  };
+  const handleDrillToggle = useCallback(
+    async (drillTitle: string) => {
+      onDrillComplete(drillTitle);
+      const newState = {
+        ...savedCompleted,
+        [drillTitle]: !savedCompleted[drillTitle],
+      };
+      setSavedCompleted(newState);
+
+      if (planId) {
+        try {
+          const key = `completed-drills-${planId}`;
+          await AsyncStorage.setItem(key, JSON.stringify(newState));
+        } catch (e) {
+          console.error("Error saving completed drills:", e);
+          toast({
+            title: "Error",
+            description: "Could not save drill completion state.",
+            variant: "destructive",
+          });
+        }
+      }
+    },
+    [savedCompleted, onDrillComplete, planId, toast]
+  );
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
-      <div className="bg-muted p-3 border-b">
-        <h4 className="font-medium">Day {dayNumber}: {dayPlan.focus}</h4>
-        <p className="text-xs text-muted-foreground">{dayPlan.duration}</p>
-      </div>
-      <div className="p-3">
-        <ul className="space-y-3">
+    <View className="border rounded-lg overflow-hidden bg-card">
+      {/* Header */}
+      <View className="bg-muted p-3 border-b">
+        <Text className="font-medium">
+          Day {dayNumber}: {dayPlan.focus}
+        </Text>
+        <Text className="text-xs text-muted-foreground">
+          {dayPlan.duration}
+        </Text>
+      </View>
+
+      {/* Drills List */}
+      <View className="p-3">
+        <ScrollView contentContainerStyle={{ paddingBottom: 16 }}>
           {dayPlan.drills.map((drillWithSets, j) => {
-            // Skip if drill data is missing
-            if (!drillWithSets.drill) return null;
-            
             const drillObject = drillWithSets.drill;
-            const isCompleted = !!savedCompletedDrills[drillObject.title];
-            
+            if (!drillObject) return null;
+            const isCompleted = !!savedCompleted[drillObject.title];
+
             return (
-              <li key={j} className="border rounded-md overflow-hidden bg-background">
-                <div className="flex items-center p-3">
+              <View
+                key={j}
+                className="border rounded-md overflow-hidden bg-background mb-3"
+              >
+                <View className="flex-row items-center p-3">
                   <Checkbox
-                    id={`drill-${dayNumber}-${j}`}
-                    checked={isCompleted}
-                    onCheckedChange={() => handleDrillComplete(drillObject.title)}
+                    value={isCompleted}
+                    onValueChange={() => handleDrillToggle(drillObject.title)}
                     className="mr-3"
                   />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <label 
-                          htmlFor={`drill-${dayNumber}-${j}`}
-                          className={`text-sm font-medium ${isCompleted ? 'text-muted-foreground line-through' : ''}`}
+                  <View className="flex-1">
+                    <View className="flex-row justify-between items-center">
+                      <View>
+                        <Text
+                          className={`text-sm font-medium ${
+                            isCompleted
+                              ? "text-muted-foreground line-through"
+                              : ""
+                          }`}
                         >
                           {drillObject.title}
-                        </label>
-                        <p className="text-xs text-muted-foreground">
+                        </Text>
+                        <Text className="text-xs text-muted-foreground">
                           {drillWithSets.sets} sets of {drillWithSets.reps} reps
-                        </p>
-                      </div>
-                      <Button 
+                        </Text>
+                      </View>
+                      <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedDrill(drillObject)}
+                        onPress={() => setSelectedDrill(drillObject)}
                         className="ml-2"
                       >
-                        View Details
+                        <Text>View Details</Text>
                       </Button>
-                    </div>
-                  </div>
-                </div>
-              </li>
+                    </View>
+                  </View>
+                </View>
+              </View>
             );
           })}
-        </ul>
-      </div>
+        </ScrollView>
+      </View>
 
+      {/* Drill Details Dialog */}
       <DrillDetailsDialog
         drill={selectedDrill}
         isOpen={!!selectedDrill}
         onClose={() => setSelectedDrill(null)}
       />
-    </div>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  // Add any custom styles if needed
+});

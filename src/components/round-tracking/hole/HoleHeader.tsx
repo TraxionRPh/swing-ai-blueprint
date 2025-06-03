@@ -1,7 +1,7 @@
-
-import React from 'react';
-import { HoleNavigation } from './HoleNavigation';
-import { ParSelection } from './ParSelection';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { HoleNavigation } from "./HoleNavigation";
+import { ParSelection } from "./ParSelection";
 
 interface HoleHeaderProps {
   currentHole: number;
@@ -11,31 +11,55 @@ interface HoleHeaderProps {
   goToPreviousHole: () => void;
 }
 
-export const HoleHeader = ({
+export const HoleHeader: React.FC<HoleHeaderProps> = ({
   currentHole,
   holeCount,
   par,
   onParChange,
-  goToPreviousHole
-}: HoleHeaderProps) => {
+  goToPreviousHole,
+}) => {
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Hole {currentHole}</h3>
-        <HoleNavigation 
-          currentHole={currentHole} 
-          holeCount={holeCount} 
-          goToPreviousHole={goToPreviousHole} 
+    <View style={styles.container}>
+      {/* Top row: "Hole X" + navigation */}
+      <View style={styles.row}>
+        <Text style={styles.heading}>Hole {currentHole}</Text>
+        <HoleNavigation
+          currentHole={currentHole}
+          holeCount={holeCount}
+          goToPreviousHole={goToPreviousHole}
         />
-      </div>
-      
-      <div>
-        <p className="text-sm mb-2">Par</p>
-        <ParSelection 
-          value={par.toString()} 
-          onChange={onParChange} 
+      </View>
+
+      {/* Par selection */}
+      <View>
+        <Text style={styles.label}>Par</Text>
+        <ParSelection
+          value={par.toString()}
+          onChange={onParChange}
         />
-      </div>
-    </div>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "column",
+    marginBottom: 16, // spacing between header and next element
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12, // gap between title/navigation and par block
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: "500",
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: "#4A5568",
+  },
+});

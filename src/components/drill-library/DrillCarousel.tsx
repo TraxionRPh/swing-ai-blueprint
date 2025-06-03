@@ -1,19 +1,18 @@
-
+// src/components/DrillCarousel.tsx
+import React from "react";
+import { View } from "react-native";
+import { useNavigate } from "react-router-native";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Drill } from "@/types/drill";
 import { DrillCard } from "./DrillCard";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-native";
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
-  CarouselPrevious
-} from "@/components/ui/carousel";
+  CarouselPrevious,
+} from "@/components/ui/Carousel";
 
 interface DrillCarouselProps {
   drills: Drill[];
@@ -24,7 +23,7 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
 
   const handleCreatePracticePlan = () => {
     // Store selected drills in URL params
-    const drillIds = drills.map(drill => drill.id).join(',');
+    const drillIds = drills.map((drill) => drill.id).join(",");
     navigate(`/practice-plan-generator?drills=${drillIds}`);
   };
 
@@ -36,26 +35,31 @@ export const DrillCarousel = ({ drills }: DrillCarouselProps) => {
         <Carousel className="w-full mx-auto mb-6">
           <CarouselContent>
             {drills.map((drill) => (
-              <CarouselItem key={drill.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+              <CarouselItem
+                key={drill.id}
+                className="pl-4 md:basis-1/2 lg:basis-1/3"
+              >
                 <DrillCard drill={drill} />
               </CarouselItem>
             ))}
           </CarouselContent>
-          <div className="flex justify-center mt-4">
-            <div className="flex items-center gap-2">
+
+          <View className="flex-row justify-center mt-4">
+            <View className="flex-row items-center gap-2">
               <CarouselPrevious className="relative static transform-none" />
               <CarouselNext className="relative static transform-none" />
-            </div>
-          </div>
+            </View>
+          </View>
         </Carousel>
-        <div className="mt-6">
-          <Button 
-            onClick={handleCreatePracticePlan} 
+
+        <View className="mt-6">
+          <Button
+            onPress={handleCreatePracticePlan}
             className="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
           >
             Create Practice Plan with These Drills
           </Button>
-        </div>
+        </View>
       </CardContent>
     </Card>
   );

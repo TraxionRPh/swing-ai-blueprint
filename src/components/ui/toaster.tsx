@@ -1,5 +1,5 @@
-
 import React from "react";
+import { View, StyleSheet } from "react-native";
 import { useToast } from "@/hooks/use-toast";
 import {
   Toast,
@@ -8,28 +8,40 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast";
+} from "@/components/ui/Toast";
 
 export function Toaster() {
   const { toasts } = useToast();
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        );
-      })}
+      {toasts.map(({ id, title, description, action, ...props }) => (
+        <Toast key={id} {...props}>
+          <View style={styles.contentContainer}>
+            {title != null && <ToastTitle>{title}</ToastTitle>}
+            {description != null && (
+              <ToastDescription>{description}</ToastDescription>
+            )}
+          </View>
+
+          {action != null && <View style={styles.actionContainer}>{action}</View>}
+          <ToastClose />
+        </Toast>
+      ))}
       <ToastViewport />
     </ToastProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  // Mimics “grid gap-1” from Tailwind (i.e. vertical spacing of ~4px between children)
+  contentContainer: {
+    flexDirection: "column",
+    // If you want a small gap between title & description, you can add a marginBottom on the second element instead.
+    // For example, you can style ToastTitle and ToastDescription directly.
+  },
+  // Optional: wrap “action” in its own container to add margins/padding if needed
+  actionContainer: {
+    marginTop: 8, // adjust as needed
+  },
+});

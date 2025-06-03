@@ -1,6 +1,8 @@
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+// src/components/DrillCardTitle.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import { Checkbox } from "@/components/ui/Checkbox"; // RN-compatible Checkbox
+import { Badge } from "@/components/ui/Badge"; // RN-compatible Badge
 import { Drill } from "@/types/drill";
 
 interface DrillCardTitleProps {
@@ -9,29 +11,30 @@ interface DrillCardTitleProps {
   onComplete: () => void;
 }
 
-export const DrillCardTitle = ({ drill, isCompleted, onComplete }: DrillCardTitleProps) => {
+export const DrillCardTitle = ({
+  drill,
+  isCompleted,
+  onComplete,
+}: DrillCardTitleProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <Checkbox 
-          checked={isCompleted}
-          onCheckedChange={onComplete}
-          id={`drill-${drill.id}`}
+    <View className="flex-row justify-between items-center">
+      <View className="flex-row items-center space-x-3">
+        <Checkbox
+          value={isCompleted}
+          onValueChange={onComplete}
         />
-        <label 
-          htmlFor={`drill-${drill.id}`}
-          className={`
-            font-medium text-base 
-            ${isCompleted ? 'text-muted-foreground line-through' : ''}
-          `}
+        <Text
+          className={`font-medium text-base ${
+            isCompleted ? "text-muted-foreground line-through" : ""
+          }`}
         >
           {drill.title}
-        </label>
-      </div>
-      
+        </Text>
+      </View>
+
       <Badge variant="outline" className="text-xs">
-        {drill.difficulty || 'Beginner'}
+        {drill.difficulty || "Beginner"}
       </Badge>
-    </div>
+    </View>
   );
 };

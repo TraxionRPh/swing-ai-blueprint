@@ -1,35 +1,39 @@
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Target, Goal, Check, ListCheck } from "lucide-react";
-import { HandicapLevel } from "@/hooks/useProfile";
+// src/components/CommonGoals.tsx
+import React from "react";
+import { View, Text, TextInput } from "react-native";
+import { Checkbox } from "@/components/ui/Checkbox"; // assume RN‐compatible
+import {
+  Target,
+  Goal,
+  Check,
+  ListCheck,
+} from "lucide-react-native"; // RN‐compatible icons
 
 export const commonGolfGoals = [
   {
     id: "lower-score",
     label: "Lower my score",
     icon: Target,
-    requiresNumber: true
+    requiresNumber: true,
   },
   {
     id: "consistency",
     label: "Improve consistency",
     icon: ListCheck,
-    requiresNumber: false
+    requiresNumber: false,
   },
   {
     id: "technique",
     label: "Better technique",
     icon: Check,
-    requiresNumber: false
+    requiresNumber: false,
   },
   {
     id: "handicap",
     label: "Lower my handicap",
     icon: Goal,
-    requiresNumber: true
-  }
+    requiresNumber: true,
+  },
 ] as const;
 
 interface CommonGoalsProps {
@@ -41,66 +45,74 @@ interface CommonGoalsProps {
   onHandicapGoalChange: (value: number | null) => void;
 }
 
-const CommonGoals = ({ 
-  selectedGoals, 
-  scoreGoal, 
+const CommonGoals = ({
+  selectedGoals,
+  scoreGoal,
   handicapGoal,
-  onGoalToggle, 
-  onScoreGoalChange, 
-  onHandicapGoalChange 
+  onGoalToggle,
+  onScoreGoalChange,
+  onHandicapGoalChange,
 }: CommonGoalsProps) => {
   return (
-    <div className="space-y-4">
-      {commonGolfGoals.map((goal) => (
-        <div key={goal.id} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50">
-          <Checkbox
-            id={goal.id}
-            checked={selectedGoals.includes(goal.id)}
-            onCheckedChange={(checked) => onGoalToggle(goal.id, checked as boolean)}
-          />
-          <div className="grid gap-1.5 leading-none">
-            <div className="flex items-center gap-2">
-              <goal.icon className="h-4 w-4" />
-              <Label htmlFor={goal.id} className="text-sm font-medium leading-none cursor-pointer">
-                {goal.label}
-              </Label>
-            </div>
-            {goal.id === "lower-score" && selectedGoals.includes(goal.id) && (
-              <div className="mt-2 ml-6">
-                <Label htmlFor="score-goal" className="text-sm text-muted-foreground">
-                  What's your target score?
-                </Label>
-                <Input
-                  id="score-goal"
-                  type="number"
-                  value={scoreGoal || ""}
-                  onChange={(e) => onScoreGoalChange(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-24 mt-1 bg-[#111827] text-foreground border-primary/20"
-                  min={30}
-                  max={150}
-                />
-              </div>
-            )}
-            {goal.id === "handicap" && selectedGoals.includes(goal.id) && (
-              <div className="mt-2 ml-6">
-                <Label htmlFor="handicap-goal" className="text-sm text-muted-foreground">
-                  What's your target handicap?
-                </Label>
-                <Input
-                  id="handicap-goal"
-                  type="number"
-                  value={handicapGoal || ""}
-                  onChange={(e) => onHandicapGoalChange(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-24 mt-1 bg-[#111827] text-foreground border-primary/20"
-                  min={0}
-                  max={36}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
+    <View className="space-y-4">
+      {commonGolfGoals.map((goal) => {
+        const checked = selectedGoals.includes(goal.id);
+        const Icon = goal.icon;
+        return (
+          <View
+            key={goal.id}
+            className="flex-row items-start space-x-3 p-2 rounded-lg"
+          >
+            <Checkbox
+              value={checked}
+              onValueChange={(value) => onGoalToggle(goal.id, value)}
+            />
+            <View className="flex-1">
+              <View className="flex-row items-center gap-2">
+                <Icon className="h-4 w-4" />
+                <Text className="text-sm font-medium">{goal.label}</Text>
+              </View>
+
+              {goal.id === "lower-score" && checked && (
+                <View className="mt-2 ml-6">
+                  <Text className="text-sm text-muted-foreground">
+                    What's your target score?
+                  </Text>
+                  <TextInput
+                    value={scoreGoal !== null ? String(scoreGoal) : ""}
+                    onChangeText={(text) =>
+                      onScoreGoalChange(text ? parseInt(text, 10) : null)
+                    }
+                    className="w-24 mt-1 bg-[#111827] text-foreground border border-primary/20 px-2 py-1 rounded"
+                    keyboardType="numeric"
+                    placeholder="Score"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              )}
+
+              {goal.id === "handicap" && checked && (
+                <View className="mt-2 ml-6">
+                  <Text className="text-sm text-muted-foreground">
+                    What's your target handicap?
+                  </Text>
+                  <TextInput
+                    value={handicapGoal !== null ? String(handicapGoal) : ""}
+                    onChangeText={(text) =>
+                      onHandicapGoalChange(text ? parseInt(text, 10) : null)
+                    }
+                    className="w-24 mt-1 bg-[#111827] text-foreground border border-primary/20 px-2 py-1 rounded"
+                    keyboardType="numeric"
+                    placeholder="Handicap"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        );
+      })}
+    </View>
   );
 };
 

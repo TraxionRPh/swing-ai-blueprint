@@ -64,7 +64,7 @@ interface ToastComponentProps extends ToastProps {
   onClose: () => void;
 }
 
-const Toast: React.FC<ToastComponentProps> = ({
+export const Toast: React.FC<ToastComponentProps> = ({
   title,
   description,
   variant = 'default',

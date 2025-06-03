@@ -12,14 +12,14 @@ import {
 import { useAuth } from '@/context/AuthContext';
 
 // Screens
-import Auth from '@/screens/Auth';
-import ChallengeLibrary from '@/screens/ChallengeLibrary';
-import ChallengeTracking from '@/screens/ChallengeTracking';
-import ChallengeHistory from '@/screens/ChallengeHistory';
-import RoundsList from '@/screens/RoundsList';
-import RoundTracking from '@/screens/RoundTracking';
-import AIAnalysis from '@/screens/AIAnalysis';
-import UserProfile from '@/screens/Profile';
+import Auth from '@/pages/Auth';
+import ChallengeLibrary from '@/pages/ChallengeLibrary';
+import ChallengeTracking from '@/pages/ChallengeTracking';
+import ChallengeHistory from '@/pages/ChallengeHistory';
+import RoundsList from '@/pages/RoundsList';
+import RoundTracking from '@/pages/RoundTracking';
+import AIAnalysis from '@/pages/AIAnalysis';
+import UserProfile from '@/pages/Profile';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

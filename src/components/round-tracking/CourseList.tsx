@@ -1,9 +1,18 @@
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  Dimensions,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import { Course } from "@/types/round-tracking";
 import { CourseCard } from "./CourseCard";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface CourseListProps {
   isLoading: boolean;
@@ -40,65 +49,79 @@ export const CourseList = ({
   onHoleCountChange,
   onStartRound,
   onRefreshCourses,
-  onClearSearch
+  onClearSearch,
 }: CourseListProps) => {
-  if (isLoading) {
+  const renderSkeleton = () => {
+    // Render a simple gray block as skeleton
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <Card key={i} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-6">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-1" />
-                <Skeleton className="h-4 w-1/3" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <View style={styles.skeletonCard}>
+        <View style={styles.skeletonLineWide} />
+        <View style={styles.skeletonLineMedium} />
+        <View style={styles.skeletonLineSmall} />
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    const skeletonData = Array.from({ length: 6 }, (_, i) => i.toString());
+    return (
+      <FlatList
+        data={skeletonData}
+        renderItem={() => renderSkeleton()}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.listContainer}
+      />
     );
   }
-  
+
   if (hasError) {
     return (
-      <Card className="w-full">
-        <CardContent className="flex flex-col items-center justify-center p-6">
-          <p className="text-muted-foreground mb-4">
+      <View style={styles.centerContainer}>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageText}>
             Could not load courses. Please try again.
-          </p>
-          <Button variant="default" onClick={onRefreshCourses}>
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={onRefreshCourses}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   }
-  
+
   if (filteredCourses.length === 0) {
     return (
-      <Card className="w-full">
-        <CardContent className="flex flex-col items-center justify-center p-6">
-          <p className="text-muted-foreground mb-4">
-            {searchQuery ? "No courses match your search" : "No courses available"}
-          </p>
+      <View style={styles.centerContainer}>
+        <View style={styles.messageCard}>
+          <Text style={styles.messageText}>
+            {searchQuery
+              ? "No courses match your search"
+              : "No courses available"}
+          </Text>
           {searchQuery && (
-            <Button variant="outline" onClick={onClearSearch}>
-              Clear search
-            </Button>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={onClearSearch}
+            >
+              <Text style={styles.clearButtonText}>Clear search</Text>
+            </TouchableOpacity>
           )}
-        </CardContent>
-      </Card>
+        </View>
+      </View>
     );
   }
-  
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {filteredCourses.map(course => (
+    <FlatList
+      data={filteredCourses}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
         <CourseCard
-          key={course.id}
-          course={course}
-          isExpanded={expandedCourseId === course.id}
+          course={item}
+          isExpanded={expandedCourseId === item.id}
           selectedTeeId={selectedTeeId}
           selectedHoleCount={selectedHoleCount}
           isProcessing={isProcessing}
@@ -109,7 +132,97 @@ export const CourseList = ({
           onHoleCountChange={onHoleCountChange}
           onStartRound={onStartRound}
         />
-      ))}
-    </div>
+      )}
+      contentContainerStyle={styles.listContainer}
+    />
   );
 };
+
+const styles = StyleSheet.create({
+  listContainer: {
+    padding: 8,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  messageCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "center",
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    width: SCREEN_WIDTH - 32,
+  },
+  messageText: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  clearButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#007AFF",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  clearButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  skeletonCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    // Android elevation
+    elevation: 1,
+  },
+  skeletonLineWide: {
+    height: 20,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    width: "75%",
+    marginBottom: 8,
+  },
+  skeletonLineMedium: {
+    height: 16,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    width: "50%",
+    marginBottom: 6,
+  },
+  skeletonLineSmall: {
+    height: 16,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+    width: "33%",
+  },
+});

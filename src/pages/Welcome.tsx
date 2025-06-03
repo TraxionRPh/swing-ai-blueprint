@@ -1,8 +1,15 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { View, Text } from "react-native";
 import { useNavigate } from "react-router-native";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { useProfile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { LucideGolf } from "@/components/icons/CustomIcons";
@@ -17,11 +24,11 @@ const Welcome = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { saveProfile, isFirstVisit, loading } = useProfile();
-  
+
   // Form state
   const [step, setStep] = useState(1);
   const totalSteps = 3;
-  
+
   const [handicap, setHandicap] = useState<HandicapLevel>("intermediate");
   const [goals, setGoals] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
@@ -29,25 +36,27 @@ const Welcome = () => {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [scoreGoal, setScoreGoal] = useState<number | null>(null);
   const [handicapGoal, setHandicapGoal] = useState<number | null>(null);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if user is authenticated and if they've already completed onboarding
   useEffect(() => {
     const checkAuthAndOnboarding = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       if (!session) {
-        navigate('/auth');
+        navigate("/auth");
         return;
       }
-      
+
       // If profile is loaded and user has already completed onboarding, redirect to dashboard
       if (!loading && !isFirstVisit) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     };
-    
+
     checkAuthAndOnboarding();
   }, [navigate, isFirstVisit, loading]);
 
@@ -73,21 +82,23 @@ const Welcome = () => {
         lastName,
         selected_goals: selectedGoals,
         score_goal: scoreGoal,
-        handicap_goal: handicapGoal
+        handicap_goal: handicapGoal,
       });
-      
+
       toast({
         title: "Profile setup complete!",
-        description: "Welcome to ChipAway. Let's start improving your golf game."
+        description:
+          "Welcome to ChipAway. Let's start improving your golf game.",
       });
-      
-      navigate('/dashboard');
+
+      navigate("/dashboard");
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
         title: "Error saving profile",
-        description: "There was a problem setting up your profile. Please try again.",
-        variant: "destructive"
+        description:
+          "There was a problem setting up your profile. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -97,11 +108,13 @@ const Welcome = () => {
   // Show loading while checking profile status
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
+      <View className="flex-1 bg-background items-center justify-center">
+        <View className="text-center">
+          <Text className="text-muted-foreground">
+            Loading your profile...
+          </Text>
+        </View>
+      </View>
     );
   }
 
@@ -112,14 +125,11 @@ const Welcome = () => {
     switch (step) {
       case 1:
         return (
-          <SkillLevelStep 
-            handicap={handicap} 
-            setHandicap={setHandicap} 
-          />
+          <SkillLevelStep handicap={handicap} setHandicap={setHandicap} />
         );
       case 2:
         return (
-          <GoalsStep 
+          <GoalsStep
             goals={goals}
             setGoals={setGoals}
             selectedGoals={selectedGoals}
@@ -132,29 +142,33 @@ const Welcome = () => {
         );
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">First Name (optional)</label>
+          <View className="space-y-6">
+            <View className="space-y-2">
+              <Text className="text-sm text-muted-foreground">
+                First Name (optional)
+              </Text>
               <Input
                 type="text"
                 className="bg-[#111827] text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChangeText={(text) => setFirstName(text)}
                 placeholder="Enter your first name"
               />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Last Name (optional)</label>
+            </View>
+
+            <View className="space-y-2">
+              <Text className="text-sm text-muted-foreground">
+                Last Name (optional)
+              </Text>
               <Input
                 type="text"
                 className="bg-[#111827] text-foreground placeholder:text-muted-foreground border-primary/20"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChangeText={(text) => setLastName(text)}
                 placeholder="Enter your last name"
               />
-            </div>
-            
+            </View>
+
             <ProfileSummaryStep
               handicap={handicap}
               goals={goals}
@@ -162,7 +176,7 @@ const Welcome = () => {
               scoreGoal={scoreGoal}
               handicapGoal={handicapGoal}
             />
-          </div>
+          </View>
         );
       default:
         return null;
@@ -170,46 +184,37 @@ const Welcome = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <View className="flex-1 bg-background items-center justify-center p-4">
       <Card className="w-[600px] max-w-full">
         <CardHeader className="text-center space-y-1">
-          <div className="flex justify-center mb-2">
+          <View className="flex-row justify-center mb-2">
             <LucideGolf className="h-10 w-10 text-primary" />
-          </div>
+          </View>
           <CardTitle className="text-2xl">Welcome to ChipAway</CardTitle>
-          <p className="text-muted-foreground">
+          <Text className="text-muted-foreground">
             Let's set up your profile to personalize your experience
-          </p>
-          
+          </Text>
+
           <ProgressIndicator currentStep={step} totalSteps={totalSteps} />
         </CardHeader>
-        
-        <CardContent>
-          {renderStep()}
-        </CardContent>
-        
-        <CardFooter className="flex justify-between border-t p-6">
-          <Button 
-            variant="outline" 
-            onClick={handleBack}
-            disabled={step === 1}
-          >
+
+        <CardContent>{renderStep()}</CardContent>
+
+        <CardFooter className="flex-row justify-between border-t p-6">
+          <Button variant="outline" onPress={handleBack} disabled={step === 1}>
             Back
           </Button>
-          
+
           {step < totalSteps ? (
-            <Button onClick={handleNext}>Next</Button>
+            <Button onPress={handleNext}>Next</Button>
           ) : (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={isSubmitting}
-            >
+            <Button onPress={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : "Complete Setup"}
             </Button>
           )}
         </CardFooter>
       </Card>
-    </div>
+    </View>
   );
 };
 

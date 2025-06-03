@@ -1,49 +1,65 @@
-import { useState, useEffect } from "react";
+// Auth.native.tsx
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from "react-native";
 import { useNavigate } from "react-router-native";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { LucideGolf } from "@/components/icons/CustomIcons";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
-const Auth = () => {
+const { width: windowWidth } = Dimensions.get("window");
+
+const Auth: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(false);
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session } = useAuth();
-  
+
   // Redirect to welcome if already authenticated
   useEffect(() => {
     if (session) {
-      // Navigate to welcome page first - it will redirect to dashboard if onboarding is done
-      navigate('/welcome');
+      navigate("/welcome");
     }
   }, [session, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsLoading(true);
-    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (error) throw error;
 
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in.",
       });
-      
-      // Navigate happens in useEffect after session is updated
+      // Navigation happens via useEffect
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -55,30 +71,26 @@ const Auth = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignUp = async () => {
     setIsLoading(true);
-    
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
       });
-
       if (error) throw error;
 
       setSignupSuccess(true);
-      
       toast({
         title: "Account created successfully!",
         description: "You can now sign in with your credentials.",
       });
     } catch (error: any) {
-      // Handle cases where user is already registered
       if (error.message.includes("already registered")) {
         toast({
           title: "Email already registered",
-          description: "Please sign in with your existing account or use a different email.",
+          description:
+            "Please sign in with your existing account or use a different email.",
           variant: "destructive",
         });
       } else {
@@ -94,101 +106,217 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-[350px]">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <LucideGolf className="h-10 w-10 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">ChipAway</CardTitle>
-          <CardDescription>Elevate your golf game with AI-powered training</CardDescription>
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Card style={styles.card}>
+        <CardHeader style={styles.cardHeader}>
+          <View style={styles.iconContainer}>
+            <LucideGolf size={40} color="#3B82F6" />
+          </View>
+          <CardTitle style={styles.title}>ChipAway</CardTitle>
+          <CardDescription style={styles.description}>
+            Elevate your golf game with AI-powered training
+          </CardDescription>
         </CardHeader>
-        
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
+
+        <Tabs currentValue={currentTab} onValueChange={setCurrentTab} style={styles.tabs}>
+          <TabsList style={styles.tabsList}>
+            <TabsTrigger value="login" style={currentTab === "login" ? styles.activeTab : styles.inactiveTab}>
+              Login
+            </TabsTrigger>
+            <TabsTrigger value="register" style={currentTab === "register" ? styles.activeTab : styles.inactiveTab}>
+              Register
+            </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="login">
-            <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+
+          <TabsContent value="login" style={styles.tabContent}>
+            <CardContent style={styles.formContent}>
+              <Input
+                keyboardType="email-address"
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                style={styles.input}
+              />
+              <Input
+                secureTextEntry
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+              />
+            </CardContent>
+            <CardFooter>
+              <Button
+                onPress={handleLogin}
+                style={styles.submitButton}
+                disabled={isLoading}
+              >
+                <Text style={styles.buttonText}>
                   {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
-              </CardFooter>
-            </form>
+                </Text>
+              </Button>
+            </CardFooter>
           </TabsContent>
-          
-          <TabsContent value="register">
+
+          <TabsContent value="register" style={styles.tabContent}>
             {signupSuccess ? (
-              <div className="p-6 text-center space-y-4">
-                <h3 className="font-medium text-lg">Registration successful!</h3>
-                <p className="text-muted-foreground">
+              <View style={styles.successContainer}>
+                <Text style={styles.successTitle}>Registration successful!</Text>
+                <Text style={styles.successMessage}>
                   You can now sign in with your credentials to access your account.
-                </p>
-                <Button 
-                  onClick={() => document.querySelector('[data-value="login"]')?.dispatchEvent(new Event('click'))}
-                  className="mt-2"
+                </Text>
+                <Button
+                  onPress={() => {
+                    setCurrentTab("login");
+                    setSignupSuccess(false);
+                  }}
+                  style={styles.switchButton}
                 >
-                  Go to Login
+                  <Text style={styles.buttonText}>Go to Login</Text>
                 </Button>
-              </div>
+              </View>
             ) : (
-              <form onSubmit={handleSignUp}>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                </CardContent>
+              <CardContent style={styles.formContent}>
+                <Input
+                  keyboardType="email-address"
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+                <Input
+                  secureTextEntry
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.input}
+                  minLength={6}
+                />
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create Account"}
+                  <Button
+                    onPress={handleSignUp}
+                    style={styles.submitButton}
+                    disabled={isLoading}
+                  >
+                    <Text style={styles.buttonText}>
+                      {isLoading ? "Creating account..." : "Create Account"}
+                    </Text>
                   </Button>
                 </CardFooter>
-              </form>
+              </CardContent>
             )}
           </TabsContent>
         </Tabs>
       </Card>
-    </div>
+    </KeyboardAvoidingView>
   );
 };
 
 export default Auth;
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#F3F4F6", // bg-background
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  card: {
+    width: windowWidth * 0.9,
+    maxWidth: 350,
+  },
+  cardHeader: {
+    alignItems: "center",
+    paddingBottom: 0,
+  },
+  iconContainer: {
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  description: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  tabs: {
+    marginTop: 16,
+  },
+  tabsList: {
+    flexDirection: "row",
+  },
+  activeTab: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+  },
+  inactiveTab: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: "#E5E7EB",
+    alignItems: "center",
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+  },
+  tabContent: {
+    backgroundColor: "#FFFFFF",
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+    marginTop: -1,
+  },
+  formContent: {
+    padding: 16,
+  },
+  input: {
+    marginBottom: 12,
+  },
+  submitButton: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  successContainer: {
+    padding: 24,
+    alignItems: "center",
+  },
+  successTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  successMessage: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  switchButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

@@ -1,28 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-native';
+// Profile.native.tsx
+import React, { useState, useEffect } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigate } from "react-router-native";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile, HandicapLevel } from "@/hooks/useProfile";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { LogOut, Shield, Mail } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Label } from "@/components/ui/Label";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/TextArea";
+import { Separator } from "@/components/ui/Separator";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { supabase } from "@/integrations/supabase/client";
+import { LogOut, Shield, Mail } from "lucide-react-native";
 
-const Profile = () => {
+export const Profile: React.FC = () => {
   const { handicap, goals, isPremium, loading, saveProfile, firstName, lastName, avatarUrl, scoreGoal, handicapGoal } = useProfile();
   const { toast } = useToast();
   const navigate = useNavigate();
+
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  
+
   const [localHandicap, setLocalHandicap] = useState<HandicapLevel | null>(handicap);
   const [localGoals, setLocalGoals] = useState<string | null>(goals);
   const [localFirstName, setLocalFirstName] = useState<string | null>(firstName);
@@ -39,16 +50,11 @@ const Profile = () => {
     setLocalAvatarUrl(avatarUrl);
     setLocalScoreGoal(scoreGoal);
     setLocalHandicapGoal(handicapGoal);
-    
-    // Get user email
-    const getUserEmail = async () => {
+
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserEmail(user.email);
-      }
-    };
-    
-    getUserEmail();
+      if (user?.email) setUserEmail(user.email);
+    })();
   }, [handicap, goals, firstName, lastName, avatarUrl, scoreGoal, handicapGoal]);
 
   const handleSave = async () => {
@@ -61,13 +67,13 @@ const Profile = () => {
         lastName: localLastName || undefined,
         avatarUrl: localAvatarUrl || undefined,
         score_goal: localScoreGoal,
-        handicap_goal: localHandicapGoal
+        handicap_goal: localHandicapGoal,
       });
       toast({
         title: "Profile Updated",
         description: "Your changes have been saved successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
@@ -83,16 +89,15 @@ const Profile = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
       toast({
         title: "Signed Out",
         description: "You have been signed out successfully.",
       });
-      navigate('/auth');
-    } catch (error: any) {
+      navigate("/auth");
+    } catch (err: any) {
       toast({
         title: "Sign Out Failed",
-        description: error.message || "An error occurred while signing out.",
+        description: err.message || "An error occurred while signing out.",
         variant: "destructive",
       });
     } finally {
@@ -101,186 +106,315 @@ const Profile = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </View>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex justify-between items-center">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Profile Settings</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.heading}>Profile Settings</Text>
 
-      <h1 className="text-3xl font-bold">Profile Settings</h1>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Update your profile information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex justify-center pb-6">
-            <AvatarUpload
-              url={localAvatarUrl}
-              onUpload={(url) => setLocalAvatarUrl(url)}
-              size={150}
-            />
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                value={localFirstName || ''}
-                onChange={(e) => setLocalFirstName(e.target.value)}
-                placeholder="Enter your first name"
+        <Card style={styles.card}>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>Update your profile information</CardDescription>
+          </CardHeader>
+          <CardContent style={styles.cardContent}>
+            <View style={styles.avatarContainer}>
+              <AvatarUpload
+                url={localAvatarUrl}
+                onUpload={(url) => setLocalAvatarUrl(url)}
+                size={150}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                value={localLastName || ''}
-                onChange={(e) => setLocalLastName(e.target.value)}
-                placeholder="Enter your last name"
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.halfWidth}>
+                <Label text="First Name" />
+                <Input
+                  value={localFirstName || ""}
+                  onChangeText={setLocalFirstName}
+                  placeholder="Enter your first name"
+                />
+              </View>
+              <View style={styles.halfWidth}>
+                <Label text="Last Name" />
+                <Input
+                  value={localLastName || ""}
+                  onChangeText={setLocalLastName}
+                  placeholder="Enter your last name"
+                />
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <View style={styles.labelRow}>
+                <Mail size={16} color="#6B7280" style={styles.icon} />
+                <Label text="Email Address" />
+              </View>
+              <View style={styles.emailBox}>
+                <Text style={styles.emailText}>
+                  {userEmail || "Loading email..."}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.halfWidth}>
+                <Label text="Target Round Score" />
+                <Input
+                  keyboardType="number-pad"
+                  value={localScoreGoal?.toString() || ""}
+                  onChangeText={(val) =>
+                    setLocalScoreGoal(val ? Number(val) : null)
+                  }
+                  placeholder="Enter target score"
+                />
+              </View>
+              <View style={styles.halfWidth}>
+                <Label text="Target Handicap" />
+                <Input
+                  keyboardType="number-pad"
+                  value={localHandicapGoal?.toString() || ""}
+                  onChangeText={(val) =>
+                    setLocalHandicapGoal(val ? Number(val) : null)
+                  }
+                  placeholder="Enter target handicap"
+                />
+              </View>
+            </View>
+
+            <Separator style={styles.separator} />
+
+            <View style={styles.field}>
+              <Text style={styles.sectionTitle}>Skill Level</Text>
+              <RadioGroup
+                value={localHandicap || ""}
+                onValueChange={(v) => setLocalHandicap(v as HandicapLevel)}
+              >
+                {[
+                  ["beginner", "Beginner (36+ handicap)"],
+                  ["novice", "Novice (25-36 handicap)"],
+                  ["intermediate", "Intermediate (15-24 handicap)"],
+                  ["advanced", "Advanced (5-14 handicap)"],
+                  ["expert", "Expert (0-4 handicap)"],
+                  ["pro", "Professional (+ handicap)"],
+                ].map(([value, label]) => (
+                  <View key={value} style={styles.radioRow}>
+                    <RadioGroupItem value={value} />
+                    <Text style={styles.radioLabel}>{label}</Text>
+                  </View>
+                ))}
+              </RadioGroup>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.sectionTitle}>Goals</Text>
+              <Textarea
+                value={localGoals || ""}
+                onChangeText={setLocalGoals}
+                placeholder="What are your golf improvement goals?"
+                style={styles.textarea}
               />
-            </div>
-          </div>
-          
-          {/* Email display as text */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-1">
-              <Mail className="h-4 w-4" />
-              <Label>Email Address</Label>
-            </div>
-            <div className="px-3 py-2 rounded-md border border-input bg-background text-sm">
-              {userEmail || 'Loading email...'}
-            </div>
-          </div>
+            </View>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="targetScore">Target Round Score</Label>
-              <Input
-                id="targetScore"
-                type="number"
-                min={30}
-                max={150}
-                value={localScoreGoal || ''}
-                onChange={(e) => setLocalScoreGoal(e.target.value ? Number(e.target.value) : null)}
-                placeholder="Enter target score"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="targetHandicap">Target Handicap</Label>
-              <Input
-                id="targetHandicap"
-                type="number"
-                min={0}
-                max={36}
-                value={localHandicapGoal || ''}
-                onChange={(e) => setLocalHandicapGoal(e.target.value ? Number(e.target.value) : null)}
-                placeholder="Enter target handicap"
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Skill Level</h3>
-            <RadioGroup value={localHandicap || ''} onValueChange={(value) => setLocalHandicap(value as HandicapLevel)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="beginner" id="beginner" />
-                <Label htmlFor="beginner">Beginner (36+ handicap)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="novice" id="novice" />
-                <Label htmlFor="novice">Novice (25-36 handicap)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="intermediate" id="intermediate" />
-                <Label htmlFor="intermediate">Intermediate (15-24 handicap)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="advanced" id="advanced" />
-                <Label htmlFor="advanced">Advanced (5-14 handicap)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="expert" id="expert" />
-                <Label htmlFor="expert">Expert (0-4 handicap)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pro" id="pro" />
-                <Label htmlFor="pro">Professional (+ handicap)</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Goals</h3>
-            <Textarea 
-              placeholder="What are your golf improvement goals?"
-              value={localGoals || ''}
-              onChange={(e) => setLocalGoals(e.target.value)}
-              className="min-h-[100px]"
-            />
-          </div>
-
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <NotificationPreferences />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription Status</CardTitle>
-          <CardDescription>Manage your subscription and access premium features</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Shield className={isPremium ? "text-green-500" : "text-gray-400"} />
-            <span className="font-medium">
-              {isPremium ? 'Premium Member' : 'Free Tier'}
-            </span>
-          </div>
-          {!isPremium && (
-            <Button variant="outline" onClick={() => window.location.href = '/subscription'}>
-              Upgrade to Premium
+            <Button
+              onPress={handleSave}
+              disabled={isSaving}
+              style={styles.saveButton}
+            >
+              <Text style={styles.saveButtonText}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Text>
             </Button>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Sign Out button moved to bottom of page */}
-      <div className="mt-8 pb-6">
-        <Button 
-          variant="destructive"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
-        </Button>
-      </div>
-    </div>
+        <NotificationPreferences />
+
+        <Card style={styles.card}>
+          <CardHeader>
+            <CardTitle>Subscription Status</CardTitle>
+            <CardDescription>
+              Manage your subscription and access premium features
+            </CardDescription>
+          </CardHeader>
+          <CardContent style={styles.cardContent}>
+            <View style={styles.subRow}>
+              <Shield
+                size={20}
+                color={isPremium ? "#10B981" : "#9CA3AF"}
+                style={styles.icon}
+              />
+              <Text style={styles.subText}>
+                {isPremium ? "Premium Member" : "Free Tier"}
+              </Text>
+            </View>
+            {!isPremium && (
+              <Button
+                variant="outline"
+                onPress={() => navigate("/subscription")}
+                style={styles.upgradeButton}
+              >
+                <Text style={styles.upgradeText}>Upgrade to Premium</Text>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <View style={styles.logoutContainer}>
+          <Button
+            variant="destructive"
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+            style={styles.logoutButton}
+          >
+            <View style={styles.logoutRow}>
+              <LogOut size={16} color="#FFFFFF" style={styles.icon} />
+              <Text style={styles.logoutText}>
+                {isLoggingOut ? "Signing Out..." : "Sign Out"}
+              </Text>
+            </View>
+          </Button>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 export default Profile;
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  container: {
+    padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  heading: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  card: {
+    marginBottom: 24,
+  },
+  cardContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  avatarContainer: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  halfWidth: {
+    width: "48%",
+  },
+  field: {
+    marginBottom: 16,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  icon: {
+    marginRight: 6,
+  },
+  emailBox: {
+    backgroundColor: "#F3F4F6",
+    padding: 8,
+    borderRadius: 6,
+  },
+  emailText: {
+    fontSize: 14,
+    color: "#111827",
+  },
+  separator: {
+    marginVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  radioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  radioLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#374151",
+  },
+  textarea: {
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  saveButton: {
+    backgroundColor: "#3B82F6",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  subRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  subText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  upgradeButton: {
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  upgradeText: {
+    color: "#3B82F6",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  logoutContainer: {
+    marginBottom: 32,
+  },
+  logoutButton: {
+    backgroundColor: "#EF4444",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  logoutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logoutText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+});

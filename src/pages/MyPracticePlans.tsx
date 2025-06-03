@@ -1,75 +1,93 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useLocation, useNavigate } from "react-router-native";
+// MyPracticePlans.native.tsx
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigate, useLocation } from "react-router-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { GeneratedPracticePlan, SavedPracticePlan } from "@/types/practice-plan";
+import { Button } from "@/components/ui/Button";
+import type { GeneratedPracticePlan, SavedPracticePlan } from "@/types/practice-plan";
 import { GeneratedPlan } from "@/components/practice-plans/GeneratedPlan";
 import { PlanCard } from "@/components/practice-plans/PlanCard";
 import { EmptyPlansState } from "@/components/practice-plans/EmptyPlansState";
 import { PlansLoadingState } from "@/components/practice-plans/PlansLoadingState";
+import { useAuth } from "@/context/AuthContext";
 
-// Local storage key for deleted plan IDs
 const DELETED_PLANS_STORAGE_KEY = "golf-app-deleted-plan-ids";
 
-const MyPracticePlans = () => {
+export const MyPracticePlans: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const location = useLocation();
+  const location = useLocation<{ showLatest?: boolean }>();
   const navigate = useNavigate();
   const showLatest = location.state?.showLatest || false;
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [plans, setPlans] = useState<SavedPracticePlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<GeneratedPracticePlan | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>(() => {
-    // Initialize from localStorage
-    const savedIds = localStorage.getItem(DELETED_PLANS_STORAGE_KEY);
-    return savedIds ? JSON.parse(savedIds) : [];
-  });
+  const [deletedPlanIds, setDeletedPlanIds] = useState<string[]>([]);
 
-  // Update localStorage whenever deletedPlanIds changes
+  // Load deletedPlanIds from AsyncStorage on mount
   useEffect(() => {
-    localStorage.setItem(DELETED_PLANS_STORAGE_KEY, JSON.stringify(deletedPlanIds));
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem(DELETED_PLANS_STORAGE_KEY);
+        if (saved) {
+          setDeletedPlanIds(JSON.parse(saved));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  // Persist deletedPlanIds to AsyncStorage whenever it changes
+  useEffect(() => {
+    (async () => {
+      try {
+        await AsyncStorage.setItem(
+          DELETED_PLANS_STORAGE_KEY,
+          JSON.stringify(deletedPlanIds)
+        );
+      } catch {
+        // ignore
+      }
+    })();
   }, [deletedPlanIds]);
 
   const loadPracticePlans = useCallback(async () => {
     if (!user) return;
-
     setIsLoading(true);
     try {
-      console.log("Fetching practice plans for user:", user.id);
-      
       const { data, error } = await supabase
-        .from('ai_practice_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("ai_practice_plans")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching practice plans:", error);
-        throw error;
-      }
-
+      if (error) throw error;
       if (data) {
-        console.log("Practice plans fetched:", data.length);
-        const typedPlans: SavedPracticePlan[] = data.map(plan => ({
+        const typedPlans: SavedPracticePlan[] = data.map((plan) => ({
           ...plan,
           root_causes: plan.root_causes as unknown as string[],
           recommended_drills: plan.recommended_drills as unknown as any[],
-          practice_plan: plan.practice_plan as unknown as GeneratedPracticePlan
+          practice_plan: plan.practice_plan as unknown as GeneratedPracticePlan,
         }));
-        
-        const filteredPlans = typedPlans.filter(plan => !deletedPlanIds.includes(plan.id));
-        console.log("Filtered plans (after removing deleted):", filteredPlans.length);
-        setPlans(filteredPlans);
-        
-        if (showLatest && filteredPlans.length > 0) {
-          console.log("Auto-selecting latest plan:", filteredPlans[0].id);
-          setSelectedPlan(filteredPlans[0].practice_plan);
-          setSelectedPlanId(filteredPlans[0].id);
+
+        const filtered = typedPlans.filter((p) => !deletedPlanIds.includes(p.id));
+        setPlans(filtered);
+
+        if (showLatest && filtered.length > 0) {
+          setSelectedPlan(filtered[0].practice_plan);
+          setSelectedPlanId(filtered[0].id);
         }
       }
     } catch (error) {
@@ -77,123 +95,152 @@ const MyPracticePlans = () => {
       toast({
         title: "Error",
         description: "Failed to load practice plans",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   }, [user, deletedPlanIds, showLatest, toast]);
 
+  // Load plans on mount
   useEffect(() => {
     loadPracticePlans();
-    
-    // This ensures we reload plans when the page becomes visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        loadPracticePlans();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [loadPracticePlans]);
 
-  const deletePracticePlan = useCallback(async (planId: string) => {
-    try {
-      // Optimistically update UI
-      setPlans(plans.filter(plan => plan.id !== planId));
-      
-      if (selectedPlanId === planId) {
-        setSelectedPlan(null);
-        setSelectedPlanId(null);
+  const deletePracticePlan = useCallback(
+    async (planId: string) => {
+      try {
+        // Optimistic UI update
+        setPlans((prev) => prev.filter((p) => p.id !== planId));
+        if (selectedPlanId === planId) {
+          setSelectedPlan(null);
+          setSelectedPlanId(null);
+        }
+        setDeletedPlanIds((prev) => [...prev, planId]);
+
+        const { error } = await supabase
+          .from("ai_practice_plans")
+          .delete()
+          .eq("id", planId);
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Practice plan deleted",
+        });
+      } catch (error) {
+        console.error("Error deleting practice plan:", error);
+        // Rollback
+        setDeletedPlanIds((prev) => prev.filter((id) => id !== planId));
+        loadPracticePlans();
+        toast({
+          title: "Error",
+          description: "Failed to delete practice plan",
+          variant: "destructive",
+        });
       }
-
-      // Add to deleted IDs list (which will update localStorage via effect)
-      setDeletedPlanIds(prev => [...prev, planId]);
-
-      const { error } = await supabase
-        .from('ai_practice_plans')
-        .delete()
-        .eq('id', planId);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "Practice plan deleted"
-      });
-    } catch (error) {
-      console.error("Error deleting practice plan:", error);
-      
-      // Roll back optimistic updates
-      setDeletedPlanIds(prev => prev.filter(id => id !== planId));
-      loadPracticePlans();
-      
-      toast({
-        title: "Error",
-        description: "Failed to delete practice plan",
-        variant: "destructive"
-      });
-    }
-  }, [plans, selectedPlanId, toast, loadPracticePlans]);
+    },
+    [selectedPlanId, toast, loadPracticePlans]
+  );
 
   const clearSelectedPlan = useCallback(() => {
     setSelectedPlan(null);
     setSelectedPlanId(null);
     navigate(location.pathname, { replace: true });
   }, [navigate, location.pathname]);
-  
+
   const viewPlan = useCallback((plan: SavedPracticePlan) => {
     setSelectedPlan(plan.practice_plan);
     setSelectedPlanId(plan.id);
   }, []);
 
-  // Memoize the plan cards to prevent unnecessary re-renders
-  const planCards = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {plans.map((plan) => (
-        <PlanCard
-          key={plan.id}
-          plan={plan}
-          onView={viewPlan}
-          onDelete={deletePracticePlan}
-        />
-      ))}
-    </div>
-  ), [plans, viewPlan, deletePracticePlan]);
+  const planCards = useMemo(() => {
+    if (!plans) return null;
+    return (
+      <View style={styles.cardsGrid}>
+        {plans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            onView={viewPlan}
+            onDelete={deletePracticePlan}
+          />
+        ))}
+      </View>
+    );
+  }, [plans, viewPlan, deletePracticePlan]);
 
   return (
-    <div className="container p-4 py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">My Practice Plans</h1>
-        <Button size="sm" variant="outline" onClick={loadPracticePlans}>
-          Refresh
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.heading}>My Practice Plans</Text>
+        <Button style={styles.refreshButton} onPress={loadPracticePlans}>
+          <Text style={styles.refreshText}>Refresh</Text>
         </Button>
-      </div>
-      <p className="text-muted-foreground">Review your saved practice plans</p>
+      </View>
+      <Text style={styles.subheading}>Review your saved practice plans</Text>
 
       {selectedPlan ? (
         <GeneratedPlan
           plan={selectedPlan}
           onClear={clearSelectedPlan}
-          planDuration={selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"}
-          planId={selectedPlanId}
+          planDuration={
+            selectedPlan.practicePlan?.duration?.split(" ")[0] || "1"
+          }
+          planId={selectedPlanId!}
         />
       ) : (
-        <div className="space-y-6">
+        <View style={styles.contentArea}>
           {isLoading ? (
             <PlansLoadingState />
           ) : plans.length === 0 ? (
             <EmptyPlansState />
-          ) : planCards}
-        </div>
+          ) : (
+            planCards
+          )}
+        </View>
       )}
-    </div>
+    </ScrollView>
   );
 };
 
 export default MyPracticePlans;
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  refreshButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  refreshText: {
+    color: "#3B82F6",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  subheading: {
+    fontSize: 16,
+    color: "#6B7280",
+    marginBottom: 16,
+  },
+  contentArea: {
+    flex: 1,
+  },
+  cardsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+});

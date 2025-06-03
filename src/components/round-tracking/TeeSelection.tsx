@@ -1,14 +1,28 @@
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { Circle, Plus } from "lucide-react-native";
 
-import { Button } from "@/components/ui/button";
-import { Course, CourseTee } from "@/types/round-tracking";
-import { cn } from "@/lib/utils";
-import { Circle, Plus } from "lucide-react";
+interface CourseTee {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+interface Course {
+  course_tees?: CourseTee[];
+}
 
 interface TeeSelectionProps {
   selectedCourse: Course | null;
   selectedTeeId: string | null;
   onTeeSelect: (teeId: string) => void;
-  onAddTee?: () => void; // New prop for handling add tee action
+  onAddTee?: () => void;
 }
 
 export const TeeSelection = ({
@@ -18,52 +32,120 @@ export const TeeSelection = ({
   onAddTee,
 }: TeeSelectionProps) => {
   if (!selectedCourse || !selectedCourse.course_tees?.length) return null;
-  
+
   return (
-    <div className="mt-4">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-medium">Select Tee</h3>
-        
-        {/* Add new tee button */}
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.heading}>Select Tee</Text>
         {onAddTee && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onAddTee}
-            className="p-1 h-auto"
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={onAddTee}
+            activeOpacity={0.7}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            <span className="text-xs">Add Tee</span>
-          </Button>
+            <Plus size={16} color="#2563EB" style={styles.plusIcon} />
+            <Text style={styles.addButtonText}>Add Tee</Text>
+          </TouchableOpacity>
         )}
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.teesRow}
+      >
         {selectedCourse.course_tees.map((tee) => {
-          const isLightColor = ['white', 'yellow', 'gold', 'beige'].includes(tee.color?.toLowerCase() || '');
+          const colorLower = tee.color?.toLowerCase() || "";
+          const isLightColor = ["white", "yellow", "gold", "beige"].includes(
+            colorLower
+          );
           const isSelected = selectedTeeId === tee.id;
-          
           return (
-            <Button
+            <TouchableOpacity
               key={tee.id}
-              size="sm"
-              variant={isSelected ? "secondary" : "outline"}
-              onClick={() => onTeeSelect(tee.id)}
-              className={cn(
-                "flex items-center",
-                isSelected ? "ring-2 ring-white/70 ring-offset-1 shadow-md" : ""
-              )}
+              style={[
+                styles.teeButton,
+                isSelected && styles.selectedTeeButton,
+              ]}
+              onPress={() => onTeeSelect(tee.id)}
+              activeOpacity={0.7}
             >
-              <Circle 
-                fill={tee.color || "#888"} 
-                className="h-4 w-4 mr-2"
+              <Circle
+                size={ sixteen}
+                color={tee.color || "#888"}
+                fill={tee.color || "#888"}
                 strokeWidth={isLightColor ? 1 : 0}
+                style={styles.circleIcon}
               />
-              <span>{tee.name}</span>
-            </Button>
+              <Text
+                style={[
+                  styles.teeText,
+                  isSelected && styles.selectedTeeText,
+                ]}
+              >
+                {tee.name}
+              </Text>
+            </TouchableOpacity>
           );
         })}
-      </div>
-    </div>
+      </ScrollView>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  heading: {
+    fontSize:  sixteen,
+    fontWeight: "500",
+    color: "#111827",
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  plusIcon: {
+    marginRight:  four,
+  },
+  addButtonText: {
+    fontSize:  fourteen,
+    color: "#2563EB",
+    fontWeight: "500",
+  },
+  teesRow: {
+    flexDirection: "row",
+  },
+  teeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight:  eight,
+    backgroundColor: "#fff",
+  },
+  selectedTeeButton: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB",
+  },
+  circleIcon: {
+    marginRight:  eight,
+  },
+  teeText: {
+    fontSize:  fourteen,
+    color: "#111827",
+  },
+  selectedTeeText: {
+    color: "#fff",
+  },
+});

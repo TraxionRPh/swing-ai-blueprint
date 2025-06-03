@@ -1,117 +1,177 @@
-import * as React from "react"
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+// Pagination.native.tsx
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  AccessibilityRole,
+} from "react-native";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react-native";
 
-import { cn } from "@/lib/utils"
-import { ButtonProps, buttonVariants } from "@/components/ui/button"
-
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
-)
-Pagination.displayName = "Pagination"
-
-const PaginationContent = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-  <ul
-    ref={ref}
-    className={cn("flex flex-row items-center gap-1", className)}
-    {...props}
-  />
-))
-PaginationContent.displayName = "PaginationContent"
-
-const PaginationItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-  <li ref={ref} className={cn("", className)} {...props} />
-))
-PaginationItem.displayName = "PaginationItem"
-
-type PaginationLinkProps = {
-  isActive?: boolean
-} & Pick<ButtonProps, "size"> &
-  React.ComponentProps<"a">
-
-const PaginationLink = ({
-  className,
-  isActive,
-  size = "icon",
-  ...props
-}: PaginationLinkProps) => (
-  <a
-    aria-current={isActive ? "page" : undefined}
-    className={cn(
-      buttonVariants({
-        variant: isActive ? "outline" : "ghost",
-        size,
-      }),
-      className
-    )}
-    {...props}
-  />
-)
-PaginationLink.displayName = "PaginationLink"
-
-const PaginationPrevious = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to previous page"
-    size="default"
-    className={cn("gap-1 pl-2.5", className)}
-    {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-    <span>Previous</span>
-  </PaginationLink>
-)
-PaginationPrevious.displayName = "PaginationPrevious"
-
-const PaginationNext = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to next page"
-    size="default"
-    className={cn("gap-1 pr-2.5", className)}
-    {...props}
-  >
-    <span>Next</span>
-    <ChevronRight className="h-4 w-4" />
-  </PaginationLink>
-)
-PaginationNext.displayName = "PaginationNext"
-
-const PaginationEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
-  <span
-    aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
-  </span>
-)
-PaginationEllipsis.displayName = "PaginationEllipsis"
-
-export {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+interface PaginationProps {
+  children: React.ReactNode;
+  style?: object;
 }
+
+export const Pagination: React.FC<PaginationProps> = ({ children, style }) => (
+  <View
+    accessibilityRole={"navigation" as AccessibilityRole}
+    accessibilityLabel="pagination"
+    style={[styles.paginationContainer, style]}
+  >
+    {children}
+  </View>
+);
+
+interface PaginationContentProps {
+  children: React.ReactNode;
+  style?: object;
+}
+
+export const PaginationContent: React.FC<PaginationContentProps> = ({ children, style }) => (
+  <View style={[styles.contentContainer, style]}>{children}</View>
+);
+
+interface PaginationItemProps {
+  children: React.ReactNode;
+  style?: object;
+}
+
+export const PaginationItem: React.FC<PaginationItemProps> = ({ children, style }) => (
+  <View style={style}>{children}</View>
+);
+
+interface PaginationLinkProps {
+  isActive?: boolean;
+  onPress?: () => void;
+  children: React.ReactNode;
+  style?: object;
+}
+
+export const PaginationLink: React.FC<PaginationLinkProps> = ({
+  isActive = false,
+  onPress,
+  children,
+  style,
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    style={[
+      styles.linkBase,
+      isActive ? styles.linkActive : styles.linkInactive,
+      style,
+    ]}
+    accessibilityState={{ selected: isActive }}
+  >
+    {children}
+  </TouchableOpacity>
+);
+
+interface PaginationPreviousProps {
+  onPress?: () => void;
+  disabled?: boolean;
+}
+
+export const PaginationPrevious: React.FC<PaginationPreviousProps> = ({
+  onPress,
+  disabled = false,
+}) => (
+  <PaginationLink
+    onPress={onPress}
+    style={styles.prevNextContainer}
+    isActive={false}
+  >
+    <ChevronLeft size={16} color={disabled ? "#9CA3AF" : "#111827"} />
+    <Text style={[styles.prevNextText, disabled && styles.textDisabled]}>
+      Previous
+    </Text>
+  </PaginationLink>
+);
+
+interface PaginationNextProps {
+  onPress?: () => void;
+  disabled?: boolean;
+}
+
+export const PaginationNext: React.FC<PaginationNextProps> = ({
+  onPress,
+  disabled = false,
+}) => (
+  <PaginationLink
+    onPress={onPress}
+    style={styles.prevNextContainer}
+    isActive={false}
+  >
+    <Text style={[styles.prevNextText, disabled && styles.textDisabled]}>
+      Next
+    </Text>
+    <ChevronRight size={16} color={disabled ? "#9CA3AF" : "#111827"} />
+  </PaginationLink>
+);
+
+interface PaginationEllipsisProps {
+  style?: object;
+}
+
+export const PaginationEllipsis: React.FC<PaginationEllipsisProps> = ({ style }) => (
+  <View style={[styles.ellipsisContainer, style]}>
+    <MoreHorizontal size={16} color="#6B7280" />
+    <Text style={styles.srOnly}>More pages</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  paginationContainer: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 8,
+  },
+  contentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  linkBase: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  linkActive: {
+    borderWidth: 1,
+    borderColor: "#3B82F6",
+    backgroundColor: "#FFFFFF",
+  },
+  linkInactive: {
+    backgroundColor: "transparent",
+  },
+  prevNextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  prevNextText: {
+    fontSize: 16,
+    color: "#111827",
+  },
+  textDisabled: {
+    color: "#9CA3AF",
+  },
+  ellipsisContainer: {
+    height: 36,
+    width: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    margin: -1,
+    overflow: "hidden",
+    opacity: 0,
+  },
+});

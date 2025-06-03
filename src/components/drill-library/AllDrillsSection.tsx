@@ -1,6 +1,7 @@
-
+// src/components/AllDrillsSection.tsx
+import React from "react";
+import { View, Text, ScrollView } from "react-native";
 import { Drill } from "@/types/drill";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { DrillFilters } from "./DrillFilters";
 import { DrillCard } from "./DrillCard";
 
@@ -19,34 +20,44 @@ export const AllDrillsSection = ({
   selectedCategory,
   setSelectedCategory,
   selectedDifficulty,
-  setSelectedDifficulty
+  setSelectedDifficulty,
 }: AllDrillsSectionProps) => {
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">All Drills</h2>
-      <ScrollArea className="h-[600px]">
+    <View>
+      <Text className="text-xl font-semibold mb-4">All Drills</Text>
+
+      <ScrollView
+        className="h-[600px]"
+        contentContainerStyle={{ paddingBottom: 16 }}
+      >
         {drills && (
-          <DrillFilters 
-            drills={drills}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            selectedDifficulty={selectedDifficulty}
-            setSelectedDifficulty={setSelectedDifficulty}
-          />
+          <View className="mb-4">
+            <DrillFilters
+              drills={drills}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              selectedDifficulty={selectedDifficulty}
+              setSelectedDifficulty={setSelectedDifficulty}
+            />
+          </View>
         )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+
+        <View className="flex-row flex-wrap gap-4 mt-6">
           {filteredDrills.map((drill) => (
-            <DrillCard key={drill.id} drill={drill} />
+            <View key={drill.id} className="w-full md:w-1/2 lg:w-1/3 mb-4">
+              <DrillCard drill={drill} />
+            </View>
           ))}
-        </div>
-        
+        </View>
+
         {filteredDrills.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No drills match your filters.</p>
-          </div>
+          <View className="text-center py-10">
+            <Text className="text-muted-foreground">
+              No drills match your filters.
+            </Text>
+          </View>
         )}
-      </ScrollArea>
-    </div>
+      </ScrollView>
+    </View>
   );
 };

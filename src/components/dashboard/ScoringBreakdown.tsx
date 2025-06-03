@@ -7,14 +7,14 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+} from "@/components/ui/Tooltip";
+import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { AlertCircle, Loader2 } from "lucide-react-native";
 import { useScoringBreakdown } from "@/hooks/useScoringBreakdown";
 

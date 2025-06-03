@@ -1,6 +1,8 @@
-
-import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+// src/components/DrillCardDetails.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import { Button } from "@/components/ui/Button"; // RN-compatible Button
+import { Info } from "lucide-react-native";
 
 interface DrillCardDetailsProps {
   sets: number;
@@ -9,26 +11,32 @@ interface DrillCardDetailsProps {
   onViewDetails: () => void;
 }
 
-export const DrillCardDetails = ({ sets, reps, duration, onViewDetails }: DrillCardDetailsProps) => {
+export const DrillCardDetails = ({
+  sets,
+  reps,
+  duration,
+  onViewDetails,
+}: DrillCardDetailsProps) => {
   return (
-    <div className="flex justify-between items-center text-sm text-muted-foreground">
-      <div>
-        <span>{sets} sets of {reps} reps</span>
-        <span className="mx-2">•</span>
-        <span>{duration || '10-15 minutes'}</span>
-      </div>
-      
-      <Button 
-        variant="ghost" 
-        size="sm" 
+    <View className="flex-row justify-between items-center">
+      <View className="flex-row items-center">
+        <Text className="text-sm text-muted-foreground">
+          {sets} sets of {reps} reps
+        </Text>
+        <Text className="text-sm text-muted-foreground mx-2">•</Text>
+        <Text className="text-sm text-muted-foreground">
+          {duration || "10-15 minutes"}
+        </Text>
+      </View>
+
+      <Button
+        variant="ghost"
+        size="sm"
         className="p-0 h-8 w-8"
-        onClick={(e) => {
-          e.stopPropagation();
-          onViewDetails();
-        }}
+        onPress={onViewDetails}
       >
-        <Info className="h-4 w-4" />
+        <Info className="h-4 w-4 text-muted-foreground" />
       </Button>
-    </div>
+    </View>
   );
 };

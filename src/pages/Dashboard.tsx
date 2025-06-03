@@ -6,8 +6,8 @@ import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { PracticeChart } from "@/components/dashboard/PracticeChart";
 import { ScoringBreakdown } from "@/components/dashboard/ScoringBreakdown";
 import { PerformanceInsights } from "@/components/dashboard/PerformanceInsights";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { Lock } from "lucide-react";
 import { Link } from "react-router-native";
 
@@ -16,7 +16,7 @@ import {
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
+} from "@/components/ui/Breadcrumb";
 
 const Dashboard = () => {
   return (

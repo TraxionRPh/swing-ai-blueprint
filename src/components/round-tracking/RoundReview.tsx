@@ -1,77 +1,162 @@
-
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+} from "react-native";
 import { useNavigate, useParams } from "react-router-native";
-import { Button } from "@/components/ui/button";
-import { Loading } from "@/components/ui/loading";
-import { RoundSummaryCard, HoleDetailsTable } from "@/components/round-tracking/review";
+import { Loading } from "@/components/ui/Loading";
+import { RoundSummaryCard } from "@/components/round-tracking/review/RoundSummaryCard";
+import { HoleDetailsTable } from "@/components/round-tracking/review/HoleDetailsTable";
 import { useRoundReviewData } from "@/hooks/round-tracking/useRoundReviewData";
 import { useRoundCompletion } from "@/hooks/round-tracking/useRoundCompletion";
-import { CardFooter } from "@/components/ui/card";
 
-const RoundReview = () => {
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+export const RoundReview = () => {
   const navigate = useNavigate();
-  const { roundId } = useParams<{ roundId: string }>();
-  
-  // Load round data using custom hook
+  const { roundId = "" } = useParams<{ roundId: string }>();
+
   const { isLoading, holeScores, roundStats } = useRoundReviewData(roundId);
-  
-  // Handle round completion using custom hook
-  const { 
-    completeRound, 
-    isSaving
-  } = useRoundCompletion(
-    roundId, 
+
+  const { completeRound, isSaving } = useRoundCompletion(
+    roundId,
     roundStats.totalScore,
     roundStats.totalHoles
   );
-  
-  // Handle round completion
+
   const handleCompleteRound = async () => {
     await completeRound({
       totalScore: roundStats.totalScore,
       totalPutts: roundStats.totalPutts,
       fairwaysHit: roundStats.fairwaysHit,
-      greensInRegulation: roundStats.greensInRegulation
+      greensInRegulation: roundStats.greensInRegulation,
     });
-    
-    // No need for explicit navigation here - the completeRound function handles it
+    // completeRound handles navigation internally
   };
-  
+
   if (isLoading) {
-    return <Loading size="lg" message="Loading round summary..." />;
+    return (
+      <View style={styles.loadingContainer}>
+        <Loading size="lg" message="Loading round summary..." />
+      </View>
+    );
   }
-  
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Round Review</h1>
-        <p className="text-muted-foreground">
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Round Review</Text>
+        <Text style={styles.subtitle}>
           Review and submit your {roundStats.totalHoles}-hole round
-        </p>
-      </div>
-      
-      {/* Round Summary Card */}
+        </Text>
+      </View>
+
       <RoundSummaryCard {...roundStats} />
-      
-      {/* Hole by Hole Table with Footer */}
-      <div>
+
+      <View style={styles.tableSection}>
         <HoleDetailsTable holeScores={holeScores} />
-        <CardFooter className="flex justify-between mt-4 border rounded-md p-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(`/rounds/track/${roundId}/${roundStats.totalHoles}`)}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.footerButton, styles.outlineButton]}
+            onPress={() =>
+              navigate(`/rounds/track/${roundId}/${roundStats.totalHoles}`)
+            }
           >
-            Back to Scoring
-          </Button>
-          <Button 
-            onClick={handleCompleteRound} 
+            <Text style={[styles.footerButtonText, styles.outlineText]}>
+              Back to Scoring
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.footerButton,
+              (isSaving || holeScores.length === 0) && styles.disabledButton,
+            ]}
+            onPress={handleCompleteRound}
             disabled={isSaving || holeScores.length === 0}
           >
-            {isSaving ? <Loading size="sm" message="Saving..." inline /> : "Complete Round"}
-          </Button>
-        </CardFooter>
-      </div>
-    </div>
+            {isSaving ? (
+              <View style={styles.inlineLoading}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.footerButtonText}> Saving... </Text>
+              </View>
+            ) : (
+              <Text style={styles.footerButtonText}>Complete Round</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 
-export default RoundReview;
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+    backgroundColor: "#fff",
+  },
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  tableSection: {
+    marginTop: 16,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    padding: 12,
+  },
+  footerButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    marginHorizontal: 4,
+    backgroundColor: "#2563EB",
+  },
+  outlineButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#2563EB",
+  },
+  footerButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#fff",
+  },
+  outlineText: {
+    color: "#2563EB",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  inlineLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+});

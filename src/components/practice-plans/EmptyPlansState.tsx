@@ -1,22 +1,30 @@
+// src/components/EmptyPlansState.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import { useNavigate } from "react-router-native";
+import { Button } from "@/components/ui/Button"; // RN-compatible Button
+import { Card } from "@/components/ui/Card"; // RN-compatible Card
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 export const EmptyPlansState = () => {
+  const navigate = useNavigate();
+
   return (
     <Card className="p-8 text-center">
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">No Practice Plans Yet</h3>
-        <p className="text-muted-foreground">
+      <View className="space-y-4">
+        <Text className="text-xl font-semibold">
+          No Practice Plans Yet
+        </Text>
+        <Text className="text-muted-foreground">
           Your saved practice plans will appear here. Create a plan from the Practice Plan Generator.
-        </p>
-        <Button 
-          onClick={() => window.location.href = "/practice-plans"}
+        </Text>
+        <Button
+          onPress={() => navigate("/practice-plans")}
           className="mt-4"
         >
-          Create a Practice Plan
+          <Text className="text-white">Create a Practice Plan</Text>
         </Button>
-      </div>
+      </View>
     </Card>
   );
 };

@@ -1,30 +1,95 @@
-
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface PlanDurationSelectorProps {
   duration: string;
   onChange: (value: string) => void;
 }
 
-export const PlanDurationSelector = ({ duration, onChange }: PlanDurationSelectorProps) => {
+export const PlanDurationSelector = ({
+  duration,
+  onChange,
+}: PlanDurationSelectorProps) => {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Plan Duration</h3>
-      <RadioGroup value={duration} onValueChange={onChange} className="flex space-x-4">
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="1" id="day-1" />
-          <Label htmlFor="day-1">1 Day</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="3" id="day-3" />
-          <Label htmlFor="day-3">3 Days</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="5" id="day-5" />
-          <Label htmlFor="day-5">5 Days</Label>
-        </div>
-      </RadioGroup>
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.heading}>Plan Duration</Text>
+      <View style={styles.optionsRow}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => onChange("1")}
+        >
+          <View
+            style={[
+              styles.radioCircle,
+              duration === "1" && styles.radioSelected,
+            ]}
+          />
+          <Text style={styles.optionLabel}>1 Day</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => onChange("3")}
+        >
+          <View
+            style={[
+              styles.radioCircle,
+              duration === "3" && styles.radioSelected,
+            ]}
+          />
+          <Text style={styles.optionLabel}>3 Days</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => onChange("5")}
+        >
+          <View
+            style={[
+              styles.radioCircle,
+              duration === "5" && styles.radioSelected,
+            ]}
+          />
+          <Text style={styles.optionLabel}>5 Days</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginVertical: 8,
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  optionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  optionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 24,
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#777",
+    marginRight: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  radioSelected: {
+    borderColor: "#007AFF",
+    backgroundColor: "#007AFF",
+  },
+  optionLabel: {
+    fontSize: 16,
+  },
+});

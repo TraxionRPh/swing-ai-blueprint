@@ -133,9 +133,6 @@ export const BreadcrumbLink = React.forwardRef<Text, BreadcrumbLinkProps>(
 );
 BreadcrumbLink.displayName = "BreadcrumbLink";
 
-// ------------------------------------------------------------------
-// <BreadcrumbPage> replaces <span> for “current page.” We render as Text only.
-// ------------------------------------------------------------------
 type BreadcrumbPageProps = TextProps & {
   onPress?: () => void;
 };

@@ -1,181 +1,248 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-native";
-import { useRound } from "@/context/round";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RoundHeader } from "./RoundHeader";
-import { LoadingState } from "./LoadingState";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { useNavigate, useParams } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Lock } from "lucide-react";
-import { Loading } from "@/components/ui/loading";
+import { useProfile } from "@/hooks/useProfile";
+import { useRoundLimit } from "@/hooks/useRoundLimit";
+import { useRound } from "@/context/round";
 import { HoleDetailsTable } from "./review/HoleDetailsTable";
 import { RoundSummaryCard } from "./review/RoundSummaryCard";
+import { RoundHeader } from "./RoundHeader";
+import { LoadingState } from "./LoadingState";
 import { useRoundReviewData } from "@/hooks/round-tracking/useRoundReviewData";
-import { useRoundLimit } from "@/hooks/useRoundLimit";
-import { useProfile } from "@/hooks/useProfile";
+import { AlertCircle, Lock } from "lucide-react-native";
+import { Loading } from "@/components/ui/Loading";
+import { Button } from "@/components/ui/Button";
 
-interface RoundDetailProps {
-  onBack: () => void;
-}
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-export const RoundDetail = ({ onBack }: RoundDetailProps) => {
+export const RoundDetail = ({ onBack }: { onBack: () => void }) => {
   const navigate = useNavigate();
-  const { roundId } = useParams();
+  const { roundId = "" } = useParams<{ roundId: string }>();
   const { toast } = useToast();
   const { isPremium } = useProfile();
-  const { canTrackRound, daysUntilNextRound, isLoading: isCheckingLimit } = useRoundLimit();
+  const { canTrackRound, daysUntilNextRound, isLoading: isCheckingLimit } =
+    useRoundLimit();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  
-  // Fetch detailed round data directly using the hook
+
   const { isLoading, holeScores, roundStats } = useRoundReviewData(roundId);
-  
-  // For access to the current round context (needed for in-progress rounds)
-  const { 
+
+  const {
     currentRoundId,
     setCurrentRoundId,
     selectedCourse,
     hasFetchError,
-    setIsLoading
+    setIsLoading: setRoundLoading,
   } = useRound();
-  
-  // Initialize with the round ID from the URL
+
   useEffect(() => {
     if (roundId && roundId !== currentRoundId) {
-      console.log(`RoundDetail: Setting current round ID to: ${roundId}`);
       setCurrentRoundId(roundId);
     }
   }, [roundId, currentRoundId, setCurrentRoundId]);
 
-  // Continue the round if it's in progress
   const handleContinueRound = () => {
     if (!roundId) {
       toast({
         title: "Error",
         description: "Round ID is missing. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
-    // Check if user can track a new round (free tier limitation)
     if (!isPremium && !canTrackRound) {
       setShowUpgradePrompt(true);
       return;
     }
-    
-    // Navigate to the first hole or the appropriate hole
     navigate(`/rounds/track/${roundId}/1`);
   };
-  
+
   const handleRetryLoading = () => {
     if (roundId) {
-      setIsLoading(true);
-      window.location.reload();
+      setRoundLoading(true);
+      navigate(".", { replace: true }); // reload current screen
     }
   };
 
-  // If still loading
   if (isLoading || isCheckingLimit) {
     return (
-      <div className="space-y-6">
+      <ScrollView contentContainerStyle={styles.loadingContainer}>
         <RoundHeader
           title={selectedCourse?.name || "Round Details"}
           subtitle="Loading round details..."
           onBack={onBack}
         />
         <Loading message="Loading round details..." size="md" />
-      </div>
+      </ScrollView>
     );
   }
 
-  // Show error state if data failed to load
   if (hasFetchError) {
     return (
-      <div className="space-y-6">
+      <ScrollView contentContainerStyle={styles.errorContainer}>
         <RoundHeader
           title="Round Details"
           subtitle="Connection Error"
           onBack={onBack}
         />
-        
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Unable to load round data
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              There was a problem connecting to the server. Check your internet connection and try again.
-            </p>
-            <Button onClick={handleRetryLoading}>
-              Retry Loading
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+        <View style={styles.errorCard}>
+          <View style={styles.errorHeader}>
+            <AlertCircle size={24} color="#DC2626" />
+            <Text style={styles.errorTitle}>Unable to load round data</Text>
+          </View>
+          <Text style={styles.errorText}>
+            There was a problem connecting to the server. Check your internet
+            connection and try again.
+          </Text>
+          <Button onPress={handleRetryLoading} label="Retry Loading" />
+        </View>
+      </ScrollView>
     );
   }
-  
-  // Show upgrade prompt if needed
+
   if (showUpgradePrompt) {
     return (
-      <div className="space-y-6">
+      <ScrollView contentContainerStyle={styles.promptContainer}>
         <RoundHeader
           title={roundStats.courseName || "Round Details"}
           subtitle={`${roundStats.date} - ${roundStats.totalScore} strokes (${roundStats.totalHoles} holes)`}
           onBack={onBack}
         />
-        
-        <Card className="border-primary/50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-primary">
-              <Lock className="h-5 w-5 mr-2" />
-              Free Account Limit Reached
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Free accounts are limited to one round every 7 days. You can continue tracking this round in {daysUntilNextRound} days or upgrade to premium for unlimited round tracking.
-            </p>
-            <div className="flex gap-4">
-              <Button onClick={() => setShowUpgradePrompt(false)} variant="outline">
-                Back to Details
-              </Button>
-              <Button asChild>
-                <Link to="/subscription">
-                  Upgrade to Premium
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <View style={styles.promptCard}>
+          <View style={styles.promptHeader}>
+            <Lock size={24} color="#3B82F6" />
+            <Text style={styles.promptTitle}>Free Account Limit Reached</Text>
+          </View>
+          <Text style={styles.promptText}>
+            Free accounts are limited to one round every 7 days. You can
+            continue tracking this round in {daysUntilNextRound} days or upgrade
+            to premium for unlimited round tracking.
+          </Text>
+          <View style={styles.promptButtons}>
+            <Button
+              onPress={() => setShowUpgradePrompt(false)}
+              variant="outline"
+              label="Back to Details"
+            />
+            <Button
+              onPress={() => navigate("/subscription")}
+              label="Upgrade to Premium"
+            />
+          </View>
+        </View>
+      </ScrollView>
     );
   }
-  
+
   return (
-    <div className="space-y-6">
+    <ScrollView contentContainerStyle={styles.container}>
       <RoundHeader
         title={roundStats.courseName || "Round Details"}
         subtitle={`${roundStats.date} - ${roundStats.totalScore} strokes (${roundStats.totalHoles} holes)`}
         onBack={onBack}
       />
-      
-      {/* Round Summary Statistics */}
+
       <RoundSummaryCard {...roundStats} />
-      
-      {/* Hole by Hole Details */}
+
       <HoleDetailsTable holeScores={holeScores} />
-      
-      {/* Back to List Button */}
-      <div className="flex justify-center mt-6">
-        <Button variant="outline" onClick={onBack}>
-          Back to Round History
-        </Button>
-      </div>
-    </div>
+
+      <View style={styles.backButtonContainer}>
+        <Button
+          onPress={onBack}
+          variant="outline"
+          label="Back to Round History"
+        />
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+    flexGrow: 1,
+  },
+  loadingContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  errorContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  errorCard: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    width: SCREEN_WIDTH - 32,
+    alignItems: "center",
+  },
+  errorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#DC2626",
+    marginLeft: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  promptContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  promptCard: {
+    backgroundColor: "#EFF6FF",
+    borderColor: "#BFDBFE",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    width: SCREEN_WIDTH - 32,
+  },
+  promptHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  promptTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#3B82F6",
+    marginLeft: 8,
+  },
+  promptText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 12,
+  },
+  promptButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  backButtonContainer: {
+    marginTop: 24,
+    alignItems: "center",
+  },
+});

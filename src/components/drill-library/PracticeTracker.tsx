@@ -1,6 +1,15 @@
-
-import { Button } from "@/components/ui/button";
-import { Play, CircleStop, Pause, Play as Resume } from "lucide-react";
+// src/components/PracticeTracker.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import {
+  Button,
+} from "@/components/ui/Button";
+import {
+  Play,
+  CircleStop,
+  Pause,
+  Play as ResumeIcon,
+} from "lucide-react-native";
 import { Drill } from "@/types/drill";
 import { usePracticeTracking } from "@/hooks/usePracticeTracking";
 
@@ -9,62 +18,73 @@ interface PracticeTrackerProps {
 }
 
 export const PracticeTracker = ({ drill }: PracticeTrackerProps) => {
-  const { 
-    isTracking, 
+  const {
+    isTracking,
     isPaused,
-    formattedTime, 
-    startPractice, 
+    formattedTime,
+    startPractice,
     pausePractice,
-    completePractice 
+    completePractice,
   } = usePracticeTracking(drill);
 
   return (
-    <div className="flex flex-col space-y-4">
+    <View className="flex flex-col space-y-4">
       {isTracking ? (
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="text-2xl font-mono bg-secondary/20 px-4 py-2 rounded-md min-w-[100px] text-center">
-            {formattedTime}
-          </div>
-          <div className="flex gap-3 flex-1 justify-start">
-            <Button 
+        <View className="flex flex-col sm:flex-row items-center gap-4">
+          {/* Timer Display */}
+          <View className="bg-secondary/20 px-4 py-2 rounded-md min-w-[100px]">
+            <Text className="text-2xl font-mono text-center">
+              {formattedTime}
+            </Text>
+          </View>
+
+          {/* Pause/Resume & Complete Buttons */}
+          <View className="flex-row gap-3 flex-1 justify-start">
+            <Button
               variant="outline"
-              onClick={pausePractice}
+              onPress={pausePractice}
               className="flex-1 sm:flex-none"
               size="sm"
             >
-              {isPaused ? (
-                <>
-                  <Resume className="h-4 w-4" />
-                  <span>Resume</span>
-                </>
-              ) : (
-                <>
-                  <Pause className="h-4 w-4" />
-                  <span>Pause</span>
-                </>
-              )}
+              <View className="flex-row items-center">
+                {isPaused ? (
+                  <>
+                    <ResumeIcon className="h-4 w-4" />
+                    <Text className="ml-2">Resume</Text>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-4 w-4" />
+                    <Text className="ml-2">Pause</Text>
+                  </>
+                )}
+              </View>
             </Button>
-            <Button 
+
+            <Button
               variant="destructive"
-              onClick={completePractice}
+              onPress={completePractice}
               className="flex-1 sm:flex-none"
               size="sm"
             >
-              <CircleStop className="h-4 w-4" />
-              <span>Complete</span>
+              <View className="flex-row items-center">
+                <CircleStop className="h-4 w-4" />
+                <Text className="ml-2">Complete</Text>
+              </View>
             </Button>
-          </div>
-        </div>
+          </View>
+        </View>
       ) : (
-        <Button 
-          onClick={startPractice}
+        <Button
+          onPress={startPractice}
           className="w-full sm:w-auto"
         >
-          <Play className="h-4 w-4" />
-          Start Practice
+          <View className="flex-row items-center">
+            <Play className="h-4 w-4" />
+            <Text className="ml-2">Start Practice</Text>
+          </View>
         </Button>
       )}
-    </div>
+    </View>
   );
 };
-

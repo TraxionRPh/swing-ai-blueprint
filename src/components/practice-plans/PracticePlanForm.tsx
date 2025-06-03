@@ -1,13 +1,19 @@
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { CommonProblemCard } from "./CommonProblemCard";
-import { CommonProblem } from "@/types/practice-plan";
-import { Separator } from "@/components/ui/separator";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+} from "react-native";
 import { Brain } from "@/components/icons/CustomIcons";
-import { useState, useEffect } from "react";
+import { CommonProblemCard } from "./CommonProblemCard";
 import { PlanDurationDialog } from "./PlanDurationDialog";
+import { CommonProblem } from "@/types/practice-plan";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface PracticePlanFormProps {
   inputValue: string;
@@ -34,61 +40,68 @@ export const PracticePlanForm = ({
 }: PracticePlanFormProps) => {
   const [showDurationDialog, setShowDurationDialog] = useState(false);
   const [isAIGeneration, setIsAIGeneration] = useState(false);
-  const [enhancedInput, setEnhancedInput] = useState('');
+  const [enhancedInput, setEnhancedInput] = useState("");
 
-  // Effect to explicitly tag skill-specific queries
   useEffect(() => {
     let processedInput = inputValue;
-    
-    // PUTTING: Strict enforcement for putting-related queries
-    const isPuttingQuery = inputValue.toLowerCase().includes('putt') || 
-                         inputValue.toLowerCase().includes('green') ||
-                         inputValue.toLowerCase().includes('read') || 
-                         inputValue.toLowerCase().includes('lag');
-                         
-    // DRIVING: Strict enforcement for driver/tee shot problems
-    const isDrivingQuery = inputValue.toLowerCase().includes('driver') ||
-                         inputValue.toLowerCase().includes('tee shot') ||
-                         inputValue.toLowerCase().includes('off the tee') ||
-                         inputValue.toLowerCase().includes('slice') ||
-                         inputValue.toLowerCase().includes('hook');
-                        
-    // IRON PLAY: Strict enforcement for iron play problems
-    const isIronQuery = inputValue.toLowerCase().includes('iron') ||
-                      inputValue.toLowerCase().includes('approach') ||
-                      inputValue.toLowerCase().includes('ball striking') ||
-                      inputValue.toLowerCase().includes(' mid game') ||
-                      inputValue.toLowerCase().includes('contact');
-                        
-    // SHORT GAME: Strict enforcement for chipping/pitching problems
-    const isChippingQuery = inputValue.toLowerCase().includes('chip') ||
-                          inputValue.toLowerCase().includes('pitch') ||
-                          inputValue.toLowerCase().includes('short game') ||
-                          inputValue.toLowerCase().includes('around the green');
-                          
-    // BUNKER: Strict enforcement for bunker/sand problems
-    const isBunkerQuery = inputValue.toLowerCase().includes('bunker') || 
-                        inputValue.toLowerCase().includes('sand');
-    
-    // Add explicit category requirements based on the problem type
+    const lower = inputValue.toLowerCase();
+
+    const isPuttingQuery =
+      lower.includes("putt") ||
+      lower.includes("green") ||
+      lower.includes("read") ||
+      lower.includes("lag");
+    const isDrivingQuery =
+      lower.includes("driver") ||
+      lower.includes("tee shot") ||
+      lower.includes("off the tee") ||
+      lower.includes("slice") ||
+      lower.includes("hook");
+    const isIronQuery =
+      lower.includes("iron") ||
+      lower.includes("approach") ||
+      lower.includes("ball striking") ||
+      lower.includes(" mid game") ||
+      lower.includes("contact");
+    const isChippingQuery =
+      lower.includes("chip") ||
+      lower.includes("pitch") ||
+      lower.includes("short game") ||
+      lower.includes("around the green");
+    const isBunkerQuery =
+      lower.includes("bunker") || lower.includes("sand");
+
     if (isPuttingQuery) {
       processedInput = `STRICTLY PUTTING ONLY: ${inputValue} - THIS IS A PUTTING-ONLY PLAN: ONLY use drills with category="putting". NO other drill types allowed.`;
-    }
-    else if (isDrivingQuery) {
+    } else if (isDrivingQuery) {
       processedInput = `STRICTLY DRIVING ONLY: ${inputValue} - THIS IS A DRIVING-ONLY PLAN: ONLY use drills with categories related to driving, tee shots, or long game. NO other drill types allowed.`;
-    }
-    else if (isIronQuery) {
+    } else if (isIronQuery) {
       processedInput = `STRICTLY IRON PLAY ONLY: ${inputValue} - THIS IS AN IRON PLAY PLAN: ONLY use drills with categories related to irons, approach shots, or ball striking. NO other drill types allowed.`;
-    }
-    else if (isChippingQuery) {
+    } else if (isChippingQuery) {
       processedInput = `STRICTLY SHORT GAME ONLY: ${inputValue} - THIS IS A SHORT GAME PLAN: ONLY use drills with categories related to chipping, pitching, or short game. NO other drill types allowed.`;
-    }
-    else if (isBunkerQuery) {
+    } else if (isBunkerQuery) {
       processedInput = `STRICTLY BUNKER PLAY ONLY: ${inputValue} - THIS IS A BUNKER/SAND PLAN: ONLY use drills with categories related to bunkers or sand shots. NO other drill types allowed.`;
     }
-    
+
     setEnhancedInput(processedInput);
   }, [inputValue]);
+
+  const needsCategoryEnhancement = (text: string): boolean => {
+    const lower = text.toLowerCase();
+    return (
+      lower.includes("putt") ||
+      lower.includes("green") ||
+      lower.includes("driver") ||
+      lower.includes("slice") ||
+      lower.includes("hook") ||
+      lower.includes("iron") ||
+      lower.includes("approach") ||
+      lower.includes("chip") ||
+      lower.includes("pitch") ||
+      lower.includes("bunker") ||
+      lower.includes("sand")
+    );
+  };
 
   const handleGenerateClick = (isAI: boolean) => {
     setIsAIGeneration(isAI);
@@ -97,9 +110,11 @@ export const PracticePlanForm = ({
 
   const handleConfirmDuration = () => {
     setShowDurationDialog(false);
-    
-    // Replace input with enhanced version (category-tagged) before submitting
-    if (needsCategoryEnhancement(inputValue) && inputValue !== enhancedInput) {
+
+    if (
+      needsCategoryEnhancement(inputValue) &&
+      inputValue !== enhancedInput
+    ) {
       onInputChange(enhancedInput);
       setTimeout(() => {
         onSubmit(isAIGeneration);
@@ -108,79 +123,82 @@ export const PracticePlanForm = ({
       onSubmit(isAIGeneration);
     }
   };
-  
-  // Helper function to check if input needs category enhancement
-  const needsCategoryEnhancement = (text: string): boolean => {
-    const lowerText = text.toLowerCase();
-    return lowerText.includes('putt') || 
-           lowerText.includes('green') ||
-           lowerText.includes('driver') ||
-           lowerText.includes('slice') ||
-           lowerText.includes('hook') ||
-           lowerText.includes('iron') ||
-           lowerText.includes('approach') ||
-           lowerText.includes('chip') || 
-           lowerText.includes('pitch') ||
-           lowerText.includes('bunker') ||
-           lowerText.includes('sand');
-  };
 
   return (
-    <Card className="max-w-none">
-      <CardHeader>
-        <CardTitle>Create Your Practice Plan</CardTitle>
-        <CardDescription>
-          Get a personalized practice plan based on your specific golf needs
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <Button 
-            onClick={() => handleGenerateClick(true)}
-            disabled={isAiGenerating || isManualGenerating}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs md:text-sm"
-          >
-            <Brain className="mr-2 h-4 w-4" />
-            {isAiGenerating ? "Analyzing Your Data..." : "Create Personalized AI Practice Plan"}
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <Separator className="flex-1" />
-          <span className="text-xs font-medium text-muted-foreground">OR</span>
-          <Separator className="flex-1" />
-        </div>
-        
-        <div className="space-y-4">
-          <Textarea 
-            placeholder="Describe your golf issue in detail (e.g., 'I'm slicing my driver' or 'I'm struggling with distance control in my putting')"
-            className="min-h-32"
-            value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
-          />
-          
-          <Button 
-            className="w-full" 
-            onClick={() => handleGenerateClick(false)}
-            disabled={isAiGenerating || isManualGenerating}
-          >
-            {isManualGenerating ? "Generating Practice Plan..." : "Generate Practice Plan"}
-          </Button>
-        </div>
-        
-        <div className="space-y-4">
-          <h3 className="text-md font-medium">Common Problems</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {commonProblems.map(item => (
-              <CommonProblemCard
-                key={item.id}
-                item={item}
-                onSelect={onSelectProblem}
-              />
-            ))}
-          </div>
-        </div>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Your Practice Plan</Text>
+          <Text style={styles.description}>
+            Get a personalized practice plan based on your specific golf needs
+          </Text>
+        </View>
 
+        <View style={styles.content}>
+          {/* AI-Generated Button */}
+          <TouchableOpacity
+            style={[
+              styles.aiButton,
+              (isAiGenerating || isManualGenerating) && styles.buttonDisabled,
+            ]}
+            onPress={() => handleGenerateClick(true)}
+            disabled={isAiGenerating || isManualGenerating}
+          >
+            <Brain style={styles.brainIcon} />
+            <Text style={styles.aiButtonText}>
+              {isAiGenerating
+                ? "Analyzing Your Data..."
+                : "Create Personalized AI Practice Plan"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* OR Separator */}
+          <View style={styles.separatorRow}>
+            <View style={styles.separatorLine} />
+            <Text style={styles.separatorText}>OR</Text>
+            <View style={styles.separatorLine} />
+          </View>
+
+          {/* Manual Input */}
+          <TextInput
+            style={styles.textarea}
+            placeholder="Describe your golf issue in detail (e.g., 'I'm slicing my driver' or 'I'm struggling with distance control in my putting')"
+            multiline
+            value={inputValue}
+            onChangeText={onInputChange}
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.manualButton,
+              (isAiGenerating || isManualGenerating) && styles.buttonDisabled,
+            ]}
+            onPress={() => handleGenerateClick(false)}
+            disabled={isAiGenerating || isManualGenerating}
+          >
+            <Text style={styles.manualButtonText}>
+              {isManualGenerating
+                ? "Generating Practice Plan..."
+                : "Generate Practice Plan"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Common Problems Section */}
+          <View style={styles.problemsSection}>
+            <Text style={styles.problemsHeading}>Common Problems</Text>
+            <View style={styles.problemsGrid}>
+              {commonProblems.map((item: CommonProblem) => (
+                <CommonProblemCard
+                  key={item.id}
+                  item={item}
+                  onSelect={onSelectProblem}
+                />
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {/* Duration Dialog */}
         <PlanDurationDialog
           isOpen={showDurationDialog}
           onClose={() => setShowDurationDialog(false)}
@@ -188,7 +206,118 @@ export const PracticePlanForm = ({
           onPlanDurationChange={onPlanDurationChange}
           onConfirm={handleConfirmDuration}
         />
-      </CardContent>
-    </Card>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingBottom: 16,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    overflow: "hidden",
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  description: {
+    fontSize:  fourteen,
+    color: "#555",
+  },
+  content: {
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  aiButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#8e44ad", // Purple
+    paddingVertical: 14,
+    borderRadius: 6,
+  },
+  brainIcon: {
+    marginRight: 8,
+  },
+  aiButtonText: {
+    color: "#fff",
+    fontSize:  sixteen,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  separatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical:  sixteen,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  separatorText: {
+    marginHorizontal:  eight,
+    fontSize:  fourteen,
+    color: "#888",
+  },
+  textarea: {
+    height: 120,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    textAlignVertical: "top",
+    fontSize:  sixteen,
+    marginBottom:  twelve,
+  },
+  manualButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: "center",
+    marginBottom:  sixteen,
+  },
+  manualButtonText: {
+    color: "#fff",
+    fontSize:  sixteen,
+    fontWeight: "500",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  problemsSection: {
+    marginTop:  twelve,
+  },
+  problemsHeading: {
+    fontSize:  eighteen,
+    fontWeight: "600",
+    marginBottom:  eight,
+  },
+  problemsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+});

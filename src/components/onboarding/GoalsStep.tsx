@@ -1,5 +1,6 @@
-
-import { Textarea } from "@/components/ui/textarea";
+// src/components/GoalsStep.tsx
+import React from "react";
+import { View, Text, TextInput } from "react-native";
 import CommonGoals from "./CommonGoals";
 
 interface GoalsStepProps {
@@ -13,21 +14,21 @@ interface GoalsStepProps {
   setHandicapGoal: (handicap: number | null) => void;
 }
 
-const GoalsStep = ({ 
-  goals, 
-  setGoals, 
-  selectedGoals, 
+const GoalsStep = ({
+  goals,
+  setGoals,
+  selectedGoals,
   setSelectedGoals,
   scoreGoal,
   setScoreGoal,
   handicapGoal,
-  setHandicapGoal
+  setHandicapGoal,
 }: GoalsStepProps) => {
   const handleGoalToggle = (goalId: string, checked: boolean) => {
     if (checked) {
       setSelectedGoals([...selectedGoals, goalId]);
     } else {
-      setSelectedGoals(selectedGoals.filter(g => g !== goalId));
+      setSelectedGoals(selectedGoals.filter((g) => g !== goalId));
       if (goalId === "lower-score") {
         setScoreGoal(null);
       }
@@ -38,9 +39,9 @@ const GoalsStep = ({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h3 className="text-lg font-medium">What are your golf goals?</h3>
-      
+    <View className="space-y-6 animate-fade-in">
+      <Text className="text-lg font-medium">What are your golf goals?</Text>
+
       <CommonGoals
         selectedGoals={selectedGoals}
         scoreGoal={scoreGoal}
@@ -49,17 +50,20 @@ const GoalsStep = ({
         onScoreGoalChange={setScoreGoal}
         onHandicapGoalChange={setHandicapGoal}
       />
-      
-      <div className="space-y-2">
-        <label className="text-sm text-muted-foreground">Additional goals or notes (optional):</label>
-        <Textarea 
+
+      <View className="space-y-2">
+        <Text className="text-sm text-muted-foreground">
+          Additional goals or notes (optional):
+        </Text>
+        <TextInput
+          multiline
           placeholder="Any other specific goals or details you'd like to share..."
-          className="min-h-24"
+          className="min-h-24 bg-card rounded p-2 text-foreground"
           value={goals}
-          onChange={(e) => setGoals(e.target.value)}
+          onChangeText={setGoals}
         />
-      </div>
-    </div>
+      </View>
+    </View>
   );
 };
 

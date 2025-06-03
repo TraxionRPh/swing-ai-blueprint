@@ -1,56 +1,125 @@
-
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Calendar, Brain } from "lucide-react";
+import React from "react";
+import { View, Text, Switch, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { Bell, Calendar, Brain } from "lucide-react-native";
 import { useNotifications } from "@/hooks/useNotifications";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export const NotificationPreferences = () => {
   const { preferences, updatePreferences } = useNotifications();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notification Preferences</CardTitle>
-        <CardDescription>Choose which notifications you'd like to receive</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Bell className="h-5 w-5 text-primary" />
-            <Label htmlFor="practice-reminders">Practice Reminders</Label>
-          </div>
-          <Switch
-            id="practice-reminders"
-            checked={preferences.practice_reminders}
-            onCheckedChange={(checked) => updatePreferences({ practice_reminders: checked })}
-          />
-        </div>
+    <ScrollView contentContainerStyle={styles.wrapper}>
+      {/* Card Container */}
+      <View style={styles.card}>
+        {/* Card Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Notification Preferences</Text>
+          <Text style={styles.description}>
+            Choose which notifications you'd like to receive
+          </Text>
+        </View>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Calendar className="h-5 w-5 text-primary" />
-            <Label htmlFor="round-completion">Round Completion Reminders</Label>
-          </div>
-          <Switch
-            id="round-completion"
-            checked={preferences.round_completion_reminders}
-            onCheckedChange={(checked) => updatePreferences({ round_completion_reminders: checked })}
-          />
-        </div>
+        {/* Card Content */}
+        <View style={styles.content}>
+          {/* Practice Reminders Row */}
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Bell size={20} color="#007AFF" />
+              <Text style={styles.label}>Practice Reminders</Text>
+            </View>
+            <Switch
+              value={preferences.practice_reminders}
+              onValueChange={(checked) =>
+                updatePreferences({ practice_reminders: checked })
+              }
+            />
+          </View>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Brain className="h-5 w-5 text-primary" />
-            <Label htmlFor="ai-insights">AI Insights</Label>
-          </div>
-          <Switch
-            id="ai-insights"
-            checked={preferences.ai_insights}
-            onCheckedChange={(checked) => updatePreferences({ ai_insights: checked })}
-          />
-        </div>
-      </CardContent>
-    </Card>
+          {/* Round Completion Reminders Row */}
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Calendar size={20} color="#007AFF" />
+              <Text style={styles.label}>Round Completion Reminders</Text>
+            </View>
+            <Switch
+              value={preferences.round_completion_reminders}
+              onValueChange={(checked) =>
+                updatePreferences({ round_completion_reminders: checked })
+              }
+            />
+          </View>
+
+          {/* AI Insights Row */}
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <Brain size={20} color="#007AFF" />
+              <Text style={styles.label}>AI Insights</Text>
+            </View>
+            <Switch
+              value={preferences.ai_insights}
+              onValueChange={(checked) =>
+                updatePreferences({ ai_insights: checked })
+              }
+            />
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  wrapper: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  card: {
+    width: SCREEN_WIDTH - 32,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    overflow: "hidden",
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  description: {
+    fontSize: 14,
+    color: "#555",
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  rowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  label: {
+    fontSize:  sixteen,
+    marginLeft:  eight,
+    color: "#333",
+  },
+});

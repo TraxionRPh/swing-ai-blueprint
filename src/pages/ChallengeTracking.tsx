@@ -1,24 +1,40 @@
-import { useNavigate, useParams } from 'react-router-native';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Loading } from '@/components/ui/loading';
-import { useChallenge } from '@/hooks/useChallenge';
-import { TrackingForm } from '@/components/challenge/TrackingForm';
-import { useSubmitChallenge } from '@/hooks/useSubmitChallenge';
+// ChallengeTracking.native.tsx
+import React from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { useParams, useNavigate } from "react-router-native";
+import { useChallenge } from "@/hooks/useChallenge";
+import { useSubmitChallenge } from "@/hooks/useSubmitChallenge";
+import { Button } from "@/components/ui/Button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
+import { ArrowLeft, Calendar } from "lucide-react-native";
+import { Badge } from "@/components/ui/Badge";
+import { Loading } from "@/components/ui/Loading";
+import { TrackingForm } from "@/components/challenge/TrackingForm";
 
-const extractAttemptsFromInstructions = (challenge: any): number | undefined => {
-  if (challenge.attempts && typeof challenge.attempts === 'number') {
+const extractAttemptsFromInstructions = (challenge: any): number => {
+  if (challenge.attempts && typeof challenge.attempts === "number") {
     return challenge.attempts;
   }
-  
+
   const instructions = [
     challenge.instruction1,
     challenge.instruction2,
-    challenge.instruction3
+    challenge.instruction3,
   ];
-  
+
   for (const instruction of instructions) {
     if (!instruction) continue;
     const match = instruction.match(/(\d+)\s*(?:balls?|drives?|shots?|attempts?)/i);
@@ -26,12 +42,12 @@ const extractAttemptsFromInstructions = (challenge: any): number | undefined => 
       return parseInt(match[1], 10);
     }
   }
-  
+
   return 10;
 };
 
-const ChallengeTracking = () => {
-  const { challengeId } = useParams();
+export const ChallengeTracking: React.FC = () => {
+  const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
   const { data: challenge, isLoading } = useChallenge(challengeId);
   const { onSubmit, isPersisting } = useSubmitChallenge(challengeId);
@@ -39,81 +55,230 @@ const ChallengeTracking = () => {
   const handleBack = () => {
     navigate(-1);
   };
-  
-  const totalAttempts = challenge ? extractAttemptsFromInstructions(challenge) : 10;
-  
+
+  const totalAttempts = challenge
+    ? extractAttemptsFromInstructions(challenge)
+    : 10;
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <View style={styles.loadingContainer}>
         <Loading message="Loading challenge..." />
-      </div>
+      </View>
     );
   }
-  
+
   if (!challenge) {
     return (
-      <div className="text-center p-8">
-        <h2 className="text-2xl font-bold">Challenge not found</h2>
-        <p className="text-muted-foreground mt-2">The challenge you're looking for couldn't be found.</p>
-        <Button className="mt-4" onClick={handleBack}>Back to Challenges</Button>
-      </div>
+      <View style={styles.centeredContainer}>
+        <Text style={styles.notFoundTitle}>Challenge not found</Text>
+        <Text style={styles.notFoundSubtitle}>
+          The challenge you're looking for couldn't be found.
+        </Text>
+        <Button style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.buttonText}>Back to Challenges</Text>
+        </Button>
+      </View>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" size="icon" onClick={handleBack}>
-          <ArrowLeft className="h-5 w-5" />
-          <span className="sr-only">Go back</span>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Challenge Tracking</h1>
-          <p className="text-muted-foreground">
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleBack}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.pageTitle}>Challenge Tracking</Text>
+          <Text style={styles.pageSubtitle}>
             Record your results for this challenge
-          </p>
-        </div>
-      </div>
-      
-      <Card className="border-primary/20">
+          </Text>
+        </View>
+      </View>
+
+      <Card style={styles.card}>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <View style={styles.cardHeaderRow}>
             <CardTitle>{challenge.title}</CardTitle>
-            <Badge variant={
-              challenge.difficulty === "Beginner" ? "outline" : 
-              challenge.difficulty === "Intermediate" ? "secondary" : "default"
-            }>
+            <Badge
+              variant={
+                challenge.difficulty === "Beginner"
+                  ? "outline"
+                  : challenge.difficulty === "Intermediate"
+                  ? "secondary"
+                  : "default"
+              }
+            >
               {challenge.difficulty}
             </Badge>
-          </div>
-          <CardDescription>{challenge.description}</CardDescription>
+          </View>
+          <CardDescription style={styles.cardDescription}>
+            {challenge.description}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Instructions</h3>
-            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-              {challenge.instruction1 && <li>{challenge.instruction1}</li>}
-              {challenge.instruction2 && <li>{challenge.instruction2}</li>}
-              {challenge.instruction3 && <li>{challenge.instruction3}</li>}
-            </ol>
-          </div>
-          
-          <div className="flex flex-wrap gap-2 pt-2">
-            <h3 className="text-lg font-medium w-full">Metrics</h3>
-            {challenge.metrics && challenge.metrics.map((metric: string) => (
-              <Badge key={metric} variant="secondary">{metric}</Badge>
-            ))}
-          </div>
-          
-          <TrackingForm 
-            onSubmit={onSubmit} 
-            isPersisting={isPersisting} 
+
+        <CardContent style={styles.cardContent}>
+          {/* Instructions */}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            {[
+              challenge.instruction1,
+              challenge.instruction2,
+              challenge.instruction3,
+            ].map(
+              (instr, idx) =>
+                instr && (
+                  <View key={idx} style={styles.instructionRow}>
+                    <Text style={styles.instructionIndex}>{`${idx + 1}. `}</Text>
+                    <Text style={styles.instructionText}>{instr}</Text>
+                  </View>
+                )
+            )}
+          </View>
+
+          {/* Metrics */}
+          <View style={styles.metricsContainer}>
+            <Text style={styles.sectionTitleFull}>Metrics</Text>
+            <View style={styles.metricsRow}>
+              {challenge.metrics?.map((metric: string) => (
+                <Badge
+                  key={metric}
+                  variant="secondary"
+                  style={styles.metricBadge}
+                >
+                  {metric}
+                </Badge>
+              ))}
+            </View>
+          </View>
+
+          {/* Tracking Form */}
+          <TrackingForm
+            onSubmit={onSubmit}
+            isPersisting={isPersisting}
             totalAttempts={totalAttempts}
           />
         </CardContent>
       </Card>
-    </div>
+    </ScrollView>
   );
 };
 
 export default ChallengeTracking;
+
+const { width: windowWidth } = Dimensions.get("window");
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    minHeight: 400,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  centeredContainer: {
+    flex: 1,
+    padding: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notFoundTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  notFoundSubtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  backButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconButton: {
+    marginRight: 12,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  pageSubtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  card: {
+    width: windowWidth * 0.94,
+    alignSelf: "center",
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  cardDescription: {
+    marginTop: 8,
+  },
+  cardContent: {
+    paddingTop: 12,
+  },
+  instructionsContainer: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  sectionTitleFull: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+    width: "100%",
+  },
+  instructionRow: {
+    flexDirection: "row",
+    marginBottom: 4,
+  },
+  instructionIndex: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  instructionText: {
+    fontSize: 16,
+    color: "#6B7280",
+    flexShrink: 1,
+  },
+  metricsContainer: {
+    marginBottom: 16,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  metricBadge: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
+});

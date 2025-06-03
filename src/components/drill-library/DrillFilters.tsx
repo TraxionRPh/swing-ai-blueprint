@@ -1,7 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+// src/components/DrillFilters.tsx
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { Drill } from "@/types/drill";
 
 interface DrillFiltersProps {
@@ -17,76 +21,123 @@ export const DrillFilters: React.FC<DrillFiltersProps> = ({
   selectedCategory,
   setSelectedCategory,
   selectedDifficulty,
-  setSelectedDifficulty
+  setSelectedDifficulty,
 }) => {
-  const [categories, setCategories] = useState<string[]>(['all']);
+  const [categories, setCategories] = useState<string[]>(["all"]);
   const [difficulties, setDifficulties] = useState<string[]>([]);
 
   useEffect(() => {
     if (!drills || drills.length === 0) return;
-    
-    const uniqueCategories = ['all', ...new Set(drills.map(drill => drill.category))];
+
+    const uniqueCategories = [
+      "all",
+      ...Array.from(new Set(drills.map((drill) => drill.category))),
+    ];
     setCategories(uniqueCategories);
-    
+
     // Predefined order for difficulties
-    const difficultyOrder = ['Beginner', 'Intermediate', 'Advanced'];
-    const uniqueDifficulties = [...new Set(drills.map(drill => drill.difficulty))]
-      .sort((a, b) => {
-        const indexA = difficultyOrder.indexOf(a);
-        const indexB = difficultyOrder.indexOf(b);
-        
-        if (indexA !== -1 && indexB !== -1) {
-          return indexA - indexB;
-        }
-        
-        if (indexA !== -1) return -1;
-        if (indexB !== -1) return 1;
-        
-        return a.localeCompare(b);
-      });
-    
+    const difficultyOrder = ["Beginner", "Intermediate", "Advanced"];
+    const uniqueDifficulties = Array.from(
+      new Set(drills.map((drill) => drill.difficulty))
+    ).sort((a, b) => {
+      const indexA = difficultyOrder.indexOf(a);
+      const indexB = difficultyOrder.indexOf(b);
+
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+
     setDifficulties(uniqueDifficulties);
   }, [drills]);
 
   return (
-    <div className="space-y-4">
-      <Tabs 
-        value={selectedCategory} 
-        onValueChange={setSelectedCategory} 
-        className="w-full"
+    <View className="space-y-4">
+      {/* Category Tabs as horizontal scroll buttons */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 4 }}
       >
-        <TabsList className="w-full h-auto flex flex-wrap gap-1 bg-background p-1">
-          {categories.map(category => (
-            <TabsTrigger 
-              key={category} 
-              value={category} 
-              className="flex-none px-4 py-2 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors border border-transparent data-[state=active]:border-primary/50"
+        {categories.map((category) => {
+          const isActive = category === selectedCategory;
+          return (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}
+              className={`
+                mx-1 px-4 py-2 rounded-md
+                ${isActive
+                  ? "bg-primary text-primary-foreground border-primary/50 border"
+                  : "bg-background border border-transparent"}
+              `}
             >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+              <Text
+                className={`
+                  text-sm
+                  ${isActive ? "text-primary-foreground" : "text-muted-foreground"}
+                `}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
-      <div className="flex flex-wrap gap-2">
-        <Badge 
-          variant={selectedDifficulty === null ? "default" : "outline"}
-          className="cursor-pointer hover:bg-primary/90 transition-colors"
-          onClick={() => setSelectedDifficulty(null)}
+      {/* Difficulty Badges */}
+      <View className="flex-row flex-wrap gap-2">
+        <TouchableOpacity
+          onPress={() => setSelectedDifficulty(null)}
+          className={`
+            px-3 py-1.5 rounded-full
+            ${selectedDifficulty === null
+              ? "bg-primary text-primary-foreground"
+              : "bg-transparent border border-primary/50"}
+          `}
         >
-          All Difficulties
-        </Badge>
-        {difficulties.map(difficulty => (
-          <Badge 
-            key={difficulty} 
-            variant={selectedDifficulty === difficulty ? "default" : "outline"}
-            className="cursor-pointer hover:bg-primary/90 transition-colors"
-            onClick={() => setSelectedDifficulty(difficulty)}
+          <Text
+            className={`
+              text-xs
+              ${selectedDifficulty === null
+                ? "text-primary-foreground"
+                : "text-muted-foreground"}
+            `}
           >
-            {difficulty}
-          </Badge>
-        ))}
-      </div>
-    </div>
+            All Difficulties
+          </Text>
+        </TouchableOpacity>
+
+        {difficulties.map((difficulty) => {
+          const isActive = selectedDifficulty === difficulty;
+          return (
+            <TouchableOpacity
+              key={difficulty}
+              onPress={() =>
+                setSelectedDifficulty(isActive ? null : difficulty)
+              }
+              className={`
+                px-3 py-1.5 rounded-full
+                ${isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-transparent border border-primary/50"}
+              `}
+            >
+              <Text
+                className={`
+                  text-xs
+                  ${isActive ? "text-primary-foreground" : "text-muted-foreground"}
+                `}
+              >
+                {difficulty}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
   );
 };

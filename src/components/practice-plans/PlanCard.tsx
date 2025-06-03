@@ -1,11 +1,23 @@
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+// src/components/PlanCard.tsx
+import React from "react";
+import {
+  View,
+  Text,
+  Alert,
+} from "react-native";
 import { formatDistanceToNow } from "date-fns";
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Trash2 } from "lucide-react-native";
+import { Badge } from "@/components/ui/Badge"; // RN-compatible Badge
+import { Button } from "@/components/ui/Button"; // RN-compatible Button
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card"; // RN-compatible Card
+import { Separator } from "@/components/ui/Separator"; // RN-compatible Separator
 import { SavedPracticePlan } from "@/types/practice-plan";
 
 interface PlanCardProps {
@@ -15,52 +27,62 @@ interface PlanCardProps {
 }
 
 export const PlanCard = ({ plan, onView, onDelete }: PlanCardProps) => {
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Practice Plan",
+      "Are you sure you want to delete this practice plan? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => onDelete(plan.id),
+        },
+      ]
+    );
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="rounded-lg shadow-sm mb-4">
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="line-clamp-1">{plan.problem}</CardTitle>
-            <CardDescription className="flex items-center gap-1 mt-1">
-              <Clock className="h-3 w-3" />
-              <span>{formatDistanceToNow(new Date(plan.created_at), { addSuffix: true })}</span>
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1">
+            <CardTitle className="line-clamp-1">
+              {plan.problem}
+            </CardTitle>
+            <CardDescription className="flex-row items-center gap-1 mt-1">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Text className="text-muted-foreground">
+                {formatDistanceToNow(new Date(plan.created_at), { addSuffix: true })}
+              </Text>
             </CardDescription>
-          </div>
-          <Badge variant="outline">
+          </View>
+          <Badge variant="outline" className="ml-2">
             {plan.practice_plan?.practicePlan?.duration || "1 day"}
           </Badge>
-        </div>
+        </View>
       </CardHeader>
+
       <CardContent className="pb-2">
-        <p className="text-sm text-muted-foreground line-clamp-2">{plan.diagnosis}</p>
+        <Text className="text-sm text-muted-foreground line-clamp-2">
+          {plan.diagnosis}
+        </Text>
       </CardContent>
+
       <Separator />
-      <CardFooter className="pt-4 flex justify-between">
-        <Button onClick={() => onView(plan)} variant="outline">View Plan</Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Practice Plan</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this practice plan? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={() => onDelete(plan.id)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+
+      <CardFooter className="pt-4 flex-row justify-between">
+        <Button onPress={() => onView(plan)} variant="outline">
+          <Text>View Plan</Text>
+        </Button>
+        <Button
+          onPress={handleDelete}
+          variant="ghost"
+          size="icon"
+          className="text-destructive"
+        >
+          <Trash2 className="h-5 w-5 text-destructive" />
+        </Button>
       </CardFooter>
     </Card>
   );

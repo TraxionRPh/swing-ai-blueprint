@@ -1,12 +1,12 @@
-
-import { useState } from "react";
+// src/components/DrillCard.tsx
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Drill } from "@/types/drill";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/Card"; // RN-compatible Card
+import { Checkbox } from "@/components/ui/Checkbox"; // RN-compatible Checkbox
+import { Badge } from "@/components/ui/Badge"; // RN-compatible Badge
 import { DrillDetailsDialog } from "./DrillDetailsDialog";
-import { DrillCardTitle } from "./DrillCardTitle";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 
 interface DrillCardProps {
   drill: Drill;
@@ -16,92 +16,88 @@ interface DrillCardProps {
   onComplete: () => void;
 }
 
-export const DrillCard = ({ 
-  drill, 
-  sets, 
-  reps, 
-  isCompleted, 
-  onComplete 
+export const DrillCard = ({
+  drill,
+  sets,
+  reps,
+  isCompleted,
+  onComplete,
 }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
   if (!drill) return null;
 
   const getDifficultyColor = (difficulty: string) => {
-    const lowerDifficulty = difficulty?.toLowerCase() || 'beginner';
-    
+    const lowerDifficulty = difficulty.toLowerCase();
     switch (lowerDifficulty) {
-      case 'beginner':
-        return "bg-emerald-500 hover:bg-emerald-600 text-white border-0";
-      case 'intermediate':
-        return "bg-amber-500 hover:bg-amber-600 text-white border-0";
-      case 'advanced':
-        return "bg-rose-500 hover:bg-rose-600 text-white border-0";
+      case "beginner":
+        return "bg-emerald-500 hover:bg-emerald-600 text-white";
+      case "intermediate":
+        return "bg-amber-500 hover:bg-amber-600 text-white";
+      case "advanced":
+        return "bg-rose-500 hover:bg-rose-600 text-white";
       default:
-        return "bg-slate-500 hover:bg-slate-600 text-white border-0";
-    }
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (!(e.target instanceof HTMLElement) || !e.target.closest('[data-checkbox]')) {
-      setShowDetails(true);
+        return "bg-slate-500 hover:bg-slate-600 text-white";
     }
   };
 
   return (
     <>
-      <Card 
-        className={cn(
-          "group transition-all duration-200 cursor-pointer",
-          "border border-border/50 hover:border-primary/30 hover:shadow-md",
-          isCompleted ? "bg-primary/5 dark:bg-primary/10" : "bg-background",
-          "relative overflow-hidden"
-        )}
-        onClick={handleCardClick}
+      <TouchableOpacity
+        onPress={() => setShowDetails(true)}
+        activeOpacity={0.8}
       >
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3 min-h-[28px]">
-              <div data-checkbox className="mt-1">
-                <Checkbox 
-                  checked={isCompleted}
-                  onCheckedChange={() => onComplete()}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-              </div>
-              <div>
-                <h3 className={cn(
-                  "text-lg font-semibold leading-tight mb-1 transition-colors",
-                  isCompleted && "text-muted-foreground line-through"
-                )}>
-                  {drill.title}
-                </h3>
-                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <Badge 
-                    className={cn("text-xs font-normal", getDifficultyColor(drill.difficulty || 'beginner'))}
+        <Card
+          className={cn(
+            "group transition-all duration-200",
+            isCompleted ? "bg-primary/5" : "bg-background",
+            "rounded-lg border border-border/50"
+          )}
+        >
+          <CardContent className="p-4 space-y-4">
+            <View className="flex-row justify-between items-start gap-3">
+              <View className="flex-row items-start gap-3 min-h-[28px]">
+                <View className="mt-1">
+                  <Checkbox
+                    value={isCompleted}
+                    onValueChange={onComplete}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className={cn(
+                      "text-lg font-semibold leading-tight mb-1",
+                      isCompleted && "text-muted-foreground line-through"
+                    )}
                   >
-                    {drill.difficulty || 'Beginner'}
-                  </Badge>
-                  
-                  {/* Show the drill category as a badge */}
-                  {drill.category && (
-                    <Badge 
-                      variant="outline"
-                      className="text-xs font-normal"
+                    {drill.title}
+                  </Text>
+                  <View className="flex-row items-center gap-1.5 mt-1 flex-wrap">
+                    <Badge
+                      className={cn(
+                        "text-xs font-normal",
+                        getDifficultyColor(drill.difficulty || "beginner")
+                      )}
                     >
-                      {drill.category}
+                      {drill.difficulty || "Beginner"}
                     </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+                    {drill.category && (
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {drill.category}
+                      </Badge>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
 
-          <div className="text-sm text-muted-foreground">
-            {sets} sets of {reps} reps • {drill.duration || '10-15 minutes'}
-          </div>
-        </CardContent>
-      </Card>
+            <Text className="text-sm text-muted-foreground">
+              {sets} sets of {reps} reps • {drill.duration || "10-15 minutes"}
+            </Text>
+          </CardContent>
+        </Card>
+      </TouchableOpacity>
 
       <DrillDetailsDialog
         drill={drill}

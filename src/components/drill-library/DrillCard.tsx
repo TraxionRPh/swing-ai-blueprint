@@ -1,5 +1,7 @@
-
-import { Button } from "@/components/ui/button";
+// src/components/DrillCard.tsx
+import React, { useState } from "react";
+import { View, Text } from "react-native";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -7,9 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { Drill } from "@/types/drill";
-import { useState } from "react";
 import { DrillDetailsModal } from "./DrillDetailsModal";
 import { DifficultyBadge } from "./DifficultyBadge";
 
@@ -21,37 +22,39 @@ export const DrillCard = ({ drill }: DrillCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <>
+    <View>
       <Card className="h-full flex flex-col">
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <View className="flex-row justify-between items-start">
             <CardTitle className="text-xl">{drill.title}</CardTitle>
             <DifficultyBadge difficulty={drill.difficulty} />
-          </div>
+          </View>
           <CardDescription>{drill.duration}</CardDescription>
         </CardHeader>
+
         <CardContent className="flex-grow">
-          <p className="text-sm text-muted-foreground">
+          <Text className="text-sm text-muted-foreground">
             {drill.overview?.substring(0, 150)}
-            {drill.overview?.length > 150 ? '...' : ''}
-          </p>
+            {drill.overview && drill.overview.length > 150 ? "…" : ""}
+          </Text>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={() => setShowDetails(true)}
+
+        <CardFooter className="flex-row justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
+            onPress={() => setShowDetails(true)}
           >
             View Details
           </Button>
         </CardFooter>
       </Card>
-      
+
       <DrillDetailsModal
         drill={drill}
         isOpen={showDetails}
         onClose={() => setShowDetails(false)}
       />
-    </>
+    </View>
   );
 };

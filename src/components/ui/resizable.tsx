@@ -1,43 +1,163 @@
-import { GripVertical } from "lucide-react"
-import * as ResizablePrimitive from "react-resizable-panels"
+import React, { useRef, useState, useEffect, ReactNode } from "react";
+import {
+  View,
+  StyleSheet,
+  Animated,
+  PanResponder,
+  StyleProp,
+  ViewStyle,
+  LayoutChangeEvent,
+} from "react-native";
+import { GripVertical } from "lucide-react-native";
 
-import { cn } from "@/lib/utils"
+type Direction = "horizontal" | "vertical";
 
-const ResizablePanelGroup = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => (
-  <ResizablePrimitive.PanelGroup
-    className={cn(
-      "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
-      className
-    )}
-    {...props}
-  />
-)
+interface ResizablePanelGroupProps {
+  /**
+   * Direction of the split: "horizontal" => panels side by side; 
+   * "vertical" => panels stacked top/bottom.
+   */
+  direction?: Direction;
+  /**
+   * Initial sizes as fractions (sum should be 1). E.g., [0.5, 0.5].
+   * If omitted, defaults to equal split.
+   */
+  initialSizes?: [number, number];
+  /**
+   * Whether to show a visible handle bar.
+   */
+  withHandle?: boolean;
+  /**
+   * Style to apply to the container.
+   */
+  style?: StyleProp<ViewStyle>;
+  /**
+   * Exactly two child panels expected.
+   */
+  children: [ReactNode, ReactNode];
+}
 
-const ResizablePanel = ResizablePrimitive.Panel
+export function ResizablePanelGroup({
+  direction = "horizontal",
+  initialSizes = [0.5, 0.5],
+  withHandle = true,
+  style,
+  children,
+}: ResizablePanelGroupProps) {
+  if (!Array.isArray(children) || children.length !== 2) {
+    throw new Error("ResizablePanelGroup requires exactly two children.");
+  }
 
-const ResizableHandle = ({
-  withHandle,
-  className,
-  ...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
-  withHandle?: boolean
-}) => (
-  <ResizablePrimitive.PanelResizeHandle
-    className={cn(
-      "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
-      className
-    )}
-    {...props}
-  >
-    {withHandle && (
-      <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
-        <GripVertical className="h-2.5 w-2.5" />
-      </div>
-    )}
-  </ResizablePrimitive.PanelResizeHandle>
-)
+  const containerSize = useRef(0); // width or height depending on direction
+  const handleSize = 12; // size of the draggable bar
+  const [sizes, setSizes] = useState<[number, number]>(initialSizes);
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle }
+  // Animated value for the panel1 size (in pixels)
+  const animValue = useRef(new Animated.Value(0)).current;
+
+  // After layout, set initial pixel-based size
+  const onContainerLayout = (e: LayoutChangeEvent) => {
+    const layout = direction === "horizontal" ? e.nativeEvent.layout.width : e.nativeEvent.layout.height;
+    containerSize.current = layout;
+    const initialPixel = initialSizes[0] * (layout - handleSize);
+    animValue.setValue(initialPixel);
+  };
+
+  // When animValue changes, update relative sizes
+  useEffect(() => {
+    const listenerId = animValue.addListener(({ value }) => {
+      const total = containerSize.current - handleSize;
+      if (total > 0) {
+        const frac1 = value / total;
+        const frac2 = 1 - frac1;
+        setSizes([frac1, frac2]);
+      }
+    });
+    return () => {
+      animValue.removeListener(listenerId);
+    };
+  }, [animValue]);
+
+  // PanResponder to drag the handle
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_evt, gestureState) => {
+        const delta = direction === "horizontal" ? gestureState.dx : gestureState.dy;
+        const newSize = Math.max(
+          0,
+          Math.min(containerSize.current - handleSize, animValue._value + delta)
+        );
+        animValue.setValue(newSize);
+      },
+      onPanResponderRelease: () => {
+        // nothing extra on release
+      },
+    })
+  ).current;
+
+  // Styles for panels based on direction
+  const panel1Style = direction === "horizontal"
+    ? { width: Animated.add(animValue, 0) }
+    : { height: Animated.add(animValue, 0) };
+
+  const panel2Style = direction === "horizontal"
+    ? { flex: 1 }
+    : { flex: 1 };
+
+  const handleStyle = direction === "horizontal"
+    ? { width: handleSize, cursor: "ew-resize" }
+    : { height: handleSize, cursor: "ns-resize" };
+
+  return (
+    <View
+      style={[styles.groupContainer, direction === "vertical" && styles.groupVertical, style]}
+      onLayout={onContainerLayout}
+    >
+      <Animated.View style={[styles.panel, panel1Style]}>
+        {children[0]}
+      </Animated.View>
+
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[styles.handle, handleStyle]}
+      >
+        {withHandle && (
+          <GripVertical
+            size={direction === "horizontal" ? 20 : 24}
+            color="#6B7280"
+            style={[
+              direction === "horizontal"
+                ? { transform: [{ rotate: "90deg" }] }
+                : {},
+            ]}
+          />
+        )}
+      </Animated.View>
+
+      <Animated.View style={[styles.panel, panel2Style]}>
+        {children[1]}
+      </Animated.View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  groupContainer: {
+    flexDirection: "row",
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  groupVertical: {
+    flexDirection: "column",
+  },
+  panel: {
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+  },
+  handle: {
+    backgroundColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

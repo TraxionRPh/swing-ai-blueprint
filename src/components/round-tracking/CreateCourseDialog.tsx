@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-native";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 import { CourseBasicInfoForm } from "./CourseBasicInfoForm";
 import { TeesForm } from "./TeesForm";
 

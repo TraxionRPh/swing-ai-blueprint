@@ -1,14 +1,28 @@
-
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-native';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Calendar } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Loading } from '@/components/ui/loading';
-import { format } from 'date-fns';
+// ChallengeHistory.native.tsx
+import React from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { useParams, useNavigate } from "react-router-native";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/Button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
+import { ArrowLeft, Calendar } from "lucide-react-native";
+import { Badge } from "@/components/ui/Badge";
+import { Loading } from "@/components/ui/Loading";
+import { format } from "date-fns";
 
 type Challenge = {
   id: string;
@@ -26,167 +40,340 @@ type ChallengeResult = {
   created_at: string;
   updated_at: string;
   user_id: string;
-  // Make a local property for the UI that won't be saved to the database
   _recent_score?: string;
 };
 
-const ChallengeHistory = () => {
-  const { challengeId } = useParams();
+export const ChallengeHistory: React.FC = () => {
+  const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
-  
+
   // Fetch challenge details
-  const { data: challenge, isLoading: isLoadingChallenge } = useQuery({
-    queryKey: ['challenge', challengeId],
+  const {
+    data: challenge,
+    isLoading: isLoadingChallenge,
+  } = useQuery<Challenge | null>({
+    queryKey: ["challenge", challengeId],
     queryFn: async () => {
       if (!challengeId) return null;
-      
       const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('id', challengeId)
+        .from("challenges")
+        .select("*")
+        .eq("id", challengeId)
         .single();
-      
       if (error) {
-        console.error('Error fetching challenge:', error);
+        console.error("Error fetching challenge:", error);
         return null;
       }
-      
       return data as Challenge;
     },
   });
-  
+
   // Fetch challenge progress
-  const { data: progress, isLoading: isLoadingProgress } = useQuery({
-    queryKey: ['challenge-progress', challengeId],
+  const {
+    data: progress,
+    isLoading: isLoadingProgress,
+  } = useQuery<ChallengeResult | null>({
+    queryKey: ["challenge-progress", challengeId],
     queryFn: async () => {
       if (!challengeId) return null;
-      
       const { data, error } = await supabase
-        .from('user_challenge_progress')
-        .select('*')
-        .eq('challenge_id', challengeId)
+        .from("user_challenge_progress")
+        .select("*")
+        .eq("challenge_id", challengeId)
         .single();
-      
-      if (error && error.code !== 'PGRST116') { // Not found is OK
-        console.error('Error fetching challenge progress:', error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching challenge progress:", error);
       }
-      
       if (data) {
-        // Create local property for UI that won't be saved to DB
         const result: ChallengeResult = {
           ...data,
-          _recent_score: data.best_score // Use best_score as default for UI
+          _recent_score: data.best_score,
         };
         return result;
       }
-      
       return null;
     },
   });
-  
+
   const handleBack = () => {
     navigate(-1);
   };
-  
+
   const handleStartChallenge = () => {
     navigate(`/challenge-tracking/${challengeId}`);
   };
-  
+
   if (isLoadingChallenge || isLoadingProgress) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <View style={styles.loadingContainer}>
         <Loading message="Loading challenge history..." />
-      </div>
+      </View>
     );
   }
-  
+
   if (!challenge) {
     return (
-      <div className="text-center p-8">
-        <h2 className="text-2xl font-bold">Challenge not found</h2>
-        <p className="text-muted-foreground mt-2">The challenge you're looking for couldn't be found.</p>
-        <Button className="mt-4" onClick={handleBack}>Back to Challenges</Button>
-      </div>
+      <View style={styles.centeredContainer}>
+        <Text style={styles.notFoundTitle}>Challenge not found</Text>
+        <Text style={styles.notFoundSubtitle}>
+          The challenge you're looking for couldn't be found.
+        </Text>
+        <Button style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.buttonText}>Back to Challenges</Text>
+        </Button>
+      </View>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" size="icon" onClick={handleBack}>
-          <ArrowLeft className="h-5 w-5" />
-          <span className="sr-only">Go back</span>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Challenge History</h1>
-          <p className="text-muted-foreground">
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleBack}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.pageTitle}>Challenge History</Text>
+          <Text style={styles.pageSubtitle}>
             View your past results for this challenge
-          </p>
-        </div>
-      </div>
-      
-      <Card>
+          </Text>
+        </View>
+      </View>
+
+      <Card style={styles.card}>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <View style={styles.cardHeaderRow}>
             <CardTitle>{challenge.title}</CardTitle>
-            <Badge variant={
-              challenge.difficulty === "Beginner" ? "outline" : 
-              challenge.difficulty === "Intermediate" ? "secondary" : "default"
-            }>
+            <Badge
+              variant={
+                challenge.difficulty === "Beginner"
+                  ? "outline"
+                  : challenge.difficulty === "Intermediate"
+                  ? "secondary"
+                  : "default"
+              }
+            >
               {challenge.difficulty}
             </Badge>
-          </div>
-          <CardDescription>{challenge.description}</CardDescription>
+          </View>
+          <CardDescription style={styles.cardDescription}>
+            {challenge.description}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {challenge.metrics && challenge.metrics.map((metric: string) => (
-              <Badge key={metric} variant="secondary">{metric}</Badge>
+        <CardContent style={styles.cardContent}>
+          <View style={styles.metricsRow}>
+            {challenge.metrics?.map((metric) => (
+              <Badge key={metric} variant="secondary" style={styles.metricBadge}>
+                {metric}
+              </Badge>
             ))}
-          </div>
-          
+          </View>
+
           {progress ? (
-            <div className="space-y-4 mt-4">
-              <div className="bg-muted rounded-lg p-4">
-                <h3 className="text-lg font-medium mb-4">Your Results</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Best Score:</span>
-                    <Badge variant="default">{progress.best_score}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Recent Score:</span>
-                    <Badge variant="outline">{progress._recent_score || progress.best_score}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Last Updated:
-                    </span>
-                    <span>{format(new Date(progress.updated_at), 'MMM d, yyyy')}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <Button className="w-full" onClick={handleStartChallenge}>
-                Start Challenge Again
+            <View style={styles.resultsContainer}>
+              <View style={styles.resultsBox}>
+                <Text style={styles.resultsTitle}>Your Results</Text>
+                <View style={styles.resultRow}>
+                  <Text style={styles.resultLabel}>Best Score:</Text>
+                  <Badge variant="default">{progress.best_score}</Badge>
+                </View>
+                <View style={styles.resultRow}>
+                  <Text style={styles.resultLabel}>Recent Score:</Text>
+                  <Badge variant="outline">
+                    {progress._recent_score || progress.best_score}
+                  </Badge>
+                </View>
+                <View style={styles.resultRowSmall}>
+                  <View style={styles.dateRow}>
+                    <Calendar size={16} color="#6B7280" style={styles.calendarIcon} />
+                    <Text style={styles.dateLabel}>Last Updated:</Text>
+                  </View>
+                  <Text style={styles.dateValue}>
+                    {format(new Date(progress.updated_at), "MMM d, yyyy")}
+                  </Text>
+                </View>
+              </View>
+              <Button style={styles.fullWidthButton} onPress={handleStartChallenge}>
+                <Text style={styles.buttonText}>Start Challenge Again</Text>
               </Button>
-            </div>
+            </View>
           ) : (
-            <div className="text-center py-6">
-              <h3 className="text-lg font-medium mb-2">No attempts yet</h3>
-              <p className="text-muted-foreground mb-4">
+            <View style={styles.noAttemptsContainer}>
+              <Text style={styles.noAttemptsTitle}>No attempts yet</Text>
+              <Text style={styles.noAttemptsSubtitle}>
                 You haven't attempted this challenge yet. Start now to track your progress!
-              </p>
-              <Button onClick={handleStartChallenge}>
-                Start Challenge
+              </Text>
+              <Button onPress={handleStartChallenge} style={styles.startButton}>
+                <Text style={styles.buttonText}>Start Challenge</Text>
               </Button>
-            </div>
+            </View>
           )}
         </CardContent>
       </Card>
-    </div>
+    </ScrollView>
   );
 };
 
 export default ChallengeHistory;
+
+const { width: windowWidth } = Dimensions.get("window");
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    flexGrow: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    minHeight: 400,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  centeredContainer: {
+    flex: 1,
+    padding: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notFoundTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  notFoundSubtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  backButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconButton: {
+    marginRight: 12,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  pageSubtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  card: {
+    width: windowWidth * 0.94,
+    alignSelf: "center",
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  cardDescription: {
+    marginTop: 8,
+  },
+  cardContent: {
+    paddingTop: 12,
+  },
+  metricsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  metricBadge: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  resultsContainer: {
+    marginTop: 16,
+  },
+  resultsBox: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  resultRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  resultLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  resultRowSmall: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  calendarIcon: {
+    marginRight: 4,
+  },
+  dateLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  dateValue: {
+    fontSize: 14,
+    color: "#111827",
+  },
+  fullWidthButton: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+  noAttemptsContainer: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  noAttemptsTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  noAttemptsSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  startButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+});

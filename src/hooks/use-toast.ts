@@ -3,7 +3,7 @@ import * as React from "react";
 import type {
   ToastActionElement,
   ToastProps,
-} from "@/components/ui/toast";
+} from "@/components/ui/Toast";
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 2000; // Reduced from 5000 to 2000 milliseconds (2 seconds)

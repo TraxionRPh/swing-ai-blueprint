@@ -7,9 +7,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { useGolfStats } from "@/hooks/useGolfStats";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export const StatCards = () => {
   const { handicap, bestRound, practiceTime, loading } = useGolfStats();

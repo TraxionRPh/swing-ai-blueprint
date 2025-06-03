@@ -1,32 +1,33 @@
-
-import React, { useEffect, useState } from 'react';
-import ReactConfetti from 'react-confetti';
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+// src/components/GoalAchievementModal.tsx
+import React, { useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { PartyPopper } from "lucide-react";
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
+  StyleSheet,
+} from "react-native";
+import ConfettiCannon from "react-native-confetti-cannon";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/Button";
+import { PartyPopper } from "lucide-react-native";
 import { AchievedGoal } from "@/hooks/useGoalAchievement";
 
 interface GoalAchievementModalProps {
-  achievedGoal: AchievedGoal;
+  achievedGoal: AchievedGoal | null;
   onClose: () => void;
   onSetNewGoal: () => void;
 }
 
-const GoalAchievementModal = ({ 
-  achievedGoal, 
+const GoalAchievementModal = ({
+  achievedGoal,
   onClose,
-  onSetNewGoal 
+  onSetNewGoal,
 }: GoalAchievementModalProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const { toast } = useToast();
+  const { width, height } = Dimensions.get("window");
 
   useEffect(() => {
     if (achievedGoal) {
@@ -34,7 +35,7 @@ const GoalAchievementModal = ({
       toast({
         title: "Congratulations! 🎉",
         description: `You've reached your ${achievedGoal.type} goal of ${achievedGoal.value}!`,
-        duration: 2000, // Reduced to 2 seconds
+        duration: 2000,
       });
 
       // Stop confetti after 5 seconds
@@ -49,44 +50,97 @@ const GoalAchievementModal = ({
   if (!achievedGoal) return null;
 
   return (
-    <>
-      {showConfetti && (
-        <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={200}
-        />
-      )}
-      <Dialog open={Boolean(achievedGoal)} onOpenChange={() => onClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <PartyPopper className="h-5 w-5 text-yellow-500" />
-              Congratulations!
-            </DialogTitle>
-            <DialogDescription>
-              You've achieved your {achievedGoal.type} goal of {achievedGoal.value}!
-              This is a great milestone in your golf journey.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-6">
-            <p className="text-center text-muted-foreground">
+    <Modal visible={true} transparent animationType="slide">
+      <View style={styles.overlay}>
+        {showConfetti && (
+          <ConfettiCannon
+            count={200}
+            origin={{ x: width / 2, y: 0 }}
+            fadeOut
+          />
+        )}
+
+        <View style={styles.modalContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <PartyPopper className="h-6 w-6 text-yellow-500" />
+            <Text style={styles.title}>Congratulations!</Text>
+          </View>
+
+          {/* Description */}
+          <Text style={styles.description}>
+            You've achieved your {achievedGoal.type} goal of {achievedGoal.value}!{`\n`}
+            This is a great milestone in your golf journey.
+          </Text>
+
+          <View style={styles.promptContainer}>
+            <Text style={styles.prompt}>
               Would you like to set a new goal to keep improving?
-            </p>
-          </div>
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button variant="outline" onClick={onClose}>
-              Maybe Later
+            </Text>
+          </View>
+
+          {/* Footer Buttons */}
+          <View style={styles.footer}>
+            <Button variant="outline" onPress={onClose} className="flex-1 mr-2">
+              <Text style={styles.buttonText}>Maybe Later</Text>
             </Button>
-            <Button onClick={onSetNewGoal}>
-              Set New Goal
+            <Button onPress={onSetNewGoal} className="flex-1 ml-2">
+              <Text style={styles.buttonText}>Set New Goal</Text>
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
 export default GoalAchievementModal;
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "90%",
+    maxHeight: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  description: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  promptContainer: {
+    marginVertical: 12,
+    alignItems: "center",
+  },
+  prompt: {
+    fontSize: 14,
+    color: "#777",
+    textAlign: "center",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+});

@@ -1,6 +1,6 @@
-
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import React from "react";
+import { View, TextInput, StyleSheet } from "react-native";
+import { Search } from "lucide-react-native";
 
 interface SearchBarProps {
   searchQuery: string;
@@ -9,14 +9,38 @@ interface SearchBarProps {
 
 export const SearchBar = ({ searchQuery, onSearchChange }: SearchBarProps) => {
   return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
+    <View style={styles.container}>
+      <Search size={16} color="#6B7280" style={styles.icon} />
+      <TextInput
+        style={styles.input}
         placeholder="Search courses by name, city or state..."
+        placeholderTextColor="#9CA3AF"
         value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        className="pl-10"
+        onChangeText={onSearchChange}
       />
-    </div>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    position: "relative",
+    width: "100%",
+  },
+  icon: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+  },
+  input: {
+    height: 44,
+    paddingLeft: 40,
+    paddingRight: 12,
+    borderColor: "#D1D5DB",
+    borderWidth: 1,
+    borderRadius: 6,
+    fontSize: 16,
+    color: "#111827",
+    backgroundColor: "#fff",
+  },
+});

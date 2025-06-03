@@ -1,38 +1,44 @@
+// SidebarTrigger.native.tsx
+import React from "react";
+import { TouchableOpacity, StyleSheet, View, AccessibilityRole } from "react-native";
+import { PanelLeft } from "lucide-react-native";
+import { useSidebar } from "./sidebar-context";
+import { cn } from "@/lib/utils"; // if you have a utility for combining styles; otherwise remove
 
-export * from "./sidebar-context"
-export * from "./sidebar-provider"
-export * from "./sidebar-menu"
-export * from "./sidebar-components"
+interface SidebarTriggerProps {
+  style?: object;
+  onPress?: () => void;
+}
 
-// Re-export the trigger component
-import { PanelLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useSidebar } from "./sidebar-context"
-import * as React from "react"
+export const SidebarTrigger: React.FC<SidebarTriggerProps> = ({ style, onPress }) => {
+  const { toggleSidebar } = useSidebar();
 
-export const SidebarTrigger = React.forwardRef<
-  React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const handlePress = () => {
+    onPress?.();
+    toggleSidebar();
+  };
 
   return (
-    <Button
-      ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("h-7 w-7", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
-      {...props}
+    <TouchableOpacity
+      onPress={handlePress}
+      accessibilityRole={"button" as AccessibilityRole}
+      accessibilityLabel="Toggle Sidebar"
+      style={[styles.button, style]}
+      activeOpacity={0.7}
     >
-      <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
-  )
-})
-SidebarTrigger.displayName = "SidebarTrigger"
+      <PanelLeft size={24} color="#111827" />
+      {/* sr-only text is not needed in RN; accessibilityLabel suffices */}
+    </TouchableOpacity>
+  );
+};
+
+SidebarTrigger.displayName = "SidebarTrigger";
+
+const styles = StyleSheet.create({
+  button: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

@@ -1,11 +1,17 @@
-
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { Course } from "@/types/round-tracking";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react-native";
 import { TeeSelection } from "./TeeSelection";
 import { HoleCountSelection } from "./HoleCountSelection";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface CourseCardProps {
   course: Course;
@@ -32,83 +38,183 @@ export const CourseCard = ({
   onTeeSelect,
   onAddTee,
   onHoleCountChange,
-  onStartRound
+  onStartRound,
 }: CourseCardProps) => {
   return (
-    <Card 
-      key={course.id} 
-      className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-primary' : ''}`}
+    <View
+      style={[
+        styles.card,
+        isExpanded && styles.cardExpanded,
+      ]}
     >
-      <CardContent className="p-0">
-        <div 
-          className="p-6 cursor-pointer flex justify-between items-center"
-          onClick={() => onCourseClick(course.id, course)}
-        >
-          <div>
-            <h3 className="font-medium text-lg">{course.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              {course.city}, {course.state}
-            </p>
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="h-5 w-5" />
-          ) : (
-            <ChevronDown className="h-5 w-5" />
-          )}
-        </div>
-        
-        {/* Expanded section with tee selection and hole count */}
-        {isExpanded && (
-          <div className="p-6 pt-0 border-t">
-            {/* Use the TeeSelection component */}
-            {course.course_tees && course.course_tees.length > 0 ? (
-              <TeeSelection
-                selectedCourse={course}
-                selectedTeeId={selectedTeeId}
-                onTeeSelect={onTeeSelect}
-                onAddTee={() => onAddTee(course)}
-              />
-            ) : (
-              <div className="mb-4">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground">No tee information available</p>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => onAddTee(course)}
-                    className="p-1 h-auto"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Add Tee</span>
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Hole Count Selection */}
-            <div className="mt-6 mb-4">
-              <HoleCountSelection
-                holeCount={selectedHoleCount}
-                setHoleCount={onHoleCountChange}
-              />
-            </div>
-            
-            <Button 
-              className="w-full mt-2" 
-              onClick={onStartRound}
-              disabled={isProcessing || !selectedTeeId}
-            >
-              {isProcessing ? 'Creating Round...' : 'Start Round'}
-            </Button>
-            
-            {processingError && (
-              <p className="text-sm text-destructive mt-2">
-                {processingError}
-              </p>
-            )}
-          </div>
+      {/* Card Header */}
+      <TouchableOpacity
+        style={styles.header}
+        activeOpacity={0.7}
+        onPress={() => onCourseClick(course.id, course)}
+      >
+        <View>
+          <Text style={styles.courseName}>{course.name}</Text>
+          <Text style={styles.courseLocation}>
+            {course.city}, {course.state}
+          </Text>
+        </View>
+        {isExpanded ? (
+          <ChevronUp size={20} color="#333" />
+        ) : (
+          <ChevronDown size={20} color="#333" />
         )}
-      </CardContent>
-    </Card>
+      </TouchableOpacity>
+
+      {/* Expanded Section */}
+      {isExpanded && (
+        <View style={styles.expandedSection}>
+          {/* Tee Selection */}
+          {course.course_tees && course.course_tees.length > 0 ? (
+            <TeeSelection
+              selectedCourse={course}
+              selectedTeeId={selectedTeeId}
+              onTeeSelect={onTeeSelect}
+              onAddTee={() => onAddTee(course)}
+            />
+          ) : (
+            <View style={styles.noTeeContainer}>
+              <View style={styles.noTeeTextContainer}>
+                <Text style={styles.noTeeText}>
+                  No tee information available
+                </Text>
+                <TouchableOpacity
+                  style={styles.addTeeButton}
+                  onPress={() => onAddTee(course)}
+                >
+                  <Plus size={16} color="#007AFF" />
+                  <Text style={styles.addTeeButtonText}>Add Tee</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Hole Count Selection */}
+          <View style={styles.holeCountContainer}>
+            <HoleCountSelection
+              holeCount={selectedHoleCount}
+              setHoleCount={onHoleCountChange}
+            />
+          </View>
+
+          {/* Start Round Button */}
+          <TouchableOpacity
+            style={[
+              styles.startButton,
+              (isProcessing || !selectedTeeId) && styles.buttonDisabled,
+            ]}
+            onPress={onStartRound}
+            disabled={isProcessing || !selectedTeeId}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.startButtonText}>
+              {isProcessing ? "Creating Round..." : "Start Round"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Processing Error */}
+          {processingError && (
+            <Text style={styles.errorText}>{processingError}</Text>
+          )}
+        </View>
+      )}
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    width: SCREEN_WIDTH - 32,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginVertical: 8,
+    alignSelf: "center",
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    overflow: "hidden",
+  },
+  cardExpanded: {
+    borderWidth: 2,
+    borderColor: "#007AFF",
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  courseName: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#333",
+  },
+  courseLocation: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
+  expandedSection: {
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  noTeeContainer: {
+    marginBottom: 16,
+  },
+  noTeeTextContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  noTeeText: {
+    fontSize: 14,
+    color: "#888",
+  },
+  addTeeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  addTeeButtonText: {
+    fontSize:  fourteen,
+    color: "#007AFF",
+    marginLeft: 4,
+  },
+  holeCountContainer: {
+    marginTop:  sixteen,
+    marginBottom:  twelve,
+  },
+  startButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  startButtonText: {
+    color: "#fff",
+    fontSize:  sixteen,
+    fontWeight: "500",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  errorText: {
+    marginTop: 8,
+    fontSize:  fourteen,
+    color: "#E55353",
+    textAlign: "center",
+  },
+});

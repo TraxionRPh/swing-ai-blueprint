@@ -1,87 +1,136 @@
+import React from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Switch as RNSwitch,
+  StyleSheet,
+} from "react-native";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import type { HoleData } from "@/types/round-tracking";
+type HoleData = {
+  distance: string | number;
+  score: string | number;
+  putts: string | number;
+  fairwayHit: boolean;
+  greenInRegulation: boolean;
+};
 
 interface HoleInputFormProps {
   holeData: HoleData;
-  handleDistanceChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleScoreChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handlePuttsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleDistanceChange: (value: string) => void;
+  handleScoreChange: (value: string) => void;
+  handlePuttsChange: (value: string) => void;
   handleInputChange: (field: keyof HoleData, value: any) => void;
 }
 
-export const HoleInputForm = ({
+/**
+ * NOTE: The original web handlers took a React.ChangeEvent<HTMLInputElement>.
+ * In React Native, TextInput’s onChangeText gives you the new text directly.
+ * So we change the signatures above accordingly.
+ */
+export const HoleInputForm: React.FC<HoleInputFormProps> = ({
   holeData,
   handleDistanceChange,
   handleScoreChange,
   handlePuttsChange,
-  handleInputChange
-}: HoleInputFormProps) => {
+  handleInputChange,
+}) => {
   return (
-    <div className="space-y-4">
+    <View style={styles.container}>
       {/* Yardage Input */}
-      <div>
-        <Label htmlFor="distance">Distance (yards)</Label>
-        <Input
-          id="distance"
-          type="number"
-          min="0"
-          value={holeData.distance || ""}
-          onChange={handleDistanceChange}
-          className="mt-2"
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Distance (yards)</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          value={holeData.distance?.toString() || ""}
+          onChangeText={handleDistanceChange}
           placeholder="Enter distance"
         />
-      </div>
-      
+      </View>
+
       {/* Score Input */}
-      <div>
-        <Label htmlFor="score">Score</Label>
-        <Input
-          id="score"
-          type="number"
-          min="1"
-          value={holeData.score || ""}
-          onChange={handleScoreChange}
-          className="mt-2"
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Score</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          value={holeData.score?.toString() || ""}
+          onChangeText={handleScoreChange}
           placeholder="Enter score"
         />
-      </div>
-      
+      </View>
+
       {/* Putts Input */}
-      <div>
-        <Label htmlFor="putts">Putts</Label>
-        <Input
-          id="putts"
-          type="number"
-          min="0"
-          value={holeData.putts || ""}
-          onChange={handlePuttsChange}
-          className="mt-2"
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Putts</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          value={holeData.putts?.toString() || ""}
+          onChangeText={handlePuttsChange}
           placeholder="Enter putts"
         />
-      </div>
-      
+      </View>
+
       {/* Fairway and Green Regulation */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="fairway"
-            checked={holeData.fairwayHit}
-            onCheckedChange={(checked) => handleInputChange('fairwayHit', checked)}
+      <View style={styles.toggleRow}>
+        <View style={styles.toggleContainer}>
+          <RNSwitch
+            value={holeData.fairwayHit}
+            onValueChange={(val) => handleInputChange("fairwayHit", val)}
           />
-          <Label htmlFor="fairway">Fairway Hit</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="gir"
-            checked={holeData.greenInRegulation}
-            onCheckedChange={(checked) => handleInputChange('greenInRegulation', checked)}
+          <Text style={styles.toggleLabel}>Fairway Hit</Text>
+        </View>
+
+        <View style={styles.toggleContainer}>
+          <RNSwitch
+            value={holeData.greenInRegulation}
+            onValueChange={(val) =>
+              handleInputChange("greenInRegulation", val)
+            }
           />
-          <Label htmlFor="gir">Green in Regulation</Label>
-        </div>
-      </div>
-    </div>
+          <Text style={styles.toggleLabel}>Green in Regulation</Text>
+        </View>
+      </View>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "column",
+    gap: 16, // RN 0.71+ supports gap; if older RN, use marginBottom on each field
+    paddingVertical: 8,
+  },
+  fieldContainer: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+    fontWeight: "500",
+    color: "#333",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#CCC",
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  toggleLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#333",
+  },
+});

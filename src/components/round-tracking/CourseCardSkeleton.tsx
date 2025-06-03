@@ -1,25 +1,106 @@
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+} from "react-native";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// A simple gray box to mimic a skeleton line
+const Skeleton = ({ style }: { style?: object }) => (
+  <View style={[styles.skeletonBase, style]} />
+);
 
 export const CourseCardSkeleton = () => {
   return (
-    <Card className="cursor-not-allowed hover:shadow-sm transition-shadow">
-      <CardContent className="p-6">
-        <Skeleton className="h-5 w-3/4 mb-3" />
-        <Skeleton className="h-4 w-1/2 mb-3" />
-        <Skeleton className="h-4 w-1/3" />
-      </CardContent>
-    </Card>
+    <View style={styles.card}>
+      <View style={styles.cardContent}>
+        <Skeleton style={styles.skeletonTitle} />
+        <Skeleton style={styles.skeletonSubtitle} />
+        <Skeleton style={styles.skeletonLine} />
+      </View>
+    </View>
   );
 };
 
-export const CourseCardSkeletonGrid = ({ count = 9 }: { count?: number }) => {
+export const CourseCardSkeletonGrid = ({
+  count = 9,
+}: {
+  count?: number;
+}) => {
+  // Determine number of columns based on screen width
+  // 1 column if narrow, 2 for medium, 3 for wider
+  let numColumns = 1;
+  if (SCREEN_WIDTH >= 800) {
+    numColumns = 3;
+  } else if (SCREEN_WIDTH >= 500) {
+    numColumns = 2;
+  }
+
+  const data = Array.from({ length: count }, (_, i) => ({ key: i.toString() }));
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array(count).fill(0).map((_, index) => (
-        <CourseCardSkeleton key={index} />
-      ))}
-    </div>
+    <FlatList
+      data={data}
+      renderItem={() => <CourseCardSkeleton />}
+      keyExtractor={(item) => item.key}
+      numColumns={numColumns}
+      columnWrapperStyle={
+        numColumns > 1 ? styles.columnWrapper : undefined
+      }
+      contentContainerStyle={styles.gridContainer}
+    />
   );
 };
+
+const styles = StyleSheet.create({
+  // Card styles
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    margin: 8,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
+    overflow: "hidden",
+    // Ensure cards flexibly size in grid
+    flex: 1,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  // Skeleton line base
+  skeletonBase: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 4,
+  },
+  // Specific skeleton sizes
+  skeletonTitle: {
+    height: 20,
+    width: "75%",
+    marginBottom: 12,
+  },
+  skeletonSubtitle: {
+    height: 16,
+    width: "50%",
+    marginBottom: 12,
+  },
+  skeletonLine: {
+    height: 16,
+    width: "33%",
+  },
+  // Grid container padding
+  gridContainer: {
+    padding: 8,
+  },
+  // If multiple columns, add spacing between items
+  columnWrapper: {
+    justifyContent: "space-between",
+  },
+});

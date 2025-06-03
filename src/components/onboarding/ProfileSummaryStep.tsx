@@ -1,5 +1,7 @@
-
-import { Separator } from "@/components/ui/separator";
+// src/components/ProfileSummaryStep.tsx
+import React from "react";
+import { View, Text } from "react-native";
+import { Separator } from "@/components/ui/Separator"; // assume RN-compatible
 import { commonGolfGoals } from "./CommonGoals";
 
 interface ProfileSummaryStepProps {
@@ -10,56 +12,66 @@ interface ProfileSummaryStepProps {
   handicapGoal: number | null;
 }
 
-const ProfileSummaryStep = ({ 
-  handicap, 
-  goals, 
-  selectedGoals, 
-  scoreGoal, 
-  handicapGoal 
+const ProfileSummaryStep = ({
+  handicap,
+  goals,
+  selectedGoals,
+  scoreGoal,
+  handicapGoal,
 }: ProfileSummaryStepProps) => {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h3 className="text-lg font-medium">Your SwingAI Profile</h3>
-      
-      <div className="space-y-2">
-        <p className="font-medium">Skill Level:</p>
-        <p className="text-muted-foreground capitalize">{handicap}</p>
-      </div>
-      
+    <View className="space-y-6 animate-fade-in">
+      <Text className="text-lg font-medium">Your SwingAI Profile</Text>
+
+      <View className="space-y-2">
+        <Text className="font-medium">Skill Level:</Text>
+        <Text className="text-muted-foreground capitalize">{handicap}</Text>
+      </View>
+
       <Separator />
-      
-      <div className="space-y-2">
-        <p className="font-medium">Selected Goals:</p>
-        <ul className="space-y-2 text-muted-foreground">
+
+      <View className="space-y-2">
+        <Text className="font-medium">Selected Goals:</Text>
+        <View className="space-y-2">
           {selectedGoals.map((goalId) => {
-            const goal = commonGolfGoals.find(g => g.id === goalId);
+            const goal = commonGolfGoals.find((g) => g.id === goalId);
             if (!goal) return null;
+            const Icon = goal.icon;
             return (
-              <li key={goalId} className="flex items-center gap-2">
-                <goal.icon className="h-4 w-4" />
-                <span>{goal.label}</span>
-                {goalId === "lower-score" && scoreGoal && (
-                  <span className="text-sm">(Target: {scoreGoal})</span>
+              <View
+                key={goalId}
+                className="flex-row items-center gap-2"
+              >
+                <Icon className="h-4 w-4" />
+                <Text>{goal.label}</Text>
+                {goalId === "lower-score" && scoreGoal !== null && (
+                  <Text className="text-sm">
+                    {" "}
+                    (Target: {scoreGoal})
+                  </Text>
                 )}
-                {goalId === "handicap" && handicapGoal && (
-                  <span className="text-sm">(Target: {handicapGoal})</span>
+                {goalId === "handicap" && handicapGoal !== null && (
+                  <Text className="text-sm">
+                    {" "}
+                    (Target: {handicapGoal})
+                  </Text>
                 )}
-              </li>
+              </View>
             );
           })}
-        </ul>
-      </div>
-      
-      {goals && (
+        </View>
+      </View>
+
+      {goals ? (
         <>
           <Separator />
-          <div className="space-y-2">
-            <p className="font-medium">Additional Goals:</p>
-            <p className="text-muted-foreground">{goals}</p>
-          </div>
+          <View className="space-y-2">
+            <Text className="font-medium">Additional Goals:</Text>
+            <Text className="text-muted-foreground">{goals}</Text>
+          </View>
         </>
-      )}
-    </div>
+      ) : null}
+    </View>
   );
 };
 

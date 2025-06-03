@@ -1,38 +1,110 @@
+// NotFound.native.tsx
+import React, { useEffect } from "react";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { useLocation, useNavigate } from "react-router-native";
+import { Button } from "@/components/ui/Button";
+import { AlertCircle } from "lucide-react-native";
 
-import { useEffect } from "react";
-import { useLocation, Link } from "react-router-native";
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
-
-const NotFound = () => {
+export const NotFound: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.error(
-      "404 Error: Route not found:",
-      location.pathname
-    );
+    console.error("404 Error: Route not found:", location.pathname);
   }, [location.pathname]);
 
+  const handleReturn = () => {
+    navigate("/dashboard");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center">
-            <AlertCircle className="h-8 w-8 text-amber-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">404</h1>
-          <p className="text-xl text-gray-600 mb-2">Page Not Found</p>
-          <p className="text-gray-500 mb-6">
-            The page you're looking for doesn't exist or has been moved.
-          </p>
-          <Button asChild className="w-full">
-            <Link to="/dashboard">Return to Dashboard</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
+        <View style={styles.iconCircle}>
+          <AlertCircle size={32} color="#D97706" /> {/* amber-600 */}
+        </View>
+        <Text style={styles.code}>404</Text>
+        <Text style={styles.title}>Page Not Found</Text>
+        <Text style={styles.subtitle}>
+          The page you're looking for doesn't exist or has been moved.
+        </Text>
+        <Button style={styles.button} onPress={handleReturn}>
+          <Text style={styles.buttonText}>Return to Dashboard</Text>
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default NotFound;
+
+const { width } = Dimensions.get("window");
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F9FAFB", // gray-50
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  container: {
+    width: width * 0.9,
+    maxWidth: 360,
+    backgroundColor: "#FFFFFF", // white
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  iconCircle: {
+    backgroundColor: "#FEF3C7", // amber-100
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  code: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#111827", // gray-900
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#374151", // gray-700
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280", // gray-500
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  button: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 6,
+    backgroundColor: "#3B82F6", // primary
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

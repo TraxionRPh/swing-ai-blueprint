@@ -1,21 +1,18 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-native";
-import { PlayCircle, Trash2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigate } from "react-router-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { PlayCircle, Trash2 } from "lucide-react-native";
 import { useToast } from "@/hooks/use-toast";
 
-interface InProgressRoundProps {
+interface InProgressRoundCardProps {
   roundId: string;
   courseName: string;
   lastHole: number;
@@ -23,129 +20,244 @@ interface InProgressRoundProps {
   onDelete?: () => void;
 }
 
-export const InProgressRoundCard = ({ 
-  roundId, 
-  courseName, 
-  lastHole, 
+export const InProgressRoundCard = ({
+  roundId,
+  courseName,
+  lastHole,
   holeCount,
-  onDelete 
-}: InProgressRoundProps) => {
+  onDelete,
+}: InProgressRoundCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  const handleResumeRound = () => {
+  const handleResumeRound = async () => {
     try {
       setIsLoading(true);
-      console.log("Resume round clicked for round ID:", roundId);
-      console.log("Last completed hole:", lastHole);
-      
       toast({
         title: "Loading round",
-        description: "Retrieving your round data..."
+        description: "Retrieving your round data...",
       });
-      
-      // Calculate the next hole to resume play at
-      // If lastHole is 0 (no holes completed), start at hole 1
-      // Otherwise, go to the hole after the last completed one (unless that would exceed hole count)
-      const resumeHole = lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
-      console.log("Resuming at hole:", resumeHole);
-      
-      // Clear any existing resume data first
-      sessionStorage.removeItem('resume-hole-number');
-      localStorage.removeItem('resume-hole-number');
-      
-      // Set the resume data in both storage locations for redundancy
-      sessionStorage.setItem('resume-hole-number', resumeHole.toString());
-      localStorage.setItem('resume-hole-number', resumeHole.toString());
-      
-      // Force resume flag ensures the round is properly resumed even if there are
-      // conflicts with other hole selection mechanisms
-      sessionStorage.setItem('force-resume', 'true');
-      
-      // Add a small delay to let the toast show before navigation
+
+      const resumeHole =
+        lastHole === 0 ? 1 : Math.min(lastHole + 1, holeCount);
+
+      await AsyncStorage.removeItem("resume-hole-number");
+      await AsyncStorage.removeItem("force-resume");
+
+      await AsyncStorage.setItem(
+        "resume-hole-number",
+        resumeHole.toString()
+      );
+      await AsyncStorage.setItem("force-resume", "true");
+
       setTimeout(() => {
         navigate(`/rounds/${roundId}`);
       }, 300);
     } catch (error) {
       console.error("Navigation error:", error);
       setIsLoading(false);
-      
       toast({
         title: "Navigation error",
-        description: "There was an issue loading this round. Please try again.",
-        variant: "destructive"
+        description:
+          "There was an issue loading this round. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
   return (
     <>
-      <Card className="mb-6 bg-primary/5 border-primary/20">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-medium">Resume Round</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setShowDeleteDialog(true)}
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Resume Round</Text>
+          <TouchableOpacity
+            onPress={() => setShowDeleteDialog(true)}
+            style={styles.iconButton}
           >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete round</span>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col space-y-3">
-            <p className="text-sm text-muted-foreground">
-              You have an incomplete round at <span className="font-medium text-foreground">{courseName}</span>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Progress: {lastHole} of {holeCount} holes completed
-            </p>
-            <Button 
-              onClick={handleResumeRound} 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading Round...
-                </>
-              ) : (
-                <>
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  Continue Round
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <Trash2 size={20} color="#dc2626" />
+          </TouchableOpacity>
+        </View>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Round</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this round? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                onDelete?.();
-                setShowDeleteDialog(false);
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <View style={styles.content}>
+          <Text style={styles.text}>
+            You have an incomplete round at{" "}
+            <Text style={styles.boldText}>{courseName}</Text>
+          </Text>
+          <Text style={styles.text}>
+            Progress: {lastHole} of {holeCount} holes completed
+          </Text>
+
+          <TouchableOpacity
+            onPress={handleResumeRound}
+            style={[styles.resumeButton, isLoading && styles.disabledButton]}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <ActivityIndicator
+                  size="small"
+                  color="#fff"
+                  style={styles.spinner}
+                />
+                <Text style={styles.buttonText}>Loading Round...</Text>
+              </>
+            ) : (
+              <>
+                <PlayCircle size={20} color="#fff" style={styles.icon} />
+                <Text style={styles.buttonText}>Continue Round</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showDeleteDialog}
+        onRequestClose={() => setShowDeleteDialog(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Round</Text>
+            <Text style={styles.modalDescription}>
+              Are you sure you want to delete this round? This action cannot be
+              undone.
+            </Text>
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                onPress={() => setShowDeleteDialog(false)}
+                style={[styles.modalButton, styles.cancelButton]}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  onDelete?.();
+                  setShowDeleteDialog(false);
+                }}
+                style={[styles.modalButton, styles.deleteButton]}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#f3f4f6",
+    borderColor: "#d1d5db",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  iconButton: {
+    padding: 4,
+  },
+  content: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  text: {
+    fontSize: 14,
+    color: "#4b5563",
+    marginBottom: 4,
+  },
+  boldText: {
+    fontWeight: "600",
+    color: "#111827",
+  },
+  resumeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2563eb",
+    paddingVertical: 12,
+    borderRadius: 6,
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  icon: {
+    marginRight: 4,
+  },
+  spinner: {
+    marginRight: 8,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#111827",
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: "#4b5563",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  cancelButton: {
+    backgroundColor: "#e5e7eb",
+  },
+  cancelButtonText: {
+    color: "#374151",
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: "#dc2626",
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+});
